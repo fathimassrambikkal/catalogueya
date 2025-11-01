@@ -13,7 +13,7 @@ export default function Favourite() {
   const { favourites, toggleFavourite } = useFavourites();
   const navigate = useNavigate();
 
-  // 🧭 Handles navigation based on item type
+  //  Handles navigation based on item type
   const handleNavigate = (item) => {
     if (item.type === "sales") {
       navigate(`/salesproduct/${item.id}`);
@@ -47,7 +47,7 @@ export default function Favourite() {
     }
   };
 
-  // ❤️ Empty state
+  //  Empty state
   if (!favourites || favourites.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center text-gray-600">

@@ -115,7 +115,7 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* FAQ Section Below */}
+      {/* FAQ Section  */}
       <Faq />
 
       {/* Call To Action Section */}

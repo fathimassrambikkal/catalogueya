@@ -24,31 +24,32 @@ export default function Navbar() {
 
   return (
     <nav
+      dir={i18n.language === "ar" ? "rtl" : "ltr"}
       className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 font-inter transition-all duration-500
         ${
           isGlassPage
             ? "backdrop-blur-lg bg-white/30 shadow-xl border border-white/20"
             : "bg-white/80 shadow-xl"
         }
-        w-[90%] sm:w-[80%] md:w-[60%] rounded-full flex justify-between items-center px-4 sm:px-8 py-2 sm:py-3`}
+        w-[95%] sm:w-[88%] md:w-[75%] rounded-2xl flex justify-between items-center px-6 sm:px-10 py-3 sm:py-2`}
     >
-      {/* ✅ Logo */}
+      {/* Logo */}
       <div className="flex-shrink-0">
         <Link to="/">
           <img
             src={logo}
             alt="Catalogueya Logo"
-            className="h-8 sm:h-10 object-contain"
+            className="h-12 sm:h-14 object-contain" // logo slightly larger
           />
         </Link>
       </div>
 
-      {/* ✅ Right Section */}
-      <div className="flex items-center space-x-2 sm:space-x-4">
-        {/* ❤️ Favourites */}
+      {/* Right Section */}
+      <div className="flex items-center space-x-3 sm:space-x-5">
+        {/* Favourites */}
         <Link to="/favourite" className="relative">
           <AiOutlineHeart
-            className={`text-xl sm:text-xl cursor-pointer transition ${
+            className={`text-2xl cursor-pointer transition ${
               count > 0
                 ? "text-red-500 hover:text-red-600"
                 : "text-gray-600 hover:text-red-400"
@@ -61,7 +62,7 @@ export default function Navbar() {
           )}
         </Link>
 
-        {/* 🔐 Login */}
+        {/* Login */}
         <Link
           to="/sign"
           className="border border-gray-300 text-gray-700 hover:text-blue-500 px-3 sm:px-4 py-1 sm:py-2 rounded-full transition text-xs sm:text-sm flex items-center justify-center bg-white/30 hover:bg-white/50"
@@ -69,23 +70,15 @@ export default function Navbar() {
           {t("login")}
         </Link>
 
-        {/* 📝 Sign Up */}
-        <Link
-          to="/register"
-          className="bg-blue-500 text-white hover:bg-blue-600 px-3 sm:px-4 py-1 sm:py-2 rounded-full transition text-xs sm:text-sm flex items-center justify-center"
-        >
-          {t("signup")}
-        </Link>
-
-        {/* 🌍 Language Toggle */}
+        {/* Language Toggle */}
         <button
           onClick={toggleLanguage}
           className="border border-gray-300 text-gray-700 px-2 py-1 sm:px-3 sm:py-2 rounded-full hover:bg-white/50 transition text-xs sm:text-sm backdrop-blur-md"
         >
-          {i18n.language === "en" ? "AR" : "EN"}
+          {i18n.language === "en" ? "عربي" : "EN"}
         </button>
 
-        {/* 🍔 Menu Button */}
+        {/* Menu Button */}
         <div
           className="relative"
           onMouseEnter={() => setMenuOpen(true)}
@@ -123,9 +116,15 @@ export default function Navbar() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="absolute right-0 mt-3 bg-white/70 backdrop-blur-md shadow-lg rounded-xl w-40 sm:w-48 border border-white/30 z-50"
+                className={`absolute mt-3 bg-white/70 backdrop-blur-md shadow-lg rounded-xl w-52 sm:w-60 border border-white/30 z-50 ${
+                  i18n.language === "ar" ? "left-0" : "right-0"
+                }`}
               >
-                <ul className="flex flex-col text-gray-700 text-center text-sm">
+                <ul
+                  className={`flex flex-col text-gray-700 text-center text-sm ${
+                    i18n.language === "ar" ? "text-right pr-3" : ""
+                  }`}
+                >
                   <li className="px-4 py-2 hover:bg-white/50 hover:rounded-full transition">
                     <Link to="/" onClick={() => setMenuOpen(false)}>
                       {t("home")}
@@ -144,6 +143,17 @@ export default function Navbar() {
                   <li className="px-4 py-2 hover:bg-white/50 hover:rounded-full transition">
                     <Link to="/contact" onClick={() => setMenuOpen(false)}>
                       {t("contact")}
+                    </Link>
+                  </li>
+
+                  {/* Sign Up moved inside dropdown */}
+                  <li className="px-4 py-2">
+                    <Link
+                      to="/register"
+                      onClick={() => setMenuOpen(false)}
+                      className="block bg-blue-500 text-white px-3 py-1.5 rounded-full hover:bg-blue-600 transition text-sm"
+                    >
+                      {t("signup")}
                     </Link>
                   </li>
                 </ul>

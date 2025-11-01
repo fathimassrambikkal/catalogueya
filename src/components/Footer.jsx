@@ -4,7 +4,7 @@ import { FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import { HiArrowUpRight } from "react-icons/hi2";
 import Iridescence from "../ui/Iridescence";
 
-// 🟢 Import your icon images
+
 import ios from "../assets/ios.png";
 import android from "../assets/android.png";
 
@@ -25,7 +25,6 @@ export default function Footer() {
       <div className="relative z-20 w-[90%] max-w-7xl flex flex-col md:flex-row justify-between items-start py-40 text-gray-200">
         {/* Left Section - Contact */}
         <div className="flex flex-col gap-3 text-left">
-          {/* 👇 Reduced text sizes slightly */}
           <p className="text-2xl md:text-3xl font-medium text-gray-400">
             Let's Talk
           </p>

@@ -10,7 +10,7 @@ export default function FavouriteCard({ product }) {
   const { toggleFavourite, favourites } = useFavourites();
 
   const isFavourite = favourites.some((item) => item.id === product.id);
-  const whatsappNumber = "97400000000"; // replace dynamically if needed
+  const whatsappNumber = "97400000000"; 
 
   return (
     <motion.div
@@ -38,7 +38,7 @@ export default function FavouriteCard({ product }) {
           Sale Offer
         </div>
 
-        {/* ❤️ Favourite Icon */}
+        {/*  Favourite Icon */}
         <button
           onClick={(e) => {
             e.stopPropagation();
