@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import banner1 from "../assets/banner1.avif";
-import banner2 from "../assets/banner2.avif";
-import banner3 from "../assets/banner3.avif";
+import banner1 from "../assets/banner2.avif";
+import banner2 from "../assets/banner3.avif";
+import banner3 from "../assets/banner1.avif";
 import SearchBar from "../components/SearchBar";
 
 const images = [banner1, banner2, banner3];
 
 export default function Banner() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [bannerHeight, setBannerHeight] = useState("85vh"); // default reduced height
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // ✅ Auto-slide every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -19,102 +18,96 @@ export default function Banner() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Adjust banner height based on screen width
   useEffect(() => {
-    const updateHeight = () => {
-      const width = window.innerWidth;
-      if (width < 640) setBannerHeight("65vh"); // Mobile
-      else if (width < 1024) setBannerHeight("75vh"); // Tablet
-      else setBannerHeight("85vh"); // Desktop
-    };
-
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    window.addEventListener("orientationchange", updateHeight);
-
-    return () => {
-      window.removeEventListener("resize", updateHeight);
-      window.removeEventListener("orientationchange", updateHeight);
-    };
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ✨ Animation Variants
-  const textContainer = {
+  const headingSize =
+    windowWidth < 400
+      ? "text-2xl sm:text-3xl"
+      : windowWidth < 640
+      ? "text-3xl sm:text-5xl"
+      : "text-4xl sm:text-6xl";
+
+  const dotSize = windowWidth < 400 ? "w-3 h-3" : "w-4 h-4";
+
+  // --- Animation Variants  ---
+  const container = {
     hidden: { opacity: 1 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
   };
 
-  const textChild = {
-    hidden: { opacity: 0, y: 25, filter: "blur(8px)" },
+  const child = {
+    hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
     visible: {
       opacity: 1,
       y: 0,
       filter: "blur(0px)",
-      transition: { duration: 0.4, ease: "easeOut" },
+      transition: { duration: 0.5, ease: "easeOut" },
     },
   };
 
   const headingText = "Welcome to Catalogueya";
 
   return (
-    <section
-      className="relative w-full overflow-hidden flex items-center justify-center"
-      style={{ height: bannerHeight }}
-    >
-      {/* Background Images */}
+    <section className="relative w-full h-[80vh] md:h-[90vh] lg:h-screen overflow-hidden flex items-center justify-center bg-gray-900">
+
+      {/* Banner Images */}
       {images.map((img, index) => (
-        <motion.img
+        <img
           key={index}
           src={img}
           alt={`banner-${index}`}
           loading="lazy"
-          className="absolute w-full h-full object-cover"
-          animate={{ opacity: index === currentIndex ? 1 : 0 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
+          className={`absolute w-full h-full object-cover transition-opacity duration-1000 ${
+            index === currentIndex ? "opacity-100" : "opacity-0"
+          }`}
         />
       ))}
 
-      {/* Centered Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center gap-5 px-4 text-center">
+      {/* Content */}
+      <div className="absolute z-10 top-1/3 w-full flex flex-col items-center gap-6 px-4">
         {/* Search Bar */}
-        <div className="w-full max-w-md sm:max-w-2xl">
+        <div className="w-full max-w-2xl">
           <SearchBar />
         </div>
 
-        {/* Animated Heading */}
+        {/* Animated Heading  */}
         <motion.h2
-          variants={textContainer}
+          variants={container}
           initial="hidden"
           animate="visible"
-          className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center"
+          className={`${headingSize} font-extrabold tracking-tight text-center text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center`}
         >
           {headingText.split("").map((char, i) => (
-            <motion.span key={i} variants={textChild} className="inline-block">
-              {char === " " ? "\u00A0" : char}
+            <motion.span key={i} variants={child} className="inline-block">
+              <span className="inline-block">{char === " " ? "\u00A0" : char}</span>
             </motion.span>
           ))}
         </motion.h2>
 
         {/* Subtext */}
         <motion.p
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: headingText.length * 0.05 + 0.3, duration: 1 }}
-          className="text-white/90 text-base sm:text-lg md:text-xl font-medium tracking-wide drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]"
+          transition={{ delay: headingText.length * 0.05 + 0.2, duration: 1 }}
+          className="text-white/90 text-lg md:text-xl font-medium tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]"
         >
-          Enhance Everyday Living.
+        Enhance Everyday Living.
         </motion.p>
       </div>
 
-      {/* Navigation Dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-md">
+      {/* Dots */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-md">
         {images.map((_, idx) => (
           <button
             key={idx}
-            onClick={() => setCurrentIndex(idx)}
-            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 ${
-              idx === currentIndex ? "bg-white scale-110" : "bg-white/50"
+            className={`${dotSize} rounded-full transition-colors ${
+              idx === currentIndex ? "bg-white" : "bg-white/50"
             }`}
+            onClick={() => setCurrentIndex(idx)}
           />
         ))}
       </div>
