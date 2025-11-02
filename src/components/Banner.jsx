@@ -24,6 +24,7 @@ export default function Banner() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Heading responsive size
   const headingSize =
     windowWidth < 400
       ? "text-2xl sm:text-3xl"
@@ -31,9 +32,14 @@ export default function Banner() {
       ? "text-3xl sm:text-5xl"
       : "text-4xl sm:text-6xl";
 
-  const dotSize = windowWidth < 400 ? "w-3 h-3" : "w-4 h-4";
+  // Smaller dots on small screens
+  const dotSize = windowWidth < 640 ? "w-2.5 h-2.5" : "w-4 h-4";
 
-  // --- Animation Variants  ---
+  // Reduce section height only on small screens
+  const sectionHeight =
+    windowWidth < 640 ? "h-[60vh]" : "h-[90vh] md:h-[90vh] lg:h-screen";
+
+  // --- Animation Variants ---
   const container = {
     hidden: { opacity: 1 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
@@ -52,8 +58,9 @@ export default function Banner() {
   const headingText = "Welcome to Catalogueya";
 
   return (
-    <section className="relative w-full h-[80vh] md:h-[90vh] lg:h-screen overflow-hidden flex items-center justify-center bg-gray-900">
-
+    <section
+      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center bg-gray-900`}
+    >
       {/* Banner Images */}
       {images.map((img, index) => (
         <img
@@ -74,19 +81,24 @@ export default function Banner() {
           <SearchBar />
         </div>
 
-        {/* Animated Heading  */}
-        <motion.h2
-          variants={container}
-          initial="hidden"
-          animate="visible"
-          className={`${headingSize} font-extrabold tracking-tight text-center text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center`}
-        >
-          {headingText.split("").map((char, i) => (
-            <motion.span key={i} variants={child} className="inline-block">
-              <span className="inline-block">{char === " " ? "\u00A0" : char}</span>
-            </motion.span>
-          ))}
-        </motion.h2>
+        {/* Animated Heading */}
+       <motion.h2
+      variants={container}
+      initial="hidden"
+      animate="visible"
+      className="font-extrabold tracking-tight text-center text-white
+                drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center
+                text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl 2xl:text-5xl leading-tight px-4"
+    >
+      {headingText.split("").map((char, i) => (
+        <motion.span key={i} variants={child} className="inline-block">
+          <span className="inline-block">
+            {char === " " ? "\u00A0" : char}
+          </span>
+        </motion.span>
+      ))}
+    </motion.h2>
+
 
         {/* Subtext */}
         <motion.p
@@ -95,12 +107,12 @@ export default function Banner() {
           transition={{ delay: headingText.length * 0.05 + 0.2, duration: 1 }}
           className="text-white/90 text-lg md:text-xl font-medium tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]"
         >
-        Enhance Everyday Living.
+          Enhance Everyday Living.
         </motion.p>
       </div>
 
       {/* Dots */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-md">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-20 p-1.5 rounded-full bg-white/20 backdrop-blur-md">
         {images.map((_, idx) => (
           <button
             key={idx}

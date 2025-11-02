@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { HiDotsHorizontal } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +9,7 @@ import { AiOutlineHeart } from "react-icons/ai";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { favourites } = useFavourites();
   const { t, i18n } = useTranslation();
   const count = favourites.length;
@@ -22,16 +23,45 @@ export default function Navbar() {
     i18n.changeLanguage(newLang);
   };
 
+  // 🌟 Scroll listener for navbar background change
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 40) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // 🔄 Toggle dropdown menu on click
+  const toggleMenu = () => {
+    setMenuOpen((prev) => !prev);
+  };
+
+  // 🧠 Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".menu-container")) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   return (
     <nav
       dir={i18n.language === "ar" ? "rtl" : "ltr"}
-      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 font-inter transition-all duration-500
+      className={`fixed  left-1/2 -translate-x-1/2 z-50 font-inter transition-all duration-500
         ${
-          isGlassPage
+          scrolled && isGlassPage
             ? "backdrop-blur-lg bg-white/30 shadow-xl border border-white/20"
-            : "bg-white/80 shadow-xl"
+            : "bg-white shadow-md"
         }
-        w-[95%] sm:w-[88%] md:w-[75%] rounded-2xl flex justify-between items-center px-6 sm:px-10 py-3 sm:py-2`}
+        w-full flex justify-between items-center px-6 sm:px-10 py-3 sm:py-2 `}
     >
       {/* Logo */}
       <div className="flex-shrink-0">
@@ -39,13 +69,13 @@ export default function Navbar() {
           <img
             src={logo}
             alt="Catalogueya Logo"
-            className="h-12 sm:h-14 object-contain" // logo slightly larger
+            className="h-12 sm:h-14 object-contain ml-2 lg:ml-16"
           />
         </Link>
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center space-x-3 sm:space-x-5">
+      <div className="flex items-center space-x-3 sm:space-x-5 md:mr-20">
         {/* Favourites */}
         <Link to="/favourite" className="relative">
           <AiOutlineHeart
@@ -79,12 +109,9 @@ export default function Navbar() {
         </button>
 
         {/* Menu Button */}
-        <div
-          className="relative"
-          onMouseEnter={() => setMenuOpen(true)}
-          onMouseLeave={() => setMenuOpen(false)}
-        >
+        <div className="relative menu-container">
           <motion.button
+            onClick={toggleMenu}
             className="flex items-center bg-white/30 text-gray-700 px-2 py-2 rounded-xl hover:bg-white/50 transition"
             animate={{
               rotate: menuOpen ? [0, 3, -3, 0] : 0,
@@ -145,8 +172,6 @@ export default function Navbar() {
                       {t("contact")}
                     </Link>
                   </li>
-
-                  {/* Sign Up moved inside dropdown */}
                   <li className="px-4 py-2">
                     <Link
                       to="/register"

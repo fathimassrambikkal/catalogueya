@@ -55,11 +55,11 @@ export default function HomeServices() {
     cardsPerView >= 6
       ? "w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40"
       : cardsPerView === 4
-      ? "w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28"
-      : "w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44 lg:w-48 lg:h-48";
+      ? "w-34 h-34 sm:w-38 sm:h-38 md:w-42 md:h-42 lg:w-46 lg:h-46"
+      : "w-34 h-34 sm:w-40 sm:h-40 md:w-44 md:h-44 lg:w-48 lg:h-48";
 
   return (
-    <section className="relative mx-auto py-10 sm:py-14 lg:py-16 overflow-hidden bg-gray-50">
+    <section className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-gray-50">
       {/* Section Header */}
       <div className="text-center mb-8 sm:mb-12">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
@@ -91,11 +91,11 @@ export default function HomeServices() {
             {duplicatedServices.map((service, index) => (
               <div
                 key={index}
-                className="flex-none px-1 sm:px-2 flex justify-center"
+                className="flex-none px-[3px] sm:px-[5px] flex justify-center items-center"
                 style={{ width: `${100 / cardsPerView}%` }}
               >
                 <div
-                  className={`relative group rounded-full p-[2px] bg-gradient-to-br 
+                  className={`relative group aspect-square rounded-full p-[2px] bg-gradient-to-br 
                               from-white/40 via-white/10 to-transparent backdrop-blur-md 
                               shadow-lg border border-white/30 hover:scale-105 
                               transition-all duration-300 ${circleSize}`}

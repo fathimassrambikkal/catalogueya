@@ -1,53 +1,21 @@
-import React, { useMemo, Suspense, memo } from "react";
-import { motion } from "framer-motion";
+import React, { memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FaStar, FaHeart, FaWhatsapp } from "react-icons/fa";
 import { unifiedData } from "../data/unifiedData";
 import { useFavourites } from "../context/FavouriteContext";
-
-// ✅ Lazy load icons (only when needed)
-const FaStar = React.lazy(() =>
-  import("react-icons/fa").then((mod) => ({ default: mod.FaStar }))
-);
-const FaHeart = React.lazy(() =>
-  import("react-icons/fa").then((mod) => ({ default: mod.FaHeart }))
-);
-const FaWhatsapp = React.lazy(() =>
-  import("react-icons/fa").then((mod) => ({ default: mod.FaWhatsapp }))
-);
 
 function NewArrivalsComponent() {
   const navigate = useNavigate();
   const { newArrivalProducts } = unifiedData;
-  const limitedProducts = useMemo(() => newArrivalProducts.slice(0, 4), [newArrivalProducts]);
+  const limitedProducts = newArrivalProducts.slice(0, 4);
   const { favourites, toggleFavourite } = useFavourites();
   const whatsappNumber = "97400000000";
 
-  // ✅ Animation variants memoized for better performance
-  const container = useMemo(
-    () => ({
-      hidden: {},
-      visible: { transition: { staggerChildren: 0.15 } },
-    }),
-    []
-  );
-
-  const cardVariant = useMemo(
-    () => ({
-      hidden: { opacity: 0, y: 40 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: { duration: 0.6, ease: "easeOut" },
-      },
-    }),
-    []
-  );
-
   return (
-    <section className="py-6 sm:py-10 bg-gray-50 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
+    <section className="py-6 sm:py-10 bg-[#f9f5ec] px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start justify-between mb-8 sm:mb-12 gap-6">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal  md:font-light tracking-tighter text-gray-900">
           New Arrivals
         </h1>
 
@@ -76,20 +44,13 @@ function NewArrivalsComponent() {
       </div>
 
       {/* Product Grid */}
-      <motion.div
-        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-7 place-items-center"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={container}
-      >
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-7 place-items-center">
         {limitedProducts.map((product) => {
           const isFav = favourites.some((item) => item.id === product.id);
 
           return (
-            <motion.div
+            <div
               key={product.id}
-              variants={cardVariant}
               className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
                          bg-white/10 border border-white/30 backdrop-blur-2xl 
                          shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
@@ -98,12 +59,11 @@ function NewArrivalsComponent() {
               onClick={() => navigate(`/newarrivalprofile/${product.id}`)}
             >
               {/* Favourite Button */}
-              <motion.button
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFavourite(product);
                 }}
-                whileTap={{ scale: 0.9 }}
                 className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-20 p-1.5 sm:p-2 rounded-full shadow-md transition backdrop-blur-md border 
                   ${
                     isFav
@@ -111,14 +71,12 @@ function NewArrivalsComponent() {
                       : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"
                   }`}
               >
-                <Suspense fallback={<span className="w-3 h-3 bg-gray-200 rounded-full" />}>
-                  <FaHeart
-                    className={`text-xs sm:text-sm md:text-base ${
-                      isFav ? "text-red-500" : "hover:text-red-400"
-                    }`}
-                  />
-                </Suspense>
-              </motion.button>
+                <FaHeart
+                  className={`text-xs sm:text-sm md:text-base ${
+                    isFav ? "text-red-500" : "hover:text-red-400"
+                  }`}
+                />
+              </button>
 
               {/* Product Image */}
               <div className="relative w-full h-[180px] xs:h-[200px] sm:h-[220px] md:h-[240px] overflow-hidden rounded-t-3xl">
@@ -126,30 +84,28 @@ function NewArrivalsComponent() {
                   src={product.img}
                   alt={product.name}
                   loading="lazy"
-                  className="w-full h-full object-cover object-top rounded-t-3xl transition-transform duration-500 group-hover:scale-105 border-b border-white/20"
+                  className="w-full h-full object-cover object-top rounded-t-3xl transition-transform duration-500 border-b border-white/20"
                 />
 
-                {/* Bottom-left rating */}
+                {/* Rating */}
                 <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
-                  <Suspense fallback={<span className="text-xs text-white/70">★</span>}>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <FaStar
-                        key={i}
-                        className={`w-3 h-3 ${
-                          i < Math.floor(product.rating)
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      />
-                    ))}
-                  </Suspense>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <FaStar
+                      key={i}
+                      className={`w-3 h-3 ${
+                        i < Math.floor(product.rating)
+                          ? "text-yellow-400"
+                          : "text-gray-400"
+                      }`}
+                    />
+                  ))}
                   <span className="text-[10px] text-white/90 ml-1">
                     ({product.rating.toFixed(1)})
                   </span>
                 </div>
               </div>
 
-              {/* Info Section (Glassmorphic) */}
+              {/* Info Section */}
               <div
                 className="relative w-full rounded-b-3xl p-3 sm:p-4 border-t border-white/20 
                            bg-white/10 backdrop-blur-xl 
@@ -174,29 +130,26 @@ function NewArrivalsComponent() {
                 </div>
 
                 {/* WhatsApp Icon */}
-                <Suspense fallback={<span className="w-4 h-4 bg-green-200 rounded-full" />}>
-                  <a
-                    href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(
-                      product.name
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="p-2 bg-green-500/80 rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10"
-                    title="Chat on WhatsApp"
-                  >
-                    <FaWhatsapp className="text-sm sm:text-base md:text-lg" />
-                  </a>
-                </Suspense>
+                <a
+                  href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(
+                    product.name
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-2 bg-green-500/80 rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10"
+                  title="Chat on WhatsApp"
+                >
+                  <FaWhatsapp className="text-sm sm:text-base md:text-lg" />
+                </a>
               </div>
-            </motion.div>
+            </div>
           );
         })}
-      </motion.div>
+      </div>
     </section>
   );
 }
 
-// ✅ Wrap with React.memo for render optimization
 export const NewArrivals = memo(NewArrivalsComponent);
 export default NewArrivals;

@@ -2,37 +2,43 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import { HiArrowUpRight } from "react-icons/hi2";
-import Iridescence from "../ui/Iridescence";
-
+// import Iridescence from "../ui/Iridescence"; // 📴 Temporarily disabled
 
 import ios from "../assets/ios.png";
 import android from "../assets/android.png";
 
 export default function Footer() {
   return (
-    <footer className="w-full flex justify-center font-inter relative overflow-hidden">
-      {/* Iridescent Animated Background */}
+    <footer className="w-full flex justify-center font-inter relative overflow-hidden ">
+      {/* 🌈 Gradient Background (Static) */}
       <div className="absolute inset-0 z-0">
-        <Iridescence
-          color={[0.529, 0.808, 0.922]}
-          amplitude={0.1}
-          speed={0.3}
-          mouseReact={false}
-        />
+        {/* Base Gradient Layer */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#2F6CFF] to-[#82B2FF]" />
+        
+        {/* Iridescence Animation (Commented Out)
+        <div className="absolute inset-0 opacity-40">
+          <Iridescence
+            color={[0.529, 0.808, 0.922]}
+            amplitude={0.1}
+            speed={0.3}
+            mouseReact={false}
+          />
+        </div>
+        */}
       </div>
 
-      {/* Main Footer Content */}
-      <div className="relative z-20 w-[90%] max-w-7xl flex flex-col md:flex-row justify-between items-start py-40 text-gray-200">
+      {/* 🌟 Main Footer Content */}
+      <div className="relative z-20 w-[90%] max-w-7xl flex flex-col md:flex-row justify-between items-start py-40 text-white">
         {/* Left Section - Contact */}
         <div className="flex flex-col gap-3 text-left">
-          <p className="text-2xl md:text-3xl font-medium text-gray-400">
+          <p className="text-2xl md:text-3xl font-medium text-blue-100">
             Let's Talk
           </p>
-          <h2 className="text-2xl md:text-3xl  lg:text-5xl font-semibold text-gray-500 tracking-wide break-all">
+          <h2 className="text-2xl md:text-3xl lg:text-5xl font-semibold text-white tracking-wide break-all">
             ux@catalogueya.com
           </h2>
 
-          <p className="mt-6 text-gray-500 text-sm md:text-base leading-relaxed max-w-md">
+          <p className="mt-6 text-blue-100 text-sm md:text-base leading-relaxed max-w-md">
             We’re here to help you grow your brand. Get in touch for partnerships,
             collaborations, or support.
           </p>
@@ -42,10 +48,10 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row gap-16 mt-16 md:mt-0">
           {/* Navigation */}
           <div>
-            <h3 className="text-lg text-gray-600 mb-4 uppercase tracking-wider">
+            <h3 className="text-lg text-blue-100 mb-4 uppercase tracking-wider">
               Navigation
             </h3>
-            <ul className="space-y-3 text-base text-gray-500">
+            <ul className="space-y-3 text-base text-blue-100">
               {[
                 { name: "Home", path: "/" },
                 { name: "About", path: "/about" },
@@ -66,10 +72,10 @@ export default function Footer() {
 
           {/* Social Media */}
           <div>
-            <h3 className="text-lg text-gray-600 mb-4 uppercase tracking-wider">
+            <h3 className="text-lg text-blue-100 mb-4 uppercase tracking-wider">
               Social Media
             </h3>
-            <ul className="space-y-3 text-base text-gray-500">
+            <ul className="space-y-3 text-base text-blue-100">
               {[
                 {
                   name: "Twitter",
@@ -118,10 +124,10 @@ export default function Footer() {
       </div>
 
       {/* Footer Bottom Line */}
-      <div className="absolute bottom-6 w-full text-center text-sm text-gray-400 z-20">
+      <div className="absolute bottom-6 w-full text-center text-sm text-blue-100 z-20">
         <p>
           PRIVACY POLICY ・ TERMS OF SERVICE ・ CREATED BY{" "}
-          <span className="text-gray-700 font-semibold">CATALOGUEYA</span>
+          <span className="text-white font-semibold">CATALOGUEYA</span>
         </p>
       </div>
     </footer>

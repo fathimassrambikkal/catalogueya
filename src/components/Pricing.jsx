@@ -74,7 +74,7 @@ function Pricing() {
       <div className="text-center mb-14 max-w-3xl">
      
 
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 leading-tighter">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 tracking-tighter">
           Simple pricing
         </h1>
       </div>
