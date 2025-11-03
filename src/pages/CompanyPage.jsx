@@ -84,7 +84,7 @@ export default function CompanyPage() {
           <img
             src={company.logo || category.image}
             alt={company.name}
-            className="w-20 h-20 sm:w-32 sm:h-32 object-contain rounded-full border-2 border-white shadow-lg"
+            className="w-16 h-16 sm:w-32 sm:h-32 object-contain rounded-full border-2 border-white shadow-lg"
           />
 
           {/* Info */}
