@@ -8,7 +8,7 @@ import {
   FaHeart,
   FaShareAlt,
 } from "react-icons/fa";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { categories } from "../data/categoriesData";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
@@ -39,6 +39,9 @@ export default function ProductProfile() {
 
   const [selectedImage, setSelectedImage] = useState(product?.image);
   const [showModal, setShowModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
 
   useEffect(() => {
     if (product) {
@@ -102,11 +105,12 @@ export default function ProductProfile() {
         transition={{ duration: 0.6 }}
         className="relative max-w-7xl mx-auto px-6 py-12 mt-20 md:mt-28 grid grid-cols-1 md:grid-cols-2 gap-10 bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-hidden rounded-3xl shadow-sm"
       >
+        {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="absolute -top-4 left-6 z-30 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition"
+          className="absolute -top-1 left-6 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition"
         >
-          <FaArrowLeft className="text-gray-700 text-lg" />
+          <FaArrowLeft className="text-gray-700 text-md" />
         </button>
 
         {/* Left Section */}
@@ -180,15 +184,19 @@ export default function ProductProfile() {
             </div>
           </div>
         </div>
-
-        {/* Right Section */}
+        {/* ===== Right Section (Updated) ===== */}
         <div className="flex flex-col justify-start space-y-6">
           <p className="text-gray-500 uppercase text-sm tracking-wide">
             {product.categoryName || "PRODUCT"}
           </p>
-          <h1 className="text-4xl font-semibold text-gray-900 tracking-tighter">
-            {product.name}
-          </h1>
+
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-semibold text-gray-900 tracking-tighter">
+              {product.name}
+            </h1>
+        
+          </div>
+
           {product.companyName && (
             <button
               onClick={() =>
@@ -202,6 +210,7 @@ export default function ProductProfile() {
               <span className="font-semibold">{product.companyName}</span>
             </button>
           )}
+
           <div className="flex items-baseline gap-3 mt-2">
             {product.oldPrice && (
               <span className="text-gray-400 line-through text-lg">
@@ -212,29 +221,112 @@ export default function ProductProfile() {
               QAR {product.price}
             </span>
           </div>
+          <h3 className="text-xl text-gray-800">product details</h3>
           <p className="text-gray-600 leading-relaxed text-base">
             {product.description ||
               `Introducing our ${product.name} – designed for superior quality and style.`}
           </p>
-          <div className="flex items-center gap-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <FaStar
-                key={i}
-                className={`w-5 h-5 ${
-                  i < Math.floor(product.rating ?? 0)
-                    ? "text-yellow-400"
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
-            <span className="text-gray-600">
-              ({(product.rating ?? 0).toFixed(1)})
-            </span>
+
+          {/* Rating + Review Button */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <FaStar
+                  key={i}
+                  className={`w-5 h-5 ${
+                    i < Math.floor(product.rating ?? 0)
+                      ? "text-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
+              <span className="text-gray-600">
+                ({(product.rating ?? 0).toFixed(1)})
+              </span>
+            </div>
+
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="ml-2 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-all duration-300"
+            >
+              Write a Review
+            </button>
           </div>
         </div>
       </motion.section>
 
-      {/* ===== Similar Products (Updated to Match New Arrivals) ===== */}
+      {/* ===== Review Modal ===== */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative"
+            >
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                Write a Review
+              </h3>
+
+              {/* Rating Input */}
+              <div className="flex justify-center mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <FaStar
+                    key={i}
+                    onClick={() => setReviewRating(i + 1)}
+                    className={`w-7 h-7 cursor-pointer transition ${
+                      i < reviewRating ? "text-yellow-400" : "text-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Review Textarea */}
+              <textarea
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Share your thoughts about this product..."
+                className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                rows="4"
+              ></textarea>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  className="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    alert(`⭐ ${reviewRating} Star Review Submitted!`);
+                    setShowReviewModal(false);
+                    setReviewText("");
+                    setReviewRating(0);
+                  }}
+                  disabled={!reviewText}
+                  className={`px-4 py-2 text-sm rounded-lg text-white ${
+                    reviewText
+                      ? "bg-gray-900 hover:bg-gray-800"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Submit
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ===== Similar Products Section ===== */}
       {similarProducts.length > 0 && (
         <section className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-semibold tracking-tighter text-gray-900 mb-10 text-center">
@@ -253,11 +345,7 @@ export default function ProductProfile() {
                 <motion.div
                   key={sp.id}
                   whileHover={{ scale: 1.03 }}
-                  className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
-                             bg-white/10 border border-white/30 backdrop-blur-2xl 
-                             shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-                             hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
-                             transition-all duration-700"
+                  className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer bg-white/10 border border-white/30 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-700"
                   onClick={() =>
                     navigate(
                       `/category/${sp.categoryId}/company/${sp.companyId}/product/${sp.id}`
@@ -270,8 +358,7 @@ export default function ProductProfile() {
                       e.stopPropagation();
                       toggleFavourite(sp);
                     }}
-                    className={`absolute top-2 right-2 z-20 p-2 rounded-full border backdrop-blur-md shadow-md transition 
-                    ${
+                    className={`absolute top-2 right-2 z-20 p-2 rounded-full border backdrop-blur-md shadow-md transition ${
                       isFav
                         ? "bg-red-100 text-red-600 border-red-200"
                         : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"
