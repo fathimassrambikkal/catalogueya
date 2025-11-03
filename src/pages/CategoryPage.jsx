@@ -98,7 +98,7 @@ export default function CategoryPage() {
     >
       <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-20">
         {/* ===== Header with Back Arrow + Logo ===== */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-8 mr-20">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}

@@ -1,297 +1,183 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { categories } from "../data/categoriesData";
-import { FaUserCircle, FaChevronDown, FaWhatsapp, FaStar } from "react-icons/fa";
-import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
-import { motion } from "framer-motion";
 import { useFavourites } from "../context/FavouriteContext";
-import CallToAction from "../components/CallToAction";
+import { MdIosShare } from "react-icons/md";
+
+// Lazy load icons
+const FaStar = React.lazy(() =>
+  import("react-icons/fa").then((mod) => ({ default: mod.FaStar }))
+);
+const FaWhatsapp = React.lazy(() =>
+  import("react-icons/fa").then((mod) => ({ default: mod.FaWhatsapp }))
+);
+const FaHeart = React.lazy(() =>
+  import("react-icons/fa").then((mod) => ({ default: mod.FaHeart }))
+);
+const FaArrowLeft = React.lazy(() =>
+  import("react-icons/fa").then((mod) => ({ default: mod.FaArrowLeft }))
+);
 
 export default function CompanyPage() {
   const { categoryId, companyId } = useParams();
   const navigate = useNavigate();
-  const [showProfile, setShowProfile] = useState(false);
-  const dropdownRef = useRef(null);
   const { favourites, toggleFavourite } = useFavourites();
 
   const category = categories.find((cat) => cat.id === categoryId);
-  const company = category?.companies?.find((comp) => comp.id === companyId);
+  const company = category?.companies.find((c) => c.id === companyId);
 
-  if (!company)
-    return <div className="text-center py-20 text-gray-500">Company not found.</div>;
+  if (!category || !company) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-500 text-lg">
+        Company not found.
+      </div>
+    );
+  }
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowProfile(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const container = useMemo(
-    () => ({
-      hidden: {},
-      visible: { transition: { staggerChildren: 0.15 } },
-    }),
-    []
-  );
-
-  const cardVariant = useMemo(
-    () => ({
-      hidden: { opacity: 0, y: 40 },
-      visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-    }),
-    []
-  );
+  const isFavourite = (id) => favourites.some((fav) => fav.id === id);
 
   return (
-    <>
-      {/* ===== Background ===== */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-white">
+      {/* ===== Banner Section ===== */}
       <div
-        className="relative w-full py-20 overflow-hidden"
+        className="relative w-full h-[320px] sm:h-[380px] flex items-center justify-center overflow-hidden"
         style={{
-          backgroundColor: "#ffffff",
-          backgroundImage: "radial-gradient(rgba(59,130,246,0.25) 1.5px, transparent 0)",
-          backgroundSize: "20px 20px",
-          backgroundPosition: "-5px -5px",
+          background: `linear-gradient(135deg, rgba(15,15,15,0.55), rgba(15,15,15,0.6)), url(${
+            company.banner || company.logo || category.image
+          })`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       >
-        {/* ===== Company Header ===== */}
-        <div className="relative w-full max-w-7xl mx-auto py-24 md:py-28 px-6 md:px-12 z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 w-full">
-            {/* === Logo + Name === */}
-            <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left w-full md:w-auto">
-              {company.logo ? (
-                <div className="flex-shrink-0">
-                  <img
-                    src={company.logo}
-                    alt={company.name}
-                    className="w-24 h-24 md:w-28 md:h-28 object-contain rounded-xl border border-gray-200 shadow-md bg-white p-2"
-                  />
-                </div>
-              ) : (
-                <div className="w-24 h-24 flex items-center justify-center bg-gray-100 text-gray-400 rounded-xl border">
-                  No Logo
-                </div>
-              )}
+        {/* 🔙 Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-24 md:top-24 left-2 md:left-4 z-30 p-1 md:p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition"
+        >
+          <Suspense fallback={<div>←</div>}>
+            <FaArrowLeft className="text-gray-700 text-sm md:text-md" />
+          </Suspense>
+        </button>
 
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold text-gray-900">{company.name}</h1>
-                <p className="text-gray-600 text-lg mt-2 max-w-xl mx-auto md:mx-0">
-                  Redefining green spaces with elegance and care — where nature meets modern design.
-                </p>
+        {/* ✅ Share Button */}
+        <button
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: company.name,
+                text: `Check out ${company.name} on our platform!`,
+                url: window.location.href,
+              });
+            } else {
+              navigator.clipboard.writeText(window.location.href);
+              alert("Link copied to clipboard!");
+            }
+          }}
+          className="absolute top-24 md:top-24 right-3 md:right-5 z-30 flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 shadow-lg transition"
+        >
+          <MdIosShare className="text-white text-2xl" />
+        </button>
+
+        {/* ===== Company Info Row ===== */}
+        <div className="flex flex-row items-center justify-between w-full px-6 sm:px-16 gap-6">
+          {/* Logo */}
+          <img
+            src={company.logo || category.image}
+            alt={company.name}
+            className="w-24 h-24 sm:w-32 sm:h-32 object-contain rounded-full border-2 border-white shadow-lg"
+          />
+
+          {/* Info */}
+          <div className="flex flex-col justify-center text-white flex-1 min-w-0">
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight drop-shadow-lg">
+              {company.name}
+            </h1>
+            <p className="text-xs sm:text-sm opacity-90">{company.title}</p>
+
+            {/* ✅ Rating + WhatsApp Together */}
+            <div className="flex items-center gap-4 mt-2 text-sm sm:text-base">
+              <div className="flex items-center gap-1">
+                <Suspense fallback={<span>⭐</span>}>
+                  <FaStar className="text-yellow-400 text-lg sm:text-xl" />
+                </Suspense>
+                <span className="font-semibold">{company.rating}</span>
               </div>
-            </div>
 
-            {/* === WhatsApp + Info === */}
-            <div className="flex flex-col sm:flex-row justify-center md:justify-end items-center gap-3 w-full md:w-auto">
-              
-              {/* WhatsApp Button */}
+              {/* WhatsApp Next to Rating */}
               <a
-                href={`https://wa.me/${company.phone?.replace(/\D/g, "") || ""}?text=Hi%20${company.name},%20I'm%20interested%20in%20your%20products%20on%20Catalogueya!`}
+                href={`https://wa.me/${company.phone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center 
-                            px-4 py-3 rounded-full 
-                            bg-green-500 hover:bg-green-600 
-                            text-white shadow-md 
-                            transition-all text-sm sm:text-base
-                            w-auto min-w-[50px]"
+                className="inline-flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-green-500 hover:bg-green-600 shadow-md transition"
               >
-                <FaWhatsapp className="text-xl sm:text-lg" />
+                <Suspense fallback={<span>💬</span>}>
+                  <FaWhatsapp className="text-white text-lg sm:text-2xl" />
+                </Suspense>
               </a>
+            </div>
 
-              {/* Simple Dropdown */}
-              <div ref={dropdownRef} className="relative w-full sm:w-auto">
-                <button
-                  onClick={() => setShowProfile((prev) => !prev)}
-                  className="flex items-center justify-center gap-2 
-                             px-5 py-3 rounded-full 
-                             bg-white/80 backdrop-blur-md 
-                             border border-gray-200 text-gray-800 
-                             hover:bg-white transition-all shadow-sm 
-                             text-base w-full sm:w-auto sm:min-w-[180px]"
-                >
-                  <FaUserCircle className="text-xl" />
-                  <span>Company Info</span>
-                  <FaChevronDown
-                    className={`transition-transform duration-300 ${showProfile ? "rotate-180" : ""}`}
-                  />
-                </button>
-
-                {showProfile && (
-                  <div
-                    className="absolute right-0 mt-3 w-full sm:w-72 bg-white/95 backdrop-blur-md 
-                               border border-gray-200 rounded-2xl p-5 
-                               shadow-xl text-gray-900 z-20 
-                               max-h-[70vh] overflow-y-auto"
-                  >
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900 text-center sm:text-left">
-                      Company Profile
-                    </h3>
-                    <div className="space-y-2 text-gray-800 text-sm break-words">
-                      <p>
-                        <strong>Working Hours:</strong>{" "}
-                        {company.workingHours || "Not specified"}
-                      </p>
-                      <p>
-                        <strong>Location:</strong>{" "}
-                        {company.location || "Not specified"}
-                      </p>
-                      <p>
-                        <strong>Phone:</strong>{" "}
-                        {company.phone || "Not available"}
-                      </p>
-                      <p>
-                        <strong>Social Media:</strong>{" "}
-                        {company.social ? (
-                          <a
-                            href={company.social}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline break-all"
-                          >
-                            Visit
-                          </a>
-                        ) : (
-                          "Not available"
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* ✅ Location Below */}
+            <div className="flex items-center gap-1 mt-2 text-xs sm:text-sm opacity-85">
+              <span role="img" aria-label="location">
+                📍
+              </span>
+              <p>{company.location}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ===== Products Section ===== */}
-      <section className="py-10 sm:py-14 bg-gray-50 px-4 sm:px-8 md:px-12 lg:px-20">
-        <div className="flex flex-col md:flex-row items-start justify-between mb-10 gap-6">
-          <h2 className="text-3xl sm:text-4xl font-light tracking-tighter text-gray-900">
-            Our Products
-          </h2>
-          <p className="text-gray-600 text-sm sm:text-base">
-            {company.products.length} products available
-          </p>
-        </div>
+      {/* ===== Products Section (3-column grid) ===== */}
+      <div className="px-6 sm:px-12 py-12">
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 tracking-tight">
+          Our Products
+        </h2>
 
-        <motion.div
-          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-7 place-items-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={container}
-        >
-          {company.products.map((product) => {
-            const isFav = favourites.some((fav) => fav.id === product.id);
-
-            return (
-              <motion.div
+        {company.products && company.products.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
+            {company.products.map((product) => (
+              <div
                 key={product.id}
-                variants={cardVariant}
+                className="relative overflow-hidden rounded-xl group cursor-pointer aspect-square"
                 onClick={() =>
                   navigate(
-                    `/category/${category.id}/company/${company.id}/product/${product.id}`
+                    `/category/${categoryId}/company/${companyId}/product/${product.id}`
                   )
                 }
-                className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
-                           bg-white/10 border border-white/30 backdrop-blur-2xl 
-                           shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-                           hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
-                           transition-all duration-700"
               >
-                {/* === Product Image === */}
-                <div className="relative w-full h-[180px] xs:h-[200px] sm:h-[220px] md:h-[240px] overflow-hidden rounded-t-3xl">
-                  <img
-                    src={product.img || product.image}
-                    alt={product.name}
-                    loading="lazy"
-                    className="w-full h-full object-cover object-top rounded-t-3xl transition-transform duration-500 group-hover:scale-105 border-b border-white/20"
-                  />
+                <img
+                  src={product.img}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
 
-                  {/* === Favourite Button === */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavourite(product);
-                    }}
-                    className="absolute top-3 right-3 bg-white/70 backdrop-blur-md rounded-full p-2 shadow-sm hover:scale-110 transition-all"
-                  >
-                    {isFav ? (
-                      <AiFillHeart className="text-red-500 text-lg" />
-                    ) : (
-                      <AiOutlineHeart className="text-gray-600 text-lg" />
-                    )}
-                  </button>
-
-                  {/* === Rating Badge === */}
-                  <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <FaStar
-                        key={i}
-                        className={`w-3 h-3 ${
-                          i < Math.floor(product.rating || 4)
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      />
-                    ))}
-                    <span className="text-[10px] text-white/90 ml-1">
-                      ({(product.rating || 4.0).toFixed(1)})
-                    </span>
-                  </div>
-                </div>
-
-                {/* === Product Info (Glassmorphic Bottom) === */}
-                <div
-                  className="relative w-full rounded-b-3xl p-3 sm:p-4 border-t border-white/20 
-                             bg-white/10 backdrop-blur-xl 
-                             before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/30 before:to-white/10 before:rounded-b-3xl before:pointer-events-none 
-                             shadow-[0_4px_20px_rgba(255,255,255,0.15)] 
-                             flex items-center justify-between overflow-hidden"
+                {/* Favourite Icon */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavourite(product);
+                  }}
+                  className="absolute top-3 right-3 text-white"
                 >
-                  <div className="flex flex-col w-[80%] z-10">
-                    <h3 className="font-semibold text-[11px] xs:text-xs sm:text-sm truncate text-gray-900 mb-1">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[11px] xs:text-[12px] sm:text-sm font-bold text-gray-900">
-                        QAR {product.price}
-                      </span>
-                      {product.oldPrice && (
-                        <span className="text-[9px] xs:text-[10px] sm:text-xs line-through text-gray-500">
-                          QAR {product.oldPrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* === WhatsApp Button === */}
-                  <a
-                    href={`https://wa.me/${company.phone?.replace(/\D/g, "") || ""}?text=Hi%20${company.name},%20I'm%20interested%20in%20${encodeURIComponent(
-                      product.name
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="p-2 bg-green-500/80 rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10"
-                    title="Chat on WhatsApp"
-                  >
-                    <FaWhatsapp className="text-sm sm:text-base md:text-lg" />
-                  </a>
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      </section>
-
-      <CallToAction />
-    </>
+                  <Suspense fallback={<span>♡</span>}>
+                    <FaHeart
+                      className={`${
+                        isFavourite(product.id)
+                          ? "text-red-500"
+                          : "text-white/90 hover:text-red-400"
+                      } drop-shadow-lg`}
+                    />
+                  </Suspense>
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-10 text-lg">
+            No products available for this company.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

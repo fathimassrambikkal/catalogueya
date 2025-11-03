@@ -16,6 +16,17 @@ import alrayhanLogo from "../assets/alrayhan.png";
 import mashatilDiscoveryLogo from "../assets/logo1.png";
 
 // =============================
+// Banners (NEW)
+// =============================
+import paintBanner from "../assets/bannerc.avif";
+import carpenterBanner from "../assets/bannerc.avif";
+import lightingBanner from "../assets/bannerc.avif";
+import curtainsBanner from "../assets/bannerc.avif";
+import wallpaperBanner from "../assets/bannerc.avif";
+import gardeningBanner from "../assets/bannerc.avif";
+import securityBanner from "../assets/bannerc.avif";
+
+// =============================
 // Gardening Product Images
 // =============================
 import g1 from "../assets/g1.jpg";
@@ -38,6 +49,7 @@ export const categories = [
         id: "paintco1",
         name: "ColorMax Paints",
         rating: 4.5,
+        banner: paintBanner,
         products: [
           {
             id: "paint1",
@@ -53,6 +65,7 @@ export const categories = [
         id: "paintco2",
         name: "Rainbow Coats",
         rating: 4.2,
+        banner: paintBanner,
         products: [
           {
             id: "paint2",
@@ -74,6 +87,7 @@ export const categories = [
         id: "woodworks",
         name: "WoodWorks Co.",
         rating: 4.6,
+        banner: carpenterBanner,
         products: [
           {
             id: "wood1",
@@ -89,6 +103,7 @@ export const categories = [
         id: "furniPro",
         name: "FurniPro",
         rating: 4.4,
+        banner: carpenterBanner,
         products: [
           {
             id: "wood2",
@@ -110,6 +125,7 @@ export const categories = [
         id: "lightco1",
         name: "BrightHome",
         rating: 4.7,
+        banner: lightingBanner,
         products: [
           {
             id: "lamp1",
@@ -125,6 +141,7 @@ export const categories = [
         id: "lightco2",
         name: "Luma Lights",
         rating: 4.3,
+        banner: lightingBanner,
         products: [
           {
             id: "lamp2",
@@ -146,6 +163,7 @@ export const categories = [
         id: "curtainsCo1",
         name: "Elegant Drapes",
         rating: 4.5,
+        banner: curtainsBanner,
         products: [
           {
             id: "curtain1",
@@ -160,6 +178,7 @@ export const categories = [
         id: "curtainsCo2",
         name: "HomeShades",
         rating: 4.2,
+        banner: curtainsBanner,
         products: [
           {
             id: "curtain2",
@@ -181,6 +200,7 @@ export const categories = [
         id: "wallco1",
         name: "WallArt",
         rating: 4.6,
+        banner: wallpaperBanner,
         products: [
           {
             id: "wp1",
@@ -195,6 +215,7 @@ export const categories = [
         id: "wallco2",
         name: "DecorWalls",
         rating: 4.3,
+        banner: wallpaperBanner,
         products: [
           {
             id: "wp2",
@@ -216,6 +237,7 @@ export const categories = [
         id: "gardenCo1",
         name: "ALRAYHAN",
         logo: alrayhanLogo,
+        banner: gardeningBanner,
         rating: 4.7,
         title: "ALRAYHAN CARE AND MAINTENANCE GARDENES",
         about:
@@ -242,6 +264,7 @@ export const categories = [
         id: "gardenCo2",
         name: "Mashatil Discovery",
         logo: mashatilDiscoveryLogo,
+        banner: gardeningBanner,
         rating: 4.5,
         title: "Gardening Experts",
         businessNumber: "25751",
@@ -265,6 +288,7 @@ export const categories = [
         id: "secureCo1",
         name: "SafeHome",
         rating: 4.8,
+        banner: securityBanner,
         products: [
           {
             id: "cam1",

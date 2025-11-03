@@ -13,6 +13,7 @@ import { categories } from "../data/categoriesData";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { useFavourites } from "../context/FavouriteContext";
+import { Lens } from "../components/Lens";
 
 export default function ProductProfile() {
   const params = useParams();
@@ -113,8 +114,9 @@ export default function ProductProfile() {
           <FaArrowLeft className="text-gray-700 text-md" />
         </button>
 
-        {/* Left Section */}
+        {/* Left Section with Lens */}
         <div className="flex flex-col md:flex-row gap-6">
+          {/* Small preview images */}
           <div className="flex md:flex-col gap-3 order-2 md:order-1">
             {[product.image, product.image2, product.image3, product.image4]
               .filter(Boolean)
@@ -133,12 +135,17 @@ export default function ProductProfile() {
               ))}
           </div>
 
+          {/* Main product image inside Lens */}
           <div className="relative flex-1 order-1 md:order-2 overflow-hidden rounded-xl shadow-2xl group">
-            <img
-              src={selectedImage}
-              alt={product.name}
-              className="w-full h-[500px] object-cover rounded-xl transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-            />
+            <Lens zoomFactor={1.8} lensSize={160}>
+              <img
+                src={selectedImage}
+                alt={product.name}
+                className="w-full h-[500px] object-cover rounded-xl transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+              />
+            </Lens>
+
+            {/* Zoom overlay icon */}
             <button
               onClick={() => setShowModal(true)}
               className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-300"
@@ -146,6 +153,7 @@ export default function ProductProfile() {
               <FaSearchPlus className="text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity duration-300" />
             </button>
 
+            {/* Favourite, Share, WhatsApp */}
             <div className="absolute top-5 right-5 flex flex-col gap-3 z-30">
               <button
                 onClick={(e) => {
@@ -184,17 +192,16 @@ export default function ProductProfile() {
             </div>
           </div>
         </div>
-        {/* ===== Right Section (Updated) ===== */}
+
+        {/* ===== Right Section ===== */}
         <div className="flex flex-col justify-start space-y-6">
           <p className="text-gray-500 uppercase text-sm tracking-wide">
             {product.categoryName || "PRODUCT"}
           </p>
-
           <div className="flex items-center gap-3">
             <h1 className="text-4xl font-semibold text-gray-900 tracking-tighter">
               {product.name}
             </h1>
-        
           </div>
 
           {product.companyName && (
@@ -221,7 +228,8 @@ export default function ProductProfile() {
               QAR {product.price}
             </span>
           </div>
-          <h3 className="text-xl text-gray-800">product details</h3>
+
+          <h3 className="text-xl text-gray-800">Product Details</h3>
           <p className="text-gray-600 leading-relaxed text-base">
             {product.description ||
               `Introducing our ${product.name} – designed for superior quality and style.`}
@@ -332,7 +340,6 @@ export default function ProductProfile() {
           <h2 className="text-3xl font-semibold tracking-tighter text-gray-900 mb-10 text-center">
             Similar Products
           </h2>
-
           <motion.div
             className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 place-items-center"
             initial="hidden"
@@ -411,7 +418,6 @@ export default function ProductProfile() {
                         )}
                       </div>
                     </div>
-
                     <a
                       href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(
                         sp.name
