@@ -4,7 +4,6 @@ import {
   FaStar,
   FaWhatsapp,
   FaArrowLeft,
-  FaSearchPlus,
   FaHeart,
   FaShareAlt,
 } from "react-icons/fa";
@@ -39,7 +38,6 @@ export default function ProductProfile() {
     .find((p) => String(p.id) === String(productId));
 
   const [selectedImage, setSelectedImage] = useState(product?.image);
-  const [showModal, setShowModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -47,7 +45,6 @@ export default function ProductProfile() {
   useEffect(() => {
     if (product) {
       setSelectedImage(product.image);
-      setShowModal(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [productId]);
@@ -135,23 +132,15 @@ export default function ProductProfile() {
               ))}
           </div>
 
-          {/* Main product image inside Lens */}
+          {/* Main product image (no search icon now) */}
           <div className="relative flex-1 order-1 md:order-2 overflow-hidden rounded-xl shadow-2xl group">
-            <Lens zoomFactor={1.8} lensSize={160}>
+            <Lens zoomFactor={1.8} lensSize={160} disableOnMobile={true}>
               <img
                 src={selectedImage}
                 alt={product.name}
                 className="w-full h-[500px] object-cover rounded-xl transition-transform duration-500 ease-out group-hover:scale-[1.02]"
               />
             </Lens>
-
-            {/* Zoom overlay icon */}
-            <button
-              onClick={() => setShowModal(true)}
-              className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-300"
-            >
-              <FaSearchPlus className="text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity duration-300" />
-            </button>
 
             {/* Favourite, Share, WhatsApp */}
             <div className="absolute top-5 right-5 flex flex-col gap-3 z-30">

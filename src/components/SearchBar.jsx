@@ -45,6 +45,7 @@ export default function SearchBar() {
       {/* Search Input */}
       <div className="flex items-center px-4 py-3 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl">
         <AiOutlineSearch className="text-white text-xl mr-2" />
+
         <input
           type="text"
           placeholder="I'm looking for..."
@@ -52,15 +53,23 @@ export default function SearchBar() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1 outline-none bg-transparent text-white placeholder-gray-300"
         />
+
         {searchTerm && (
           <AiOutlineClose
             onClick={() => setSearchTerm("")}
             className="text-gray-300 hover:text-white text-lg cursor-pointer ml-2"
           />
         )}
+
+        {/* 🇶🇦 Qatar Flag */}
+        <img
+          src="https://flagcdn.com/w40/qa.png"
+          alt="Qatar Flag"
+          className="w-8 h-6 ml-3 rounded-sm shadow-md"
+        />
       </div>
 
-      {/* Show Dropdown only when typing */}
+      {/* Dropdown */}
       <AnimatePresence>
         {searchTerm && (
           <motion.div
