@@ -1,5 +1,4 @@
-import React, { useState, useMemo, Suspense, memo } from "react";
-import { motion } from "framer-motion";
+import React, { useState, Suspense, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFavourites } from "../context/FavouriteContext";
 import { salesProducts } from "../data/salesData";
@@ -38,27 +37,6 @@ function SalesProductPageComponent() {
         return 0;
     }
   });
-
-  // ✅ Motion Variants
-  const container = useMemo(
-    () => ({
-      hidden: {},
-      visible: { transition: { staggerChildren: 0.15 } },
-    }),
-    []
-  );
-
-  const cardVariant = useMemo(
-    () => ({
-      hidden: { opacity: 0, y: 40 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: { duration: 0.6, ease: "easeOut" },
-      },
-    }),
-    []
-  );
 
   return (
     <>
@@ -101,20 +79,13 @@ function SalesProductPageComponent() {
         </div>
 
         {/* Product Grid */}
-        <motion.div
-          className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={container}
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center">
           {sortedProducts.map((product) => {
             const isFav = favourites.some((item) => item.id === product.id);
 
             return (
-              <motion.div
+              <div
                 key={product.id}
-                variants={cardVariant}
                 className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
                            bg-white/10 border border-white/30 backdrop-blur-2xl 
                            shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
@@ -123,12 +94,11 @@ function SalesProductPageComponent() {
                 onClick={() => navigate(`/salesproduct/${product.id}`)}
               >
                 {/* ❤️ Favourite Button */}
-                <motion.button
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavourite(product);
                   }}
-                  whileTap={{ scale: 0.9 }}
                   className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-20 p-1.5 sm:p-2 rounded-full shadow-md transition backdrop-blur-md border 
                     ${
                       isFav
@@ -143,7 +113,7 @@ function SalesProductPageComponent() {
                       }`}
                     />
                   </Suspense>
-                </motion.button>
+                </button>
 
                 {/* 🖼️ Product Image */}
                 <div className="relative w-full h-[180px] xs:h-[200px] sm:h-[220px] md:h-[240px] overflow-hidden rounded-t-3xl">
@@ -214,10 +184,10 @@ function SalesProductPageComponent() {
                     </a>
                   </Suspense>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
-        </motion.div>
+        </div>
       </section>
 
       <CallToAction />
