@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import "./i18n"; // ✅ Import i18n configuration
+import "./i18n";
 import { useTranslation } from "react-i18next";
 
 // Components
@@ -20,17 +20,17 @@ import CompanyLogin from "./pages/Companylogin";
 import CompanyForgotPassword from "./pages/CompanyForgotPassword";
 import PricingPage from "./pages/PricingPage";
 
-
-// Category + Product + Company Pages
+// Category + Product + Company
 import CategoryPage from "./pages/CategoryPage";
 import CompanyPage from "./pages/CompanyPage";
 import ProductProfile from "./pages/ProductProfile";
+import CompanyReviewsPage from "./pages/CompanyReviewsPage";
 
-// Sales Pages
+// Sales
 import SalesProductPage from "./pages/SalesProductPage";
 import SalesProductProfile from "./pages/SalesProductProfile";
 
-// New Arrival Pages
+// New Arrival
 import NewArrivalProductPage from "./pages/NewArrivalProductPage";
 import NewArrivalProductProfile from "./pages/NewArrivalProductProfile";
 
@@ -38,7 +38,7 @@ function AppContent() {
   const location = useLocation();
   const { i18n } = useTranslation();
 
-  // ✅ Automatically set page direction (RTL/LTR)
+  // Set direction (RTL/LTR)
   useEffect(() => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = i18n.language;
@@ -60,6 +60,7 @@ function AppContent() {
       <Scroll />
       <main className="flex-grow">
         <Routes>
+          {/* Main */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
@@ -68,21 +69,42 @@ function AppContent() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/company-login" element={<CompanyLogin />} />
-          <Route path="/company-forgot-password" element={<CompanyForgotPassword />} />
+          <Route
+            path="/company-forgot-password"
+            element={<CompanyForgotPassword />}
+          />
           <Route path="/pricing" element={<PricingPage />} />
 
           {/* Category + Company + Product */}
           <Route path="/category/:categoryId" element={<CategoryPage />} />
-          <Route path="/category/:categoryId/company/:companyId" element={<CompanyPage />} />
-          <Route path="/category/:categoryId/company/:companyId/product/:id" element={<ProductProfile />} />
+          <Route
+            path="/category/:categoryId/company/:companyId"
+            element={<CompanyPage />}
+          />
+          <Route
+            path="/category/:categoryId/company/:companyId/product/:id"
+            element={<ProductProfile />}
+          />
+
+          {/* Reviews */}
+          <Route
+            path="/category/:categoryId/company/:companyId/reviews"
+            element={<CompanyReviewsPage />}
+          />
 
           {/* Sales */}
           <Route path="/salesproducts" element={<SalesProductPage />} />
           <Route path="/salesproduct/:id" element={<SalesProductProfile />} />
 
           {/* New Arrival */}
-          <Route path="/newarrivalproducts" element={<NewArrivalProductPage />} />
-          <Route path="/newarrivalprofile/:id" element={<NewArrivalProductProfile />} />
+          <Route
+            path="/newarrivalproducts"
+            element={<NewArrivalProductPage />}
+          />
+          <Route
+            path="/newarrivalprofile/:id"
+            element={<NewArrivalProductProfile />}
+          />
         </Routes>
       </main>
       {!hideLayout && <Footer />}

@@ -1,28 +1,59 @@
-import { useState, useEffect } from "react";
-import {
-  getFavourites,
-  toggleFavourite,
-  isFavourite,
-} from "../utils/favouriteUtils";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { categories } from "../data/categoriesData"; // needed to fetch missing info
 
-export default function useFavourites() {
-  const [favourites, setFavourites] = useState(getFavourites());
+const FavouriteContext = createContext();
 
-  const handleToggle = (product) => {
-    const updated = toggleFavourite(product);
-    setFavourites(updated);
+export function FavouriteProvider({ children }) {
+  const [favourites, setFavourites] = useState(
+    JSON.parse(localStorage.getItem("favourites")) || []
+  );
+
+  // Helper: complete product info if missing
+  const getFullProduct = (item) => {
+    if (item.categoryId && item.companyId) return item; // already complete
+
+    // Search in categories data
+    for (const cat of categories) {
+      for (const comp of cat.companies) {
+        const prod = comp.products.find((p) => p.id === item.id);
+        if (prod) {
+          return {
+            ...prod,
+            categoryId: cat.id,
+            companyId: comp.id,
+            categoryName: cat.title,
+            companyName: comp.name,
+            image: prod.image || prod.img,
+          };
+        }
+      }
+    }
+    return item; // fallback
+  };
+
+  const toggleFavourite = (item) => {
+    const fullItem = getFullProduct(item);
+
+    setFavourites((prev) => {
+      const exists = prev.some((fav) => fav.id === fullItem.id);
+      const updated = exists
+        ? prev.filter((fav) => fav.id !== fullItem.id)
+        : [...prev, fullItem];
+
+      localStorage.setItem("favourites", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   useEffect(() => {
-    const handleStorageChange = () => setFavourites(getFavourites());
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+    localStorage.setItem("favourites", JSON.stringify(favourites));
+  }, [favourites]);
 
-  return {
-    favourites,
-    toggleFavourite: handleToggle,
-    isFavourite,
-    count: favourites.length,
-  };
+  return (
+    <FavouriteContext.Provider value={{ favourites, toggleFavourite }}>
+      {children}
+    </FavouriteContext.Provider>
+  );
 }
+
+export const useFavourites = () => useContext(FavouriteContext);

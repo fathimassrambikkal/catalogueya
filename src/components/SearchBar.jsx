@@ -6,14 +6,47 @@ import { categories } from "../data/categoriesData";
 
 export default function SearchBar() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentWord, setCurrentWord] = useState("I'm looking for...");
+  const [startCycle, setStartCycle] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
+
+  // Start cycling categories after 0.5s
+  useEffect(() => {
+    const timer = setTimeout(() => setStartCycle(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Cycle through categories with smooth vanish effect
+  useEffect(() => {
+    if (!startCycle) return;
+
+    const texts = categories.map((c) => c.title);
+    let index = 0;
+
+    const interval = setInterval(() => {
+      if (searchTerm) return; // stop if user types
+
+      // Show the word
+      setCurrentWord(texts[index]);
+
+      // Vanish after 1.2s
+      const vanishTimer = setTimeout(() => setCurrentWord(null), 1200);
+
+      // Move to next word
+      index = (index + 1) % texts.length;
+
+      return () => clearTimeout(vanishTimer);
+    }, 1800); // space between words for better breathing effect
+
+    return () => clearInterval(interval);
+  }, [startCycle, searchTerm]);
 
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setSearchTerm(""); // optional: clear search when clicking outside
+        setSearchTerm("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -42,17 +75,32 @@ export default function SearchBar() {
 
   return (
     <div ref={searchRef} className="w-full relative">
-      {/* Search Input */}
-      <div className="flex items-center px-4 py-3 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl">
+      <div className="flex items-center px-4 py-3 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl relative">
         <AiOutlineSearch className="text-white text-xl mr-2" />
 
         <input
           type="text"
-          placeholder="I'm looking for..."
+          placeholder=""
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 outline-none bg-transparent text-white placeholder-gray-300"
+          className="flex-1 outline-none bg-transparent text-white"
         />
+
+        {/* Animate placeholder / category words */}
+        <AnimatePresence>
+          {!searchTerm && currentWord && (
+            <motion.span
+              key={currentWord}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ opacity: { duration: 0.4 }, y: { duration: 0.6, ease: "easeOut" } }}
+              className="absolute left-10 top-3 text-gray-400 pointer-events-none select-none"
+            >
+              {currentWord}
+            </motion.span>
+          )}
+        </AnimatePresence>
 
         {searchTerm && (
           <AiOutlineClose
@@ -61,7 +109,6 @@ export default function SearchBar() {
           />
         )}
 
-        {/* 🇶🇦 Qatar Flag */}
         <img
           src="https://flagcdn.com/w40/qa.png"
           alt="Qatar Flag"
@@ -69,7 +116,6 @@ export default function SearchBar() {
         />
       </div>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {searchTerm && (
           <motion.div
@@ -79,7 +125,6 @@ export default function SearchBar() {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="absolute top-full left-0 w-full mt-2 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl z-30"
           >
-            {/* Category List */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-5 pt-4 pb-5">
               {filteredCategories.length > 0 ? (
                 filteredCategories.map((cat) => (
@@ -102,7 +147,6 @@ export default function SearchBar() {
               )}
             </div>
 
-            {/* Search Button */}
             <div className="px-5 pb-5">
               <button
                 onClick={handleSearch}

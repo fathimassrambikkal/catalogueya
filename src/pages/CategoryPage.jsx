@@ -96,62 +96,71 @@ export default function CategoryPage() {
         backgroundPosition: "0 0",
       }}
     >
+{/* Back button */}
+<button
+  onClick={() => navigate(-1)}
+  className="absolute top-20 sm:top-8 left-6 sm:left-8 md:top-28 md:left-12 z-30 p-2 sm:p-2 md:p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition"
+>
+  <Suspense fallback={<span>←</span>}>
+    <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg " />
+  </Suspense>
+</button>
+
+
       <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-20">
         {/* ===== Header with Back Arrow + Logo ===== */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-8 mr-20">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition"
-            >
-              <Suspense fallback={<span>←</span>}>
-                <FaArrowLeft className="text-gray-800 text-lg" />
-              </Suspense>
-            </button>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10 relative">
 
-            <div className="flex items-center gap-3">
+          {/* Left: Back Button + Logo + Title */}
+          <div className="flex items-center gap-4 md:gap-6 relative">
+          
+
+            {/* Logo + Title */}
+            <div className="flex items-center gap-3 md:gap-4 ml-10 md:ml-0">
               {category.image && (
                 <img
                   src={category.image}
                   alt={category.title}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-300 shadow-md object-cover"
+                  className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover"
                 />
               )}
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900 leading-tight">
                 {category.title}
               </h2>
             </div>
           </div>
 
-          {/* View & Sort Controls */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex border border-gray-300 rounded-full overflow-hidden shadow-sm">
+          {/* Right: View Toggle + Sort Dropdown */}
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 md:gap-5">
+            {/* View Toggle Buttons */}
+            <div className="flex border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm">
               <button
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  viewType === "companies"
-                    ? "bg-gray-800 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
                 onClick={() => setViewType("companies")}
+                className={`px-5 py-2 text-sm font-medium transition-all duration-300 rounded-l-full ${
+                  viewType === "companies"
+                    ? "bg-blue-500 text-white shadow-sm"
+                    : "text-gray-900 "
+                }`}
               >
                 Companies
               </button>
               <button
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  viewType === "products"
-                    ? "bg-gray-800 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
                 onClick={() => setViewType("products")}
+                className={`px-5 py-2 text-sm font-medium transition-all duration-300 rounded-r-full ${
+                  viewType === "products"
+                    ? "bg-gray-900 text-white shadow-sm"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 Products
               </button>
             </div>
 
+            {/* Sort Dropdown */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="border border-gray-300 rounded-full px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
             >
               <option value="relevance">Sort by Relevance</option>
               <option value="rating">Top Rated</option>
@@ -160,13 +169,14 @@ export default function CategoryPage() {
             </select>
           </div>
         </div>
-                {/* ===== Companies Grid ===== */}
+
+        {/* ===== Companies Grid ===== */}
         {viewType === "companies" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 place-items-center"
+            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center"
           >
             {sortedCompanies.map((company) => (
               <motion.div
@@ -175,12 +185,8 @@ export default function CategoryPage() {
                 onClick={() =>
                   navigate(`/category/${category.id}/company/${company.id}`)
                 }
-                className="relative group cursor-pointer bg-white rounded-xl 
-                          border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] 
-                          hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] 
-                          transition-all duration-700 overflow-hidden w-full max-w-[220px]"
+                className="relative group cursor-pointer bg-white rounded-xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition-all duration-700 overflow-hidden w-full max-w-[220px]"
               >
-                {/* Logo Container */}
                 <div className="relative w-full h-[120px] overflow-hidden rounded-t-xl">
                   <img
                     src={company.logo}
@@ -189,14 +195,11 @@ export default function CategoryPage() {
                   />
                 </div>
 
-                {/* Info Section */}
                 <div className="flex items-center justify-between p-3 pt-2">
-                  {/* Text & Rating */}
                   <div className="flex flex-col">
                     <h3 className="text-gray-900 font-medium text-sm sm:text-base truncate mb-1">
                       {company.name}
                     </h3>
-
                     <div className="flex items-center gap-1">
                       <Suspense fallback={<span>★</span>}>
                         <FaStar className="w-3 h-3 text-yellow-400" />
@@ -206,8 +209,6 @@ export default function CategoryPage() {
                       </span>
                     </div>
                   </div>
-
-                  {/* Arrow - Right side inline */}
                   <div className="bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300">
                     <Suspense fallback={<span>→</span>}>
                       <MdOutlineArrowOutward className="text-gray-700 text-sm" />
@@ -238,11 +239,7 @@ export default function CategoryPage() {
                       `/category/${product.categoryId}/company/${product.companyId}/product/${product.id}`
                     )
                   }
-                  className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
-                             bg-white border border-gray-100 backdrop-blur-2xl 
-                             shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-                             hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
-                             transition-all duration-700"
+                  className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer bg-white border border-gray-100 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-700"
                 >
                   {/* Favourite Button */}
                   <motion.button
@@ -293,7 +290,7 @@ export default function CategoryPage() {
                     </div>
                   </div>
 
-                  {/* Info Section */}
+                  {/* Info */}
                   <div className="p-4 flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-sm text-gray-900 mb-1">

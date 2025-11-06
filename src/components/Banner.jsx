@@ -11,6 +11,7 @@ export default function Banner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+  // Banner image slider
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -18,6 +19,7 @@ export default function Banner() {
     return () => clearInterval(interval);
   }, []);
 
+  // Window resize handler
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -32,14 +34,14 @@ export default function Banner() {
       ? "text-3xl sm:text-5xl"
       : "text-4xl sm:text-6xl";
 
-  // Smaller dots on small screens
+  // Dots size
   const dotSize = windowWidth < 640 ? "w-2.5 h-2.5" : "w-4 h-4";
 
-  // Reduce section height only on small screens
+  // Section height
   const sectionHeight =
     windowWidth < 640 ? "h-[60vh]" : "h-[90vh] md:h-[90vh] lg:h-screen";
 
-  // --- Animation Variants ---
+  // Animation Variants
   const container = {
     hidden: { opacity: 1 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
@@ -75,30 +77,29 @@ export default function Banner() {
       ))}
 
       {/* Content */}
-      <div className="absolute z-10 top-1/3 w-full flex flex-col items-center gap-6 px-4">
+      <div className="absolute z-10 top-[38%] md:top-1/3 w-full flex flex-col items-center gap-6 px-4">
         {/* Search Bar */}
         <div className="w-full max-w-2xl">
           <SearchBar />
         </div>
 
         {/* Animated Heading */}
-       <motion.h2
-      variants={container}
-      initial="hidden"
-      animate="visible"
-      className="font-extrabold tracking-tight text-center text-white
-                drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center
-                text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl 2xl:text-5xl leading-tight px-4"
-    >
-      {headingText.split("").map((char, i) => (
-        <motion.span key={i} variants={child} className="inline-block">
-          <span className="inline-block">
-            {char === " " ? "\u00A0" : char}
-          </span>
-        </motion.span>
-      ))}
-    </motion.h2>
-
+        <motion.h2
+          variants={container}
+          initial="hidden"
+          animate="visible"
+          className="font-extrabold tracking-tight text-center text-white
+                     drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center
+                     text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl 2xl:text-5xl leading-tight px-4"
+        >
+          {headingText.split("").map((char, i) => (
+            <motion.span key={i} variants={child} className="inline-block">
+              <span className="inline-block">
+                {char === " " ? "\u00A0" : char}
+              </span>
+            </motion.span>
+          ))}
+        </motion.h2>
 
         {/* Subtext */}
         <motion.p
