@@ -112,7 +112,7 @@ export default function CategoryPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10 relative">
 
           {/* Left: Back Button + Logo + Title */}
-          <div className="flex items-center gap-4 md:gap-6 relative">
+          <div className="flex items-center gap-4 md:gap-6 mt-5 md:mt-0 relative">
           
 
             {/* Logo + Title */}

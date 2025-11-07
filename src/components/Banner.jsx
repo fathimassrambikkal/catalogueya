@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import banner1 from "../assets/banner2.avif";
-import banner2 from "../assets/banner3.avif";
-import banner3 from "../assets/banner1.avif";
+import banner1 from "../assets/banner1.avif";
+import banner2 from "../assets/banner2.avif";
+import banner3 from "../assets/banner3.avif";
 import SearchBar from "../components/SearchBar";
 
 const images = [banner1, banner2, banner3];
@@ -15,33 +15,22 @@ export default function Banner() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
-  // Window resize handler
+  // Window resize
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Heading responsive size
-  const headingSize =
-    windowWidth < 400
-      ? "text-2xl sm:text-3xl"
-      : windowWidth < 640
-      ? "text-3xl sm:text-5xl"
-      : "text-4xl sm:text-6xl";
-
-  // Dots size
-  const dotSize = windowWidth < 640 ? "w-2.5 h-2.5" : "w-4 h-4";
-
-  // Section height
+  // Sizes
   const sectionHeight =
     windowWidth < 640 ? "h-[60vh]" : "h-[90vh] md:h-[90vh] lg:h-screen";
 
-  // Animation Variants
+  // Animations
   const container = {
     hidden: { opacity: 1 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
@@ -61,18 +50,27 @@ export default function Banner() {
 
   return (
     <section
-      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center bg-gray-900`}
+      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center bg-[#fefae0]`} // soft yellow fallback
     >
       {/* Banner Images */}
       {images.map((img, index) => (
-        <img
+        <motion.img
           key={index}
           src={img}
           alt={`banner-${index}`}
           loading="lazy"
-          className={`absolute w-full h-full object-cover transition-opacity duration-1000 ${
-            index === currentIndex ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute w-full h-full object-cover transition-opacity duration-[1200ms]
+            ${index === currentIndex ? "opacity-100" : "opacity-0"}`}
+          initial={false}
+          animate={
+            index === 0 && index === currentIndex
+              ? { scale: [1.1, 1] } // Zoom-out only for first image
+              : { scale: 1 }
+          }
+          transition={{
+            duration: 4,
+            ease: "easeOut",
+          }}
         />
       ))}
 
@@ -94,9 +92,7 @@ export default function Banner() {
         >
           {headingText.split("").map((char, i) => (
             <motion.span key={i} variants={child} className="inline-block">
-              <span className="inline-block">
-                {char === " " ? "\u00A0" : char}
-              </span>
+              {char === " " ? "\u00A0" : char}
             </motion.span>
           ))}
         </motion.h2>
@@ -106,7 +102,7 @@ export default function Banner() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: headingText.length * 0.05 + 0.2, duration: 1 }}
-          className="text-white/90 text-lg md:text-xl font-medium tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]"
+          className="text-white/90 text-lg md:text-xl font-semibold tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]"
         >
           Enhance Everyday Living.
         </motion.p>
@@ -117,7 +113,9 @@ export default function Banner() {
         {images.map((_, idx) => (
           <button
             key={idx}
-            className={`${dotSize} rounded-full transition-colors ${
+            className={`${
+              windowWidth < 640 ? "w-2.5 h-2.5" : "w-4 h-4"
+            } rounded-full transition-colors ${
               idx === currentIndex ? "bg-white" : "bg-white/50"
             }`}
             onClick={() => setCurrentIndex(idx)}

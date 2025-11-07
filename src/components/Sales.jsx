@@ -87,6 +87,7 @@ function SalesComponent() {
                   className="w-full h-full object-cover object-top rounded-t-3xl border-b border-white/20"
                 />
 
+                
                 {/* Rating */}
                 <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -94,7 +95,7 @@ function SalesComponent() {
                       key={i}
                       className={`w-3 h-3 ${
                         i < Math.floor(product.rating)
-                          ? "text-yellow-400"
+                          ? "text-white"
                           : "text-gray-400"
                       }`}
                     />

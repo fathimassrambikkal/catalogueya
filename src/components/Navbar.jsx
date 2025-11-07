@@ -23,7 +23,6 @@ export default function Navbar() {
     i18n.changeLanguage(newLang);
   };
 
-  // 🌟 Scroll listener for navbar background change
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 40) {
@@ -36,12 +35,10 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 🔄 Toggle dropdown menu on click
   const toggleMenu = () => {
     setMenuOpen((prev) => !prev);
   };
 
-  // 🧠 Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest(".menu-container")) {
@@ -55,13 +52,13 @@ export default function Navbar() {
   return (
     <nav
       dir={i18n.language === "ar" ? "rtl" : "ltr"}
-      className={`fixed  left-1/2 -translate-x-1/2 z-50 font-inter transition-all duration-500
+      className={`fixed left-1/2 -translate-x-1/2 z-50 font-inter transition-all duration-500
         ${
           scrolled && isGlassPage
             ? "backdrop-blur-lg bg-white/30 shadow-xl border border-white/20"
             : "bg-white shadow-md"
         }
-        w-full flex justify-between items-center px-6 sm:px-10 py-3 sm:py-2 `}
+        w-full flex justify-between items-center px-6 sm:px-10 py-3 sm:py-2`}
     >
       {/* Logo */}
       <div className="flex-shrink-0">
@@ -95,7 +92,7 @@ export default function Navbar() {
         {/* Login */}
         <Link
           to="/sign"
-          className="border border-gray-300 text-gray-700 hover:text-blue-500 px-3 sm:px-4 py-1 sm:py-2 rounded-full transition text-xs sm:text-sm flex items-center justify-center bg-white/30 hover:bg-white/50"
+          className="border border-gray-300 text-gray-950 hover:text-blue-500 px-3 sm:px-4 py-1 sm:py-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center bg-white/30 hover:bg-white/50"
         >
           {t("login")}
         </Link>
@@ -103,7 +100,7 @@ export default function Navbar() {
         {/* Language Toggle */}
         <button
           onClick={toggleLanguage}
-          className="border border-gray-300 text-gray-700 px-2 py-1 sm:px-3 sm:py-2 rounded-full hover:bg-white/50 transition text-xs sm:text-sm backdrop-blur-md"
+          className="border border-gray-300 text-gray-950 px-2 py-1 sm:px-3 sm:py-2 rounded-xl hover:bg-white/50 transition text-xs sm:text-sm backdrop-blur-md"
         >
           {i18n.language === "en" ? "عربي" : "EN"}
         </button>
@@ -163,7 +160,10 @@ export default function Navbar() {
                     </Link>
                   </li>
                   <li className="px-4 py-2 hover:bg-white/50 hover:rounded-full transition">
-                    <Link to="/salesproducts" onClick={() => setMenuOpen(false)}>
+                    <Link
+                      to="/salesproducts"
+                      onClick={() => setMenuOpen(false)}
+                    >
                       {t("offers")}
                     </Link>
                   </li>

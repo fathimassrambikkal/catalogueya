@@ -4,22 +4,15 @@ import {
   FaStar,
   FaWhatsapp,
   FaArrowLeft,
-  FaSearchPlus,
-  FaTimes,
   FaHeart,
   FaShareAlt,
 } from "react-icons/fa";
-import { BsArrowsMove } from "react-icons/bs";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useTransform,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { categories } from "../data/categoriesData";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { useFavourites } from "../context/FavouriteContext";
+import { Lens } from "../components/Lens";
 
 export default function NewArrivalProductProfile() {
   const params = useParams();
@@ -45,15 +38,21 @@ export default function NewArrivalProductProfile() {
     .find((p) => String(p.id) === String(productId));
 
   const [selectedImage, setSelectedImage] = useState(product?.image);
-  const [showModal, setShowModal] = useState(false);
-  const y = useMotionValue(0);
-  const scale = useTransform(y, [-200, 0, 200], [1.2, 1, 1.2]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewName, setReviewName] = useState("");
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     if (product) {
       setSelectedImage(product.image);
-      setShowModal(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
+
+      // load reviews for this product (per-product)
+      const storageKey = `reviews_${product.id}`;
+      const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
+      setReviews(savedReviews);
     }
   }, [productId]);
 
@@ -101,29 +100,59 @@ export default function NewArrivalProductProfile() {
     )
     .slice(0, 4);
 
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : product.rating || 0;
+
+  const handleReviewSubmit = () => {
+    if (!reviewName || !reviewText || reviewRating === 0) {
+      alert("Please enter your name, rating, and comment.");
+      return;
+    }
+
+    const storageKey = `reviews_${product.id}`;
+    const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+    const newReviewObj = {
+      id: Date.now(),
+      name: reviewName,
+      rating: reviewRating,
+      comment: reviewText,
+      date: new Date().toLocaleDateString(),
+    };
+
+    const updatedReviews = [...savedReviews, newReviewObj];
+    localStorage.setItem(storageKey, JSON.stringify(updatedReviews));
+    setReviews(updatedReviews);
+    alert(`⭐ ${reviewRating}-star review submitted!`);
+    setShowReviewModal(false);
+    setReviewText("");
+    setReviewRating(0);
+    setReviewName("");
+  };
+
   return (
     <>
-      {/* ===== Product Section ===== */}
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-6 left-6 z-40 p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition"
+      >
+        <FaArrowLeft className="text-gray-600 text-lg" />
+      </button>
+
+      {/* Product Section (ProductProfile theme) */}
       <motion.section
         key={productId}
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative max-w-7xl mx-auto px-6 py-12 mt-20 md:mt-28 grid grid-cols-1 md:grid-cols-2 gap-10 
-                   bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-hidden rounded-3xl shadow-sm"
+        className="relative max-w-[1200px] mx-auto px-6 md:px-10 py-24 grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-16 bg-white rounded-3xl shadow-sm"
       >
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute -top-4 left-6 z-30 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition"
-        >
-          <FaArrowLeft className="text-gray-700 text-lg" />
-        </button>
-
-        {/* ===== Left Section ===== */}
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Thumbnails */}
-          <div className="flex md:flex-col gap-3 order-2 md:order-1">
+        {/* Left: Image Gallery */}
+        <div className="flex flex-col md:flex-row gap-6 md:sticky md:top-24 h-fit">
+          <div className="flex md:flex-col gap-3 order-2 md:order-1 self-start">
             {[product.image, product.image2, product.image3, product.image4]
               .filter(Boolean)
               .map((img, idx) => (
@@ -134,39 +163,33 @@ export default function NewArrivalProductProfile() {
                   onClick={() => setSelectedImage(img)}
                   className={`w-20 h-20 object-cover rounded-xl cursor-pointer border transition-all duration-300 ${
                     selectedImage === img
-                      ? "border-gray-800 scale-105 shadow-md"
-                      : "border-transparent opacity-70 hover:opacity-100"
+                      ? "border-gray-900 scale-105 shadow-sm"
+                      : "border-gray-200 opacity-80 hover:opacity-100"
                   }`}
                 />
               ))}
           </div>
 
-          {/* Main Image */}
-          <div className="relative flex-1 order-1 md:order-2 overflow-hidden rounded-xl shadow-2xl group">
-            <img
-              src={selectedImage}
-              alt={product.name}
-              className="w-full h-[450px] object-cover rounded-xl transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-            />
-            <button
-              onClick={() => setShowModal(true)}
-              className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-300"
-            >
-              <FaSearchPlus className="text-white opacity-0 group-hover:opacity-100 text-3xl transition-opacity duration-300" />
-            </button>
+          <div className="relative flex-1 order-1 md:order-2 overflow-hidden rounded-2xl shadow-sm border border-gray-100">
+            <Lens zoomFactor={1.8} lensSize={160} disableOnMobile={true}>
+              <img
+                src={selectedImage}
+                alt={product.name}
+                className="w-full h-[500px] object-cover rounded-2xl transition-transform duration-500 ease-out hover:scale-[1.02]"
+              />
+            </Lens>
 
-            {/* Action Buttons */}
-            <div className="absolute top-5 right-5 flex flex-col gap-3 z-30">
+            <div className="absolute top-4 right-4 flex flex-col gap-3 z-30">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFavourite(product);
                 }}
-                className="p-3 rounded-full bg-white/70 backdrop-blur-md shadow-md hover:bg-white transition"
+                className="p-3 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all hover:scale-105"
               >
                 <FaHeart
-                  className={`text-xl transition-all ${
-                    isFavourite ? "text-red-500 scale-110" : "text-gray-400"
+                  className={`text-lg ${
+                    isFavourite ? "text-red-500" : "text-gray-500"
                   }`}
                 />
               </button>
@@ -176,9 +199,9 @@ export default function NewArrivalProductProfile() {
                   e.stopPropagation();
                   handleShare(product);
                 }}
-                className="p-3 rounded-full bg-white/70 backdrop-blur-md shadow-md hover:bg-white transition"
+                className="p-3 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all hover:scale-105"
               >
-                <FaShareAlt className="text-gray-600 text-xl" />
+                <FaShareAlt className="text-gray-600 text-lg" />
               </button>
 
               <a
@@ -187,21 +210,21 @@ export default function NewArrivalProductProfile() {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-3 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md transition"
+                className="p-3 rounded-full bg-green-500 text-white shadow-md hover:shadow-lg transition-all hover:scale-105"
               >
-                <FaWhatsapp className="text-xl" />
+                <FaWhatsapp className="text-lg" />
               </a>
             </div>
           </div>
         </div>
 
-        {/* ===== Right Section ===== */}
-        <div className="flex flex-col justify-start space-y-6">
-          <p className="text-gray-500 uppercase text-sm tracking-wide">
-            {product.categoryName || "PRODUCT"}
+        {/* Right: Details */}
+        <div className="flex flex-col space-y-6">
+          <p className="text-gray-500 text-sm uppercase tracking-wide">
+            {product.categoryName}
           </p>
 
-          <h1 className="text-4xl font-semibold text-gray-900 tracking-tighter">
+          <h1 className="text-4xl font-semibold text-gray-900 tracking-tight">
             {product.name}
           </h1>
 
@@ -215,7 +238,7 @@ export default function NewArrivalProductProfile() {
               className="text-base text-blue-600 font-medium hover:underline w-fit"
             >
               <span className="text-gray-500">by </span>
-              <span className="font-semibold">{product.companyName}</span>
+              {product.companyName}
             </button>
           )}
 
@@ -225,141 +248,210 @@ export default function NewArrivalProductProfile() {
                 QAR {product.oldPrice}
               </span>
             )}
-            <span className="text-2xl font-bold text-green-600">
+            <span className="text-2xl font-bold text-gray-900">
               QAR {product.price}
             </span>
           </div>
 
-          <p className="text-gray-600 leading-relaxed text-base">
-            {product.description ||
-              `Introducing our ${product.name} – designed for superior quality and style.`}
-          </p>
+          <div>
+            <h3 className="text-lg font-medium text-gray-800 mb-2">
+              Product Details
+            </h3>
+            <p className="text-gray-600 leading-relaxed text-base">
+              {product.description ||
+                `Introducing our ${product.name} – designed for superior quality and style.`}
+            </p>
+          </div>
 
-          <div className="flex items-center gap-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <FaStar
-                key={i}
-                className={`w-5 h-5 ${
-                  i < Math.floor(product.rating ?? 0)
-                    ? "text-yellow-400"
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
-            <span className="text-gray-600">
-              ({(product.rating ?? 0).toFixed(1)})
-            </span>
+          {/* Rating + Review Section */}
+          <div className="mt-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <FaStar
+                    key={i}
+                    className={`w-5 h-5 ${
+                      i < Math.round(averageRating)
+                        ? "text-gray-950"
+                        : "text-gray-300"
+                    }`}
+                  />
+                ))}
+                <span className="text-gray-600">({averageRating.toFixed(1)})</span>
+              </div>
+
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="text-sm text-white font-medium bg-gray-800 rounded-lg p-2"
+              >
+                Write a Review
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {reviews.slice(0, 2).map((rev) => (
+                <div
+                  key={rev.id}
+                  className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
+                >
+                  <div className="flex justify-between mb-1">
+                    <span className="font-semibold text-gray-800">{rev.name}</span>
+                    <span className="text-gray-500 text-sm">{rev.date}</span>
+                  </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <FaStar
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < rev.rating ? "text-gray-950" : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 text-sm">{rev.comment}</p>
+                </div>
+              ))}
+
+              {reviews.length > 2 && (
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  View {reviews.length - 2} more review(s)
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </motion.section>
 
-      {/* ===== Modal ===== */}
+      {/* Review Modal */}
       <AnimatePresence>
-        {showModal && (
+        {showReviewModal && (
           <motion.div
-            className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-[100]"
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 overflow-auto px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-8 right-10 text-white/90 hover:text-white text-4xl z-50"
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6"
             >
-              <FaTimes />
-            </button>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">
+                Customer Reviews
+              </h3>
 
-            <motion.div className="relative w-[90%] md:w-1/2 h-[70vh] bg-white/10 rounded-2xl overflow-hidden flex items-center justify-center border border-white/20 shadow-2xl">
-              <motion.img
-                src={selectedImage}
-                alt={product.name}
-                style={{ scale }}
-                className="max-w-full max-h-full object-contain rounded-xl select-none pointer-events-none transition-transform duration-300 ease-out"
+              <div className="max-h-[50vh] overflow-y-auto mb-4 space-y-3">
+                {reviews.length > 0 ? (
+                  reviews.map((rev) => (
+                    <div key={rev.id} className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+                      <div className="flex justify-between mb-1">
+                        <span className="font-semibold text-gray-800">{rev.name}</span>
+                        <span className="text-gray-500 text-sm">{rev.date}</span>
+                      </div>
+                      <div className="flex items-center gap-1 mb-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <FaStar key={i} className={`w-4 h-4 ${i < rev.rating ? "text-gray-950" : "text-gray-300"}`} />
+                        ))}
+                      </div>
+                      <p className="text-gray-700 text-sm">{rev.comment}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center text-sm">No reviews yet – be the first to review!</p>
+                )}
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">Write a Review</h3>
+
+              <input
+                type="text"
+                placeholder="Your Name"
+                value={reviewName}
+                onChange={(e) => setReviewName(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
               />
-              <motion.div
-                drag="y"
-                dragConstraints={{ top: -80, bottom: 80 }}
-                dragElastic={0.25}
-                onDragEnd={() => scale.set(1)}
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/25 border border-white/40 backdrop-blur-md p-5 rounded-full shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing z-50"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <BsArrowsMove className="text-white text-2xl" />
-              </motion.div>
+
+              <div className="flex justify-center mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <FaStar
+                    key={i}
+                    onClick={() => setReviewRating(i + 1)}
+                    className={`w-7 h-7 cursor-pointer transition ${i < reviewRating ? "text-gray-950" : "text-gray-300"}`}
+                  />
+                ))}
+              </div>
+
+              <textarea
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Share your thoughts about this product..."
+                className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                rows="4"
+              ></textarea>
+
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  className="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReviewSubmit}
+                  disabled={!reviewText || !reviewName || reviewRating === 0}
+                  className={`px-4 py-2 text-sm rounded-lg text-white ${reviewText && reviewName && reviewRating ? "bg-gray-900 hover:bg-gray-800" : "bg-gray-400 cursor-not-allowed"}`}
+                >
+                  Submit
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ===== Similar Products (updated like SalesProductProfile) ===== */}
+      {/* Similar Products */}
       {similarProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-semibold tracking-tighter text-gray-900 mb-10 text-center">
-            Similar Products
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 place-items-center">
+        <section className="max-w-6xl mx-auto px-6 py-20">
+          <h2 className="text-3xl font-semibold text-gray-900 text-center mb-12">Similar Products</h2>
+          <motion.div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {similarProducts.map((sp) => {
               const isFav = favourites.some((f) => f.id === sp.id);
               return (
                 <motion.div
                   key={sp.id}
                   whileHover={{ scale: 1.03 }}
-                  onClick={() =>
-                    navigate(
-                      `/category/${sp.categoryId}/company/${sp.companyId}/product/${sp.id}`
-                    )
-                  }
-                  className="relative w-full max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
-                             bg-white/10 border border-white/50 backdrop-blur-2xl 
-                             shadow-[0_8px_30px_rgba(255,255,255,0.1)] 
-                             hover:shadow-[0_8px_60px_rgba(255,255,255,0.25)] 
-                             transition-all duration-700"
+                  className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer"
+                  onClick={() => navigate(`/category/${sp.categoryId}/company/${sp.companyId}/product/${sp.id}`)}
                 >
-                  <div className="relative w-full h-[240px] sm:h-[250px] overflow-hidden">
-                    <img
-                      src={sp.image}
-                      alt={sp.name}
-                      className="w-full h-full object-cover rounded-3xl transition-transform duration-500 group-hover:scale-105 border-4 border-white/30"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent"></div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavourite(sp);
+                    }}
+                    className={`absolute top-3 right-3 z-20 p-2 rounded-full border border-gray-200 bg-white hover:bg-gray-100 shadow-sm transition-all hover:scale-110 ${isFav ? "text-red-500" : "text-gray-500"}`}
+                  >
+                    <FaHeart className="text-lg" />
+                  </button>
+
+                  <div className="w-full h-[220px] overflow-hidden rounded-t-2xl">
+                    <img src={sp.image} alt={sp.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                   </div>
 
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[80%]
-                               bg-white/30 backdrop-blur-xl border border-white/40 
-                               rounded-xl p-3 flex flex-col items-center text-white shadow-lg">
-                    <h3 className="font-semibold text-sm truncate">{sp.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-white font-bold text-sm">
-                        QAR {sp.price}
-                      </span>
-                      {sp.oldPrice && (
-                        <span className="text-[10px] line-through text-gray-300">
-                          QAR {sp.oldPrice}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center mt-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <FaStar
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < Math.floor(sp.rating ?? 0)
-                              ? "text-yellow-400"
-                              : "text-gray-500"
-                          }`}
-                        />
-                      ))}
-                      <span className="text-[10px] text-gray-200 ml-1">
-                        ({(sp.rating ?? 0).toFixed(1)})
-                      </span>
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-800 text-sm truncate mb-1">{sp.name}</h3>
+                    <div className="flex items-center gap-1 text-gray-700">
+                      <span className="text-sm font-semibold">QAR {sp.price}</span>
+                      {sp.oldPrice && <span className="text-xs line-through text-gray-400">QAR {sp.oldPrice}</span>}
                     </div>
                   </div>
                 </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </section>
       )}
 

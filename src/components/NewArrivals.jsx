@@ -15,14 +15,14 @@ function NewArrivalsComponent() {
     <section className="py-6 sm:py-10 bg-amber-300 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start justify-between mb-8 sm:mb-12 gap-6">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal  md:font-light tracking-tighter text-white">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black">
           New Arrivals
         </h1>
 
-        <div className="md:w-1/3 flex justify-start md:justify-end ">
+        <div className="md:w-1/3 flex justify-start md:justify-end">
           <Link
             to="/newarrivalproducts"
-            className="relative font-medium text-white px-2 py-2 overflow-hidden group h-5 sm:h-6 flex items-center gap-1 text-xs sm:text-base"
+            className="relative font-medium text-black px-2 py-2 overflow-hidden group h-5 sm:h-6 flex items-center gap-1 text-xs sm:text-base"
           >
             <span className="transition-transform duration-300 transform group-hover:-translate-y-full flex items-center gap-1 sm:gap-2">
               View more{" "}
@@ -36,8 +36,8 @@ function NewArrivalsComponent() {
                 →
               </span>
             </span>
-            <span className="absolute bottom-0 left-2 h-[1px] w-4/5 bg-white overflow-hidden">
-              <span className="absolute left-0 top-0 h-full w-full bg-white origin-left transform scale-x-[0.9] opacity-30 transition-all duration-300 group-hover:scale-x-100 group-hover:opacity-100"></span>
+            <span className="absolute bottom-0 left-2 h-[1px] w-4/5 bg-black overflow-hidden">
+              <span className="absolute left-0 top-0 h-full w-full bg-black origin-left transform scale-x-[0.9] opacity-30 transition-all duration-300 group-hover:scale-x-100 group-hover:opacity-100"></span>
             </span>
           </Link>
         </div>
@@ -94,7 +94,7 @@ function NewArrivalsComponent() {
                       key={i}
                       className={`w-3 h-3 ${
                         i < Math.floor(product.rating)
-                          ? "text-yellow-400"
+                          ? "text-white"
                           : "text-gray-400"
                       }`}
                     />

@@ -52,28 +52,30 @@ export default function CompanyReviewsPage() {
     );
   }
 
-  // Calculate average rating
   const avgRating =
     reviews.length > 0
-      ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+      ? (
+          reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
+        ).toFixed(1)
       : company.rating || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-8 lg:px-20">
-      {/* Back Button */}
+    <div className="min-h-screen bg-gray-50 pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-8 lg:px-20 relative">
+      {/* ✅ Fixed Floating Back Button (same as CompanyPage) */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 mb-8 text-gray-700 hover:text-blue-600 transition"
+        className="fixed top-20 sm:top-18 md:top-20 lg:top-24 left-4 sm:left-6 md:left-8 lg:left-10
+                   z-30 p-2 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full
+                   shadow-sm hover:bg-gray-50 transition-all hover:scale-105"
       >
-        <FaArrowLeft className="text-lg" />
-        <span className="font-medium">{t("Back to")} {company.name}</span>
+        <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
       </button>
 
       {/* Company Header */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow p-6 mb-10"
+        className="bg-white rounded-2xl shadow p-6 mb-10 mt-24 sm:mt-24 lg:mt-24"
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -87,9 +89,11 @@ export default function CompanyReviewsPage() {
           </div>
 
           {/* Average Rating */}
-          <div className="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-xl">
-            <FaStar className="text-yellow-400 text-lg" />
-            <span className="font-semibold text-gray-800 text-lg">{avgRating}</span>
+          <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl">
+            <FaStar className="text-gray-950 text-lg" />
+            <span className="font-semibold text-gray-800 text-lg">
+              {avgRating}
+            </span>
             <span className="text-sm text-gray-500">
               ({reviews.length} {t("reviews")})
             </span>
@@ -136,7 +140,7 @@ export default function CompanyReviewsPage() {
                     <FaStar
                       key={i}
                       className={`${
-                        i < r.rating ? "text-yellow-400" : "text-gray-300"
+                        i < r.rating ? "text-gray-950" : "text-gray-300"
                       }`}
                     />
                   ))}
@@ -180,8 +184,8 @@ export default function CompanyReviewsPage() {
                 onClick={() => setNewReview({ ...newReview, rating: r })}
                 className={`cursor-pointer text-lg ${
                   newReview.rating >= r
-                    ? "text-yellow-400"
-                    : "text-gray-300 hover:text-yellow-300"
+                    ? "text-gray-950"
+                    : "text-gray-300 hover:text-gray-400"
                 }`}
               />
             ))}
@@ -205,7 +209,7 @@ export default function CompanyReviewsPage() {
         </button>
       </motion.form>
 
-      {/* Map (Optional) */}
+      {/* Optional Map */}
       {company.map && (
         <div className="mt-12 bg-white rounded-2xl shadow overflow-hidden">
           <iframe
