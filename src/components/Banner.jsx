@@ -10,11 +10,13 @@ const images = [banner1, banner2, banner3];
 export default function Banner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [initialRender, setInitialRender] = useState(true);
 
   // Banner image slider
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
+      setInitialRender(false); // after first change, disable initial effect
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -26,11 +28,9 @@ export default function Banner() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Sizes
   const sectionHeight =
     windowWidth < 640 ? "h-[60vh]" : "h-[90vh] md:h-[90vh] lg:h-screen";
 
-  // Animations
   const container = {
     hidden: { opacity: 1 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
@@ -50,38 +50,38 @@ export default function Banner() {
 
   return (
     <section
-      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center bg-[#fefae0]`} // soft yellow fallback
+      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center bg-[#fefae0]`}
     >
       {/* Banner Images */}
-      {images.map((img, index) => (
-        <motion.img
-          key={index}
-          src={img}
-          alt={`banner-${index}`}
-          loading="lazy"
-          className={`absolute w-full h-full object-cover transition-opacity duration-[1200ms]
-            ${index === currentIndex ? "opacity-100" : "opacity-0"}`}
-          initial={false}
-          animate={
-            index === 0 && index === currentIndex
-              ? { scale: [1.1, 1] } // Zoom-out only for first image
-              : { scale: 1 }
-          }
-          transition={{
-            duration: 4,
-            ease: "easeOut",
-          }}
-        />
-      ))}
+      {images.map((img, index) => {
+        const isActive = index === currentIndex;
+        return (
+          <motion.img
+            key={index}
+            src={img}
+            alt={`banner-${index}`}
+            loading="lazy"
+            className={`absolute w-full h-full object-cover transition-opacity duration-[1200ms]
+              ${isActive ? "opacity-100" : "opacity-0"}`}
+            initial={initialRender && index === 0 ? { scale: 1.2, x: -20 } : { scale: 1 }}
+            animate={
+              isActive
+                ? initialRender && index === 0
+                  ? { scale: 1, x: 0 }
+                  : { scale: 1 }
+                : { scale: 1 }
+            }
+            transition={initialRender && index === 0 ? { duration: 4, ease: "easeOut" } : { duration: 0.8 }}
+          />
+        );
+      })}
 
       {/* Content */}
       <div className="absolute z-10 top-[38%] md:top-1/3 w-full flex flex-col items-center gap-6 px-4">
-        {/* Search Bar */}
         <div className="w-full max-w-2xl">
           <SearchBar />
         </div>
 
-        {/* Animated Heading */}
         <motion.h2
           variants={container}
           initial="hidden"
@@ -97,7 +97,6 @@ export default function Banner() {
           ))}
         </motion.h2>
 
-        {/* Subtext */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
