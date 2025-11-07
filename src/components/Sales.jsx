@@ -84,7 +84,8 @@ function SalesComponent() {
                   src={product.img}
                   alt={product.name}
                   loading="lazy"
-                  className="w-full h-full object-cover object-top rounded-t-3xl border-b border-white/20"
+                  className="w-full h-full object-cover object-top rounded-t-3xl border-b border-white/20
+                   transition-transform duration-500 ease-out transform group-hover:scale-105"
                 />
 
                 

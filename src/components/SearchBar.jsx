@@ -17,7 +17,7 @@ export default function SearchBar() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Cycle through categories with smooth vanish effect
+  // Cycle through categories with slower vanish effect
   useEffect(() => {
     if (!startCycle) return;
 
@@ -25,19 +25,19 @@ export default function SearchBar() {
     let index = 0;
 
     const interval = setInterval(() => {
-      if (searchTerm) return; // stop if user types
+      if (searchTerm) return; // stop cycling if user types
 
-      // Show the word
+      // Show the current word
       setCurrentWord(texts[index]);
 
-      // Vanish after 1.2s
-      const vanishTimer = setTimeout(() => setCurrentWord(null), 1200);
+      // Vanish after 1.8s (slower)
+      const vanishTimer = setTimeout(() => setCurrentWord(null), 1800);
 
       // Move to next word
       index = (index + 1) % texts.length;
 
       return () => clearTimeout(vanishTimer);
-    }, 1800); // space between words for better breathing effect
+    }, 2500); // spacing between words for better breathing
 
     return () => clearInterval(interval);
   }, [startCycle, searchTerm]);
@@ -94,7 +94,10 @@ export default function SearchBar() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ opacity: { duration: 0.4 }, y: { duration: 0.6, ease: "easeOut" } }}
+              transition={{
+                opacity: { duration: 0.6 },
+                y: { duration: 0.8, ease: "easeOut" },
+              }}
               className="absolute left-10 top-3 text-gray-400 pointer-events-none select-none"
             >
               {currentWord}

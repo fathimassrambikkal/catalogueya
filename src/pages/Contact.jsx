@@ -59,10 +59,22 @@ export default function Contact() {
               {/* Social Media Icons */}
               <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:space-x-5 mt-8">
                 {[
-                  { icon: <FaFacebookF size={20} />, url: "https://www.facebook.com" },
-                  { icon: <FaInstagram size={20} />, url: "https://www.instagram.com" },
-                  { icon: <FaTiktok size={20} />, url: "https://www.tiktok.com" },
-                  { icon: <FaSnapchatGhost size={20} />, url: "https://www.snapchat.com" },
+                  {
+                    icon: <FaFacebookF size={20} />,
+                    url: "https://www.facebook.com/share/1BGBgzNm9d/?mibextid=wwXIfr",
+                  },
+                  {
+                    icon: <FaInstagram size={20} />,
+                    url: "https://www.instagram.com/catalogueya.qa?igsh=b3k0MGY5Z21la3Bz",
+                  },
+                  {
+                    icon: <FaTiktok size={20} />,
+                    url: "https://www.tiktok.com/@catalogueya.qa?lang=en-GB&is_from_webapp=1&sender_device=mobile&sender_web_id=7569663066179307016",
+                  },
+                  {
+                    icon: <FaSnapchatGhost size={20} />,
+                    url: "https://snapchat.com/t/2LvJi7m4",
+                  },
                 ].map((s, i) => (
                   <a
                     key={i}

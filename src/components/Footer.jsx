@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaTiktok, FaSnapchatGhost } from "react-icons/fa";
 import { HiArrowUpRight } from "react-icons/hi2";
 // import Iridescence from "../ui/Iridescence"; // 📴 Temporarily disabled
 
@@ -14,7 +14,7 @@ export default function Footer() {
       <div className="absolute inset-0 z-0">
         {/* Base Gradient Layer */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#2F6CFF] to-[#82B2FF]" />
-        
+
         {/* Iridescence Animation (Commented Out)
         <div className="absolute inset-0 opacity-40">
           <Iridescence
@@ -52,7 +52,7 @@ export default function Footer() {
               Navigation
             </h3>
             <ul className="space-y-3 text-base text-blue-100">
-              {[
+              {[ 
                 { name: "Home", path: "/" },
                 { name: "About", path: "/about" },
                 { name: "Offers", path: "/offers" },
@@ -78,19 +78,24 @@ export default function Footer() {
             <ul className="space-y-3 text-base text-blue-100">
               {[
                 {
-                  name: "Twitter",
-                  icon: <FaTwitter />,
-                  url: "https://twitter.com/",
-                },
-                {
-                  name: "LinkedIn",
-                  icon: <FaLinkedinIn />,
-                  url: "https://linkedin.com/",
+                  name: "Facebook",
+                  icon: <FaFacebookF />,
+                  url: "https://www.facebook.com/share/1BGBgzNm9d/?mibextid=wwXIfr",
                 },
                 {
                   name: "Instagram",
                   icon: <FaInstagram />,
-                  url: "https://instagram.com/",
+                  url: "https://www.instagram.com/catalogueya.qa?igsh=b3k0MGY5Z21la3Bz",
+                },
+                {
+                  name: "TikTok",
+                  icon: <FaTiktok />,
+                  url: "https://www.tiktok.com/@catalogueya.qa?lang=en-GB&is_from_webapp=1&sender_device=mobile&sender_web_id=7569663066179307016",
+                },
+                {
+                  name: "Snapchat",
+                  icon: <FaSnapchatGhost />,
+                  url: "https://snapchat.com/t/2LvJi7m4",
                 },
               ].map((s, i) => (
                 <li key={i}>

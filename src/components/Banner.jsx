@@ -10,15 +10,14 @@ const images = [banner1, banner2, banner3];
 export default function Banner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [initialRender, setInitialRender] = useState(true);
+  const [firstImageLoaded, setFirstImageLoaded] = useState(false);
+  const [startSlider, setStartSlider] = useState(false);
 
-  // Banner image slider
+  // Preload first image
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
-      setInitialRender(false); // after first change, disable initial effect
-    }, 4000);
-    return () => clearInterval(interval);
+    const img = new Image();
+    img.src = images[0];
+    img.onload = () => setFirstImageLoaded(true);
   }, []);
 
   // Window resize
@@ -27,6 +26,24 @@ export default function Banner() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+
+  useEffect(() => {
+    if (!firstImageLoaded) return;
+    const timer = setTimeout(() => setStartSlider(true), 2000); // 2s first zoom + text animation
+    return () => clearTimeout(timer);
+  }, [firstImageLoaded]);
+
+  // Slider autoplay
+  useEffect(() => {
+    if (!startSlider) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [startSlider]);
 
   const sectionHeight =
     windowWidth < 640 ? "h-[60vh]" : "h-[90vh] md:h-[90vh] lg:h-screen";
@@ -48,44 +65,53 @@ export default function Banner() {
 
   const headingText = "Welcome to Catalogueya";
 
+  if (!firstImageLoaded) return null; 
+
   return (
     <section
-      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center bg-[#fefae0]`}
+      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center`}
     >
       {/* Banner Images */}
       {images.map((img, index) => {
         const isActive = index === currentIndex;
+
+        // First image cinematic zoom
+        const firstImageZoom =
+          index === 0 && !startSlider
+            ? { scale: [1.2, 1], x: [-20, 0] }
+            : { scale: 1, x: 0 };
+
         return (
           <motion.img
             key={index}
             src={img}
             alt={`banner-${index}`}
             loading="lazy"
-            className={`absolute w-full h-full object-cover transition-opacity duration-[1200ms]
-              ${isActive ? "opacity-100" : "opacity-0"}`}
-            initial={initialRender && index === 0 ? { scale: 1.2, x: -20 } : { scale: 1 }}
-            animate={
-              isActive
-                ? initialRender && index === 0
-                  ? { scale: 1, x: 0 }
-                  : { scale: 1 }
-                : { scale: 1 }
-            }
-            transition={initialRender && index === 0 ? { duration: 4, ease: "easeOut" } : { duration: 0.8 }}
+            className={`absolute w-full h-full object-cover transition-opacity duration-[1200ms] ${
+              isActive ? "opacity-100" : "opacity-0"
+            }`}
+            initial={firstImageZoom}
+            animate={firstImageZoom}
+            transition={{
+              duration: index === 0 && !startSlider ? 2 : 0.8,
+              ease: "easeOut",
+            }}
           />
         );
       })}
 
       {/* Content */}
-      <div className="absolute z-10 top-[38%] md:top-1/3 w-full flex flex-col items-center gap-6 px-4">
+      <div className="absolute z-10 inset-0 flex flex-col items-center justify-center gap-6 px-4">
+        {/* Search Bar */}
         <div className="w-full max-w-2xl">
           <SearchBar />
         </div>
 
+        {/* Heading */}
         <motion.h2
           variants={container}
           initial="hidden"
-          animate="visible"
+          animate={startSlider ? "visible" : "hidden"} 
           className="font-extrabold tracking-tight text-center text-white
                      drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center
                      text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl 2xl:text-5xl leading-tight px-4"
@@ -97,11 +123,13 @@ export default function Banner() {
           ))}
         </motion.h2>
 
+        {/* Subtext */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={startSlider ? { opacity: 1, y: 0 } : { opacity: 0 }}
           transition={{ delay: headingText.length * 0.05 + 0.2, duration: 1 }}
-          className="text-white/90 text-lg md:text-xl font-semibold tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]"
+          className="text-white/90 text-md md:text-xl lg:text-2xl font-semibold tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] max-w-2xl
+                     -mt-4 sm:-mt-1"
         >
           Enhance Everyday Living.
         </motion.p>
