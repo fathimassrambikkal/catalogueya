@@ -27,10 +27,10 @@ export default function Banner() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-
+  // Start slider after first image loads
   useEffect(() => {
     if (!firstImageLoaded) return;
-    const timer = setTimeout(() => setStartSlider(true), 2000); // 2s first zoom + text animation
+    const timer = setTimeout(() => setStartSlider(true), 2000);
     return () => clearTimeout(timer);
   }, [firstImageLoaded]);
 
@@ -55,27 +55,18 @@ export default function Banner() {
 
   const child = {
     hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: "blur(0px)",
-      transition: { duration: 0.5, ease: "easeOut" },
-    },
+    visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.5, ease: "easeOut" } },
   };
 
   const headingText = "Welcome to Catalogueya";
 
-  if (!firstImageLoaded) return null; 
-
   return (
     <section
-      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center`}
+      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center bg-gray-200`}
     >
       {/* Banner Images */}
       {images.map((img, index) => {
         const isActive = index === currentIndex;
-
-        // First image cinematic zoom
         const firstImageZoom =
           index === 0 && !startSlider
             ? { scale: [1.2, 1], x: [-20, 0] }
@@ -111,7 +102,7 @@ export default function Banner() {
         <motion.h2
           variants={container}
           initial="hidden"
-          animate={startSlider ? "visible" : "hidden"} 
+          animate={startSlider ? "visible" : "hidden"}
           className="font-extrabold tracking-tight text-center text-white
                      drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center
                      text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl 2xl:text-5xl leading-tight px-4"
@@ -128,8 +119,7 @@ export default function Banner() {
           initial={{ opacity: 0, y: 20 }}
           animate={startSlider ? { opacity: 1, y: 0 } : { opacity: 0 }}
           transition={{ delay: headingText.length * 0.05 + 0.2, duration: 1 }}
-          className="text-white/90 text-md md:text-xl lg:text-2xl font-semibold tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] max-w-2xl
-                     -mt-4 sm:-mt-1"
+          className="text-white/90 text-md md:text-xl lg:text-2xl font-semibold tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] max-w-2xl -mt-4 sm:-mt-1"
         >
           Enhance Everyday Living.
         </motion.p>
@@ -140,9 +130,7 @@ export default function Banner() {
         {images.map((_, idx) => (
           <button
             key={idx}
-            className={`${
-              windowWidth < 640 ? "w-2.5 h-2.5" : "w-4 h-4"
-            } rounded-full transition-colors ${
+            className={`${windowWidth < 640 ? "w-2.5 h-2.5" : "w-4 h-4"} rounded-full transition-colors ${
               idx === currentIndex ? "bg-white" : "bg-white/50"
             }`}
             onClick={() => setCurrentIndex(idx)}
