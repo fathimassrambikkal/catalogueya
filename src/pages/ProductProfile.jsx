@@ -87,28 +87,23 @@ export default function ProductProfile() {
     }
   };
 
-  // ✅ Flatten all products for “Similar Products”
-  const allProducts = categories.flatMap((cat) =>
-    cat.companies.flatMap((comp) =>
-      (comp.products || []).map((p) => ({
+  // ✅ Similar Products — only from same company
+  const company = categories
+    .find((cat) => cat.id === categoryId)
+    ?.companies.find((comp) => comp.id === companyId);
+
+  const similarProducts =
+    (company?.products || [])
+      .filter((p) => p.id !== product.id)
+      .map((p) => ({
         ...p,
-        categoryId: cat.id,
-        companyId: comp.id,
-        category: cat.title,
-        companyName: comp.name,
+        categoryId,
+        companyId,
+        companyName: company.name,
+        categoryName: product.categoryName,
         image: p.image || p.img,
       }))
-    )
-  );
-
-  const similarProducts = allProducts
-    .filter(
-      (sp) =>
-        sp.id !== product.id &&
-        (sp.categoryId === product.categoryId ||
-          sp.companyId === product.companyId)
-    )
-    .slice(0, 4);
+      .slice(0, 4);
 
   const averageRating =
     reviews.length > 0
