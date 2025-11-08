@@ -108,8 +108,14 @@ export default function HomeServices() {
                       loading="lazy"
                       className="w-full h-full object-cover rounded-full opacity-90 group-hover:opacity-100 transition duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end justify-center rounded-full pb-2">
-                      <h3 className="text-white text-[9px] sm:text-xs md:text-sm font-semibold text-center px-1 leading-tight">
+                    {/* Updated Gradient + Text */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center rounded-full pb-4">
+                      <h3
+                        className="text-white text-[9px] sm:text-xs md:text-sm font-semibold 
+                                   text-center px-2 py-[3px] leading-tight bg-black/40 
+                                   rounded-full backdrop-blur-sm shadow-sm 
+                                   group-hover:bg-black/60 transition"
+                      >
                         {service.title}
                       </h3>
                     </div>

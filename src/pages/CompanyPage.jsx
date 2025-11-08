@@ -151,12 +151,12 @@ export default function CompanyPage() {
         </h2>
 
         {company.products && company.products.length > 0 ? (
-          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-12">
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-1 sm:gap-2 px-4 sm:px-12">
             {company.products.map((product) => (
               <div
                 key={product.id}
                 className="relative overflow-hidden cursor-pointer aspect-square group 
-                           rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 
+                            bg-white/10 backdrop-blur-lg border border-white/20 
                            shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-500"
                 onClick={() =>
                   navigate(
@@ -167,7 +167,7 @@ export default function CompanyPage() {
                 <img
                   src={product.img}
                   alt={product.name}
-                  className="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover object-center  transition-transform duration-500 group-hover:scale-105"
                 />
 
                 <button

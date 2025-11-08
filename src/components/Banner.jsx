@@ -55,7 +55,12 @@ export default function Banner() {
 
   const child = {
     hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
-    visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.5, ease: "easeOut" } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
   };
 
   const headingText = "Welcome to Catalogueya";
@@ -67,10 +72,6 @@ export default function Banner() {
       {/* Banner Images */}
       {images.map((img, index) => {
         const isActive = index === currentIndex;
-        const firstImageZoom =
-          index === 0 && !startSlider
-            ? { scale: [1.2, 1], x: [-20, 0] }
-            : { scale: 1, x: 0 };
 
         return (
           <motion.img
@@ -81,10 +82,10 @@ export default function Banner() {
             className={`absolute w-full h-full object-cover transition-opacity duration-[1200ms] ${
               isActive ? "opacity-100" : "opacity-0"
             }`}
-            initial={firstImageZoom}
-            animate={firstImageZoom}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isActive ? 1 : 0 }}
             transition={{
-              duration: index === 0 && !startSlider ? 2 : 0.8,
+              duration: 0.8,
               ease: "easeOut",
             }}
           />
@@ -92,7 +93,11 @@ export default function Banner() {
       })}
 
       {/* Content */}
-      <div className="absolute z-10 inset-0 flex flex-col items-center justify-center gap-6 px-4">
+      <div
+        className={`absolute z-10 inset-0 flex flex-col items-center justify-center gap-6 px-4 ${
+          windowWidth < 640 ? "translate-y-8" : "translate-y-0"
+        }`}
+      >
         {/* Search Bar */}
         <div className="w-full max-w-2xl">
           <SearchBar />

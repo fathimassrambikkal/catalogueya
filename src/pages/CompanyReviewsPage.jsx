@@ -18,9 +18,12 @@ export default function CompanyReviewsPage() {
   const [newReview, setNewReview] = useState({
     name: "",
     rating: 0,
+    serviceRating: 0,
+    productRating: 0,
     comment: "",
   });
 
+  // Load reviews
   useEffect(() => {
     window.scrollTo(0, 0);
     const saved = localStorage.getItem(storageKey);
@@ -28,9 +31,16 @@ export default function CompanyReviewsPage() {
     else if (company?.reviews) setReviews(company.reviews);
   }, [storageKey, company]);
 
+  // Handle submit
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!newReview.name || !newReview.comment || newReview.rating === 0) {
+    if (
+      !newReview.name ||
+      !newReview.comment ||
+      newReview.rating === 0 ||
+      newReview.serviceRating === 0 ||
+      newReview.productRating === 0
+    ) {
       alert(t("Please complete all fields!"));
       return;
     }
@@ -41,7 +51,13 @@ export default function CompanyReviewsPage() {
     ];
     setReviews(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
-    setNewReview({ name: "", rating: 0, comment: "" });
+    setNewReview({
+      name: "",
+      rating: 0,
+      serviceRating: 0,
+      productRating: 0,
+      comment: "",
+    });
   };
 
   if (!company) {
@@ -61,7 +77,7 @@ export default function CompanyReviewsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-8 lg:px-20 relative">
-      {/* ✅ Fixed Floating Back Button (same as CompanyPage) */}
+      {/* 🔙 Floating Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="fixed top-20 sm:top-18 md:top-20 lg:top-24 left-4 sm:left-6 md:left-8 lg:left-10
@@ -71,11 +87,11 @@ export default function CompanyReviewsPage() {
         <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
       </button>
 
-      {/* Company Header */}
+      {/* 🏢 Company Header */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow p-6 mb-10 mt-24 sm:mt-24 lg:mt-24"
+        className="bg-white rounded-2xl shadow p-6 mb-10 mt-24"
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -88,9 +104,9 @@ export default function CompanyReviewsPage() {
             </p>
           </div>
 
-          {/* Average Rating */}
+          {/* ⭐ Average Rating */}
           <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl">
-            <FaStar className="text-gray-950 text-lg" />
+            <FaStar className="text-gray-900 text-lg" />
             <span className="font-semibold text-gray-800 text-lg">
               {avgRating}
             </span>
@@ -100,7 +116,7 @@ export default function CompanyReviewsPage() {
           </div>
         </div>
 
-        {/* Location Info */}
+        {/* 📍 Location */}
         {company.location && (
           <div className="flex items-center gap-2 mt-4 text-gray-600">
             <FaMapMarkerAlt className="text-blue-500" />
@@ -118,7 +134,7 @@ export default function CompanyReviewsPage() {
         )}
       </motion.div>
 
-      {/* Reviews Section */}
+      {/* 💬 Reviews List */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -135,17 +151,46 @@ export default function CompanyReviewsPage() {
                 key={r.id}
                 className="border-b border-gray-100 pb-4 last:border-none"
               >
+                {/* ⭐ Rating */}
                 <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm text-gray-700 w-16">Rating:</span>
                   {[...Array(5)].map((_, i) => (
                     <FaStar
                       key={i}
                       className={`${
-                        i < r.rating ? "text-gray-950" : "text-gray-300"
+                        i < r.rating ? "text-gray-900" : "text-gray-300"
                       }`}
                     />
                   ))}
                   <span className="text-sm text-gray-500 ml-auto">{r.date}</span>
                 </div>
+
+                {/* 🧰 Service */}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm text-gray-700 w-16">Service:</span>
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar
+                      key={i}
+                      className={`${
+                        i < r.serviceRating ? "text-gray-900" : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* 📦 Products */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm text-gray-700 w-16">Products:</span>
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar
+                      key={i}
+                      className={`${
+                        i < r.productRating ? "text-gray-900" : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+
                 <p className="text-gray-700 mb-1">{r.comment}</p>
                 <p className="text-sm text-gray-500">– {r.name}</p>
               </div>
@@ -156,7 +201,7 @@ export default function CompanyReviewsPage() {
         )}
       </motion.div>
 
-      {/* Add Review Form */}
+      {/* 📝 Add Review Form */}
       <motion.form
         onSubmit={handleSubmit}
         initial={{ opacity: 0 }}
@@ -175,6 +220,7 @@ export default function CompanyReviewsPage() {
           className="border w-full rounded-lg px-3 py-2 mb-3 focus:ring-2 focus:ring-blue-400 outline-none"
         />
 
+        {/* ⭐ Rating */}
         <div className="flex items-center gap-2 mb-3">
           <label className="text-gray-700 font-medium">{t("Rating")}:</label>
           <div className="flex gap-1">
@@ -184,7 +230,47 @@ export default function CompanyReviewsPage() {
                 onClick={() => setNewReview({ ...newReview, rating: r })}
                 className={`cursor-pointer text-lg ${
                   newReview.rating >= r
-                    ? "text-gray-950"
+                    ? "text-gray-900"
+                    : "text-gray-300 hover:text-gray-400"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Service */}
+        <div className="flex items-center gap-2 mb-3">
+          <label className="text-gray-700 font-medium">{t("Service")}:</label>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((r) => (
+              <FaStar
+                key={r}
+                onClick={() =>
+                  setNewReview({ ...newReview, serviceRating: r })
+                }
+                className={`cursor-pointer text-lg ${
+                  newReview.serviceRating >= r
+                    ? "text-gray-900"
+                    : "text-gray-300 hover:text-gray-400"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Products */}
+        <div className="flex items-center gap-2 mb-3">
+          <label className="text-gray-700 font-medium">{t("Products")}:</label>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((r) => (
+              <FaStar
+                key={r}
+                onClick={() =>
+                  setNewReview({ ...newReview, productRating: r })
+                }
+                className={`cursor-pointer text-lg ${
+                  newReview.productRating >= r
+                    ? "text-gray-900"
                     : "text-gray-300 hover:text-gray-400"
                 }`}
               />
