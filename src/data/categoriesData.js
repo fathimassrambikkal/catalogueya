@@ -220,11 +220,11 @@ export const categories = [
         phone: "50874532",
         googleMapLink: "https://maps.google.com/?q=Al+Rayyan,Qatar",
         products: [
-          { id: "wood6", name: "Bookshelf", price: 60, img: ms1},
-          { id: "wood7", name: "Coffee Table", price: 70, img: ms2},
-          { id: "wood8", name: "Bed Frame", price: 130, img: ms3},
-          { id: "wood9", name: "Kitchen Cabinet", price: 140, img: ms4},
-          { id: "wood10", name: "Shoe Rack", price: 45, img: ms5},
+          { id: "wood6", name: "sofa set", price: 60, img: ms1},
+          { id: "wood7", name: "sofa set", price: 70, img: ms2},
+          { id: "wood8", name: "sofa set", price: 130, img: ms3},
+          { id: "wood9", name: "sofa set", price: 140, img: ms4},
+          { id: "wood10", name: "sofa set", price: 45, img: ms5},
         ],
       },
        {
@@ -270,10 +270,10 @@ export const categories = [
         phone: "50874532",
         googleMapLink: "https://maps.google.com/?q=Al+Rayyan,Qatar",
         products: [
-          { id: "wood15", name: "door", price: 60, img: js1},
-          { id: "wood16", name: "door", price: 70, img: js2},
-          { id: "wood17", name: "door", price: 130, img: js3},
-          { id: "wood18", name: "door", price: 140, img: js4},
+          { id: "wood15", name: "sofa set", price: 60, img: js1},
+          { id: "wood16", name: "sofa set", price: 70, img: js2},
+          { id: "wood17", name: "sofa set", price: 130, img: js3},
+          { id: "wood18", name: "sofa set", price: 140, img: js4},
          
         ],
       },
