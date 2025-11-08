@@ -7,7 +7,7 @@ import {
   FaHeart,
   FaShareAlt,
 } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { categories } from "../data/categoriesData";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
@@ -20,8 +20,11 @@ export default function ProductProfile() {
   const whatsappNumber = "97400000000";
   const { favourites, toggleFavourite } = useFavourites();
 
-  const productId = params.id || params.productId || params.pid;
+  // ✅ Extract params safely
+  const { categoryId, companyId, id: routeProductId, productId, pid } = params;
+  const resolvedProductId = routeProductId || productId || pid;
 
+  // ✅ Improved product lookup (matches category + company + product)
   const product = categories
     .flatMap((cat) =>
       cat.companies.flatMap((comp) =>
@@ -35,7 +38,12 @@ export default function ProductProfile() {
         }))
       )
     )
-    .find((p) => String(p.id) === String(productId));
+    .find(
+      (p) =>
+        String(p.id) === String(resolvedProductId) &&
+        String(p.categoryId) === String(categoryId) &&
+        String(p.companyId) === String(companyId)
+    );
 
   const [selectedImage, setSelectedImage] = useState(product?.image);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -44,6 +52,7 @@ export default function ProductProfile() {
   const [reviewName, setReviewName] = useState("");
   const [reviews, setReviews] = useState([]);
 
+  // ✅ Load reviews for correct product
   useEffect(() => {
     if (product) {
       setSelectedImage(product.image);
@@ -52,7 +61,7 @@ export default function ProductProfile() {
       const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
       setReviews(savedReviews);
     }
-  }, [productId]);
+  }, [resolvedProductId, categoryId, companyId]);
 
   if (!product)
     return (
@@ -63,6 +72,7 @@ export default function ProductProfile() {
 
   const isFavourite = favourites.some((fav) => fav.id === product.id);
 
+  // ✅ Share handler
   const handleShare = (p) => {
     const shareData = {
       title: p.name,
@@ -77,6 +87,7 @@ export default function ProductProfile() {
     }
   };
 
+  // ✅ Flatten all products for “Similar Products”
   const allProducts = categories.flatMap((cat) =>
     cat.companies.flatMap((comp) =>
       (comp.products || []).map((p) => ({
@@ -84,6 +95,7 @@ export default function ProductProfile() {
         categoryId: cat.id,
         companyId: comp.id,
         category: cat.title,
+        companyName: comp.name,
         image: p.image || p.img,
       }))
     )
@@ -103,6 +115,7 @@ export default function ProductProfile() {
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : product.rating || 0;
 
+  // ✅ Review submit
   const handleReviewSubmit = () => {
     if (!reviewName || !reviewText || reviewRating === 0) {
       alert("Please enter your name, rating, and comment.");
@@ -132,8 +145,8 @@ export default function ProductProfile() {
 
   return (
     <>
-   
-    <button
+      {/* Back button */}
+      <button
         onClick={() => navigate(-1)}
         className="absolute top-20 sm:top-8 left-5 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition"
       >
@@ -142,7 +155,7 @@ export default function ProductProfile() {
 
       {/* Product Section */}
       <motion.section
-        key={productId}
+        key={resolvedProductId}
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -217,7 +230,7 @@ export default function ProductProfile() {
           </div>
         </div>
 
-        {/* Right: Details */}
+        {/* Right: Product Details */}
         <div className="flex flex-col space-y-6">
           <p className="text-gray-500 text-sm uppercase tracking-wide">
             {product.categoryName}

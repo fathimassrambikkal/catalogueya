@@ -1,12 +1,13 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MdIosShare } from "react-icons/md";
+import { FaStar } from "react-icons/fa";
 import { categories } from "../data/categoriesData";
 import { useFavourites } from "../context/FavouriteContext";
-import { FaStar } from "react-icons/fa";
 
+// ✅ Lazy load heavy icons only
 const FaWhatsapp = React.lazy(() =>
   import("react-icons/fa").then((m) => ({ default: m.FaWhatsapp }))
 );
@@ -22,8 +23,12 @@ export default function CompanyPage() {
   const navigate = useNavigate();
   const { favourites, toggleFavourite } = useFavourites();
 
-  const category = categories.find((cat) => cat.id === categoryId);
-  const company = category?.companies.find((c) => c.id === companyId);
+  // ✅ UseMemo to avoid re-finding on each render
+  const { category, company } = useMemo(() => {
+    const cat = categories.find((c) => c.id === categoryId);
+    const comp = cat?.companies.find((c) => c.id === companyId);
+    return { category: cat, company: comp };
+  }, [categoryId, companyId]);
 
   if (!category || !company) {
     return (
@@ -44,28 +49,27 @@ export default function CompanyPage() {
           background: `linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${
             company.banner || company.logo || category.image
           }) center/cover no-repeat`,
+          willChange: "transform, opacity",
         }}
       >
-        {/* Back Button */}
+        {/* 🔙 Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-20 sm:top-22 md:top-24 lg:top-28 left-4 sm:left-6 md:left-8 lg:left-10
-                     z-30 p-2 sm:p-2 md:p-2 lg:p-2 bg-white/50 backdrop-blur-lg rounded-full
-                     border border-white/50 shadow-lg hover:bg-white/50 hover:scale-110
-                     transition-all duration-300"
+          className="absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full
+                     border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300"
         >
           <Suspense fallback={<span>←</span>}>
-            <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
+            <FaArrowLeft className="text-gray-700 text-lg sm:text-xl" />
           </Suspense>
         </button>
 
-        {/* Share Button */}
+        {/* 🔗 Share Button */}
         <button
           onClick={() => {
             if (navigator.share) {
               navigator.share({
                 title: company.name,
-                text: `Check out ${company.name} on our platform!`,
+                text: `Check out ${company.name} on Catalogueya!`,
                 url: window.location.href,
               });
             } else {
@@ -73,9 +77,9 @@ export default function CompanyPage() {
               alert("Link copied to clipboard!");
             }
           }}
-          className="absolute top-24 right-3 sm:top-24 sm:right-5 z-30 flex items-center justify-center 
-                     w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-lg 
-                     hover:bg-white/30 shadow-xl hover:scale-105 transition"
+          className="absolute top-24 right-4 sm:right-8 z-30 flex items-center justify-center 
+                     w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-md 
+                     hover:bg-white/30 shadow-xl hover:scale-105 transition-all duration-300"
         >
           <MdIosShare className="text-white text-xl sm:text-2xl" />
         </button>
@@ -85,8 +89,11 @@ export default function CompanyPage() {
           <img
             src={company.logo || category.image}
             alt={company.name}
+            loading="eager"
+            decoding="async"
             className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain rounded-xl 
                        border-2 border-white/50 shadow-2xl backdrop-blur-sm"
+            style={{ willChange: "transform" }}
           />
           <div className="flex flex-col justify-center text-white flex-1 min-w-0">
             <h1 className="text-3xl sm:text-5xl font-bold tracking-tight drop-shadow-2xl leading-tight">
@@ -123,11 +130,11 @@ export default function CompanyPage() {
             </div>
 
             {/* 📍 Location */}
-            <div className="flex items-center gap-1 mt-2 text-xs sm:text-sm opacity-85">
-              <span role="img" aria-label="location">
-                📍
-              </span>
-              <p>
+            {company.location && (
+              <div className="flex items-center gap-1 mt-2 text-xs sm:text-sm opacity-85">
+                <span role="img" aria-label="location">
+                  📍
+                </span>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                     company.location
@@ -138,8 +145,8 @@ export default function CompanyPage() {
                 >
                   {company.location}
                 </a>
-              </p>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -150,26 +157,30 @@ export default function CompanyPage() {
           Our Products
         </h2>
 
-        {company.products && company.products.length > 0 ? (
+        {company.products?.length ? (
           <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-1 sm:gap-2 px-4 sm:px-12">
             {company.products.map((product) => (
               <div
                 key={product.id}
                 className="relative overflow-hidden cursor-pointer aspect-square group 
-                            bg-white/10 backdrop-blur-lg border border-white/20 
-                           shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-500"
+                            bg-white/10 backdrop-blur-md border border-white/20 
+                            shadow-md hover:shadow-2xl hover:scale-[1.02] transition-all duration-400"
                 onClick={() =>
                   navigate(
                     `/category/${categoryId}/company/${companyId}/product/${product.id}`
                   )
                 }
               >
+                {/* ✅ Lazy-load images for speed */}
                 <img
                   src={product.img}
                   alt={product.name}
-                  className="w-full h-full object-cover object-center  transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
 
+                {/* ❤️ Favourite Toggle */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

@@ -14,6 +14,11 @@ import securityImg from "../assets/security.jpg";
 // =============================
 import alrayhanLogo from "../assets/alrayhan.png";
 import mashatilDiscoveryLogo from "../assets/logo1.png";
+import alruhullogo from "../assets/logo6.png";
+import mansurlogo from "../assets/logo4.png";
+import almajedmobeeliyath from "../assets/logo7.jpg";
+import  AbuJohar from "../assets/logo2.png";
+
 
 // =============================
 // Banners (NEW)
@@ -54,6 +59,7 @@ import g22 from "../assets/g22.jpg";
 import g23 from "../assets/g23.jpg";
 import g24 from "../assets/g24.jpg";
 import g25 from "../assets/g25.jpg";
+
 // =============================
 // Gardening Product Images alrayhan
 // =============================
@@ -80,11 +86,50 @@ import a20 from "../assets/a20.jpg";
 import a21 from "../assets/a21.jpg";
 import a22 from "../assets/a22.jpg";
 import a23 from "../assets/a23.jpg";
+// =============================
+// carpentry Product Images alruhul
+// =============================
+import s1 from "../assets/s1.jpg";
+import s2 from "../assets/s2.jpg";
+import s3 from "../assets/s3.jpg";
+// =============================
+// carpentry Product Images mansur
+// =============================
+import ms1 from "../assets/ms1.jpg";
+import ms2 from "../assets/ms2.jpg";
+import ms3 from "../assets/ms3.jpg";
+import ms4 from "../assets/ms4.jpg";
+import ms5 from "../assets/ms5.jpg";
+// =============================
+// carpentry Product Images majeed
+// =============================
+import mc1 from "../assets/mc1.jpg";
+import mc2 from "../assets/mc2.jpg";
+import mc3 from "../assets/mc3.jpg";
+import mc4 from "../assets/mc4.jpg";
+import mc5 from "../assets/mc5.jpg";
+// =============================
+// carpentry Product Images aljohar
+// =============================
+import js1 from "../assets/js1.jpg";
+import js2 from "../assets/js2.jpg";
+import js3 from "../assets/js3.jpg";
+import js4 from "../assets/js4.jpg";
+import jw1 from "../assets/jw1.jpg";
+import jw2 from "../assets/jw2.jpg";
+import jw3 from "../assets/jw3.jpg";
+import jw4 from "../assets/jw4.jpg";
+import jw5 from "../assets/jw5.jpg";
+import jw6 from "../assets/jw6.jpg";
+import jw7 from "../assets/jw7.jpg";
+import jc1 from "../assets/jc1.jpg";
 
 
-
-
-
+// =============================
+// curtains Product Images alruhul
+// =============================
+import c1 from "../assets/c1.jpg";
+import c2 from "../assets/c2.jpg";
 // =============================
 // Categories Data
 // =============================
@@ -133,34 +178,103 @@ export const categories = [
     image: carpenterImg,
     companies: [
       {
-        id: "woodworks",
-        name: "WoodWorks Co.",
-        rating: 4.6,
+        id: "alruhul",
+        name: "Al Ruhul",
+        logo: alruhullogo,
         banner: carpenterBanner,
+        rating: 4.6,
+        title: "Expert Carpentry & Custom Furniture",
+        about:
+          "Specialists in custom furniture, home woodwork, and wooden interiors with precision craftsmanship.",
+        businessNumber: "305478",
+        workingHours: "10",
+        delivery: "Yes",
+        implementation: "Yes",
+        location: "Doha, Qatar",
+        email: "alruhul@gmail.com",
+        phone: "55678900",
+        googleMapLink: "https://maps.google.com/?q=Doha,Qatar",
         products: [
-          {
-            id: "wood1",
-            name: "Wooden Dining Table",
-            price: 120,
-            img: carpenterImg,
-            rating: 4.8,
-            isNewArrival: true,
-          },
+          { id: "wood1", name: "sofa set", price: 120, img: s1 },
+          { id: "wood2", name: "sofa set", price: 50, img: s2 },
+          { id: "wood3", name: "sofa set", price: 85, img: s3 },
+          ,
+          
         ],
       },
       {
-        id: "furniPro",
-        name: "FurniPro",
-        rating: 4.4,
+        id: "mansur",
+        name: "Mansur Al Attiya Decor",
+        logo: mansurlogo,
         banner: carpenterBanner,
+        rating: 4.4,
+        title: "Custom Interior Woodwork",
+        about:
+          "We design, craft, and install top-quality wooden furniture and fittings for homes and offices.",
+        businessNumber: "304522",
+        workingHours: "8",
+        delivery: "Yes",
+        implementation: "Yes",
+        location: "Al Rayyan, Qatar",
+        email: "furnipro@gmail.com",
+        phone: "50874532",
+        googleMapLink: "https://maps.google.com/?q=Al+Rayyan,Qatar",
         products: [
-          {
-            id: "wood2",
-            name: "Wall Shelf Set",
-            price: 50,
-            img: carpenterImg,
-            rating: 4.5,
-          },
+          { id: "wood6", name: "Bookshelf", price: 60, img: ms1},
+          { id: "wood7", name: "Coffee Table", price: 70, img: ms2},
+          { id: "wood8", name: "Bed Frame", price: 130, img: ms3},
+          { id: "wood9", name: "Kitchen Cabinet", price: 140, img: ms4},
+          { id: "wood10", name: "Shoe Rack", price: 45, img: ms5},
+        ],
+      },
+       {
+        id: "majed",
+        name: "Al majed mobeeliyath",
+        logo: almajedmobeeliyath,
+        banner: carpenterBanner,
+        rating: 4.4,
+        title: "Custom Interior Woodwork",
+        about:
+          "We design, craft, and install top-quality wooden furniture and fittings for homes and offices.",
+        businessNumber: "304522",
+        workingHours: "8",
+        delivery: "Yes",
+        implementation: "Yes",
+        location: "Al Rayyan, Qatar",
+        email: "furnipro@gmail.com",
+        phone: "50874532",
+        googleMapLink: "https://maps.google.com/?q=Al+Rayyan,Qatar",
+        products: [
+          { id: "wood11", name: "door", price: 60, img: mc1},
+          { id: "wood12", name: "door", price: 70, img: mc2},
+          { id: "wood13", name: "door", price: 130, img: mc3},
+          { id: "wood14", name: "door", price: 140, img: mc4},
+          { id: "wood15", name: "door", price: 45, img: mc5},
+        ],
+      },
+      {
+        id: "abujohar",
+        name: "Abu Johar Furnitures",
+        logo: AbuJohar,
+        banner: carpenterBanner,
+        rating: 4.4,
+        title: "Custom Interior Woodwork",
+        about:
+          "We design, craft, and install top-quality wooden furniture and fittings for homes and offices.",
+        businessNumber: "304522",
+        workingHours: "8",
+        delivery: "Yes",
+        implementation: "Yes",
+        location: "Al Rayyan, Qatar",
+        email: "furnipro@gmail.com",
+        phone: "50874532",
+        googleMapLink: "https://maps.google.com/?q=Al+Rayyan,Qatar",
+        products: [
+          { id: "wood15", name: "door", price: 60, img: js1},
+          { id: "wood16", name: "door", price: 70, img: js2},
+          { id: "wood17", name: "door", price: 130, img: js3},
+          { id: "wood18", name: "door", price: 140, img: js4},
+         
         ],
       },
     ],
@@ -209,33 +323,48 @@ export const categories = [
     image: curtainsImg,
     companies: [
       {
-        id: "curtainsCo1",
-        name: "Elegant Drapes",
-        rating: 4.5,
+        id: "alruhul",
+        name: "Al Ruhul",
+        logo: alruhullogo,
         banner: curtainsBanner,
+        rating: 4.5,
+        title: "Custom Curtains and Blinds",
+        about:
+          "We offer premium curtain designs, installations, and blinds for residential and commercial spaces.",
+        businessNumber: "402215",
+        workingHours: "9",
+        delivery: "Yes",
+        implementation: "Yes",
+        location: "Doha, Qatar",
+        email: "elegantdrapes@gmail.com",
+        phone: "55124567",
+        googleMapLink: "https://maps.google.com/?q=Doha,Qatar",
         products: [
-          {
-            id: "curtain1",
-            name: "Luxury Curtain Set",
-            price: 80,
-            img: curtainsImg,
-            rating: 4.6,
-          },
+          { id: "curtain1", name: "Luxury Curtain Set", price: 80, img: c1 },
+          { id: "curtain2", name: "Sheer Curtains", price: 35, img: c2 },
+         
         ],
       },
       {
-        id: "curtainsCo2",
-        name: "HomeShades",
-        rating: 4.2,
+        id: "abujohar",
+        name: "Abu Johar Furnitures",
+        logo: AbuJohar,
         banner: curtainsBanner,
+        rating: 4.3,
+        title: "HomeShades Curtain Experts",
+        about:
+          "High-quality, stylish, and durable blinds and curtains tailored to your interior style.",
+        businessNumber: "401789",
+        workingHours: "10",
+        delivery: "Yes",
+        implementation: "Yes",
+        location: "Al Wakra, Qatar",
+        email: "homeshades@gmail.com",
+        phone: "55893421",
+        googleMapLink: "https://maps.google.com/?q=Al+Wakra,Qatar",
         products: [
-          {
-            id: "curtain2",
-            name: "Sheer Curtains",
-            price: 35,
-            img: curtainsImg,
-            rating: 4.3,
-          },
+          { id: "curtain6", name: "Velvet Curtain", price: 85, img: jc1 },
+          
         ],
       },
     ],
@@ -246,37 +375,36 @@ export const categories = [
     image: wallpaperImg,
     companies: [
       {
-        id: "wallco1",
-        name: "WallArt",
-        rating: 4.6,
-        banner: wallpaperBanner,
-        products: [
-          {
-            id: "wp1",
-            name: "Floral Wallpaper",
-            price: 50,
-            img: wallpaperImg,
-            rating: 4.5,
-          },
-        ],
-      },
-      {
-        id: "wallco2",
-        name: "DecorWalls",
+        id: "abujohar",
+        name: "Abu Johar Furnitures",
+        logo: AbuJohar,
+        banner: curtainsBanner,
         rating: 4.3,
-        banner: wallpaperBanner,
+        title: "HomeShades Curtain Experts",
+        about:
+          "High-quality, stylish, and durable blinds and curtains tailored to your interior style.",
+        businessNumber: "401789",
+        workingHours: "10",
+        delivery: "Yes",
+        implementation: "Yes",
+        location: "Al Wakra, Qatar",
+        email: "homeshades@gmail.com",
+        phone: "55893421",
+        googleMapLink: "https://maps.google.com/?q=Al+Wakra,Qatar",
         products: [
-          {
-            id: "wp2",
-            name: "Textured Wallpaper",
-            price: 60,
-            img: wallpaperImg,
-            rating: 4.4,
-          },
+          { id: "wallpaper6", name: " wallpaper", price: 85, img: jw1 },
+          { id: "wallpaper7", name: "wallpaper", price: 55, img: jw2 },
+          { id: "wallpaper8", name: "wallpaper", price: 75, img: jw3 },
+          { id: "wallpaper9", name: "wallpaper", price: 65, img: jw4 },
+          { id: "wallpaper10", name: "wallpaper", price: 40, img: jw5 },
+          { id: "wallpaper9", name: "wallpaper", price: 65, img: jw6 },
+          { id: "wallpaper10", name: "wallpaper", price: 40, img: jw7 },
         ],
       },
+      
     ],
   },
+  // ✅ Gardening section (unchanged)
   {
     id: "gardening",
     title: "Gardening",
@@ -300,33 +428,31 @@ export const categories = [
         email: "wahaab562@gmail.com",
         phone: "55106186",
         googleMapLink: "https://maps.google.com/?q=Doha,Qatar",
-       products: [
-  { id: "plant1", name: "Plant 1", price: 30, img: a1 },
-  { id: "plant2", name: "Plant 2", price: 25, img: a2 },
-  { id: "plant3", name: "Plant 3", price: 35, img: a3 },
-  { id: "plant4", name: "Plant 4", price: 28, img: a4 },
-  { id: "plant5", name: "Plant 5", price: 22, img: a5 },
-  { id: "plant6", name: "Plant 6", price: 20, img: a6 },
-  { id: "plant7", name: "Plant 7", price: 27, img: a7 },
-  { id: "plant8", name: "Plant 8", price: 32, img: a8 },
-  { id: "plant9", name: "Plant 9", price: 26, img: a9 },
-  { id: "plant10", name: "Plant 10", price: 30, img: a10 },
-  { id: "plant11", name: "Plant 11", price: 24, img: a11 },
-  { id: "plant12", name: "Plant 12", price: 29, img: a12 },
-  { id: "plant13", name: "Plant 13", price: 31, img: a13 },
-  { id: "plant14", name: "Plant 14", price: 23, img: a14 },
-  { id: "plant15", name: "Plant 15", price: 32, img: a15 },
-  { id: "plant16", name: "Plant 16", price: 28, img: a16 },
-  { id: "plant17", name: "Plant 17", price: 25, img: a17 },
-  { id: "plant18", name: "Plant 18", price: 34, img: a18 },
-  { id: "plant19", name: "Plant 19", price: 30, img: a19 },
-  { id: "plant20", name: "Plant 20", price: 27, img: a20 },
-  { id: "plant21", name: "Plant 21", price: 29, img: a21 },
-  { id: "plant22", name: "Plant 22", price: 31, img: a22 },
-  { id: "plant23", name: "Plant 23", price: 26, img: a23 },
-  
-],
-
+        products: [
+          { id: "plant1", name: "Plant 1", price: 30, img: a1 },
+          { id: "plant2", name: "Plant 2", price: 25, img: a2 },
+          { id: "plant3", name: "Plant 3", price: 35, img: a3 },
+          { id: "plant4", name: "Plant 4", price: 28, img: a4 },
+          { id: "plant5", name: "Plant 5", price: 22, img: a5 },
+          { id: "plant6", name: "Plant 6", price: 20, img: a6 },
+          { id: "plant7", name: "Plant 7", price: 27, img: a7 },
+          { id: "plant8", name: "Plant 8", price: 32, img: a8 },
+          { id: "plant9", name: "Plant 9", price: 26, img: a9 },
+          { id: "plant10", name: "Plant 10", price: 30, img: a10 },
+          { id: "plant11", name: "Plant 11", price: 24, img: a11 },
+          { id: "plant12", name: "Plant 12", price: 29, img: a12 },
+          { id: "plant13", name: "Plant 13", price: 31, img: a13 },
+          { id: "plant14", name: "Plant 14", price: 23, img: a14 },
+          { id: "plant15", name: "Plant 15", price: 32, img: a15 },
+          { id: "plant16", name: "Plant 16", price: 28, img: a16 },
+          { id: "plant17", name: "Plant 17", price: 25, img: a17 },
+          { id: "plant18", name: "Plant 18", price: 34, img: a18 },
+          { id: "plant19", name: "Plant 19", price: 30, img: a19 },
+          { id: "plant20", name: "Plant 20", price: 27, img: a20 },
+          { id: "plant21", name: "Plant 21", price: 29, img: a21 },
+          { id: "plant22", name: "Plant 22", price: 31, img: a22 },
+          { id: "plant23", name: "Plant 23", price: 26, img: a23 },
+        ],
       },
       {
         id: "gardenCo2",
@@ -344,33 +470,32 @@ export const categories = [
         phone: "31098634",
         googleMapLink: "https://maps.google.com/?q=Al+gharafa,Qatar",
         products: [
-  { id: "plant1", name: "Fiddle Leaf Fig", price: 30, img: g1 },
-  { id: "plant2", name: "Snake Plant", price: 25, img: g2 },
-  { id: "plant3", name: "Monstera Deliciosa", price: 35, img: g3 },
-  { id: "plant4", name: "ZZ Plant", price: 28, img: g4 },
-  { id: "plant5", name: "Peace Lily", price: 22, img: g5 },
-  { id: "plant6", name: "Spider Plant", price: 20, img: g6 },
-  { id: "plant7", name: "Plant 7", price: 27, img: g7 },
-  { id: "plant8", name: "Plant 8", price: 32, img: g8 },
-  { id: "plant9", name: "Plant 9", price: 26, img: g9 },
-  { id: "plant10", name: "Plant 10", price: 30, img: g10 },
-  { id: "plant11", name: "Plant 11", price: 24, img: g11 },
-  { id: "plant12", name: "Plant 12", price: 29, img: g12 },
-  { id: "plant13", name: "Plant 13", price: 31, img: g13 },
-  { id: "plant14", name: "Plant 14", price: 23, img: g14 },
-  { id: "plant15", name: "Plant 15", price: 32, img: g15 },
-  { id: "plant16", name: "Plant 16", price: 28, img: g16 },
-  { id: "plant17", name: "Plant 17", price: 25, img: g17 },
-  { id: "plant18", name: "Plant 18", price: 34, img: g18 },
-  { id: "plant19", name: "Plant 19", price: 30, img: g19 },
-  { id: "plant20", name: "Plant 20", price: 27, img: g20 },
-  { id: "plant21", name: "Plant 21", price: 29, img: g21 },
-  { id: "plant22", name: "Plant 22", price: 31, img: g22 },
-  { id: "plant23", name: "Plant 23", price: 26, img: g23 },
-  { id: "plant24", name: "Plant 24", price: 33, img: g24 },
-  { id: "plant25", name: "Plant 25", price: 28, img: g25 },
-]
-
+          { id: "plant1", name: "Fiddle Leaf Fig", price: 30, img: g1 },
+          { id: "plant2", name: "Snake Plant", price: 25, img: g2 },
+          { id: "plant3", name: "Monstera Deliciosa", price: 35, img: g3 },
+          { id: "plant4", name: "ZZ Plant", price: 28, img: g4 },
+          { id: "plant5", name: "Peace Lily", price: 22, img: g5 },
+          { id: "plant6", name: "Spider Plant", price: 20, img: g6 },
+          { id: "plant7", name: "Plant 7", price: 27, img: g7 },
+          { id: "plant8", name: "Plant 8", price: 32, img: g8 },
+          { id: "plant9", name: "Plant 9", price: 26, img: g9 },
+          { id: "plant10", name: "Plant 10", price: 30, img: g10 },
+          { id: "plant11", name: "Plant 11", price: 24, img: g11 },
+          { id: "plant12", name: "Plant 12", price: 29, img: g12 },
+          { id: "plant13", name: "Plant 13", price: 31, img: g13 },
+          { id: "plant14", name: "Plant 14", price: 23, img: g14 },
+          { id: "plant15", name: "Plant 15", price: 32, img: g15 },
+          { id: "plant16", name: "Plant 16", price: 28, img: g16 },
+          { id: "plant17", name: "Plant 17", price: 25, img: g17 },
+          { id: "plant18", name: "Plant 18", price: 34, img: g18 },
+          { id: "plant19", name: "Plant 19", price: 30, img: g19 },
+          { id: "plant20", name: "Plant 20", price: 27, img: g20 },
+          { id: "plant21", name: "Plant 21", price: 29, img: g21 },
+          { id: "plant22", name: "Plant 22", price: 31, img: g22 },
+          { id: "plant23", name: "Plant 23", price: 26, img: g23 },
+          { id: "plant24", name: "Plant 24", price: 33, img: g24 },
+          { id: "plant25", name: "Plant 25", price: 28, img: g25 },
+        ],
       },
     ],
   },
