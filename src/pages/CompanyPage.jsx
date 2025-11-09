@@ -59,7 +59,7 @@ export default function CompanyPage() {
                      border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300"
         >
           <Suspense fallback={<span>←</span>}>
-            <FaArrowLeft className="text-gray-700 text-lg sm:text-xl" />
+            <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
           </Suspense>
         </button>
 

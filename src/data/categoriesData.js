@@ -198,7 +198,7 @@ export const categories = [
           { id: "wood1", name: "sofa set", price: 120, img: s1 },
           { id: "wood2", name: "sofa set", price: 50, img: s2 },
           { id: "wood3", name: "sofa set", price: 85, img: s3 },
-          ,
+          
           
         ],
       },
