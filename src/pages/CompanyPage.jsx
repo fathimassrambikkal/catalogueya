@@ -1,11 +1,12 @@
 "use client";
 
-import React, { Suspense, useMemo } from "react";
+import React, { Suspense, useMemo, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MdIosShare } from "react-icons/md";
 import { FaStar } from "react-icons/fa";
-import { categories } from "../data/categoriesData";
+import { categories as localCategories } from "../data/categoriesData";
 import { useFavourites } from "../context/FavouriteContext";
+import { getCompany, getSettings, getFixedWords } from "../api";
 
 // ✅ Lazy load heavy icons only
 const FaWhatsapp = React.lazy(() =>
@@ -23,22 +24,70 @@ export default function CompanyPage() {
   const navigate = useNavigate();
   const { favourites, toggleFavourite } = useFavourites();
 
-  // ✅ UseMemo to avoid re-finding on each render
-  const { category, company } = useMemo(() => {
-    const cat = categories.find((c) => c.id === categoryId);
-    const comp = cat?.companies.find((c) => c.id === companyId);
-    return { category: cat, company: comp };
+  const [category, setCategory] = useState(null);
+  const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({});
+  const [fixedWords, setFixedWords] = useState({});
+
+  // Helper to check favourites
+  const isFavourite = (id) => favourites.some((fav) => fav.id === id);
+
+  // ===== Fetch backend data =====
+  useEffect(() => {
+    setLoading(true);
+
+    // Fetch company data
+    getCompany(companyId)
+      .then((res) => {
+        const data = res.data;
+        if (data) {
+          setCompany(data);
+
+          // find matching category in backend response
+          if (data.category) setCategory(data.category);
+          else {
+            // fallback to local category
+            const localCat = localCategories.find((c) => c.id === categoryId);
+            setCategory(localCat || null);
+          }
+        } else {
+          // fallback to local data
+          const localCat = localCategories.find((c) => c.id === categoryId);
+          const localComp = localCat?.companies.find((c) => c.id === companyId);
+          setCategory(localCat || null);
+          setCompany(localComp || null);
+        }
+      })
+      .catch(() => {
+        // fallback to local data on error
+        const localCat = localCategories.find((c) => c.id === categoryId);
+        const localComp = localCat?.companies.find((c) => c.id === companyId);
+        setCategory(localCat || null);
+        setCompany(localComp || null);
+      })
+      .finally(() => setLoading(false));
+
+    // Fetch settings & fixed words in parallel
+    Promise.all([getSettings(), getFixedWords()])
+      .then(([settingsRes, fixedWordsRes]) => {
+        setSettings(settingsRes.data || {});
+        setFixedWords(fixedWordsRes.data || {});
+      })
+      .catch(() => {
+        // fail silently, optional: console.warn("Failed to load settings/fixed words");
+      });
   }, [categoryId, companyId]);
 
-  if (!category || !company) {
+  if (loading)
+    return <div className="flex justify-center items-center min-h-screen text-gray-600">Loading...</div>;
+
+  if (!category || !company)
     return (
       <div className="flex justify-center items-center min-h-screen text-gray-500 text-lg font-medium">
         Company not found.
       </div>
     );
-  }
-
-  const isFavourite = (id) => favourites.some((fav) => fav.id === id);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white">
@@ -153,7 +202,7 @@ export default function CompanyPage() {
 
       {/* ============ Products Section ============ */}
       <section className="py-12">
-        <h2 className="text-3xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12">
+        <h2 className="text-2xl md:text-3xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12">
           Our Products
         </h2>
 
@@ -173,7 +222,7 @@ export default function CompanyPage() {
               >
                 {/* ✅ Lazy-load images for speed */}
                 <img
-                  src={product.img}
+                  src={product.img || product.image}
                   alt={product.name}
                   loading="lazy"
                   decoding="async"

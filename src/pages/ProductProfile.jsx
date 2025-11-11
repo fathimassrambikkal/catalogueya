@@ -7,12 +7,13 @@ import {
   FaHeart,
   FaShareAlt,
 } from "react-icons/fa";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { categories } from "../data/categoriesData";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { useFavourites } from "../context/FavouriteContext";
 import { Lens } from "../components/Lens";
+import { getProduct, getSettings, getFixedWords } from "../api"; 
 
 export default function ProductProfile() {
   const params = useParams();
@@ -20,48 +21,67 @@ export default function ProductProfile() {
   const whatsappNumber = "97400000000";
   const { favourites, toggleFavourite } = useFavourites();
 
-  // ✅ Extract params safely
   const { categoryId, companyId, id: routeProductId, productId, pid } = params;
   const resolvedProductId = routeProductId || productId || pid;
 
-  // ✅ Improved product lookup (matches category + company + product)
-  const product = categories
-    .flatMap((cat) =>
-      cat.companies.flatMap((comp) =>
-        (comp.products || []).map((p) => ({
-          ...p,
-          categoryId: cat.id,
-          categoryName: cat.title,
-          companyId: comp.id,
-          companyName: comp.name,
-          image: p.image || p.img,
-        }))
-      )
-    )
-    .find(
-      (p) =>
-        String(p.id) === String(resolvedProductId) &&
-        String(p.categoryId) === String(categoryId) &&
-        String(p.companyId) === String(companyId)
-    );
-
-  const [selectedImage, setSelectedImage] = useState(product?.image);
+  const [product, setProduct] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [fixedWords, setFixedWords] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [reviewName, setReviewName] = useState("");
-  const [reviews, setReviews] = useState([]);
 
-  // ✅ Load reviews for correct product
+  useEffect(() => {
+    getProduct(resolvedProductId)
+      .then((res) => {
+        if (res.data) {
+          setProduct({ ...res.data, image: res.data.image || res.data.img });
+          setSelectedImage(res.data.image || res.data.img);
+        } else fallbackProduct();
+      })
+      .catch(fallbackProduct);
+
+    function fallbackProduct() {
+      const localProd = categories
+        .flatMap((cat) =>
+          cat.companies.flatMap((comp) =>
+            (comp.products || []).map((p) => ({
+              ...p,
+              categoryId: cat.id,
+              categoryName: cat.title,
+              companyId: comp.id,
+              companyName: comp.name,
+              image: p.image || p.img,
+            }))
+          )
+        )
+        .find(
+          (p) =>
+            String(p.id) === String(resolvedProductId) &&
+            String(p.categoryId) === String(categoryId) &&
+            String(p.companyId) === String(companyId)
+        );
+      setProduct(localProd || null);
+      setSelectedImage(localProd?.image);
+    }
+  }, [resolvedProductId, categoryId, companyId]);
+
   useEffect(() => {
     if (product) {
-      setSelectedImage(product.image);
-      window.scrollTo({ top: 0, behavior: "smooth" });
       const storageKey = `reviews_${product.id}`;
       const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
       setReviews(savedReviews);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [resolvedProductId, categoryId, companyId]);
+  }, [product]);
+
+  useEffect(() => {
+    getSettings().then((res) => setSettings(res.data || {})).catch(() => {});
+    getFixedWords().then((res) => setFixedWords(res.data || {})).catch(() => {});
+  }, []);
 
   if (!product)
     return (
@@ -72,7 +92,6 @@ export default function ProductProfile() {
 
   const isFavourite = favourites.some((fav) => fav.id === product.id);
 
-  // ✅ Share handler
   const handleShare = (p) => {
     const shareData = {
       title: p.name,
@@ -87,7 +106,6 @@ export default function ProductProfile() {
     }
   };
 
-  // ✅ Similar Products — only from same company
   const company = categories
     .find((cat) => cat.id === categoryId)
     ?.companies.find((comp) => comp.id === companyId);
@@ -103,14 +121,13 @@ export default function ProductProfile() {
         categoryName: product.categoryName,
         image: p.image || p.img,
       }))
-      .slice(0, 4);
+      .slice(0, 4) || [];
 
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : product.rating || 0;
 
-  // ✅ Review submit
   const handleReviewSubmit = () => {
     if (!reviewName || !reviewText || reviewRating === 0) {
       alert("Please enter your name, rating, and comment.");
@@ -131,7 +148,6 @@ export default function ProductProfile() {
     const updatedReviews = [...savedReviews, newReviewObj];
     localStorage.setItem(storageKey, JSON.stringify(updatedReviews));
     setReviews(updatedReviews);
-    alert(`⭐ ${reviewRating}-star review submitted!`);
     setShowReviewModal(false);
     setReviewText("");
     setReviewRating(0);
@@ -270,59 +286,54 @@ export default function ProductProfile() {
             </p>
           </div>
 
-          {/* Rating + Review */}
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center gap-4">
+          {/* Updated Rating + Review Section */}
+          <div className="mt-4">
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <FaStar
                     key={i}
                     className={`w-5 h-5 ${
-                      i < Math.round(averageRating)
-                        ? "text-gray-950"
-                        : "text-gray-300"
+                      i < Math.round(averageRating) ? "text-gray-950" : "text-gray-300"
                     }`}
                   />
                 ))}
-                <span className="text-gray-600 text-sm">
-                  ({averageRating.toFixed(1)})
-                </span>
+                <span className="text-gray-600 text-sm">({averageRating.toFixed(1)})</span>
               </div>
-
               <button
                 onClick={() => setShowReviewModal(true)}
-                className="text-sm text-white bg-gray-900 hover:bg-gray-800 rounded-lg px-4 py-2 font-medium transition"
+                className="text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg p-2 transition"
               >
                 Write a Review
               </button>
             </div>
 
-            {/* Preview Reviews */}
             <div className="space-y-2">
               {reviews.slice(0, 2).map((rev) => (
-                <div
-                  key={rev.id}
-                  className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm"
-                >
+                <div key={rev.id} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm">
                   <div className="flex justify-between mb-1">
-                    <span className="font-semibold text-gray-800">
-                      {rev.name}
-                    </span>
+                    <span className="font-semibold text-gray-800">{rev.name}</span>
                     <span className="text-gray-500 text-sm">{rev.date}</span>
                   </div>
                   <div className="flex items-center gap-1 mb-1">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <FaStar
                         key={i}
-                        className={`w-4 h-4 ${
-                          i < rev.rating ? "text-gray-950" : "text-gray-300"
-                        }`}
+                        className={`w-4 h-4 ${i < rev.rating ? "text-gray-950" : "text-gray-300"}`}
                       />
                     ))}
                   </div>
                   <p className="text-gray-700 text-sm">{rev.comment}</p>
                 </div>
               ))}
+              {reviews.length > 2 && (
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="text-sm text-blue-600 hover:underline mt-1"
+                >
+                  View {reviews.length - 2} more review(s)
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -369,17 +380,11 @@ export default function ProductProfile() {
                   </div>
 
                   <div className="p-4">
-                    <h3 className="font-medium text-gray-800 text-sm truncate mb-1">
-                      {sp.name}
-                    </h3>
+                    <h3 className="font-medium text-gray-800 text-sm truncate mb-1">{sp.name}</h3>
                     <div className="flex items-center gap-1 text-gray-700">
-                      <span className="text-sm font-semibold">
-                        QAR {sp.price}
-                      </span>
+                      <span className="text-sm font-semibold">QAR {sp.price}</span>
                       {sp.oldPrice && (
-                        <span className="text-xs line-through text-gray-400">
-                          QAR {sp.oldPrice}
-                        </span>
+                        <span className="text-xs line-through text-gray-400">QAR {sp.oldPrice}</span>
                       )}
                     </div>
                   </div>
@@ -392,6 +397,105 @@ export default function ProductProfile() {
 
       <Faq />
       <CallToAction />
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 overflow-auto px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6"
+            >
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">
+                Customer Reviews
+              </h3>
+
+              <div className="max-h-[50vh] overflow-y-auto mb-4 space-y-3">
+                {reviews.length > 0 ? (
+                  reviews.map((rev) => (
+                    <div key={rev.id} className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+                      <div className="flex justify-between mb-1">
+                        <span className="font-semibold text-gray-800">{rev.name}</span>
+                        <span className="text-gray-500 text-sm">{rev.date}</span>
+                      </div>
+                      <div className="flex items-center gap-1 mb-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <FaStar
+                            key={i}
+                            className={`w-4 h-4 ${i < rev.rating ? "text-gray-950" : "text-gray-300"}`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-gray-700 text-sm">{rev.comment}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center text-sm">
+                    No reviews yet – be the first to review!
+                  </p>
+                )}
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">Write a Review</h3>
+
+              <input
+                type="text"
+                placeholder="Your Name"
+                value={reviewName}
+                onChange={(e) => setReviewName(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
+              />
+
+              <div className="flex justify-center mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <FaStar
+                    key={i}
+                    onClick={() => setReviewRating(i + 1)}
+                    className={`w-7 h-7 cursor-pointer transition ${
+                      i < reviewRating ? "text-gray-950" : "text-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <textarea
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Share your thoughts about this product..."
+                className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                rows="4"
+              ></textarea>
+
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  className="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReviewSubmit}
+                  disabled={!reviewText || !reviewName || reviewRating === 0}
+                  className={`px-4 py-2 text-sm rounded-lg text-white ${
+                    reviewText && reviewName && reviewRating
+                      ? "bg-gray-900 hover:bg-gray-800"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Submit
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import axios from "axios";
 import { categories } from "../data/categoriesData";
 import { useFavourites } from "../context/FavouriteContext";
+import { getCategory, getSettings, getFixedWords } from "../api";
 
 // Lazy-load icons
 const FaStar = React.lazy(() => import("react-icons/fa").then(mod => ({ default: mod.FaStar })));
@@ -16,6 +16,8 @@ export default function CategoryPage() {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const [category, setCategory] = useState(null);
+  const [settings, setSettings] = useState({});
+  const [fixedWords, setFixedWords] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewType, setViewType] = useState("companies");
@@ -25,25 +27,33 @@ export default function CategoryPage() {
   const whatsappNumber = "97400000000";
   const isFavourite = (id) => favourites.some(fav => fav.id === id);
 
-  // Fetch category from backend
+  // Fetch category, settings, fixedWords from backend
   useEffect(() => {
     setLoading(true);
-    axios.get("/showCategories") // replace with your actual API endpoint
-      .then(res => {
-        const cat = res.data.find(c => c.id.toString() === categoryId);
-        if (cat) setCategory(cat);
+
+    Promise.all([
+      getCategory(categoryId),
+      getSettings(),
+      getFixedWords()
+    ])
+      .then(([categoryRes, settingsRes, fixedWordsRes]) => {
+        if (categoryRes?.data) setCategory(categoryRes.data);
         else {
-          // fallback to local categories if backend doesn't return the category
-          const fallback = categories.find(c => c.id === categoryId);
+          // fallback to local categories
+          const fallback = categories.find(c => c.id.toString() === categoryId);
           if (fallback) setCategory(fallback);
           else setError("Category not found.");
         }
+
+        if (settingsRes?.data) setSettings(settingsRes.data);
+        if (fixedWordsRes?.data) setFixedWords(fixedWordsRes.data);
       })
       .catch(() => {
-        // fallback to local categories if backend fails
-        const fallback = categories.find(c => c.id === categoryId);
+        // fallback to local category
+        const fallback = categories.find(c => c.id.toString() === categoryId);
         if (fallback) setCategory(fallback);
         else setError("Failed to load category.");
+
       })
       .finally(() => setLoading(false));
   }, [categoryId]);
@@ -105,7 +115,9 @@ export default function CategoryPage() {
           <div className="flex items-center gap-4 md:gap-6 mt-5 md:mt-0 relative">
             <div className="flex items-center gap-3 md:gap-4 ml-10 md:ml-0">
               {category.image && <img src={category.image} alt={category.title} className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover" />}
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900 leading-tight">{category.title}</h2>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900 leading-tight">
+                {fixedWords?.categoryTitle || category.title}
+              </h2>
             </div>
           </div>
 
@@ -137,7 +149,7 @@ export default function CategoryPage() {
                     <h3 className="text-gray-900 font-medium text-sm sm:text-base truncate mb-1">{company.name}</h3>
                     <div className="flex items-center gap-1">
                       <Suspense fallback={<span>★</span>}><FaStar className="w-3 h-3 text-yellow-400" /></Suspense>
-                      <span className="text-xs text-gray-600 font-medium">{company.rating.toFixed(1)}</span>
+                      <span className="text-xs text-gray-600 font-medium">{company.rating?.toFixed(1)}</span>
                     </div>
                   </div>
                   <div className="bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300">

@@ -134,13 +134,13 @@ export default function NewArrivalProductProfile() {
 
   return (
     <>
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-40 p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition"
-      >
-        <FaArrowLeft className="text-gray-600 text-lg" />
-      </button>
+   {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-20 sm:top-8 left-5 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition"
+        >
+          <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
+        </button>
 
       {/* Product Section (ProductProfile theme) */}
       <motion.section
@@ -282,7 +282,7 @@ export default function NewArrivalProductProfile() {
 
               <button
                 onClick={() => setShowReviewModal(true)}
-                className="text-sm text-white font-medium bg-gray-800 rounded-lg p-2"
+                className="text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg p-2 transition"
               >
                 Write a Review
               </button>

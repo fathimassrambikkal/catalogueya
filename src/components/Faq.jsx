@@ -46,7 +46,7 @@ export default function Faq() {
       id="faq"
     >
       {/* Center Card */}
-      <div className="w-full max-w-6xl bg-white/80 backdrop-blur-lg    p-10 md:p-16 flex flex-col lg:flex-row justify-between gap-16 relative overflow-hidden">
+      <div className="w-full max-w-6xl  backdrop-blur-lg    p-10 md:p-16 flex flex-col lg:flex-row justify-between gap-16 relative overflow-hidden">
         {/* Decorative Glow */}
         <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/40 via-cyan-100/30 to-transparent blur-3xl opacity-50 pointer-events-none"></div>
 

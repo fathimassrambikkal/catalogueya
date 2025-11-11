@@ -1,9 +1,73 @@
 // src/pages/Sign.jsx
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { loginCustomer, logoutCustomer } from "../api"; // Axios API functions
 
 export default function Sign() {
+  const navigate = useNavigate(); // for redirection
   const [loginType, setLoginType] = useState("customer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // ✅ Check if customer is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      setIsLoggedIn(true);
+      navigate("/dashboard"); // redirect if already logged in
+    }
+  }, [navigate]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (loginType !== "customer") return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await loginCustomer(email, password);
+      const { token, user } = response.data;
+
+      // Save token and user info
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setIsLoggedIn(true);
+      alert("Customer logged in successfully!");
+
+      // Redirect to dashboard
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.message || "Invalid email or password. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      await logoutCustomer(); // Call API to logout
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+
+      setIsLoggedIn(false);
+      alert("Customer logged out successfully!");
+      navigate("/sign"); // back to login page
+    } catch (err) {
+      console.error(err);
+      alert("Logout failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="min-h-[80vh] flex items-center justify-center bg-gray-50 py-16">
@@ -32,19 +96,25 @@ export default function Sign() {
           </button>
         </div>
 
-        {/* Form */}
-        <form className="flex flex-col gap-4">
-          {loginType === "customer" ? (
-            <>
+        {/* Form or Logout */}
+        {loginType === "customer" ? (
+          !isLoggedIn ? (
+            <form className="flex flex-col gap-4" onSubmit={handleLogin}>
+              {error && <p className="text-red-500 text-center">{error}</p>}
+
               <input
                 type="email"
                 placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               <input
                 type="password"
                 placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -58,25 +128,37 @@ export default function Sign() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
               >
-                Sign In
+                {loading ? "Signing In..." : "Sign In"}
               </button>
-            </>
+            </form>
           ) : (
-            <>
-              <p className="text-gray-700 mb-4">
-                Access the company portal by clicking here:
+            <div className="w-full flex flex-col items-center gap-4">
+              <p className="text-gray-700 text-center">
+                You are logged in as a customer.
               </p>
-              <Link
-                to="/company-login"
-                className="text-blue-600 font-semibold hover:underline"
+              <button
+                onClick={handleLogout}
+                disabled={loading}
+                className="w-full bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 transition-all duration-200"
               >
-                Company Login
-              </Link>
-            </>
-          )}
-        </form>
+                {loading ? "Logging out..." : "Logout"}
+              </button>
+            </div>
+          )
+        ) : (
+          <p className="text-gray-700 text-center">
+            Access the company portal by clicking here:{" "}
+            <Link
+              to="/company-login"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Company Login
+            </Link>
+          </p>
+        )}
 
         {/* Registration link */}
         <p className="mt-6 text-center text-gray-600 text-sm">

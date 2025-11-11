@@ -2,19 +2,57 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { unifiedData } from "../data/unifiedData";
+import { getCategories, getSettings, getFixedWords } from "../api";
 
 export default function HomeServices() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
-  const { categories } = unifiedData;
 
+  // ✅ Local fallback data
+  const [categories, setCategories] = useState(unifiedData.categories || []);
+  const [settings, setSettings] = useState({});
+  const [fixedWords, setFixedWords] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardsPerView, setCardsPerView] = useState(6);
 
-  const duplicatedServices = useMemo(() => [...categories, ...categories], [categories]);
+  // ✅ Fetch backend data
+  useEffect(() => {
+    // Fetch categories
+    getCategories()
+      .then((res) => {
+        if (res?.data?.length) {
+          setCategories(res.data);
+        }
+      })
+      .catch((err) => console.warn("⚠️ Failed to fetch categories", err));
+
+    // Fetch settings
+    getSettings()
+      .then((res) => {
+        if (res?.data) {
+          setSettings(res.data);
+        }
+      })
+      .catch((err) => console.warn("⚠️ Failed to fetch settings", err));
+
+    // Fetch fixed words
+    getFixedWords()
+      .then((res) => {
+        if (res?.data) {
+          setFixedWords(res.data);
+        }
+      })
+      .catch((err) => console.warn("⚠️ Failed to fetch fixed words", err));
+  }, []);
+
+  // Duplicate categories for smooth infinite scroll
+  const duplicatedServices = useMemo(
+    () => [...categories, ...categories],
+    [categories]
+  );
   const totalCards = categories.length;
 
-  // 🔹 Responsive number of cards per view
+  // Responsive cards per view
   useEffect(() => {
     const updateCardsPerView = () => {
       const width = window.innerWidth;
@@ -30,7 +68,7 @@ export default function HomeServices() {
     return () => window.removeEventListener("resize", updateCardsPerView);
   }, []);
 
-  // 🔹 Carousel Controls
+  // Carousel Controls
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev <= 0 ? totalCards - 1 : prev - 1));
   };
@@ -50,7 +88,7 @@ export default function HomeServices() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🔹 Dynamic circle size
+  // Dynamic circle size
   const circleSize =
     cardsPerView >= 6
       ? "w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40"
@@ -63,10 +101,11 @@ export default function HomeServices() {
       {/* Section Header */}
       <div className="text-center mb-8 sm:mb-12">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
-          Home Services
+          {fixedWords?.homeServicesTitle || "Home Services"}
         </h2>
         <p className="text-gray-500 mt-2 text-sm sm:text-base">
-          Explore trusted service categories for your home and garden
+          {fixedWords?.homeServicesSubtitle ||
+            "Explore trusted service categories for your home and garden"}
         </p>
       </div>
 
@@ -104,11 +143,10 @@ export default function HomeServices() {
                   <div className="relative w-full h-full rounded-full overflow-hidden">
                     <img
                       src={service.image}
-                      alt={service.title}
+                      alt={service.title_en || service.title}
                       loading="lazy"
                       className="w-full h-full object-cover rounded-full opacity-90 group-hover:opacity-100 transition duration-300"
                     />
-                    {/* Updated Gradient + Text */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center rounded-full pb-4">
                       <h3
                         className="text-white text-[9px] sm:text-xs md:text-sm font-semibold 
@@ -116,7 +154,7 @@ export default function HomeServices() {
                                    rounded-full backdrop-blur-sm shadow-sm 
                                    group-hover:bg-black/60 transition"
                       >
-                        {service.title}
+                        {service.title_en || service.title}
                       </h3>
                     </div>
                   </div>

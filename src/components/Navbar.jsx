@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import logo from "../assets/logo.png";
 import { useFavourites } from "../context/FavouriteContext";
 import { AiOutlineHeart } from "react-icons/ai";
+import { changeLanguage as apiChangeLanguage } from "../api";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,32 +19,30 @@ export default function Navbar() {
   const glassPages = ["/", "/about", "/salesproducts", "/contact"];
   const isGlassPage = glassPages.includes(location.pathname);
 
-  const toggleLanguage = () => {
+  // Language toggle with API call
+  const toggleLanguage = async () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
-    i18n.changeLanguage(newLang);
+    try {
+      await apiChangeLanguage(newLang); // Backend API call
+      i18n.changeLanguage(newLang); // Frontend update
+    } catch (error) {
+      console.error("Error changing language:", error);
+    }
   };
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 40);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const toggleMenu = () => {
-    setMenuOpen((prev) => !prev);
-  };
+  const toggleMenu = () => setMenuOpen((prev) => !prev);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest(".menu-container")) {
-        setMenuOpen(false);
-      }
+      if (!e.target.closest(".menu-container")) setMenuOpen(false);
     };
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
@@ -120,13 +119,8 @@ export default function Navbar() {
             }}
           >
             <motion.div
-              animate={{
-                rotate: menuOpen ? 90 : 0,
-              }}
-              transition={{
-                duration: 0.3,
-                ease: "easeInOut",
-              }}
+              animate={{ rotate: menuOpen ? 90 : 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
             >
               <HiDotsHorizontal className="text-gray-700 text-xl" />
             </motion.div>
