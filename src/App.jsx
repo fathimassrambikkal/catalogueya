@@ -19,7 +19,7 @@ import Register from "./pages/Register";
 import CompanyLogin from "./pages/Companylogin";
 import CompanyForgotPassword from "./pages/CompanyForgotPassword";
 import PricingPage from "./pages/PricingPage";
-
+import CompanyDashboard from "./pages/CompanyDashboard";
 // Category + Product + Company
 import CategoryPage from "./pages/CategoryPage";
 import CompanyPage from "./pages/CompanyPage";
@@ -69,6 +69,7 @@ function AppContent() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/company-login" element={<CompanyLogin />} />
+          <Route path="/company-dashboard" element={<CompanyDashboard />} />
           <Route
             path="/company-forgot-password"
             element={<CompanyForgotPassword />}

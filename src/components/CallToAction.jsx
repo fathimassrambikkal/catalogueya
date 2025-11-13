@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function CallToAction() {
   return (
-    <section className="relative w-full flex justify-center items-center py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-10 bg-gray-50 overflow-hidden">
+    <section className="relative w-full flex justify-center items-center py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-10 bg-neutral-100 overflow-hidden">
       {/* Outer Glassmorphic Container */}
       <div
         className="relative z-10 w-full max-w-7xl bg-white/10 backdrop-blur-2xl border border-white/30 rounded-3xl 

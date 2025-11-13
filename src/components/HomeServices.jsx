@@ -8,48 +8,19 @@ export default function HomeServices() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
-  // ✅ Local fallback data
   const [categories, setCategories] = useState(unifiedData.categories || []);
-  const [settings, setSettings] = useState({});
   const [fixedWords, setFixedWords] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardsPerView, setCardsPerView] = useState(6);
 
-  // ✅ Fetch backend data
+  // Fetch backend data
   useEffect(() => {
-    // Fetch categories
-    getCategories()
-      .then((res) => {
-        if (res?.data?.length) {
-          setCategories(res.data);
-        }
-      })
-      .catch((err) => console.warn("⚠️ Failed to fetch categories", err));
-
-    // Fetch settings
-    getSettings()
-      .then((res) => {
-        if (res?.data) {
-          setSettings(res.data);
-        }
-      })
-      .catch((err) => console.warn("⚠️ Failed to fetch settings", err));
-
-    // Fetch fixed words
-    getFixedWords()
-      .then((res) => {
-        if (res?.data) {
-          setFixedWords(res.data);
-        }
-      })
-      .catch((err) => console.warn("⚠️ Failed to fetch fixed words", err));
+    getCategories().then(res => res?.data?.length && setCategories(res.data)).catch(console.warn);
+    getFixedWords().then(res => res?.data && setFixedWords(res.data)).catch(console.warn);
   }, []);
 
-  // Duplicate categories for smooth infinite scroll
-  const duplicatedServices = useMemo(
-    () => [...categories, ...categories],
-    [categories]
-  );
+  // Duplicate for infinite scroll
+  const duplicatedCategories = useMemo(() => [...categories, ...categories], [categories]);
   const totalCards = categories.length;
 
   // Responsive cards per view
@@ -59,8 +30,6 @@ export default function HomeServices() {
       if (width >= 1600) setCardsPerView(6);
       else if (width >= 1280) setCardsPerView(5);
       else if (width >= 1024) setCardsPerView(4);
-      else if (width >= 768) setCardsPerView(4);
-      else if (width >= 480) setCardsPerView(4);
       else setCardsPerView(4);
     };
     updateCardsPerView();
@@ -68,12 +37,12 @@ export default function HomeServices() {
     return () => window.removeEventListener("resize", updateCardsPerView);
   }, []);
 
-  // Carousel Controls
+  // Infinite carousel logic
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev <= 0 ? totalCards - 1 : prev - 1));
+    setCurrentIndex(prev => (prev <= 0 ? totalCards - 1 : prev - 1));
   };
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev >= totalCards - 1 ? 0 : prev + 1));
+    setCurrentIndex(prev => (prev >= totalCards - 1 ? 0 : prev + 1));
   };
 
   const getTranslate = () => {
@@ -82,23 +51,12 @@ export default function HomeServices() {
     return -(cardWidth * currentIndex);
   };
 
-  useEffect(() => {
-    const handleResize = () => setCurrentIndex(0);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Dynamic circle size
-  const circleSize =
-    cardsPerView >= 6
-      ? "w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40"
-      : cardsPerView === 4
-      ? "w-34 h-34 sm:w-38 sm:h-38 md:w-42 md:h-42 lg:w-46 lg:h-46"
-      : "w-34 h-34 sm:w-40 sm:h-40 md:w-44 md:h-44 lg:w-48 lg:h-48";
+  // Slightly larger circle sizes on md
+  const circleSize = "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full";
 
   return (
-    <section className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-gray-50">
-      {/* Section Header */}
+    <section className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-neutral-100">
+      {/* Header */}
       <div className="text-center mb-8 sm:mb-12">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
           {fixedWords?.homeServicesTitle || "Home Services"}
@@ -122,22 +80,23 @@ export default function HomeServices() {
         </button>
 
         {/* Carousel */}
-        <div className="overflow-hidden w-full" ref={containerRef}>
+        <div className="overflow-hidden w-full">
           <div
-            className="flex transition-transform duration-700 ease-out"
+            className="flex transition-transform duration-700 ease-out flex-nowrap"
             style={{ transform: `translateX(${getTranslate()}px)` }}
+            ref={containerRef}
           >
-            {duplicatedServices.map((service, index) => (
+            {duplicatedCategories.map((service, index) => (
               <div
                 key={index}
-                className="flex-none px-[3px] sm:px-[5px] flex justify-center items-center"
-                style={{ width: `${100 / cardsPerView}%` }}
+                className="flex-shrink-0 px-1 sm:px-2 flex justify-center items-center"
+                style={{ flexBasis: `${100 / cardsPerView}%` }}
               >
                 <div
-                  className={`relative group aspect-square rounded-full p-[2px] bg-gradient-to-br 
-                              from-white/40 via-white/10 to-transparent backdrop-blur-md 
-                              shadow-lg border border-white/30 hover:scale-105 
-                              transition-all duration-300 ${circleSize}`}
+                  className={`relative group aspect-square ${circleSize} p-[2px] 
+                              bg-gradient-to-br from-white/40 via-white/10 to-transparent 
+                              backdrop-blur-md shadow-lg border border-white/30 hover:scale-105 
+                              transition-all duration-300`}
                   onClick={() => navigate(`/category/${service.id}`)}
                 >
                   <div className="relative w-full h-full rounded-full overflow-hidden">
@@ -147,13 +106,8 @@ export default function HomeServices() {
                       loading="lazy"
                       className="w-full h-full object-cover rounded-full opacity-90 group-hover:opacity-100 transition duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center rounded-full pb-4">
-                      <h3
-                        className="text-white text-[9px] sm:text-xs md:text-sm font-semibold 
-                                   text-center px-2 py-[3px] leading-tight bg-black/40 
-                                   rounded-full backdrop-blur-sm shadow-sm 
-                                   group-hover:bg-black/60 transition"
-                      >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-center justify-center">
+                      <h3 className="text-white text-[10px] sm:text-xs md:text-sm font-medium text-center px-3 py-[4px] leading-tight bg-black/10 rounded-sm backdrop-blur-sm shadow-md group-hover:bg-black/10 transition duration-300">
                         {service.title_en || service.title}
                       </h3>
                     </div>

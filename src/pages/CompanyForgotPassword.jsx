@@ -12,7 +12,6 @@ export default function CompanyForgotPassword() {
       alert("Please enter your username or email.");
       return;
     }
-    // Simulate password reset request
     alert(`Password reset link sent to ${username}`);
     setUsername("");
   };

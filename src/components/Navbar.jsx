@@ -8,6 +8,7 @@ import { useFavourites } from "../context/FavouriteContext";
 import { AiOutlineHeart } from "react-icons/ai";
 import { changeLanguage as apiChangeLanguage } from "../api";
 
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -23,8 +24,8 @@ export default function Navbar() {
   const toggleLanguage = async () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
     try {
-      await apiChangeLanguage(newLang); // Backend API call
-      i18n.changeLanguage(newLang); // Frontend update
+      await apiChangeLanguage(newLang); 
+      i18n.changeLanguage(newLang);
     } catch (error) {
       console.error("Error changing language:", error);
     }

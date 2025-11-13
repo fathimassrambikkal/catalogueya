@@ -10,7 +10,7 @@ const whatsappNumber = "97400000000";
 const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => {
   return (
     <div
-      className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
+      className="relative  w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
                  bg-white/10 border border-white/30 backdrop-blur-2xl 
                  shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
                  hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
@@ -96,7 +96,7 @@ function SalesComponent() {
   const handleNavigate = useCallback((id) => navigate(`/salesproduct/${id}`), [navigate]);
 
   return (
-    <section className="py-6 sm:py-10 bg-gray-50 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
+    <section className="py-6 sm:py-10 bg-neutral-100 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start justify-between mb-8 sm:mb-12 gap-6">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-gray-900">Sales</h1>

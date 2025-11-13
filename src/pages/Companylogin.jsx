@@ -11,7 +11,6 @@ export default function CompanyLogin() {
   const [error, setError] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // ✅ Check if company is already logged in
   useEffect(() => {
     const token = localStorage.getItem("companyToken");
     if (token) {
@@ -24,47 +23,22 @@ export default function CompanyLogin() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e) => {
+  // Temporary login: just navigate to dashboard
+  const handleLogin = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await loginCompany(formData.email, formData.password);
-      const { token, company } = response.data;
-
-      // Save token and company info
-      localStorage.setItem("companyToken", token);
-      localStorage.setItem("company", JSON.stringify(company));
-
-      setIsLoggedIn(true);
-      alert("Company logged in successfully!");
-
-      // Redirect to dashboard
-      navigate("/company-dashboard");
-    } catch (err) {
-      console.error(err);
-      setError(
-        err.response?.data?.message || "Invalid email or password. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
+    navigate("/company-dashboard");
   };
 
   const handleLogout = async () => {
     setLoading(true);
     try {
-      // Call logout API
       await logoutCompany();
-
-      // Remove token and info
       localStorage.removeItem("companyToken");
       localStorage.removeItem("company");
 
       setIsLoggedIn(false);
       alert("Logged out successfully!");
-      navigate("/company-login"); // back to login page
+      navigate("/company-login");
     } catch (err) {
       console.error(err);
       alert("Logout failed. Try again.");
@@ -75,19 +49,22 @@ export default function CompanyLogin() {
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 flex flex-col items-center">
+      <div className="bg-white w-full max-w-md rounded-3xl border border-gray-100 shadow-xl p-8 flex flex-col items-center backdrop-blur-sm">
         {/* Logo */}
-        <img src={logo} alt="Company Logo" className="w-20 mb-4" />
+        <img src={logo} alt="Company Logo" className="w-20 mb-4 opacity-90" />
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">
           {isLoggedIn ? "Company Dashboard" : "Company Login"}
         </h1>
 
         {!isLoggedIn ? (
           <form onSubmit={handleLogin} className="w-full space-y-4">
-            {error && <p className="text-red-500 text-center">{error}</p>}
+            {error && <p className="text-red-500 text-center text-sm">{error}</p>}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Email
               </label>
               <input
@@ -97,13 +74,16 @@ export default function CompanyLogin() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password
               </label>
               <input
@@ -113,13 +93,16 @@ export default function CompanyLogin() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 required
               />
             </div>
 
             <div className="flex justify-end text-sm">
-              <Link to="/company-forgot-password" className="text-blue-600 hover:underline">
+              <Link
+                to="/company-forgot-password"
+                className="text-blue-600 hover:underline"
+              >
                 Forgot Password?
               </Link>
             </div>
@@ -127,7 +110,7 @@ export default function CompanyLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all duration-200 disabled:opacity-50"
+              className="w-full bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
@@ -137,7 +120,7 @@ export default function CompanyLogin() {
             <p className="text-gray-700">You are logged in as a company.</p>
             <button
               onClick={handleLogout}
-              className="w-full bg-red-600 text-white py-2 rounded-xl hover:bg-red-700 transition-all duration-200"
+              className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl transition-all duration-200"
               disabled={loading}
             >
               {loading ? "Logging out..." : "Logout"}
@@ -146,7 +129,7 @@ export default function CompanyLogin() {
         )}
 
         {/* Footer */}
-        <div className="mt-8 text-center text-gray-500 text-sm flex items-center justify-center gap-2">
+        <div className="mt-8 text-center text-gray-500 text-xs flex items-center justify-center gap-2">
           <img src={logo} alt="Logo" className="w-5 h-5 opacity-70" />
           <span>© 2025 All rights reserved</span>
         </div>

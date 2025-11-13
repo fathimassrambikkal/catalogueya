@@ -41,7 +41,7 @@ export default function Faq() {
 
   return (
     <section
-      className="bg-gray-50 
+      className="bg-neutral-100
       px-6 md:px-16 flex justify-center items-center"
       id="faq"
     >

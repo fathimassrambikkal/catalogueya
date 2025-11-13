@@ -12,7 +12,7 @@ export default function Banner() {
   const [loadedImages, setLoadedImages] = useState({});
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // ✅ Preload all images (async, non-blocking)
+  //  Preload all images (async, non-blocking)
   useEffect(() => {
     images.forEach((src) => {
       const img = new Image();
@@ -25,7 +25,7 @@ export default function Banner() {
     });
   }, []);
 
-  // ✅ Auto-slide every 5s
+  // Auto-slide every 5s
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -33,7 +33,7 @@ export default function Banner() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Resize handler
+  //  Resize handler
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -43,7 +43,7 @@ export default function Banner() {
   const sectionHeight =
     windowWidth < 640 ? "h-[60vh]" : "h-[90vh] md:h-[90vh] lg:h-screen";
 
-  // ✅ Text animation variants (unchanged)
+  //  Text animation variants (unchanged)
   const container = {
     hidden: { opacity: 1 },
     visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
@@ -65,7 +65,7 @@ export default function Banner() {
     <section
       className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center`}
     >
-      {/* ✅ Always show first image immediately */}
+      {/*  Always show first image immediately */}
       <img
         src={images[0]}
         alt="banner-initial"
@@ -74,7 +74,7 @@ export default function Banner() {
         decoding="async"
       />
 
-      {/* ✅ Fade between loaded images */}
+      {/* Fade between loaded images */}
       {images.map((src, index) => {
         const isActive = index === currentIndex;
         return (
@@ -94,7 +94,7 @@ export default function Banner() {
         );
       })}
 
-      {/* ✅ Content — appears immediately with text animation */}
+      {/*  Content — appears immediately with text animation */}
       <motion.div
         className="absolute z-10 inset-0 flex flex-col items-center justify-center gap-6 px-4"
         variants={container}
@@ -126,7 +126,7 @@ export default function Banner() {
         </motion.p>
       </motion.div>
 
-      {/* ✅ Navigation dots */}
+      {/*  Navigation dots */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-20 p-1.5 rounded-full bg-white/20 backdrop-blur-md">
         {images.map((_, idx) => (
           <button
