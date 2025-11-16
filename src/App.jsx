@@ -50,6 +50,7 @@ function AppContent() {
     "/register",
     "/company-login",
     "/company-forgot-password",
+     "/company-dashboard",
   ];
 
   const hideLayout = hideLayoutPaths.includes(location.pathname);

@@ -8,7 +8,7 @@ import { categories as localCategories } from "../data/categoriesData";
 import { useFavourites } from "../context/FavouriteContext";
 import { getCompany, getSettings, getFixedWords } from "../api";
 
-// ✅ Lazy load heavy icons only
+//  Lazy load heavy icons only
 const FaWhatsapp = React.lazy(() =>
   import("react-icons/fa").then((m) => ({ default: m.FaWhatsapp }))
 );
