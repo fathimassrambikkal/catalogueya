@@ -1,11 +1,12 @@
-import React, { useState, useMemo, Suspense, memo } from "react";
+import React, { useState, useMemo, useEffect, Suspense, memo } from "react"; // ✅ added useEffect
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useFavourites } from "../context/FavouriteContext";
 import { newArrivalProducts } from "../data/newArrivalData";
 import CallToAction from "../components/CallToAction";
+import { getProducts } from "../api"; 
 
-// ✅ Lazy-loaded icons for performance
+//  Lazy-loaded icons for performance
 const FaStar = React.lazy(() =>
   import("react-icons/fa").then((mod) => ({ default: mod.FaStar }))
 );
@@ -22,18 +23,46 @@ const FaArrowLeft = React.lazy(() =>
 function NewArrivalProductPageComponent() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState("Relevance");
+  const [products, setProducts] = useState(newArrivalProducts); // ✅ default to static data
+  const [loading, setLoading] = useState(true);
   const { favourites, toggleFavourite } = useFavourites();
   const whatsappNumber = "97400000000";
 
+  // ✅ Fetch products from backend, fallback to default if API fails
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data } = await getProducts();
+        const backendData = data.data || data || [];
+        const saleItems = backendData.filter(
+          (p) =>
+            p.isOnSale ||
+            p.discount_price ||
+            (p.old_price && p.old_price > p.price)
+        );
+        if (saleItems.length > 0) {
+          setProducts(saleItems);
+        } else if (backendData.length > 0) {
+          setProducts(backendData);
+        }
+      } catch (err) {
+        console.error("❌ Error loading products, using default:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   // ✅ Sorting Logic
-  const sortedProducts = [...newArrivalProducts].sort((a, b) => {
+  const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
       case "Price: Low to High":
-        return a.price - b.price;
+        return Number(a.price) - Number(b.price);
       case "Price: High to Low":
-        return b.price - a.price;
+        return Number(b.price) - Number(a.price);
       case "Rating":
-        return b.rating - a.rating;
+        return Number(b.rating) - Number(a.rating);
       default:
         return 0;
     }

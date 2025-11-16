@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export default function CallToAction() {
+const CallToAction = React.memo(() => {
   return (
     <section className="relative w-full flex justify-center items-center py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-10 bg-neutral-100 overflow-hidden">
       {/* Outer Glassmorphic Container */}
@@ -71,4 +71,6 @@ export default function CallToAction() {
       </div>
     </section>
   );
-}
+});
+
+export default CallToAction;

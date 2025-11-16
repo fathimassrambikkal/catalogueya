@@ -1,10 +1,12 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { ScrollVelocityContainer, ScrollVelocityRow } from "../ui/scroll-based-velocity";
-import SubscribeSection from "../components/SubscribeSection";
-import CallToAction from "../components/CallToAction";
+
+// Lazy-load heavy components
+const SubscribeSection = lazy(() => import("../components/SubscribeSection"));
+const CallToAction = lazy(() => import("../components/CallToAction"));
 
 // Images
 import slider1 from "../assets/slider1.jpg";
@@ -23,22 +25,23 @@ import logo4 from "../assets/logo4.png";
 import logo5 from "../assets/logo5.png";
 import logo6 from "../assets/logo6.png";
 
+// Static arrays outside component
 const sliderImages = [slider1, slider2, slider3, slider4, slider5, slider6, slider7, slider8];
 const clientLogos = [logo1, logo2, logo3, logo4, logo5, logo6];
 
-// Memoized slider item to prevent re-renders
+// Memoized Slider Item
 const SliderItem = memo(({ img, index }) => (
   <motion.div
     key={index}
     whileHover={{ scale: 1.05 }}
     transition={{ duration: 0.3 }}
-    className="flex-shrink-0 w-[220px] sm:w-[250px] md:w-[300px] lg:w-[320px] xl:w-[360px] h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 shadow-lg rounded-3xl overflow-hidden"
+    className="flex-shrink-0 w-[220px] sm:w-[250px] md:w-[300px] lg:w-[320px] xl:w-[360px] h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 shadow-lg rounded-3xl overflow-hidden will-change-transform"
   >
     <img src={img} alt={`slide-${index}`} className="w-full h-full object-cover" loading="lazy" />
   </motion.div>
 ));
 
-// Memoized logo item
+// Memoized Logo Item
 const LogoItem = memo(({ logo, index }) => (
   <img
     key={index}
@@ -108,9 +111,11 @@ export default function About() {
         </div>
       </section>
 
-      {/* Subscribe & CTA */}
-      <SubscribeSection />
-      <CallToAction />
+      {/* Lazy-loaded Subscribe & CTA */}
+      <Suspense fallback={null}>
+        <SubscribeSection />
+        <CallToAction />
+      </Suspense>
     </>
   );
 }

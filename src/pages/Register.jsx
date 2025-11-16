@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { registerCustomer, registerCompany } from "../api"; // your real API functions
+import { registerCustomer, registerCompany } from "../api";
 
 export default function Register() {
   const [regType, setRegType] = useState("customer");

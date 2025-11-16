@@ -11,11 +11,11 @@ export default function CompanyDashboard() {
   const [activeTab, setActiveTab] = useState("Products");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // ⭐ ADDED — scroll to top when tab changes (Fixes Edit button)
+  //  ADDED — scroll to top when tab changes (Fixes Edit button)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeTab]);
-  // ⭐ END FIX
+  // END FIX
 
   // ============================
   // PRODUCTS (Already Working)
