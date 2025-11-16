@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { IoCheckmark } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
+import { getSubscribeDetails } from "../api";
 
 const Pricing = () => {
   const [activeTab, setActiveTab] = useState("Core Management");
   const [billingCycle, setBillingCycle] = useState("monthly");
+  const [subscriptionDetails, setSubscriptionDetails] = useState([]);
 
   const tabs = ["Core Management", "Sales & Promotions", "Insight & Support"];
 
@@ -36,9 +38,10 @@ const Pricing = () => {
     ],
   };
 
-  const monthlyPrice = 350;
-  const yearlyPrice = 3200;
+  const monthlyPrice = subscriptionDetails?.monthlyPrice || 350;
+  const yearlyPrice = subscriptionDetails?.yearlyPrice || 3200;
 
+  // Auto-switch tabs
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveTab((prev) => {
@@ -48,6 +51,19 @@ const Pricing = () => {
       });
     }, 5000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch subscription details from API
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const res = await getSubscribeDetails();
+        if (res?.data) setSubscriptionDetails(res.data);
+      } catch (err) {
+        console.error("Failed to fetch subscription details:", err);
+      }
+    };
+    fetchSubscription();
   }, []);
 
   return (
@@ -98,7 +114,7 @@ const Pricing = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-center mb-4  flex flex-col items-center "
+          className="text-center mb-4 flex flex-col items-center"
         >
           {billingCycle === "monthly" ? (
             <>
@@ -154,23 +170,22 @@ const Pricing = () => {
           </span>
 
           <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
-        {activeTab === "Core Management" &&
-          "Manage your entire product catalog easily"}
-        {activeTab === "Sales & Promotions" &&
-          "Boost visibility with sales and deals"}
-        {activeTab === "Insight & Support" &&
-          "Get insights and build customer trust"}
-      </h3>
+            {activeTab === "Core Management" &&
+              "Manage your entire product catalog easily"}
+            {activeTab === "Sales & Promotions" &&
+              "Boost visibility with sales and deals"}
+            {activeTab === "Insight & Support" &&
+              "Get insights and build customer trust"}
+          </h3>
 
-      <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">
-        {activeTab === "Core Management" &&
-          "Company profiles will be in both languages."}
-        {activeTab === "Sales & Promotions" &&
-          "Showcase your best deals instantly and draw customer attention to promotional sections with ease."}
-        {activeTab === "Insight & Support" &&
-          "Track performance metrics, collect real customer reviews, and offer 24/7 assistance to keep your business trusted and efficient."}
-      </p>
-
+          <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">
+            {activeTab === "Core Management" &&
+              "Company profiles will be in both languages."}
+            {activeTab === "Sales & Promotions" &&
+              "Showcase your best deals instantly and draw customer attention to promotional sections with ease."}
+            {activeTab === "Insight & Support" &&
+              "Track performance metrics, collect real customer reviews, and offer 24/7 assistance to keep your business trusted and efficient."}
+          </p>
         </div>
 
         {/* ===== RIGHT CARD ===== */}
@@ -184,7 +199,7 @@ const Pricing = () => {
             className="w-full md:w-1/2 bg-white text-gray-900 rounded-3xl p-8 shadow-lg"
           >
             <ul className="space-y-5">
-              {content[activeTab].map((item, i) => (
+              {subscriptionDetails?.[activeTab]?.map((item, i) => (
                 <motion.li
                   key={i}
                   initial={{ opacity: 0, y: 15 }}
@@ -201,6 +216,26 @@ const Pricing = () => {
                   </div>
                 </motion.li>
               ))}
+
+              {/* Fallback content if API data is empty */}
+              {(!subscriptionDetails?.[activeTab] || subscriptionDetails[activeTab].length === 0) &&
+                content[activeTab].map((item, i) => (
+                  <motion.li
+                    key={i}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.15, duration: 0.5 }}
+                    className="flex gap-3 items-start"
+                  >
+                    <IoCheckmark className="mt-1 text-xl text-blue-500" />
+                    <div>
+                      <p className="font-medium text-gray-700 text-sm md:text-base">
+                        {item.feature}
+                      </p>
+                      <p className="text-gray-500 text-xs md:text-sm">{item.benefit}</p>
+                    </div>
+                  </motion.li>
+                ))}
             </ul>
           </motion.div>
         </AnimatePresence>

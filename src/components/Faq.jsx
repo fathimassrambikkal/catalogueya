@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // added useEffect
 import { IoIosAdd, IoIosRemove } from "react-icons/io";
 import { motion, AnimatePresence } from "framer-motion";
+import { getQuestions } from "../api"; // added API import
 
 export default function Faq() {
-  const faqs = [
+  const [faqs, setFaqs] = useState([
     {
       question: "What is Catalogueya?",
       answer:
@@ -34,10 +35,24 @@ export default function Faq() {
       answer:
         "You can reach our customer support team via the Contact Us page on our website. We are available to assist you with any inquiries or issues.",
     },
-  ];
+  ]);
 
   const [openIndex, setOpenIndex] = useState(null);
   const toggleFaq = (index) => setOpenIndex(openIndex === index ? null : index);
+
+  // Fetch FAQs from API on mount
+  useEffect(() => {
+    getQuestions()
+      .then((res) => {
+        if (res.data && Array.isArray(res.data)) {
+          // Assuming API returns an array of {question, answer} objects
+          setFaqs(res.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch FAQs:", err);
+      });
+  }, []);
 
   return (
     <section

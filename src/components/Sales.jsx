@@ -1,8 +1,9 @@
-import React, { memo, useCallback } from "react";
+import React, { memo, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaStar, FaHeart, FaWhatsapp } from "react-icons/fa";
 import { unifiedData } from "../data/unifiedData";
 import { useFavourites } from "../context/FavouriteContext";
+import { getSalesProducts } from "../api"; 
 
 const whatsappNumber = "97400000000";
 
@@ -87,9 +88,21 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
 
 function SalesComponent() {
   const navigate = useNavigate();
-  const { salesProducts } = unifiedData;
-  const limitedProducts = salesProducts.slice(0, 8);
   const { favourites, toggleFavourite } = useFavourites();
+  const [apiProducts, setApiProducts] = useState([]);
+
+  // Fetch API products on mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const products = await getSalesProducts();
+      setApiProducts(products.data || products); // handle axios response
+    };
+    fetchProducts();
+  }, []);
+
+  // Combine API products with unifiedData as fallback
+  const combinedProducts = [...apiProducts, ...unifiedData.salesProducts];
+  const limitedProducts = combinedProducts.slice(0, 8);
 
   // Memoized callbacks
   const handleToggleFav = useCallback((product) => toggleFavourite(product), [toggleFavourite]);

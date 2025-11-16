@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
 import { categories } from "../data/categoriesData";
+import { useTranslation } from "react-i18next"; 
+import qatarflag from "../assets/Qatarflag.jpg"
 
 export default function SearchBar() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,6 +12,7 @@ export default function SearchBar() {
   const [startCycle, setStartCycle] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
+  const { i18n } = useTranslation(); // get current language
 
   // Start cycling categories after 0.5s
   useEffect(() => {
@@ -37,7 +40,7 @@ export default function SearchBar() {
       index = (index + 1) % texts.length;
 
       return () => clearTimeout(vanishTimer);
-    }, 2500); // spacing between words for better breathing
+    }, 2500); // spacing between words
 
     return () => clearInterval(interval);
   }, [startCycle, searchTerm]);
@@ -98,7 +101,9 @@ export default function SearchBar() {
                 opacity: { duration: 0.6 },
                 y: { duration: 0.8, ease: "easeOut" },
               }}
-              className="absolute left-10 top-3 text-gray-400 pointer-events-none select-none"
+              className={`absolute top-3 pointer-events-none select-none text-gray-400
+                ${i18n.language === "ar" ? "right-10 text-right" : "left-10 text-left"}
+              `}
             >
               {currentWord}
             </motion.span>
@@ -113,7 +118,7 @@ export default function SearchBar() {
         )}
 
         <img
-          src="https://flagcdn.com/w40/qa.png"
+          src={qatarflag}
           alt="Qatar Flag"
           className="w-8 h-6 ml-3 rounded-sm shadow-md"
         />

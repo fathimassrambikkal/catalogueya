@@ -8,7 +8,6 @@ import { useFavourites } from "../context/FavouriteContext";
 import { AiOutlineHeart } from "react-icons/ai";
 import { changeLanguage as apiChangeLanguage } from "../api";
 
-
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -20,14 +19,22 @@ export default function Navbar() {
   const glassPages = ["/", "/about", "/salesproducts", "/contact"];
   const isGlassPage = glassPages.includes(location.pathname);
 
-  // Language toggle with API call
+  // Language toggle with API first priority, but instant frontend toggle
   const toggleLanguage = async () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
+
+    // Immediate UI change
+    i18n.changeLanguage(newLang);
+    document.documentElement.setAttribute(
+      "dir",
+      newLang === "ar" ? "rtl" : "ltr"
+    );
+
+    // API call for backend preference
     try {
-      await apiChangeLanguage(newLang); 
-      i18n.changeLanguage(newLang);
+      await apiChangeLanguage(newLang);
     } catch (error) {
-      console.error("Error changing language:", error);
+      console.error("API failed, fallback to frontend:", error);
     }
   };
 
@@ -155,10 +162,7 @@ export default function Navbar() {
                     </Link>
                   </li>
                   <li className="px-4 py-2 hover:bg-white/50 hover:rounded-full transition">
-                    <Link
-                      to="/salesproducts"
-                      onClick={() => setMenuOpen(false)}
-                    >
+                    <Link to="/salesproducts" onClick={() => setMenuOpen(false)}>
                       {t("offers")}
                     </Link>
                   </li>
