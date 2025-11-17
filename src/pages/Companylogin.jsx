@@ -23,40 +23,59 @@ export default function CompanyLogin() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔹 TEMPORARY LOGIN – just go to dashboard (for testing)
-  const handleLogin = (e) => {
+  // LOGIN WITH API + TEMPORARY FALLBACK
+  const handleLogin = async (e) => {
     e.preventDefault();
-
-    const tempCompany = {
-      id: "temp-" + Date.now(),
-      name: "Demo Company",
-      email: formData.email
-    };
-
-    localStorage.setItem("companyToken", "temporary_token");
-    localStorage.setItem("company", JSON.stringify(tempCompany));
-
-    navigate("/company-dashboard");
-  };
-
-  // 🔹 LOGOUT USING API
-  const handleLogout = async () => {
     setLoading(true);
+    setError("");
+
     try {
-      await logoutCompany();
+      // REAL API LOGIN
+      const res = await loginCompany(formData.email, formData.password);
 
-      localStorage.removeItem("companyToken");
-      localStorage.removeItem("company");
+      localStorage.setItem("companyToken", res.data.token);
+      localStorage.setItem("company", JSON.stringify(res.data.company));
 
-      setIsLoggedIn(false);
-      alert("Logged out successfully!");
-      navigate("/company-login");
+      navigate("/company-dashboard");
     } catch (err) {
-      console.error(err);
-      alert("Logout failed. Try again.");
+      console.error("Login failed → using TEMPORARY LOGIN", err);
+
+      // TEMPORARY LOGIN FALLBACK
+      const tempCompany = {
+        id: "temp-" + Date.now(),
+        name: "Temporary Demo Company",
+        email: formData.email,
+      };
+
+      localStorage.setItem("companyToken", "temporary_token");
+      localStorage.setItem("company", JSON.stringify(tempCompany));
+
+      alert("API offline → temporary login active!");
+
+      navigate("/company-dashboard");
     } finally {
       setLoading(false);
     }
+  };
+
+  // LOGOUT WITH API + fallback
+  const handleLogout = async () => {
+    setLoading(true);
+
+    try {
+      await logoutCompany(); // REAL API LOGOUT
+    } catch (err) {
+      console.error("Logout API failed → using local logout", err);
+    }
+
+    // ALWAYS clear local storage
+    localStorage.removeItem("companyToken");
+    localStorage.removeItem("company");
+
+    setIsLoggedIn(false);
+    alert("Logged out successfully!");
+    navigate("/company-login");
+    setLoading(false);
   };
 
   return (
