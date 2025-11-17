@@ -16,20 +16,18 @@ export default function SearchBar() {
 
   const categoryTitles = useMemo(() => categories.map((c) => c.title), []);
 
-  // Placeholder cycling interval
   useEffect(() => {
-    if (searchTerm) return; // stop cycling while typing
+    if (searchTerm) return;
     const interval = setInterval(() => {
-      setShowPlaceholder(false); // animate out
+      setShowPlaceholder(false);
       setTimeout(() => {
         setCurrentWordIndex((prev) => (prev + 1) % categoryTitles.length);
-        setShowPlaceholder(true); // animate in
-      }, 300); // match exit animation duration
+        setShowPlaceholder(true);
+      }, 300);
     }, 2500);
     return () => clearInterval(interval);
   }, [searchTerm, categoryTitles.length]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
@@ -61,14 +59,24 @@ export default function SearchBar() {
 
   return (
     <div ref={searchRef} className="w-full relative">
-      <div className="flex items-center px-4 py-3 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl relative z-10">
-        <AiOutlineSearch className="text-white text-xl mr-2" />
+      <div
+        className={`flex items-center px-4 py-3 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl relative z-10 
+          ${i18n.language === "ar" ? "pr-6" : "pl-6"}
+        `}
+      >
+        <AiOutlineSearch
+          className={`text-white text-xl ${
+            i18n.language === "ar" ? "ml-3" : "mr-2"
+          }`}
+        />
+
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1 outline-none bg-transparent text-white"
         />
+
         <AnimatePresence>
           {!searchTerm && showPlaceholder && (
             <motion.span
@@ -78,19 +86,23 @@ export default function SearchBar() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ opacity: { duration: 0.3 }, y: { duration: 0.3 } }}
               className={`absolute top-3 pointer-events-none select-none text-gray-400 ${
-                i18n.language === "ar" ? "right-10 text-right" : "left-10 text-left"
+                i18n.language === "ar"
+                  ? "right-14 text-right"
+                  : "left-14 text-left"
               }`}
             >
               {categoryTitles[currentWordIndex]}
             </motion.span>
           )}
         </AnimatePresence>
+
         {searchTerm && (
           <AiOutlineClose
             onClick={() => setSearchTerm("")}
             className="text-gray-300 hover:text-white text-lg cursor-pointer ml-2"
           />
         )}
+
         <img
           src={qatarflag}
           alt="Qatar Flag"
@@ -100,7 +112,6 @@ export default function SearchBar() {
         />
       </div>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {searchTerm && (
           <motion.div

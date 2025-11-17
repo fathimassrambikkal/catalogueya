@@ -159,7 +159,7 @@ export default function HomeServices() {
     "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full";
 
   return (
-    <section className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-neutral-100">
+    <section dir="ltr" className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-neutral-100">
       <div className="text-center mb-8 sm:mb-12">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
           {fixedWords?.homeServicesTitle || "Home Services"}

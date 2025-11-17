@@ -3,11 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 import { HiDotsHorizontal } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import Cookies from "js-cookie"; // <-- added to read lang cookie
+import Cookies from "js-cookie"; 
 import logo from "../assets/logo.png";
 import { useFavourites } from "../context/FavouriteContext";
 import { AiOutlineHeart } from "react-icons/ai";
-import { changeLanguage as apiChangeLanguage, getFixedWords } from "../api"; // <-- import getFixedWords
+import { changeLanguage as apiChangeLanguage, getFixedWords } from "../api";
 
 // Memoized dropdown menu
 const DropdownMenu = memo(function DropdownMenu({ isOpen, language, t, closeMenu }) {
@@ -72,12 +72,18 @@ const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
 // Memoized Favourites
 const FavouritesCounter = memo(function FavouritesCounter() {
   const { favourites } = useFavourites();
+  const { i18n } = useTranslation(); // <-- added to detect language  
   const count = favourites.length;
 
   return (
-    <Link to="/favourite" className="relative">
+    <Link 
+      to="/favourite" 
+      className={`relative ${i18n.language === "ar" ? "ml-2" : ""}`} // <-- RIGHT SHIFT IN ARABIC
+    >
       <AiOutlineHeart
-        className={`text-2xl cursor-pointer transition ${count > 0 ? "text-red-500 hover:text-red-600" : "text-gray-600 hover:text-red-400"}`}
+        className={`text-2xl cursor-pointer transition ${
+          count > 0 ? "text-red-500 hover:text-red-600" : "text-gray-600 hover:text-red-400"
+        }`}
       />
       {count > 0 && (
         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] sm:text-xs rounded-full px-1.5 py-0.5 shadow-md">
@@ -109,7 +115,7 @@ export default function Navbar() {
   const glassPages = useMemo(() => ["/", "/about", "/salesproducts", "/contact"], []);
   const isGlassPage = useMemo(() => glassPages.includes(location.pathname), [location.pathname, glassPages]);
 
-  // ----------- Initialize language from cookie and fetch fixed words -----------
+  // Initialize language
   useEffect(() => {
     const initializeLanguage = async () => {
       const cookieLang = Cookies.get("lang") || "en";
@@ -120,7 +126,7 @@ export default function Navbar() {
       }
 
       try {
-        await getFixedWords(); // fetch fixed words for current language
+        await getFixedWords();
       } catch (error) {
         console.error("Failed to fetch fixed words:", error);
       }
@@ -133,10 +139,15 @@ export default function Navbar() {
     const newLang = i18n.language === "en" ? "ar" : "en";
     i18n.changeLanguage(newLang);
     document.documentElement.setAttribute("dir", newLang === "ar" ? "rtl" : "ltr");
-    try { await apiChangeLanguage(newLang); } catch (error) { console.error(error); }
+
+    try {
+      await apiChangeLanguage(newLang);
+    } catch (error) {
+      console.error(error);
+    }
   }, [i18n]);
 
-  const toggleMenu = useCallback(() => setMenuOpen(prev => !prev), []);
+  const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
