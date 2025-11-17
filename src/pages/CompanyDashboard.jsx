@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../companyDashboard/Sidebar";
-import Products from "../companyDashboard/Products";
-import Sales from "../companyDashboard/Sales";
-import Analytics from "../companyDashboard/Analytics";
-import Settings from "../companyDashboard/Settings";
-import Cover from "../companyDashboard/Cover";
+import Sidebar from "../companydashboard/Sidebar";
+import Products from "../companydashboard/Products";
+import Sales from "../companydashboard/Sales";
+import Analytics from "../companydashboard/Analytics";
+import Settings from "../companydashboard/Settings";
+import Cover from "../companydashboard/Cover";
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
 
 export default function CompanyDashboard() {
