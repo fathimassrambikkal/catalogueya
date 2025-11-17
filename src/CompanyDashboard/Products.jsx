@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaPlus, FaTrash, FaEdit, FaCheck, FaTimes, FaUpload } from "react-icons/fa";
-import Cover from "./Cover";
+
 
 export default function Products({ products, setProducts, editingProduct, setEditingProduct }) {
   const [formData, setFormData] = useState({

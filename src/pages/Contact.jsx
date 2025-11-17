@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, lazy, Suspense, useMemo } from "react";
+import React, { memo, lazy, Suspense} from "react";
 import { FaFacebookF, FaInstagram, FaTiktok, FaSnapchatGhost } from "react-icons/fa";
 
 // Lazy-load heavy components

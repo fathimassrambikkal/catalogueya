@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useMemo, useEffect, useState } from "react";
+import React, { Suspense,useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MdIosShare } from "react-icons/md";
 import { FaStar } from "react-icons/fa";

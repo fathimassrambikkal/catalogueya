@@ -105,7 +105,8 @@ export default function Banner() {
     []
   );
 
-  const headingText = useMemo(() => "Welcome to Catalogueya", []);
+const headingText = "Welcome to Catalogueya";
+
 
   return (
     <section
@@ -198,6 +199,8 @@ export default function Banner() {
           />
         ))}
       </div>
+   
+
     </section>
   );
 }

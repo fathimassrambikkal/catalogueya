@@ -27,14 +27,16 @@ export const changeLanguage = (lang) => {
 
 // ==================== General APIs ====================
 
-// getFixedWords respects the lang cookie
 export const getSettings = () => api.get("/settings");
+
 export const getFixedWords = () => {
   const lang = getLang();
-  return axios.get(`https://catalogueyanew.com.awu.zxu.temporary.site/${lang}/api/fixed_words`, {
-    headers: { "Content-Type": "application/json" },
-  });
+  return axios.get(
+    `https://catalogueyanew.com.awu.zxu.temporary.site/${lang}/api/fixed_words`,
+    { headers: { "Content-Type": "application/json" } }
+  );
 };
+
 export const getGoogleMap = () => api.get("/googlemap");
 
 // ==================== Category APIs ====================
@@ -52,19 +54,34 @@ export const getSalesProducts = () => api.get("/showProducts/sales");
 export const getArrivalsProducts = () => api.get("/showProducts/arrivals");
 
 // ==================== Questions & Subscriptions ====================
-export const getQuestions = () => axios.get("http://127.0.0.1:8000/api/showQuestions");
-export const getSubscribeDetails = () => axios.get("http://127.0.0.1:8000/api/showSubscribesDetails");
+export const getQuestions = () =>
+  api.get("/showQuestions");
+
+export const getSubscribeDetails = () =>
+  api.get("/showSubscribesDetails");
 
 // ==================== Customer Authentication ====================
+
+// 
+// POST /en/login  (NOT inside /api)
+
+const customerLoginUrl = () =>
+  `https://catalogueyanew.com.awu.zxu.temporary.site/${getLang()}/login`;
+
 export const loginCustomer = (email, password) =>
-  api.post("/login", { email, password });
+  axios.post(customerLoginUrl(), { email, password });
+
 export const registerCustomer = (name, email, password) =>
   api.post("/register", { name, email, password });
+
 export const logoutCustomer = () => api.post("/logout");
 
 // ==================== Company Authentication ====================
+
 export const loginCompany = (email, password) =>
   api.post("/company/login", { email, password });
+
 export const registerCompany = (data) =>
   api.post("/company/register", data);
+
 export const logoutCompany = () => api.post("/company/logout");

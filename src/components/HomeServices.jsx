@@ -8,57 +8,73 @@ export default function HomeServices() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
-  const [categories, setCategories] = useState(unifiedData.categories || []);
+  const [categories, setCategories] = useState(
+    Array.isArray(unifiedData?.categories) ? unifiedData.categories : []
+  );
+
   const [fixedWords, setFixedWords] = useState({});
   const [cardsPerView, setCardsPerView] = useState(6);
 
-  // Fetch backend data using async/await
+  // Fetch backend data safely
   useEffect(() => {
     let mounted = true;
 
     const fetchData = async () => {
       try {
         const catRes = await getCategories();
-        if (mounted && catRes?.data?.length) setCategories(catRes.data);
+        if (mounted && Array.isArray(catRes?.data)) {
+          setCategories(catRes.data);
+        } else {
+          setCategories([]);
+        }
 
         const wordsRes = await getFixedWords();
-        if (mounted && wordsRes?.data) setFixedWords(wordsRes.data);
+        if (mounted && typeof wordsRes?.data === "object") {
+          setFixedWords(wordsRes.data);
+        }
       } catch (err) {
         console.warn("Failed to fetch home services data:", err);
       }
     };
 
     fetchData();
-
     return () => {
       mounted = false;
     };
   }, []);
 
-  
+  // Update cards per view
   useEffect(() => {
     let timeout;
-    const updateCardsPerView = () => {
-      const width = window.innerWidth;
-      if (width >= 1600) setCardsPerView(6);
-      else if (width >= 1280) setCardsPerView(5);
-      else if (width >= 1024) setCardsPerView(4);
-      else setCardsPerView(4);
-    };
+
+  const updateCardsPerView = () => {
+  const width = window.innerWidth;
+
+  if (width >= 1600) setCardsPerView(6);
+  else if (width >= 1280) setCardsPerView(5);
+  else setCardsPerView(4); 
+};
+
+
     const handleResize = () => {
       clearTimeout(timeout);
       timeout = setTimeout(updateCardsPerView, 100);
     };
+
     updateCardsPerView();
     window.addEventListener("resize", handleResize);
+
     return () => {
       window.removeEventListener("resize", handleResize);
       clearTimeout(timeout);
     };
   }, []);
 
-  // Duplicate categories for seamless loop
-  const duplicatedCategories = useMemo(() => [...categories, ...categories], [categories]);
+  // Duplicate categories safely
+  const duplicatedCategories = useMemo(() => {
+    if (!Array.isArray(categories)) return [];
+    return [...categories, ...categories];
+  }, [categories]);
 
   // Smooth continuous scroll
   const scrollRef = useRef(0);
@@ -78,7 +94,7 @@ export default function HomeServices() {
       const deltaTime = time - lastTime;
       lastTime = time;
 
-      const containerWidth = containerRef.current.scrollWidth / 2;
+      const containerWidth = containerRef.current.scrollWidth / 2 || 0;
       scrollRef.current += SCROLL_SPEED * (deltaTime / 16);
 
       if (scrollRef.current >= containerWidth) scrollRef.current = 0;
@@ -101,45 +117,56 @@ export default function HomeServices() {
     const animate = () => {
       if (!containerRef.current) return;
       progress += 0.05;
+
       scrollRef.current = start + (end - start) * Math.min(progress, 1);
       containerRef.current.style.transform = `translateX(-${scrollRef.current}px)`;
+
       if (progress < 1) requestAnimationFrame(animate);
     };
     animate();
   };
 
-  const handlePrev = () => smoothScroll(-(containerRef.current.offsetWidth / cardsPerView));
-  const handleNext = () => smoothScroll(containerRef.current.offsetWidth / cardsPerView);
+  const handlePrev = () =>
+    smoothScroll(-(containerRef.current.offsetWidth / cardsPerView));
+
+  const handleNext = () =>
+    smoothScroll(containerRef.current.offsetWidth / cardsPerView);
 
   // Touch/swipe support
   const touchStartX = useRef(0);
+
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
     isPaused.current = true;
   };
+
   const handleTouchMove = (e) => {
     if (!containerRef.current) return;
     const touchX = e.touches[0].clientX;
     const diff = touchStartX.current - touchX;
+
     scrollRef.current += diff;
     containerRef.current.style.transform = `translateX(-${scrollRef.current}px)`;
+
     touchStartX.current = touchX;
   };
+
   const handleTouchEnd = () => {
     isPaused.current = false;
   };
 
-  const circleSize = "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full";
+  const circleSize =
+    "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full";
 
   return (
     <section className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-neutral-100">
-      {/* Header */}
       <div className="text-center mb-8 sm:mb-12">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
           {fixedWords?.homeServicesTitle || "Home Services"}
         </h2>
         <p className="text-gray-500 mt-2 text-sm sm:text-base">
-          {fixedWords?.homeServicesSubtitle || "Explore trusted service categories for your home and garden"}
+          {fixedWords?.homeServicesSubtitle ||
+            "Explore trusted service categories for your home and garden"}
         </p>
       </div>
 
@@ -147,8 +174,8 @@ export default function HomeServices() {
       <div className="relative px-4 sm:px-8 md:px-12 lg:px-16">
         <button
           onClick={handlePrev}
-          className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10 
-                     bg-gray-950 hover:bg-gray-800 text-white rounded-full 
+          className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10
+                     bg-gray-950 hover:bg-gray-800 text-white rounded-full
                      p-1.5 sm:p-2.5 transition-all shadow-md"
         >
           <FaChevronLeft size={16} />
@@ -162,23 +189,26 @@ export default function HomeServices() {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="flex flex-nowrap will-change-transform" ref={containerRef}>
+          <div
+            className="flex flex-nowrap will-change-transform"
+            ref={containerRef}
+          >
             {duplicatedCategories.map((service, index) => (
               <div
-                key={`${service.id}-${index}`}
+                key={`${service?.id}-${index}`}
                 className="flex-shrink-0 px-1 sm:px-2 flex justify-center items-center"
                 style={{ flexBasis: `${100 / cardsPerView}%` }}
               >
                 <div
-                  className={`relative group aspect-square ${circleSize} p-[2px] 
-                              bg-gradient-to-br from-white/40 via-white/10 to-transparent 
+                  className={`relative group aspect-square ${circleSize} p-[2px]
+                              bg-gradient-to-br from-white/40 via-white/10 to-transparent
                               shadow-lg border border-white/30 hover:scale-105 transition-transform duration-300`}
-                  onClick={() => navigate(`/category/${service.id}`)}
+                  onClick={() => navigate(`/category/${service?.id}`)}
                 >
                   <div className="relative w-full h-full rounded-full overflow-hidden">
                     <img
-                      src={service.image}
-                      alt={service.title_en || service.title}
+                      src={service?.image}
+                      alt={service?.title_en || service?.title}
                       loading="lazy"
                       decoding="async"
                       width={160}
@@ -187,7 +217,7 @@ export default function HomeServices() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-center justify-center">
                       <h3 className="text-white text-[10px] sm:text-xs md:text-sm font-medium text-center px-3 py-[4px] leading-tight bg-black/10 rounded-sm transition duration-300">
-                        {service.title_en || service.title}
+                        {service?.title_en || service?.title}
                       </h3>
                     </div>
                   </div>
@@ -199,13 +229,14 @@ export default function HomeServices() {
 
         <button
           onClick={handleNext}
-          className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 
-                     bg-gray-950 hover:bg-gray-800 text-white rounded-full 
+          className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10
+                     bg-gray-950 hover:bg-gray-800 text-white rounded-full
                      p-1.5 sm:p-2.5 transition-all shadow-md"
         >
           <FaChevronRight size={16} />
         </button>
       </div>
+  
     </section>
   );
 }

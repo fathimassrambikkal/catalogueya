@@ -7,6 +7,12 @@ import { FavouriteProvider } from "./context/FavouriteContext";
 import ErrorBoundary from "./components/ErrorBoundary"; 
 import { getGoogleMap } from "./api"; 
 
+import * as Sentry from "@sentry/react";
+
+Sentry.init({
+  dsn: "YOUR_PUBLIC_DSN",
+});
+
 // Function to dynamically load Google Maps script
 const loadGoogleMaps = (apiKey) => {
   if (!document.getElementById("google-maps")) {

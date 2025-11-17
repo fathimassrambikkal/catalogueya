@@ -1,74 +1,96 @@
-import React, { useState, useMemo, useEffect, Suspense, memo } from "react"; // ✅ added useEffect
+// ✅ SAFE, CLEAN, NULL-PROOF VERSION
+import React, { useState, useMemo, useEffect, Suspense, memo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useFavourites } from "../context/FavouriteContext";
 import { newArrivalProducts } from "../data/newArrivalData";
 import CallToAction from "../components/CallToAction";
-import { getProducts } from "../api"; 
+import { getProducts } from "../api";
 
-//  Lazy-loaded icons for performance
+// Lazy-loaded icons
 const FaStar = React.lazy(() =>
-  import("react-icons/fa").then((mod) => ({ default: mod.FaStar }))
+  import("react-icons/fa").then((m) => ({ default: m.FaStar }))
 );
 const FaHeart = React.lazy(() =>
-  import("react-icons/fa").then((mod) => ({ default: mod.FaHeart }))
+  import("react-icons/fa").then((m) => ({ default: m.FaHeart }))
 );
 const FaWhatsapp = React.lazy(() =>
-  import("react-icons/fa").then((mod) => ({ default: mod.FaWhatsapp }))
+  import("react-icons/fa").then((m) => ({ default: m.FaWhatsapp }))
 );
 const FaArrowLeft = React.lazy(() =>
-  import("react-icons/fa").then((mod) => ({ default: mod.FaArrowLeft }))
+  import("react-icons/fa").then((m) => ({ default: m.FaArrowLeft }))
 );
 
 function NewArrivalProductPageComponent() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState("Relevance");
-  const [products, setProducts] = useState(newArrivalProducts); // ✅ default to static data
+  const [products, setProducts] = useState(newArrivalProducts);
   const [loading, setLoading] = useState(true);
   const { favourites, toggleFavourite } = useFavourites();
   const whatsappNumber = "97400000000";
 
-  // ✅ Fetch products from backend, fallback to default if API fails
+  // ✅ Safe API fetch with strict null-checks
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await getProducts();
-        const backendData = data.data || data || [];
-        const saleItems = backendData.filter(
-          (p) =>
-            p.isOnSale ||
-            p.discount_price ||
-            (p.old_price && p.old_price > p.price)
-        );
+        const response = await getProducts();
+
+        // FULL SAFE EXTRACT
+        const raw =
+          response?.data?.data ??
+          response?.data ??
+          response ??
+          [];
+
+        // Ensure array
+        const backendProducts = Array.isArray(raw) ? raw : [];
+
+        // SAFE sale item detection
+        const saleItems = backendProducts.filter((p) => {
+          const price = Number(p?.price) || 0;
+          const oldPrice = Number(p?.old_price ?? p?.oldPrice) || 0;
+          return p?.isOnSale || p?.discount_price || oldPrice > price;
+        });
+
+        // Pick best source
         if (saleItems.length > 0) {
           setProducts(saleItems);
-        } else if (backendData.length > 0) {
-          setProducts(backendData);
+        } else if (backendProducts.length > 0) {
+          setProducts(backendProducts);
+        } else {
+          setProducts(newArrivalProducts);
         }
-      } catch (err) {
-        console.error("❌ Error loading products, using default:", err);
+      } catch (error) {
+        console.error("❌ API failed → using default:", error);
+        setProducts(newArrivalProducts);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProducts();
   }, []);
 
-  // ✅ Sorting Logic
+  // Sorting logic (safe numbers)
   const sortedProducts = [...products].sort((a, b) => {
+    const priceA = Number(a?.price) || 0;
+    const priceB = Number(b?.price) || 0;
+    const ratingA = Number(a?.rating) || 0;
+    const ratingB = Number(b?.rating) || 0;
+
     switch (sortBy) {
       case "Price: Low to High":
-        return Number(a.price) - Number(b.price);
+        return priceA - priceB;
       case "Price: High to Low":
-        return Number(b.price) - Number(a.price);
+        return priceB - priceA;
       case "Rating":
-        return Number(b.rating) - Number(a.rating);
+        return ratingB - ratingA;
       default:
         return 0;
     }
   });
 
-  // ✅ Motion Variants
+  // Motion variants
   const container = useMemo(
     () => ({
       hidden: {},
@@ -92,6 +114,7 @@ function NewArrivalProductPageComponent() {
   return (
     <>
       <section className="relative min-h-screen pt-24 pb-16 sm:pt-28 sm:pb-20 px-4 sm:px-8 md:px-12 lg:px-16 bg-gray-50">
+        
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
@@ -114,6 +137,7 @@ function NewArrivalProductPageComponent() {
           <p className="text-sm sm:text-base md:text-lg">
             {sortedProducts.length} Products Found
           </p>
+
           <div className="flex items-center gap-3 text-sm sm:text-base">
             <span className="font-medium text-gray-700">Sort by:</span>
             <select
@@ -138,20 +162,22 @@ function NewArrivalProductPageComponent() {
           variants={container}
         >
           {sortedProducts.map((product) => {
-            const isFav = favourites.some((item) => item.id === product.id);
+            const isFav =
+              favourites?.some((item) => item?.id === product?.id) || false;
 
             return (
               <motion.div
-                key={product.id}
+                key={product?.id}
                 variants={cardVariant}
                 className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
                            bg-white/10 border border-white/30 backdrop-blur-2xl 
                            shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
                            hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
                            transition-all duration-700"
-                onClick={() => navigate(`/newarrivalprofile/${product.id}`)}
+                onClick={() => navigate(`/newarrivalprofile/${product?.id}`)}
               >
-                {/* ❤️ Favourite Button */}
+                
+                {/* Favourite Button */}
                 <motion.button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -174,23 +200,23 @@ function NewArrivalProductPageComponent() {
                   </Suspense>
                 </motion.button>
 
-                {/* 🖼️ Product Image */}
+                {/* Product Image */}
                 <div className="relative w-full h-[180px] xs:h-[200px] sm:h-[220px] md:h-[240px] overflow-hidden rounded-t-3xl">
                   <img
-                    src={product.img}
-                    alt={product.name}
+                    src={product?.img}
+                    alt={product?.name}
                     loading="lazy"
                     className="w-full h-full object-cover object-top rounded-t-3xl transition-transform duration-500 group-hover:scale-105 border-b border-white/20"
                   />
 
-                  {/* ⭐ Rating */}
+                  {/* Rating */}
                   <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
                     <Suspense fallback={<span className="text-xs text-white/70">★</span>}>
                       {Array.from({ length: 5 }).map((_, i) => (
                         <FaStar
                           key={i}
                           className={`w-3 h-3 ${
-                            i < Math.floor(product.rating)
+                            i < Math.floor(Number(product?.rating) || 0)
                               ? "text-yellow-400"
                               : "text-gray-400"
                           }`}
@@ -198,12 +224,12 @@ function NewArrivalProductPageComponent() {
                       ))}
                     </Suspense>
                     <span className="text-[10px] text-white/90 ml-1">
-                      ({product.rating.toFixed(1)})
+                      ({(Number(product?.rating) || 0).toFixed(1)})
                     </span>
                   </div>
                 </div>
 
-                {/* 💬 Info Section */}
+                {/* Info Section */}
                 <div
                   className="relative w-full rounded-b-3xl p-3 sm:p-4 border-t border-white/20 
                              bg-white/10 backdrop-blur-xl 
@@ -213,25 +239,27 @@ function NewArrivalProductPageComponent() {
                 >
                   <div className="flex flex-col w-[80%] z-10">
                     <h3 className="font-semibold text-[11px] xs:text-xs sm:text-sm truncate text-gray-900 mb-1">
-                      {product.name}
+                      {product?.name}
                     </h3>
+
                     <div className="flex items-center gap-1">
                       <span className="text-[11px] xs:text-[12px] sm:text-sm font-bold text-gray-900">
-                        QAR {product.price}
+                        QAR {product?.price}
                       </span>
-                      {product.oldPrice && (
+
+                      {(product?.oldPrice || product?.old_price) && (
                         <span className="text-[9px] xs:text-[10px] sm:text-xs line-through text-gray-500">
-                          QAR {product.oldPrice}
+                          QAR {product?.oldPrice || product?.old_price}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* WhatsApp Icon */}
+                  {/* WhatsApp */}
                   <Suspense fallback={<span className="w-4 h-4 bg-green-200 rounded-full" />}>
                     <a
                       href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(
-                        product.name
+                        product?.name || ""
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"

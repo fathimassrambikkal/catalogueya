@@ -27,7 +27,6 @@ import paintBanner from "../assets/bannerc.avif";
 import carpenterBanner from "../assets/bannerc.avif";
 import lightingBanner from "../assets/bannerc.avif";
 import curtainsBanner from "../assets/bannerc.avif";
-import wallpaperBanner from "../assets/bannerc.avif";
 import gardeningBanner from "../assets/bannerc.avif";
 import securityBanner from "../assets/bannerc.avif";
 

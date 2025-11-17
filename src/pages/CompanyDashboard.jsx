@@ -98,7 +98,7 @@ export default function CompanyDashboard() {
   };
 
   return (
-    <div className="flex bg-gray-100 h-screen overflow-hidden">
+    <div className="flex bg-gray-100 min-h-screen overflow-x-hidden">
       {/* Sidebar */}
       <div
         className={`fixed z-50 top-0 left-0 h-full transition-all duration-300 w-60 md:relative md:translate-x-0 ${
@@ -109,7 +109,8 @@ export default function CompanyDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-y-auto transition-all duration-300">
+      <div className="flex-1 flex flex-col overflow-y-auto transition-all duration-300 min-w-0">
+
         <button
           onClick={() => setSidebarOpen((s) => !s)}
           className="fixed top-4 left-4 z-50 p-3 rounded-xl text-sm bg-white text-gray-500 shadow-md hover:bg-gray-100 md:hidden"

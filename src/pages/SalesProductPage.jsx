@@ -33,13 +33,20 @@ function SalesProductPageComponent() {
     const fetchProducts = async () => {
       try {
         const { data } = await getProducts();
-        const backendData = data.data || data || [];
-        const saleItems = backendData.filter(
-          (p) =>
-            p.isOnSale ||
-            p.discount_price ||
-            (p.old_price && p.old_price > p.price)
-        );
+
+        // ✅ Safer null-check for backend data
+        const backendData = data?.data ?? data ?? [];
+
+        // ✅ Prevents crashes if backendData is not an array
+        const saleItems = Array.isArray(backendData)
+          ? backendData.filter(
+              (p) =>
+                p?.isOnSale ||
+                p?.discount_price ||
+                (p?.old_price && p?.old_price > p?.price)
+            )
+          : [];
+
         if (saleItems.length > 0) setProducts(saleItems);
       } catch (err) {
         console.error("❌ Error loading sales products:", err);

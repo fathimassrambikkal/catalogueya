@@ -38,9 +38,9 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
       />
       <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
         {Array.from({ length: 5 }).map((_, i) => (
-          <FaStar key={i} className={`w-3 h-3 ${i < Math.floor(product.rating) ? "text-white" : "text-gray-400"}`} />
+          <FaStar key={i} className={`w-3 h-3 ${i < Math.floor(product.rating ?? 0) ? "text-white" : "text-gray-400"}`} />
         ))}
-        <span className="text-[10px] text-white/90 ml-1">{product.rating.toFixed(1)}</span>
+        <span className="text-[10px] text-white/90 ml-1">{(product.rating ?? 0).toFixed(1)}</span>
       </div>
     </div>
 
@@ -88,9 +88,17 @@ function NewArrivalsComponent() {
       try {
         const res = await getArrivalsProducts();
         if (!mounted) return;
-        setApiProducts(res?.data || res);
+
+        const cleaned = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res)
+          ? res
+          : [];
+
+        setApiProducts(cleaned);
       } catch (err) {
         console.warn("Failed to fetch new arrivals:", err);
+        setApiProducts([]); // fallback
       }
     };
 
@@ -100,7 +108,16 @@ function NewArrivalsComponent() {
     };
   }, []);
 
-  const combinedProducts = useMemo(() => [...apiProducts, ...unifiedData.newArrivalProducts], [apiProducts]);
+  // SAFE MERGE (prevents crash)
+  const combinedProducts = useMemo(() => {
+    const api = Array.isArray(apiProducts) ? apiProducts : [];
+    const local = Array.isArray(unifiedData.newArrivalProducts)
+      ? unifiedData.newArrivalProducts
+      : [];
+
+    return [...api, ...local];
+  }, [apiProducts]);
+
   const limitedProducts = useMemo(() => combinedProducts.slice(0, 4), [combinedProducts]);
 
   const handleToggleFav = useCallback((product) => toggleFavourite(product), [toggleFavourite]);
@@ -109,7 +126,9 @@ function NewArrivalsComponent() {
   return (
     <section className="py-6 sm:py-10 bg-amber-300 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
       <div className="flex flex-col md:flex-row items-start justify-between mb-8 sm:mb-12 gap-6">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black">New Arrivals</h1>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black">
+          New Arrivals
+        </h1>
         <div className="md:w-1/3 flex justify-start md:justify-end">
           <Link
             to="/newarrivalproducts"
@@ -118,7 +137,7 @@ function NewArrivalsComponent() {
             <span className="transition-transform duration-300 transform group-hover:-translate-y-full flex items-center gap-1 sm:gap-2">
               View more <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
             </span>
-            <span className="absolute left-3 top-full w-full transition-transform duration-300 transform group-hover:translate-y-[-100%] flex items-center gap-1">
+            <span className="absolute left-3 top-full w-full transition-transform duration-300 transform group-hover:-translate-y-[100%] flex items-center gap-1">
               View more <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
             </span>
             <span className="absolute bottom-0 left-2 h-[1px] w-4/5 bg-black overflow-hidden">
