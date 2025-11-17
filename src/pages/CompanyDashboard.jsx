@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../dashboard/Sidebar.jsx";
 import Products from "../dashboard/Products.jsx";
-import Sales from "../dashboard/Sales.js";
+import Sales from "../dashboard/Sales.jsx";
 import Analytics from "../dashboard/Analytics.jsx";
 import Settings from "../dashboard/Settings.jsx";
-import Cover from "../dashboard/Cover.js";
-
+import Cover from "../dashboard/Cover.jsx";
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
 
 export default function CompanyDashboard() {
