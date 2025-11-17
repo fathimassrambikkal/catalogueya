@@ -126,13 +126,16 @@ export default function AnalyticsAppleFull({ products = [] }) {
     return () => clearInterval(id);
   }, [range]);
 
-  /* -------------------------
-     Safe Top Product
-  ---------------------------*/
-  const topProduct = useMemo(() => {
-    if (!Array.isArray(safeProducts) || safeProducts.length === 0) return {};
-    return safeProducts.reduce((a, b) => (b.views > a.views ? b : a));
-  }, [safeProducts]);
+ /* -------------------------
+   Safe Top Product
+---------------------------*/
+const topProduct = useMemo(() => {
+  // CLEAN: no need to check Array.isArray(safeProducts)
+  if (safeProducts.length === 0) return {};
+
+  return safeProducts.reduce((a, b) => (b.views > a.views ? b : a));
+}, [safeProducts]);
+
 
   /* -------------------------
      Safe chart data
