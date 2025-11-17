@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../companyDashboard/Sidebar";
+import Sidebar from "../CompanyDashboard/Sidebar";
 import Products from "../companyDashboard/Products";
 import Sales from "../companyDashboard/Sales";
 import Analytics from "../companyDashboard/Analytics";
