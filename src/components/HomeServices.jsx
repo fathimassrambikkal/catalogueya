@@ -175,7 +175,7 @@ export default function HomeServices() {
         <button
           onClick={handlePrev}
           className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10
-                     bg-gray-950 hover:bg-gray-800 text-white rounded-full
+                     bg-gray-900 hover:bg-gray-800 text-white rounded-full
                      p-1.5 sm:p-2.5 transition-all shadow-md"
         >
           <FaChevronLeft size={16} />
@@ -230,7 +230,7 @@ export default function HomeServices() {
         <button
           onClick={handleNext}
           className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10
-                     bg-gray-950 hover:bg-gray-800 text-white rounded-full
+                     bg-gray-900 hover:bg-gray-800 text-white rounded-full
                      p-1.5 sm:p-2.5 transition-all shadow-md"
         >
           <FaChevronRight size={16} />

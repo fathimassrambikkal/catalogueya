@@ -55,7 +55,7 @@ const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
   return (
     <motion.button
       onClick={toggleMenu}
-      className="flex items-center bg-white/30 text-gray-700 px-2 py-2 rounded-xl hover:bg-white/50 transition"
+      className=" border border-gray-300 text-xs sm:text-sm  flex items-center bg-white/30 text-gray-900 px-2 py-1 sm:px-2 sm:py-2  rounded-lg md:rounded-xl  hover:bg-white/50 transition backdrop-blur-md"
       animate={{
         rotate: menuOpen ? [0, 3, -3, 0] : 0,
         scale: menuOpen ? 1.05 : 1,
@@ -72,13 +72,13 @@ const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
 // Memoized Favourites
 const FavouritesCounter = memo(function FavouritesCounter() {
   const { favourites } = useFavourites();
-  const { i18n } = useTranslation(); // <-- added to detect language  
+  const { i18n } = useTranslation();  
   const count = favourites.length;
 
   return (
     <Link 
       to="/favourite" 
-      className={`relative ${i18n.language === "ar" ? "ml-2" : ""}`} // <-- RIGHT SHIFT IN ARABIC
+      className={`relative ${i18n.language === "ar" ? "ml-2" : ""}`} 
     >
       <AiOutlineHeart
         className={`text-2xl cursor-pointer transition ${
@@ -99,7 +99,7 @@ const LanguageToggle = memo(function LanguageToggle({ toggleLanguage, language }
   return (
     <button
       onClick={toggleLanguage}
-      className="border border-gray-300 text-gray-950 px-2 py-1 sm:px-3 sm:py-2 rounded-xl hover:bg-white/50 transition text-xs sm:text-sm backdrop-blur-md"
+      className="border border-gray-300 text-gray-900 px-2 py-1 sm:px-3 sm:py-2 rounded-lg md:rounded-xl hover:bg-white/50 transition text-xs sm:text-sm backdrop-blur-md"
     >
       {language === "en" ? "عربي" : "EN"}
     </button>
@@ -185,7 +185,7 @@ export default function Navbar() {
         <FavouritesCounter />
         <Link
           to="/sign"
-          className="border border-gray-300 text-gray-950 hover:text-blue-500 px-3 sm:px-4 py-1 sm:py-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center bg-white/30 hover:bg-white/50"
+          className="border border-gray-300 text-gray-900 hover:text-blue-500 px-2 sm:px-3 py-1 sm:py-2 rounded-lg md:rounded-xl transition text-xs sm:text-sm flex items-center justify-center bg-white/30 hover:bg-white/50"
         >
           {t("login")}
         </Link>

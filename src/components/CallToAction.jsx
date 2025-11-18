@@ -23,7 +23,7 @@ const CallToAction = React.memo(() => {
           </h2>
           <p className="text-base sm:text-lg text-gray-700 leading-relaxed max-w-md">
             Subscribe to{" "}
-            <span className="font-medium text-blue-700">Catalogueya</span> and
+            <span className="font-medium text-blue-500">Catalogueya</span> and
             receive the latest updates, offers, and exclusive insights right in
             your inbox.
           </p>
@@ -62,7 +62,7 @@ const CallToAction = React.memo(() => {
             Are you a business owner?{" "}
             <Link
               to="/register"
-              className="text-blue-600 underline cursor-pointer hover:text-blue-700 transition font-semibold"
+              className="text-blue-500 underline cursor-pointer hover:text-blue-700 transition font-semibold"
             >
               Register
             </Link>

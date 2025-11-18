@@ -185,7 +185,7 @@ const headingText = "Welcome to Catalogueya";
       </motion.div>
 
       {/* Navigation dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-20 p-1.5 rounded-full bg-white/20 backdrop-blur-md">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20 p-1.5 rounded-full bg-white/20 backdrop-blur-md">
         {responsiveImages.map((_, idx) => (
           <button
             key={idx}

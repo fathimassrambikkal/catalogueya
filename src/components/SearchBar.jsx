@@ -106,7 +106,7 @@ export default function SearchBar() {
         <img
           src={qatarflag}
           alt="Qatar Flag"
-          className="w-8 h-6 ml-3 rounded-sm shadow-md"
+          className="w-8 h-6 ml-2 rounded-sm shadow-md"
           loading="lazy"
           decoding="async"
         />
