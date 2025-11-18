@@ -165,9 +165,9 @@ const headingText = "Welcome to Catalogueya";
 
         <motion.h2
           variants={container}
-          className="font-extrabold tracking-tight text-center text-white
+          className="font-extrabold  text-center text-white
                      drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex flex-wrap justify-center
-                     text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl 2xl:text-5xl leading-tight px-4"
+                     text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl 2xl:text-5xl tracking-tight px-4"
         >
           {headingText.split("").map((char, i) => (
             <motion.span key={i} variants={child} className="inline-block">

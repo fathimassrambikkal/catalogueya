@@ -65,9 +65,10 @@ export default function SearchBar() {
         `}
       >
         <AiOutlineSearch
-          className={`text-white text-xl ${
-            i18n.language === "ar" ? "ml-3" : "mr-2"
-          }`}
+          className={`text-white 
+            text-lg sm:text-xl md:text-2xl   /* Responsive sizes */
+            ${i18n.language === "ar" ? "ml-3" : "mr-2"}
+          `}
         />
 
         <input
@@ -99,14 +100,19 @@ export default function SearchBar() {
         {searchTerm && (
           <AiOutlineClose
             onClick={() => setSearchTerm("")}
-            className="text-gray-300 hover:text-white text-lg cursor-pointer ml-2"
+            className="text-gray-300 hover:text-white text-xl cursor-pointer ml-2"
           />
         )}
 
         <img
           src={qatarflag}
           alt="Qatar Flag"
-          className="w-8 h-6 ml-2 rounded-sm shadow-md"
+          className="
+            w-6 h-4          
+            sm:w-7 sm:h-5    
+            md:w-8 md:h-6     
+            ml-2 rounded-sm shadow-md object-cover
+          "
           loading="lazy"
           decoding="async"
         />
