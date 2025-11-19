@@ -83,14 +83,26 @@ function AppContent() {
             path="/category/:categoryId/company/:companyId"
             element={<CompanyPage />}
           />
+          {/* ADDED: Direct company route */}
+          <Route path="/company/:companyId" element={<CompanyPage />} />
           <Route
             path="/category/:categoryId/company/:companyId/product/:id"
+            element={<ProductProfile />}
+          />
+          {/* ADDED: Direct company product route */}
+          <Route
+            path="/company/:companyId/product/:id"
             element={<ProductProfile />}
           />
 
           {/* Reviews */}
           <Route
             path="/category/:categoryId/company/:companyId/reviews"
+            element={<CompanyReviewsPage />}
+          />
+          {/* ADDED: Direct company reviews route */}
+          <Route
+            path="/company/:companyId/reviews"
             element={<CompanyReviewsPage />}
           />
 

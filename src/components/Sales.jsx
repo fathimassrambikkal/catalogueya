@@ -79,25 +79,37 @@ function SalesComponent() {
   const { favourites, toggleFavourite } = useFavourites();
   const [apiProducts, setApiProducts] = useState([]);
 
-  // Fetch API using async/await
+  // FIXED API FETCH — always returns an array 🚀
   useEffect(() => {
     let mounted = true;
 
-    const fetchProducts = async () => {
+    (async () => {
       try {
         const res = await getSalesProducts();
         if (!mounted) return;
-        setApiProducts(res?.data || res);
+
+        let arr = [];
+
+        if (Array.isArray(res)) arr = res;
+        else if (Array.isArray(res?.data)) arr = res.data;
+        else if (Array.isArray(res?.products)) arr = res.products;
+        else console.warn("Unexpected API response format:", res);
+
+        setApiProducts(arr);
       } catch (err) {
         console.warn("Failed to fetch sales products:", err);
+        setApiProducts([]); // avoid crash
       }
-    };
+    })();
 
-    fetchProducts();
-    return () => { mounted = false; };
+    return () => (mounted = false);
   }, []);
 
-  const combinedProducts = useMemo(() => [...apiProducts, ...unifiedData.salesProducts], [apiProducts]);
+  const combinedProducts = useMemo(
+    () => [...(apiProducts || []), ...unifiedData.salesProducts],
+    [apiProducts]
+  );
+
   const limitedProducts = useMemo(() => combinedProducts.slice(0, 8), [combinedProducts]);
 
   const handleToggleFav = useCallback((product) => toggleFavourite(product), [toggleFavourite]);

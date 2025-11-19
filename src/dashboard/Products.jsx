@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaPlus, FaTrash, FaEdit, FaCheck, FaTimes, FaUpload } from "react-icons/fa";
 
-
 export default function Products({ products, setProducts, editingProduct, setEditingProduct }) {
   const [formData, setFormData] = useState({
     id: null,
@@ -12,14 +11,25 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     tag: "",
     image: "",
     media: [],
+    categories: [],
   });
 
- 
+  // ADDED: Available categories
+  const availableCategories = [
+    "Carpenter",
+    "Lighting", 
+    "Carpet",
+    "Furniture",
+    "Decoration",
+    "Kitchen",
+    "Bathroom",
+    "Outdoor"
+  ];
+
   useEffect(() => {
     if (!editingProduct) return;
 
     if (editingProduct.id) {
- 
       setFormData({
         id: editingProduct.id,
         name: editingProduct.name || "",
@@ -29,6 +39,7 @@ export default function Products({ products, setProducts, editingProduct, setEdi
         tag: editingProduct.tag || "",
         image: editingProduct.image || "",
         media: editingProduct.media ? [...editingProduct.media] : [],
+        categories: editingProduct.categories ? [...editingProduct.categories] : [], // ADDED
       });
     } else {
       // Adding new product
@@ -41,9 +52,20 @@ export default function Products({ products, setProducts, editingProduct, setEdi
         tag: "",
         image: "",
         media: [],
+        categories: [], // ADDED
       });
     }
   }, [editingProduct]);
+
+  // ADDED: Handle category selection
+  const handleCategoryToggle = (category) => {
+    setFormData(prev => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter(c => c !== category) // Remove if already selected
+        : [...prev.categories, category] // Add if not selected
+    }));
+  };
 
   const handleSave = () => {
     if (!formData.name.trim()) {
@@ -127,8 +149,6 @@ export default function Products({ products, setProducts, editingProduct, setEdi
 
   return (
     <div className="w-full px-4 md:px-8 ">
-      {/* <Cover  /> */}
-
       {/* Header with Top-right Add Button */}
       <div className="flex items-center justify-between mb-6 mt-10">
         <h2 className="text-lg font-semibold text-gray-700">Our Products</h2>
@@ -159,6 +179,15 @@ export default function Products({ products, setProducts, editingProduct, setEdi
             <h3 className="font-semibold text-[17px]">{p.name}</h3>
             <p className="text-sm text-gray-600">Price: QAR {p.price}</p>
             <p className="text-sm text-gray-600">Stock: {p.stock}</p>
+            
+            {/* ADDED: Display categories */}
+            {p.categories && p.categories.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-600">
+                  Categories: {p.categories.join(", ")}
+                </p>
+              </div>
+            )}
 
             <div className="mt-3 flex gap-3">
               <button className="flex items-center gap-2 text-blue-600 hover:text-blue-800" onClick={() => setEditingProduct(p)}>
@@ -245,6 +274,31 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                 </div>
               </div>
 
+              {/* ADDED: Product Category Section */}
+              <div className="bg-white border rounded-lg p-5 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">Product Category</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {availableCategories.map((category) => (
+                    <label key={category} className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.categories.includes(category)}
+                        onChange={() => handleCategoryToggle(category)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <span className="text-gray-700">{category}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.categories.length > 0 && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                    <p className="text-sm text-blue-700">
+                      Selected: {formData.categories.join(", ")}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Tags & Stock */}
               <div className="bg-white border rounded-lg p-5 shadow-sm">
                 <h3 className="text-lg font-semibold">Product Tags & Stock</h3>
@@ -270,8 +324,17 @@ export default function Products({ products, setProducts, editingProduct, setEdi
 
             {/* Footer buttons */}
             <div className="flex justify-end gap-4 px-6 py-4 bg-gray-50 border-t">
-              <button className="px-6 py-2 rounded-md bg-gray-300" onClick={handleDeleteProduct}>Delete</button>
-              <button className="px-6 py-2 rounded-md bg-blue-700 text-white" onClick={handleSave}>Save</button>
+              {formData.id && (
+                <button className="px-6 py-2 rounded-md bg-red-600 text-white" onClick={handleDeleteProduct}>
+                  Delete
+                </button>
+              )}
+              <button className="px-6 py-2 rounded-md bg-gray-300" onClick={() => setEditingProduct(null)}>
+                Cancel
+              </button>
+              <button className="px-6 py-2 rounded-md bg-blue-700 text-white" onClick={handleSave}>
+                {formData.id ? "Update" : "Add"}
+              </button>
             </div>
           </div>
         </div>

@@ -8,12 +8,11 @@ import {
   FaShareAlt,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { categories } from "../data/categoriesData";
+import { useFavourites } from "../context/FavouriteContext";
+import { getCompany, getSettings, getFixedWords } from "../api"; 
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
-import { useFavourites } from "../context/FavouriteContext";
 import { Lens } from "../components/Lens";
-import { getProduct, getSettings, getFixedWords } from "../api"; 
 
 export default function ProductProfile() {
   const params = useParams();
@@ -21,10 +20,11 @@ export default function ProductProfile() {
   const whatsappNumber = "97400000000";
   const { favourites, toggleFavourite } = useFavourites();
 
-  const { categoryId, companyId, id: routeProductId, productId, pid } = params;
+  const { companyId, id: routeProductId, productId, pid } = params;
   const resolvedProductId = routeProductId || productId || pid;
 
   const [product, setProduct] = useState(null);
+  const [companyData, setCompanyData] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [settings, setSettings] = useState({});
@@ -33,41 +33,139 @@ export default function ProductProfile() {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [reviewName, setReviewName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]); // Separate state for similar products
 
+  // ===== Fetch product data from company API =====
   useEffect(() => {
-    getProduct(resolvedProductId)
-      .then((res) => {
-        if (res.data) {
-          setProduct({ ...res.data, image: res.data.image || res.data.img });
-          setSelectedImage(res.data.image || res.data.img);
-        } else fallbackProduct();
-      })
-      .catch(fallbackProduct);
+    let mounted = true;
+    setLoading(true);
+    setError(null);
 
-    function fallbackProduct() {
-      const localProd = categories
-        .flatMap((cat) =>
-          cat.companies.flatMap((comp) =>
-            (comp.products || []).map((p) => ({
-              ...p,
-              categoryId: cat.id,
-              categoryName: cat.title,
-              companyId: comp.id,
-              companyName: comp.name,
-              image: p.image || p.img,
-            }))
-          )
-        )
-        .find(
-          (p) =>
-            String(p.id) === String(resolvedProductId) &&
-            String(p.categoryId) === String(categoryId) &&
-            String(p.companyId) === String(companyId)
-        );
-      setProduct(localProd || null);
-      setSelectedImage(localProd?.image);
+    console.log("🔄 Fetching company data for product ID:", resolvedProductId);
+    console.log("🏢 Company ID:", companyId);
+
+    if (!companyId) {
+      setError("Company ID is required");
+      setLoading(false);
+      return;
     }
-  }, [resolvedProductId, categoryId, companyId]);
+
+    // Get company data and find the specific product in the company's products list
+    getCompany(companyId)
+      .then((res) => {
+        if (!mounted) return;
+
+        console.log("📦 Company API Response:", res);
+        
+        // Extract company data from API response
+        const companyData = res?.data?.data?.company || res?.data?.company || res?.data;
+        console.log("🏢 Company data:", companyData);
+
+        if (companyData && companyData.products) {
+          // Find the specific product in the company's products array
+          const foundProduct = companyData.products.find(
+            p => String(p.id) === String(resolvedProductId)
+          );
+
+          console.log("🔍 Found product:", foundProduct);
+          console.log("📦 All company products:", companyData.products);
+
+          if (foundProduct) {
+            const productWithImages = {
+              ...foundProduct,
+              image: foundProduct.image || foundProduct.img || "/api/placeholder/400/400",
+              image2: foundProduct.image2 || foundProduct.images?.[1],
+              image3: foundProduct.image3 || foundProduct.images?.[2],
+              image4: foundProduct.image4 || foundProduct.images?.[3],
+              categoryId: companyData.category_id || companyData.categoryId,
+              companyId: companyId,
+              companyName: companyData.name || companyData.title || "Company",
+              categoryName: companyData.category_name || "Product"
+            };
+            
+            setProduct(productWithImages);
+            setCompanyData(companyData);
+            setSelectedImage(productWithImages.image);
+            console.log("🎉 Product data successfully set from company API:", productWithImages);
+
+            // Calculate similar products after setting company data
+            calculateSimilarProducts(companyData, productWithImages);
+          } else {
+            console.error("❌ Product not found in company products");
+            console.error("Available product IDs:", companyData.products.map(p => p.id));
+            setError(`Product with ID ${resolvedProductId} not found in company ${companyId}`);
+          }
+        } else {
+          console.error("❌ No products found for this company");
+          setError("No products available for this company");
+        }
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        console.error("❌ Failed to fetch company data:", err);
+        console.error("Error details:", err.response?.data || err.message);
+        setError("Failed to load product data");
+      })
+      .finally(() => {
+        if (mounted) {
+          console.log("🏁 Product loading completed");
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      console.log("🧹 Cleaning up product page");
+      mounted = false;
+    };
+  }, [resolvedProductId, companyId]);
+
+  // Function to calculate similar products
+  const calculateSimilarProducts = (companyData, currentProduct) => {
+    if (!companyData || !currentProduct || !companyData.products) {
+      console.log("❌ Cannot calculate similar products: missing data");
+      setSimilarProducts([]);
+      return;
+    }
+
+    const similar = companyData.products
+      .filter(p => {
+        const isSameProduct = String(p.id) === String(currentProduct.id);
+        const hasValidImage = p.image || p.img;
+        console.log(`Product ${p.id}: same=${isSameProduct}, hasImage=${hasValidImage}`);
+        return !isSameProduct && hasValidImage;
+      })
+      .slice(0, 4) // Limit to 4 products
+      .map(p => {
+        const similarProduct = {
+          ...p,
+          id: p.id,
+          name: p.name || "Unnamed Product",
+          price: p.price || 0,
+          oldPrice: p.oldPrice,
+          image: p.image || p.img || "/api/placeholder/300/300",
+          categoryId: currentProduct.categoryId,
+          companyId: currentProduct.companyId,
+          companyName: currentProduct.companyName,
+          categoryName: currentProduct.categoryName
+        };
+        console.log("🔄 Mapped similar product:", similarProduct);
+        return similarProduct;
+      });
+
+    console.log("🔄 Final similar products calculated:", similar);
+    console.log("🔄 Total products available:", companyData.products.length);
+    console.log("🔄 Current product ID:", currentProduct.id);
+    setSimilarProducts(similar);
+  };
+
+  // Recalculate similar products when product or companyData changes
+  useEffect(() => {
+    if (product && companyData) {
+      calculateSimilarProducts(companyData, product);
+    }
+  }, [product, companyData]);
 
   useEffect(() => {
     if (product) {
@@ -83,12 +181,41 @@ export default function ProductProfile() {
     getFixedWords().then((res) => setFixedWords(res.data || {})).catch(() => {});
   }, []);
 
-  if (!product)
+  // Safe rating calculation
+  const getSafeRating = (rating) => {
+    if (typeof rating === 'number') return rating;
+    if (typeof rating === 'string') return parseFloat(rating) || 0;
+    return 0;
+  };
+
+  const formatRating = (rating) => {
+    const safeRating = getSafeRating(rating);
+    return safeRating.toFixed(1);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-600">
+        Loading product...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-500 text-lg font-medium">
+        {error}
+      </div>
+    );
+  }
+
+  if (!product) {
     return (
       <div className="text-center py-20 text-lg text-gray-600">
         Product not found.
       </div>
     );
+  }
 
   const isFavourite = favourites.some((fav) => fav.id === product.id);
 
@@ -106,27 +233,22 @@ export default function ProductProfile() {
     }
   };
 
-  const company = categories
-    .find((cat) => cat.id === categoryId)
-    ?.companies.find((comp) => comp.id === companyId);
+  // Determine base path for navigation
+  const getBasePath = () => {
+    if (product.categoryId && product.companyId) {
+      return `/category/${product.categoryId}/company/${product.companyId}`;
+    } else if (product.companyId) {
+      return `/company/${product.companyId}`;
+    }
+    return "/";
+  };
 
-  const similarProducts =
-    (company?.products || [])
-      .filter((p) => p.id !== product.id)
-      .map((p) => ({
-        ...p,
-        categoryId,
-        companyId,
-        companyName: company.name,
-        categoryName: product.categoryName,
-        image: p.image || p.img,
-      }))
-      .slice(0, 4) || [];
+  const basePath = getBasePath();
 
-  const averageRating =
-    reviews.length > 0
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-      : product.rating || 0;
+  // Safe average rating calculation
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, r) => sum + getSafeRating(r.rating), 0) / reviews.length
+    : getSafeRating(product.rating);
 
   const handleReviewSubmit = () => {
     if (!reviewName || !reviewText || reviewRating === 0) {
@@ -154,6 +276,14 @@ export default function ProductProfile() {
     setReviewName("");
   };
 
+  // Get all available images for the gallery
+  const productImages = [
+    product.image,
+    product.image2,
+    product.image3,
+    product.image4
+  ].filter(Boolean);
+
   return (
     <>
       {/* Back button */}
@@ -175,29 +305,33 @@ export default function ProductProfile() {
         {/* Left: Image Gallery */}
         <div className="flex flex-col md:flex-row gap-6 md:sticky md:top-24 h-fit">
           <div className="flex md:flex-col gap-3 order-2 md:order-1 self-start">
-            {[product.image, product.image2, product.image3, product.image4]
-              .filter(Boolean)
-              .map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`${product.name}-${idx}`}
-                  onClick={() => setSelectedImage(img)}
-                  className={`w-20 h-20 object-cover rounded-xl cursor-pointer border transition-all duration-300 ${
-                    selectedImage === img
-                      ? "border-gray-900 scale-105 shadow-sm"
-                      : "border-gray-200 opacity-80 hover:opacity-100"
-                  }`}
-                />
-              ))}
+            {productImages.map((img, idx) => (
+              <img
+                key={idx}
+                src={img}
+                alt={`${product.name}-${idx}`}
+                onClick={() => setSelectedImage(img)}
+                className={`w-20 h-20 object-cover rounded-xl cursor-pointer border transition-all duration-300 ${
+                  selectedImage === img
+                    ? "border-gray-900 scale-105 shadow-sm"
+                    : "border-gray-200 opacity-80 hover:opacity-100"
+                }`}
+                onError={(e) => {
+                  e.target.src = "/api/placeholder/200/200";
+                }}
+              />
+            ))}
           </div>
 
           <div className="relative flex-1 order-1 md:order-2 overflow-hidden rounded-2xl shadow-sm border border-gray-100">
             <Lens zoomFactor={1.8} lensSize={160} disableOnMobile={true}>
               <img
-                src={selectedImage}
+                src={selectedImage || product.image}
                 alt={product.name}
                 className="w-full h-[500px] object-cover rounded-2xl transition-transform duration-500 ease-out hover:scale-[1.02]"
+                onError={(e) => {
+                  e.target.src = "/api/placeholder/500/500";
+                }}
               />
             </Lens>
 
@@ -244,7 +378,7 @@ export default function ProductProfile() {
         {/* Right: Product Details */}
         <div className="flex flex-col space-y-6">
           <p className="text-gray-500 text-sm uppercase tracking-wide">
-            {product.categoryName}
+            {product.categoryName || "Product"}
           </p>
 
           <h1 className="text-4xl font-semibold text-gray-900 tracking-tight">
@@ -253,11 +387,7 @@ export default function ProductProfile() {
 
           {product.companyName && (
             <button
-              onClick={() =>
-                navigate(
-                  `/category/${product.categoryId}/company/${product.companyId}`
-                )
-              }
+              onClick={() => navigate(basePath)}
               className="text-base text-blue-600 font-medium hover:underline w-fit"
             >
               <span className="text-gray-500">by </span>
@@ -286,7 +416,7 @@ export default function ProductProfile() {
             </p>
           </div>
 
-          {/* Updated Rating + Review Section */}
+          {/* Rating + Review Section */}
           <div className="mt-4">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
@@ -298,7 +428,7 @@ export default function ProductProfile() {
                     }`}
                   />
                 ))}
-                <span className="text-gray-600 text-sm">({averageRating.toFixed(1)})</span>
+                <span className="text-gray-600 text-sm">({formatRating(averageRating)})</span>
               </div>
               <button
                 onClick={() => setShowReviewModal(true)}
@@ -319,7 +449,7 @@ export default function ProductProfile() {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <FaStar
                         key={i}
-                        className={`w-4 h-4 ${i < rev.rating ? "text-gray-950" : "text-gray-300"}`}
+                        className={`w-4 h-4 ${i < getSafeRating(rev.rating) ? "text-gray-950" : "text-gray-300"}`}
                       />
                     ))}
                   </div>
@@ -339,11 +469,11 @@ export default function ProductProfile() {
         </div>
       </motion.section>
 
-      {/* Similar Products */}
-      {similarProducts.length > 0 && (
+      {/* Similar Products Section - FIXED */}
+      {similarProducts.length > 0 ? (
         <section className="max-w-6xl mx-auto px-6 py-20">
           <h2 className="text-3xl font-light text-gray-900 text-start mb-12">
-            Similar Products
+            Similar Products from {product.companyName}
           </h2>
           <motion.div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {similarProducts.map((sp) => {
@@ -353,11 +483,7 @@ export default function ProductProfile() {
                   key={sp.id}
                   whileHover={{ scale: 1.03 }}
                   className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer"
-                  onClick={() =>
-                    navigate(
-                      `/category/${sp.categoryId}/company/${sp.companyId}/product/${sp.id}`
-                    )
-                  }
+                  onClick={() => navigate(`${basePath}/product/${sp.id}`)}
                 >
                   <button
                     onClick={(e) => {
@@ -376,6 +502,9 @@ export default function ProductProfile() {
                       src={sp.image}
                       alt={sp.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.src = "/api/placeholder/300/300";
+                      }}
                     />
                   </div>
 
@@ -393,6 +522,12 @@ export default function ProductProfile() {
             })}
           </motion.div>
         </section>
+      ) : (
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <p className="text-gray-500 text-center">
+            No similar products found from this company.
+          </p>
+        </div>
       )}
 
       <Faq />
@@ -429,7 +564,7 @@ export default function ProductProfile() {
                         {Array.from({ length: 5 }).map((_, i) => (
                           <FaStar
                             key={i}
-                            className={`w-4 h-4 ${i < rev.rating ? "text-gray-950" : "text-gray-300"}`}
+                            className={`w-4 h-4 ${i < getSafeRating(rev.rating) ? "text-gray-950" : "text-gray-300"}`}
                           />
                         ))}
                       </div>

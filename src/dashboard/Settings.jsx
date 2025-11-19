@@ -91,7 +91,7 @@ export default function Settings({ companyInfo, setCompanyInfo }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow max-w-3xl mx-auto">
+    <div className="bg-white p-6 rounded-lg shadow max-w-3xl ">
       <h2 className="text-xl font-semibold mb-4">Settings</h2>
 
       {/* UPLOADS */}

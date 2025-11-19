@@ -11,13 +11,13 @@ export default function CompanyLogin() {
   const [error, setError] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // ✅ FIXED: No auto-redirect, only detect login state
   useEffect(() => {
     const token = localStorage.getItem("companyToken");
     if (token) {
-      setIsLoggedIn(true);
-      navigate("/company-dashboard");
+      setIsLoggedIn(true);  // ⬅️ Removed navigate()
     }
-  }, [navigate]);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

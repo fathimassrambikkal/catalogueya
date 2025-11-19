@@ -5,6 +5,7 @@ import Sales from "../dashboard/Sales.jsx";
 import Analytics from "../dashboard/Analytics.jsx";
 import Settings from "../dashboard/Settings.jsx";
 import Cover from "../dashboard/Cover.jsx";
+import Contacts from "../dashboard/Contacts.jsx"; 
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
 
 export default function CompanyDashboard() {
@@ -84,6 +85,9 @@ export default function CompanyDashboard() {
       case "Analytics":
         return <Analytics products={products} />;
 
+      case "Contacts": 
+        return <Contacts companyInfo={companyInfo} products={products} />;
+
       case "Settings":
         return (
           <Settings
@@ -101,7 +105,7 @@ export default function CompanyDashboard() {
     <div className="flex bg-gray-100 min-h-screen overflow-x-hidden">
       {/* Sidebar */}
       <div
-        className={`fixed z-50 top-0 left-0 h-full transition-all duration-300 w-60 md:relative md:translate-x-0 ${
+        className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 md:relative md:h-auto md:min-h-full ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
@@ -109,7 +113,7 @@ export default function CompanyDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-y-auto transition-all duration-300 min-w-0">
+      <div className="flex-1 flex flex-col md:min-h-screen overflow-y-auto transition-all duration-300 min-w-0">
 
         <button
           onClick={() => setSidebarOpen((s) => !s)}
@@ -123,7 +127,7 @@ export default function CompanyDashboard() {
           <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
         )}
 
-        <div className="p-6">{renderContent()}</div>
+        <div className="flex-1 p-6">{renderContent()}</div>
       </div>
     </div>
   );

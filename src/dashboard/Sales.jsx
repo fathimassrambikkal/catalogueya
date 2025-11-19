@@ -22,6 +22,68 @@ export default function Sales({ products }) {
     );
   }, [products]);
 
+  // Calculate sale status and discounted price
+  const getSaleInfo = (product) => {
+    const now = new Date();
+    const fromDate = product.fromDate ? new Date(product.fromDate) : null;
+    const toDate = product.toDate ? new Date(product.toDate) : null;
+    
+    let status = "not-active";
+    let discountedPrice = product.price;
+    
+    if (product.rate > 0 && fromDate && toDate) {
+      if (now >= fromDate && now <= toDate) {
+        status = "active";
+        discountedPrice = product.price - (product.price * product.rate / 100);
+      } else if (now < fromDate) {
+        status = "upcoming";
+      } else if (now > toDate) {
+        status = "ended";
+      }
+    }
+    
+    return { status, discountedPrice };
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  // Get status badge color
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "upcoming":
+        return "bg-blue-100 text-blue-800";
+      case "ended":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // Get status text
+  const getStatusText = (status) => {
+    switch (status) {
+      case "active":
+        return "Active";
+      case "upcoming":
+        return "Upcoming";
+      case "ended":
+        return "Ended";
+      default:
+        return "No Sale";
+    }
+  };
+
   // Handle rate change for bulk sale modal
   const handleRateChange = (id, value) => {
     setSaleProducts((prev) =>
@@ -33,8 +95,22 @@ export default function Sales({ products }) {
 
   // Publish bulk sale
   const handlePublishSales = () => {
+    if (!bulkFromDate || !bulkToDate) {
+      alert("Please select both start and end dates");
+      return;
+    }
+    
+    if (new Date(bulkFromDate) >= new Date(bulkToDate)) {
+      alert("End date must be after start date");
+      return;
+    }
+
     setSaleProducts((prev) =>
-      prev.map((p) => ({ ...p, fromDate: bulkFromDate, toDate: bulkToDate }))
+      prev.map((p) => ({ 
+        ...p, 
+        fromDate: bulkFromDate, 
+        toDate: bulkToDate 
+      }))
     );
     console.log("Published Sales:", saleProducts);
     setShowStartModal(false);
@@ -48,6 +124,13 @@ export default function Sales({ products }) {
 
   // Publish single product edit
   const handlePublishEdit = () => {
+    if (selectedEditProduct.fromDate && selectedEditProduct.toDate) {
+      if (new Date(selectedEditProduct.fromDate) >= new Date(selectedEditProduct.toDate)) {
+        alert("End date must be after start date");
+        return;
+      }
+    }
+
     setSaleProducts((prev) =>
       prev.map((p) =>
         p.id === selectedEditProduct.id ? { ...selectedEditProduct } : p
@@ -72,46 +155,81 @@ export default function Sales({ products }) {
 
       {/* Product Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {saleProducts.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white rounded-xl shadow-md border overflow-hidden hover:shadow-lg transition relative"
-          >
-            {item.image ? (
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-40 object-cover"
-              />
-            ) : (
-              <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400">
-                No Image
-              </div>
-            )}
-            {item.tag && (
-              <span className="absolute top-2 left-2 bg-blue-700 text-white px-2 py-1 text-xs font-semibold rounded">
-                {item.tag}
-              </span>
-            )}
-            <div className="p-4">
-              <h3 className="font-semibold text-sm truncate">{item.name}</h3>
-              <p className="text-gray-600 text-sm">Price: QAR {item.price}</p>
-              {item.oldPrice && (
-                <p className="text-gray-600 text-sm line-through">
-                  QAR {item.oldPrice}
-                </p>
+        {saleProducts.map((item) => {
+          const { status, discountedPrice } = getSaleInfo(item);
+          
+          return (
+            <div
+              key={item.id}
+              className="bg-white rounded-xl shadow-md border overflow-hidden hover:shadow-lg transition relative"
+            >
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-40 object-cover"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400">
+                  No Image
+                </div>
               )}
-              <p className="text-red-600 text-sm font-bold">{item.rate}% Sale</p>
+              
+              {/* Sale Status Badge */}
+              <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded ${getStatusBadge(status)}`}>
+                {getStatusText(status)}
+              </span>
+              
+              {item.tag && (
+                <span className="absolute top-2 right-2 bg-blue-700 text-white px-2 py-1 text-xs font-semibold rounded">
+                  {item.tag}
+                </span>
+              )}
 
-              <button
-                onClick={() => handleEditProduct(item)}
-                className="mt-2 bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 flex items-center gap-1"
-              >
-                <FaEdit size={12} /> Edit
-              </button>
+              <div className="p-4">
+                <h3 className="font-semibold text-sm truncate">{item.name}</h3>
+                
+                {/* Price Display */}
+                <div className="mt-2">
+                  {status === "active" ? (
+                    <>
+                      <p className="text-red-600 text-sm font-bold">
+                        {item.rate}% OFF
+                      </p>
+                      <p className="text-gray-800 font-bold">
+                        QAR {discountedPrice.toFixed(2)}
+                      </p>
+                      <p className="text-gray-500 text-sm line-through">
+                        QAR {item.price}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-gray-800 font-bold">QAR {item.price}</p>
+                  )}
+                </div>
+
+                {/* Sale Dates */}
+                {item.rate > 0 && (
+                  <div className="mt-2 text-xs text-gray-600">
+                    {item.fromDate && (
+                      <p>From: {formatDate(item.fromDate)}</p>
+                    )}
+                    {item.toDate && (
+                      <p>To: {formatDate(item.toDate)}</p>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => handleEditProduct(item)}
+                  className="mt-3 bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 flex items-center gap-1 w-full justify-center"
+                >
+                  <FaEdit size={12} /> Edit Sale
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Add Sale Card */}
         <div
@@ -138,67 +256,68 @@ export default function Sales({ products }) {
             </h2>
 
             <div className="grid grid-cols-3 gap-4 h-72 overflow-y-auto p-2">
-              {saleProducts.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-lg shadow overflow-hidden relative border p-2"
-                >
-                  {item.tag && (
-                    <span className="absolute top-1 left-1 bg-blue-700 text-white text-xs px-1 py-0.5 rounded font-semibold">
-                      {item.tag}
+              {saleProducts.map((item) => {
+                const { status } = getSaleInfo(item);
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-lg shadow overflow-hidden relative border p-2"
+                  >
+                    {item.tag && (
+                      <span className="absolute top-1 left-1 bg-blue-700 text-white text-xs px-1 py-0.5 rounded font-semibold">
+                        {item.tag}
+                      </span>
+                    )}
+                    <span className={`absolute top-1 right-1 px-1 py-0.5 text-xs rounded ${getStatusBadge(status)}`}>
+                      {getStatusText(status)}
                     </span>
-                  )}
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="h-32 w-full object-cover"
-                  />
-                  <div className="p-2 text-sm flex flex-col gap-1">
-                    <p className="font-medium truncate">{item.name}</p>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span className="text-red-600 font-bold">{item.rate}%</span>
-                      {item.oldPrice && (
-                        <span className="line-through text-gray-500">
-                          QAR {item.oldPrice}
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-32 w-full object-cover"
+                    />
+                    <div className="p-2 text-sm flex flex-col gap-1">
+                      <p className="font-medium truncate">{item.name}</p>
+                      <div className="flex justify-between text-xs mt-1">
+                        <span className="text-red-600 font-bold">{item.rate}%</span>
+                        <span className="font-bold text-gray-800">
+                          QAR {item.price}
                         </span>
-                      )}
-                    </div>
-                    <p className="font-bold text-gray-800 text-sm">
-                      QAR {item.price}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <label className="text-xs font-medium">Rate:</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={item.rate}
-                        onChange={(e) =>
-                          handleRateChange(item.id, e.target.value)
-                        }
-                        className="border rounded px-1 w-16 text-xs"
-                      />
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <label className="text-xs font-medium">Rate:</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={item.rate}
+                          onChange={(e) =>
+                            handleRateChange(item.id, e.target.value)
+                          }
+                          className="border rounded px-1 w-16 text-xs"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-6 bg-white p-4 rounded-lg shadow">
               <div>
-                <label className="font-medium">From</label>
+                <label className="font-medium">From Date</label>
                 <input
                   type="date"
-                  className="border p-2 rounded ml-2"
+                  className="border p-2 rounded w-full mt-1"
                   value={bulkFromDate}
                   onChange={(e) => setBulkFromDate(e.target.value)}
                 />
               </div>
               <div>
-                <label className="font-medium">To</label>
+                <label className="font-medium">To Date</label>
                 <input
                   type="date"
-                  className="border p-2 rounded ml-2"
+                  className="border p-2 rounded w-full mt-1"
                   value={bulkToDate}
                   onChange={(e) => setBulkToDate(e.target.value)}
                 />
@@ -239,8 +358,9 @@ export default function Sales({ products }) {
               <img
                 src={selectedEditProduct.image}
                 className="h-48 w-full object-cover"
+                alt={selectedEditProduct.name}
               />
-              <div className="p-2 text-sm">
+              <div className="p-4">
                 <p className="font-medium">{selectedEditProduct.name}</p>
                 <p className="text-red-600 font-bold text-sm">
                   {selectedEditProduct.rate}% Sale
@@ -249,12 +369,14 @@ export default function Sales({ products }) {
             </div>
 
             {/* Edit Inputs */}
-            <div className="grid grid-cols-2 gap-6 bg-white p-4 rounded-lg shadow">
+            <div className="space-y-4 bg-white p-4 rounded-lg shadow">
               <div>
-                <label className="font-medium">Sale Rate</label>
+                <label className="font-medium block mb-2">Sale Rate (%)</label>
                 <input
                   type="number"
-                  className="border p-2 rounded w-24 ml-2"
+                  min="0"
+                  max="100"
+                  className="border p-2 rounded w-full"
                   value={selectedEditProduct.rate}
                   onChange={(e) =>
                     setSelectedEditProduct({
@@ -264,35 +386,39 @@ export default function Sales({ products }) {
                   }
                 />
               </div>
-              <div>
-                <label className="font-medium">From</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded ml-2"
-                  value={selectedEditProduct.fromDate || ""}
-                  onChange={(e) =>
-                    setSelectedEditProduct({
-                      ...selectedEditProduct,
-                      fromDate: e.target.value,
-                    })
-                  }
-                />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="font-medium block mb-2">From Date</label>
+                  <input
+                    type="date"
+                    className="border p-2 rounded w-full"
+                    value={selectedEditProduct.fromDate || ""}
+                    onChange={(e) =>
+                      setSelectedEditProduct({
+                        ...selectedEditProduct,
+                        fromDate: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="font-medium block mb-2">To Date</label>
+                  <input
+                    type="date"
+                    className="border p-2 rounded w-full"
+                    value={selectedEditProduct.toDate || ""}
+                    onChange={(e) =>
+                      setSelectedEditProduct({
+                        ...selectedEditProduct,
+                        toDate: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
-              <div>
-                <label className="font-medium">To</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded ml-2"
-                  value={selectedEditProduct.toDate || ""}
-                  onChange={(e) =>
-                    setSelectedEditProduct({
-                      ...selectedEditProduct,
-                      toDate: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="flex items-center gap-2 mt-2">
+              
+              <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={selectedEditProduct.rate === 0}
@@ -303,7 +429,7 @@ export default function Sales({ products }) {
                     })
                   }
                 />
-                <span>End Sale</span>
+                <span className="text-sm">End Sale (set rate to 0%)</span>
               </div>
             </div>
 

@@ -1,60 +1,65 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { unifiedData } from "../data/unifiedData";
+
 import { getCategories, getFixedWords } from "../api";
 
 export default function HomeServices() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
-  const [categories, setCategories] = useState(
-    Array.isArray(unifiedData?.categories) ? unifiedData.categories : []
-  );
+const [categories, setCategories] = useState([]);
+const [fixedWords, setFixedWords] = useState({});
 
-  const [fixedWords, setFixedWords] = useState({});
   const [cardsPerView, setCardsPerView] = useState(6);
 
-  // Fetch backend data safely
-  useEffect(() => {
-    let mounted = true;
+// Fetch backend data safely
+useEffect(() => {
+  let mounted = true;
 
-    const fetchData = async () => {
-      try {
-        const catRes = await getCategories();
-        if (mounted && Array.isArray(catRes?.data)) {
-          setCategories(catRes.data);
-        } else {
-          setCategories([]);
-        }
+  const fetchData = async () => {
+    try {
+      const [catRes, wordsRes] = await Promise.all([
+        getCategories(),
+        getFixedWords()
+      ]);
 
-        const wordsRes = await getFixedWords();
-        if (mounted && typeof wordsRes?.data === "object") {
-          setFixedWords(wordsRes.data);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch home services data:", err);
+      console.log("showCategories API full response:", catRes);
+      console.log("showCategories API data:", catRes?.data);
+      console.log("fixedWords response:", wordsRes?.data);
+
+      if (mounted) {
+        // FIXED HERE 👇
+        const categoriesArray = catRes?.data?.data || [];
+        const fixedWordsObj = wordsRes?.data?.data || {};
+
+        setCategories(categoriesArray);
+        setFixedWords(fixedWordsObj);
       }
-    };
+    } catch (err) {
+      console.warn("Failed to fetch home services data:", err);
+    }
+  };
 
-    fetchData();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  fetchData();
+  return () => {
+    mounted = false;
+  };
+}, []);
+
+
 
   // Update cards per view
   useEffect(() => {
     let timeout;
 
-  const updateCardsPerView = () => {
-  const width = window.innerWidth;
+    const updateCardsPerView = () => {
+      const width = window.innerWidth;
 
-  if (width >= 1600) setCardsPerView(6);
-  else if (width >= 1280) setCardsPerView(5);
-  else setCardsPerView(4); 
-};
-
+      if (width >= 1600) setCardsPerView(6);
+      else if (width >= 1280) setCardsPerView(5);
+      else setCardsPerView(4);
+    };
 
     const handleResize = () => {
       clearTimeout(timeout);
@@ -159,7 +164,10 @@ export default function HomeServices() {
     "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full";
 
   return (
-    <section dir="ltr" className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-neutral-100">
+    <section
+      dir="ltr"
+      className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-hidden bg-neutral-100"
+    >
       <div className="text-center mb-8 sm:mb-12">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
           {fixedWords?.homeServicesTitle || "Home Services"}
@@ -236,7 +244,6 @@ export default function HomeServices() {
           <FaChevronRight size={16} />
         </button>
       </div>
-  
     </section>
   );
 }

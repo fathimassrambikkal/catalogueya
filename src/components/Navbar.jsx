@@ -7,7 +7,7 @@ import Cookies from "js-cookie";
 import logo from "../assets/logo.png";
 import { useFavourites } from "../context/FavouriteContext";
 import { AiOutlineHeart } from "react-icons/ai";
-import { changeLanguage as apiChangeLanguage, getFixedWords } from "../api";
+import { changeLanguage as apiChangeLanguage } from "../api";
 
 // Memoized dropdown menu
 const DropdownMenu = memo(function DropdownMenu({ isOpen, language, t, closeMenu }) {
@@ -94,11 +94,20 @@ const FavouritesCounter = memo(function FavouritesCounter() {
   );
 });
 
-// Memoized Language Toggle
+// Memoized Language Toggle - UPDATED with better click handling
 const LanguageToggle = memo(function LanguageToggle({ toggleLanguage, language }) {
+  console.log("🔤 LanguageToggle rendering - current language:", language);
+  
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("🖱️ Language button clicked!");
+    toggleLanguage();
+  };
+  
   return (
     <button
-      onClick={toggleLanguage}
+      onClick={handleClick}
       className="border border-gray-300 text-gray-900 px-2 py-1 sm:px-3 sm:py-2 rounded-lg md:rounded-xl hover:bg-white/50 transition text-xs sm:text-sm backdrop-blur-md"
     >
       {language === "en" ? "عربي" : "EN"}
@@ -115,35 +124,63 @@ export default function Navbar() {
   const glassPages = useMemo(() => ["/", "/about", "/salesproducts", "/contact"], []);
   const isGlassPage = useMemo(() => glassPages.includes(location.pathname), [location.pathname, glassPages]);
 
-  // Initialize language
+  // Initialize language - with proper cookie settings
   useEffect(() => {
-    const initializeLanguage = async () => {
-      const cookieLang = Cookies.get("lang") || "en";
-
-      if (i18n.language !== cookieLang) {
-        i18n.changeLanguage(cookieLang);
-        document.documentElement.setAttribute("dir", cookieLang === "ar" ? "rtl" : "ltr");
-      }
-
-      try {
-        await getFixedWords();
-      } catch (error) {
-        console.error("Failed to fetch fixed words:", error);
-      }
-    };
-
-    initializeLanguage();
+    const cookieLang = Cookies.get("lang") || "en";
+    console.log("🔄 Navbar initialization - cookie language:", cookieLang, "i18n language:", i18n.language);
+    
+    if (i18n.language !== cookieLang) {
+      console.log("🔄 Updating i18n language from cookie...");
+      i18n.changeLanguage(cookieLang);
+      document.documentElement.setAttribute("dir", cookieLang === "ar" ? "rtl" : "ltr");
+    }
   }, [i18n]);
 
   const toggleLanguage = useCallback(async () => {
-    const newLang = i18n.language === "en" ? "ar" : "en";
-    i18n.changeLanguage(newLang);
-    document.documentElement.setAttribute("dir", newLang === "ar" ? "rtl" : "ltr");
+    const currentLang = i18n.language;
+    const newLang = currentLang === "en" ? "ar" : "en";
+    
+    console.log("🔄 Language toggle function called:");
+    console.log("   - Current language:", currentLang);
+    console.log("   - New language:", newLang);
+    console.log("   - Cookie before change:", Cookies.get("lang"));
+
+    // Update cookie with proper expiration (30 days)
+    Cookies.set("lang", newLang, { 
+      expires: 30, // 30 days
+      path: '/',
+      sameSite: 'lax'
+    });
+    
+    console.log("   - Cookie after update:", Cookies.get("lang"));
 
     try {
-      await apiChangeLanguage(newLang);
+      console.log("🌐 Calling API to change language...");
+      console.log("🌐 API function:", apiChangeLanguage);
+      
+      // Call the API function
+      const response = await apiChangeLanguage();
+      console.log("✅ API response received:", response);
+      
+      // Check if API call was successful
+      if (response?.data?.status === 200) {
+        console.log("🎉 Language change successful! Backend confirmed:", response.data.message);
+        console.log("🔄 Reloading page to apply language changes...");
+        
+        // Reload the page after successful API call
+        window.location.reload();
+      } else {
+        console.log("⚠️ API response format unexpected:", response);
+        // Still reload to apply cookie changes
+        window.location.reload();
+      }
     } catch (error) {
-      console.error(error);
+      console.error("❌ Language change API error:", error);
+      console.error("❌ Error details:", error.response?.data || error.message);
+      
+      // Even if API fails, still reload to apply cookie changes
+      console.log("🔄 Reloading page despite API error (cookie is set)...");
+      window.location.reload();
     }
   }, [i18n]);
 
@@ -162,6 +199,11 @@ export default function Navbar() {
     document.addEventListener("click", handleClickOutside, { passive: true });
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
+
+  // Log when language changes via i18n
+  useEffect(() => {
+    console.log("📢 i18n language changed to:", i18n.language);
+  }, [i18n.language]);
 
   return (
     <nav
@@ -189,7 +231,11 @@ export default function Navbar() {
         >
           {t("login")}
         </Link>
-        <LanguageToggle toggleLanguage={toggleLanguage} language={i18n.language} />
+        {/* UPDATED: LanguageToggle with better click handling */}
+        <LanguageToggle 
+          toggleLanguage={toggleLanguage} 
+          language={i18n.language} 
+        />
         <div className="relative menu-container">
           <MenuButton menuOpen={menuOpen} toggleMenu={toggleMenu} />
           <AnimatePresence>
