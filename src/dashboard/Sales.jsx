@@ -303,6 +303,13 @@ export default function Sales({ products }) {
               })}
             </div>
 
+            {/* ADDED: "Is this product in sale?" Text below product cards */}
+            <div className="mt-4 mb-4">
+              <p className="text-lg font-semibold text-gray-700 text-center">
+                Is this product in sale?
+              </p>
+            </div>
+
             <div className="mt-6 grid grid-cols-2 gap-6 bg-white p-4 rounded-lg shadow">
               <div>
                 <label className="font-medium">From Date</label>

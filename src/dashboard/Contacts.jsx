@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaPlus, FaBell, FaUsers } from 'react-icons/fa';
 import AddCustomerModal from './AddCustomerModal';
 import SendNotificationModal from './SendNotificationModal';
-import CustomerManagement from './CustomerManagement'; // Import the CustomerManagement component
+import CustomerManagement from './CustomerManagement';
 
 function Contacts({ companyInfo, products }) {
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
@@ -47,34 +47,40 @@ function Contacts({ companyInfo, products }) {
   return (
     <>
       {/* Main Contacts View */}
-      <div className="max-w-4xl p-6">
+      <div className="p-6">
         {/* Our Customers Card */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <FaUsers className="text-blue-600" />
-            <span className="text-xl font-semibold">Our Customers</span>
-            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-              {loyalCustomers.length} Loyal Customers
-            </span>
-          </div>
-          
-          {/* Top Two Buttons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <button 
-              onClick={() => setShowAddCustomerModal(true)}
-              className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <FaPlus />
-              Add Customers
-            </button>
-            
-            <button 
-              onClick={() => setShowNotificationModal(true)}
-              className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              <FaBell />
-              Send Notification
-            </button>
+          {/* Header Section with Title and Buttons in one line */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            {/* Left side - Title and customer count */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <FaUsers className="text-blue-600" />
+                <span className="text-xl font-semibold">Our Customers</span>
+              </div>
+              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                {loyalCustomers.length} Loyal Customers
+              </span>
+            </div>
+
+            {/* Right side - Small buttons */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowAddCustomerModal(true)}
+                className="flex items-center gap-2 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                <FaPlus size={14} />
+                Add Customers
+              </button>
+              
+              <button 
+                onClick={() => setShowNotificationModal(true)}
+                className="flex items-center gap-2 bg-white text-gray-700 py-2 px-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
+              >
+                <FaBell size={14} />
+                Send Notification
+              </button>
+            </div>
           </div>
 
           {/* Customer Management Component */}

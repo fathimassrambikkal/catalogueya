@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import {
   FaFacebook, FaInstagram, FaYoutube, FaLinkedin,
-  FaPinterest, FaSnapchat, FaWhatsapp, FaGooglePlusG, FaTrash
+  FaPinterest, FaSnapchat, FaWhatsapp, FaGooglePlusG, FaTrash,
+  FaChevronDown, FaChevronUp
 } from "react-icons/fa";
 
 export default function Settings({ companyInfo, setCompanyInfo }) {
   const [form, setForm] = useState({ ...companyInfo });
+  const [isSpecialtiesOpen, setIsSpecialtiesOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Sync with parent when companyInfo changes
   useEffect(() => {
@@ -90,8 +93,21 @@ export default function Settings({ companyInfo, setCompanyInfo }) {
     setCompanyInfo(empty);
   };
 
+  const toggleSpecialtiesDropdown = () => {
+    if (isSpecialtiesOpen) {
+      // Start closing animation
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsSpecialtiesOpen(false);
+        setIsAnimating(false);
+      }, 300);
+    } else {
+      setIsSpecialtiesOpen(true);
+    }
+  };
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow max-w-3xl ">
+    <div className="bg-white p-6 rounded-lg shadow ml-2 sm:ml-3 md:ml-5 lg:ml-20 max-w-6xl">
       <h2 className="text-xl font-semibold mb-4">Settings</h2>
 
       {/* UPLOADS */}
@@ -176,21 +192,66 @@ export default function Settings({ companyInfo, setCompanyInfo }) {
           className="border p-2 w-full rounded"
         />
 
-        {/* SPECIALTIES */}
-        <div>
+        {/* SPECIALTIES DROPDOWN */}
+        <div className="relative">
           <label className="font-semibold block mb-2">Specialties</label>
-          <div className="grid grid-cols-2 gap-2">
-            {specialtiesList.map((item) => (
-              <label key={item} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.specialties.includes(item)}
-                  onChange={() => toggleSpecialty(item)}
-                />
-                {item}
-              </label>
-            ))}
-          </div>
+          
+          {/* Dropdown Trigger */}
+          <button
+            type="button"
+            onClick={toggleSpecialtiesDropdown}
+            className="w-full border p-2 rounded bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <span>Select Specialties ({form.specialties.length} selected)</span>
+            {isSpecialtiesOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </button>
+
+          {/* Dropdown Content with Fade Effect */}
+          {(isSpecialtiesOpen || isAnimating) && (
+            <div className={`
+              absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 
+              transition-all duration-300 ease-in-out overflow-hidden
+              ${isSpecialtiesOpen && !isAnimating 
+                ? 'opacity-100 transform translate-y-0' 
+                : 'opacity-0 transform -translate-y-2'
+              }
+            `}>
+              <div className="p-3 grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                {specialtiesList.map((item) => (
+                  <label key={item} className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.specialties.includes(item)}
+                      onChange={() => toggleSpecialty(item)}
+                      className="w-4 h-4 text-blue-600 rounded"
+                    />
+                    <span className="text-sm">{item}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Selected Specialties Display */}
+          {form.specialties.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {form.specialties.map((specialty) => (
+                <span 
+                  key={specialty} 
+                  className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                >
+                  {specialty}
+                  <button
+                    type="button"
+                    onClick={() => toggleSpecialty(specialty)}
+                    className="text-blue-600 hover:text-blue-800 text-xs"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* SOCIAL MEDIA */}

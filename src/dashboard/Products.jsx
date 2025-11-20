@@ -8,13 +8,13 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     price: "",
     stock: "",
     description: "",
-    tag: "",
+    tags: [], // CHANGED: Now an array for multiple tags
     image: "",
     media: [],
-    categories: [],
+    category: "", // Single category
   });
 
-  // ADDED: Available categories
+  // Available categories for dropdown
   const availableCategories = [
     "Carpenter",
     "Lighting", 
@@ -24,6 +24,15 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     "Kitchen",
     "Bathroom",
     "Outdoor"
+  ];
+
+  // Available tags for multiple selection
+  const availableTags = [
+    "New Arrival",
+    "Limited Edition",
+    "Best Seller",
+    "Low in Stock",
+    "Out in Stock"
   ];
 
   useEffect(() => {
@@ -36,10 +45,10 @@ export default function Products({ products, setProducts, editingProduct, setEdi
         price: editingProduct.price || "",
         stock: editingProduct.stock || "",
         description: editingProduct.description || "",
-        tag: editingProduct.tag || "",
+        tags: editingProduct.tags ? [...editingProduct.tags] : [], // CHANGED: Now array
         image: editingProduct.image || "",
         media: editingProduct.media ? [...editingProduct.media] : [],
-        categories: editingProduct.categories ? [...editingProduct.categories] : [], // ADDED
+        category: editingProduct.category || "",
       });
     } else {
       // Adding new product
@@ -49,21 +58,29 @@ export default function Products({ products, setProducts, editingProduct, setEdi
         price: "",
         stock: "",
         description: "",
-        tag: "",
+        tags: [], // CHANGED: Empty array for multiple tags
         image: "",
         media: [],
-        categories: [], // ADDED
+        category: "",
       });
     }
   }, [editingProduct]);
 
-  // ADDED: Handle category selection
-  const handleCategoryToggle = (category) => {
+  // Handle single category selection
+  const handleCategoryChange = (category) => {
     setFormData(prev => ({
       ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter(c => c !== category) // Remove if already selected
-        : [...prev.categories, category] // Add if not selected
+      category: category
+    }));
+  };
+
+  // CHANGED: Handle multiple tag selection
+  const handleTagToggle = (tag) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag) // Remove if already selected
+        : [...prev.tags, tag] // Add if not selected
     }));
   };
 
@@ -164,9 +181,14 @@ export default function Products({ products, setProducts, editingProduct, setEdi
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {products.map((p) => (
           <div key={p.id} className="bg-white shadow-sm rounded-xl p-4 border hover:shadow-md transition">
-            {p.tag && (
-              <div className="inline-block mb-2 px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-md">
-                {p.tag}
+            {/* CHANGED: Display multiple tags */}
+            {p.tags && p.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {p.tags.map((tag, index) => (
+                  <div key={index} className="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-md">
+                    {tag}
+                  </div>
+                ))}
               </div>
             )}
             {p.image ? (
@@ -180,11 +202,11 @@ export default function Products({ products, setProducts, editingProduct, setEdi
             <p className="text-sm text-gray-600">Price: QAR {p.price}</p>
             <p className="text-sm text-gray-600">Stock: {p.stock}</p>
             
-            {/* ADDED: Display categories */}
-            {p.categories && p.categories.length > 0 && (
+            {/* Display single category */}
+            {p.category && (
               <div className="mt-2">
                 <p className="text-sm text-gray-600">
-                  Categories: {p.categories.join(", ")}
+                  Category: {p.category}
                 </p>
               </div>
             )}
@@ -274,45 +296,56 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                 </div>
               </div>
 
-              {/* ADDED: Product Category Section */}
+              {/* Product Category Section - Dropdown */}
               <div className="bg-white border rounded-lg p-5 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Product Category</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <select 
+                  className="border p-2 rounded-md w-full max-w-md"
+                  value={formData.category}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                >
+                  <option value="">Select a category</option>
                   {availableCategories.map((category) => (
-                    <label key={category} className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50">
-                      <input
-                        type="checkbox"
-                        checked={formData.categories.includes(category)}
-                        onChange={() => handleCategoryToggle(category)}
-                        className="w-4 h-4 text-blue-600 rounded"
-                      />
-                      <span className="text-gray-700">{category}</span>
-                    </label>
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
                   ))}
-                </div>
-                {formData.categories.length > 0 && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                </select>
+                {formData.category && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-md inline-block">
                     <p className="text-sm text-blue-700">
-                      Selected: {formData.categories.join(", ")}
+                      Selected: {formData.category}
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Tags & Stock */}
+              {/* CHANGED: Tags & Stock - Now multiple checkboxes for tags */}
               <div className="bg-white border rounded-lg p-5 shadow-sm">
                 <h3 className="text-lg font-semibold">Product Tags & Stock</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div>
                     <label className="font-medium mb-1 block">Special Mark</label>
-                    <select className="border p-2 rounded-md w-full" value={formData.tag} onChange={(e) => setFormData((prev) => ({ ...prev, tag: e.target.value }))}>
-                      <option value="">Choose from the list</option>
-                      <option value="New Arrival">New Arrival</option>
-                      <option value="Limited Edition">Limited Edition</option>
-                      <option value="Best Seller">Best Seller</option>
-                      <option value="Low in Stock">Low in Stock</option>
-                      <option value="Out in Stock">Out in Stock</option>
-                    </select>
+                    <div className="space-y-2">
+                      {availableTags.map((tag) => (
+                        <label key={tag} className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            checked={formData.tags.includes(tag)}
+                            onChange={() => handleTagToggle(tag)}
+                            className="w-4 h-4 text-blue-600 rounded"
+                          />
+                          <span className="text-gray-700">{tag}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {formData.tags.length > 0 && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                        <p className="text-sm text-blue-700">
+                          Selected: {formData.tags.join(", ")}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="font-medium mb-1 block">Number of Current Stock</label>

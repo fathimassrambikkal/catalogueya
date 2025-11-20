@@ -269,15 +269,7 @@ export default function CompanyPage() {
         </div>
       </div>
 
-      {/* ============ Description Section ============ */}
-      {description && (
-        <section className="py-8 px-6 sm:px-12">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">About</h2>
-            <p className="text-gray-600 leading-relaxed">{description}</p>
-          </div>
-        </section>
-      )}
+  
 
       {/* ============ Products Section ============ */}
       <section className="py-12">
@@ -309,14 +301,6 @@ export default function CompanyPage() {
 
                 {/* Product Info Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                  <h3 className="text-white font-semibold text-sm truncate">
-                    {product.name}
-                  </h3>
-                  {product.price && (
-                    <p className="text-white/90 text-xs mt-1">
-                      QAR {parseFloat(product.price).toLocaleString()}
-                    </p>
-                  )}
                 </div>
 
                 {/* ❤️ Favourite Toggle */}
