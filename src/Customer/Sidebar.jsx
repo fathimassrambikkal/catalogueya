@@ -11,62 +11,43 @@ import {
   FaChevronRight
 } from "react-icons/fa";
 
-// Menu items configuration outside component to prevent recreation on every render
+// Menu items configuration
 const menuItems = [
-  { 
-    label: "Messages", 
-    icon: <FaComments className="text-sm" />, 
-    page: "messages" 
-  },
-  { 
-    label: "Notifications", 
-    icon: <FaBell className="text-sm" />, 
-    page: "notifications" 
-  },
-  { 
-    label: "Reviews", 
-    icon: <FaStar className="text-sm" />, 
-    page: "reviews" 
-  },
-  { 
-    label: "Settings", 
-    icon: <FaCog className="text-sm" />, 
-    page: "settings" 
-  },
-  { 
-    label: "Help", 
-    icon: <FaQuestionCircle className="text-sm" />, 
-    page: "help" 
-  }
+  { label: "Messages", icon: <FaComments className="text-sm" />, page: "messages" },
+  { label: "Notifications", icon: <FaBell className="text-sm" />, page: "notifications" },
+  { label: "Reviews", icon: <FaStar className="text-sm" />, page: "reviews" },
+  { label: "Settings", icon: <FaCog className="text-sm" />, page: "settings" },
+  { label: "Help", icon: <FaQuestionCircle className="text-sm" />, page: "help" }
 ];
 
 function Sidebar({ activeTab, setActiveTab }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const [expanded] = useState(true); // Removed setExpanded since it's not used
 
-  // Memoized handlers for better performance
   const handleLogout = useCallback(() => {
     logout();
     navigate("/sign");
   }, [logout, navigate]);
 
-  const handleNavigation = useCallback((page) => {
-    setActiveTab(page);
-  }, [setActiveTab]);
+  const handleNavigation = useCallback(
+    (page) => {
+      setActiveTab(page);
+    },
+    [setActiveTab]
+  );
 
-  // Active tab styles
-  const activeTabStyles = "bg-blue-500/10 text-blue-600 border border-blue-200 shadow-lg shadow-blue-200/50";
-  const inactiveTabStyles = "bg-white/60 text-gray-700 border border-gray-200/50 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)] hover:text-blue-500 hover:border-blue-100";
+  const activeTabStyles =
+    "bg-blue-500/10 text-blue-600 border border-blue-200 shadow-lg shadow-blue-200/50";
+  const inactiveTabStyles =
+    "bg-white/60 text-gray-700 border border-gray-200/50 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)] hover:text-blue-500 hover:border-blue-100";
 
-  // Icon container styles
   const activeIconStyles = "bg-blue-500 text-white shadow-md";
-  const inactiveIconStyles = "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
+  const inactiveIconStyles =
+    "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
 
   return (
     <div className="bg-white/80 backdrop-blur-lg text-gray-900 h-full p-3 flex flex-col border-r border-gray-200/60 w-48">
-      
-      {/* User Profile Section */}
+      {/* User Profile */}
       <div className="p-3 border-b border-gray-200/60 mb-4 mt-6">
         <div className="flex items-center">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3 shadow-lg">
@@ -79,11 +60,10 @@ function Sidebar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Menu Items */}
+      {/* Menu */}
       <nav className="flex-1 flex flex-col gap-1">
         {menuItems.map((item) => {
           const isActive = activeTab === item.page;
-          
           return (
             <button
               key={item.page}
@@ -92,28 +72,23 @@ function Sidebar({ activeTab, setActiveTab }) {
                 isActive ? activeTabStyles : inactiveTabStyles
               }`}
             >
-              {/* Icon Container */}
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                isActive ? activeIconStyles : inactiveIconStyles
-              }`}>
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  isActive ? activeIconStyles : inactiveIconStyles
+                }`}
+              >
                 {item.icon}
               </div>
 
-              {/* Label */}
-              <span className="ml-3 text-sm font-medium flex-1 text-left">
-                {item.label}
-              </span>
+              <span className="ml-3 text-sm font-medium flex-1 text-left">{item.label}</span>
 
-              {/* Active Indicator Chevron */}
-              {isActive && (
-                <FaChevronRight className="text-blue-500 text-xs" />
-              )}
+              {isActive && <FaChevronRight className="text-blue-500 text-xs" />}
             </button>
           );
         })}
       </nav>
 
-      {/* Logout Button */}
+      {/* Logout */}
       <button
         onClick={handleLogout}
         className="group relative mt-4 flex items-center p-2.5 rounded-xl
@@ -122,16 +97,18 @@ function Sidebar({ activeTab, setActiveTab }) {
           hover:shadow-[3px_3px_10px_rgba(220,38,38,0.1),-3px_-3px_10px_rgba(255,255,255,0.8)]
           hover:text-red-500 hover:border-red-200 transition-all duration-200"
       >
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center 
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center 
           bg-gray-100 text-gray-600 
           shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]
-          group-hover:bg-red-50 group-hover:text-red-500 transition-all duration-200">
+          group-hover:bg-red-50 group-hover:text-red-500 transition-all duration-200"
+        >
           <FaSignOutAlt className="text-xs" />
         </div>
         <span className="ml-3 text-sm font-medium">Logout</span>
       </button>
 
-      {/* Status Bar */}
+      {/* Status */}
       <div className="mt-4 pt-3 border-t border-gray-200/60">
         <div className="flex items-center justify-between text-xs text-gray-600">
           <span>Online</span>
