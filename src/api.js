@@ -13,21 +13,24 @@ const API_BASE = () =>
 
 // ==================== Axios Instance ====================
 
-// Create axios instance
+// Create axios instance - SIMPLIFIED without CSRF for now
 export let api = axios.create({
   baseURL: API_BASE(),
-  headers: { "Content-Type": "application/json" },
+  headers: { 
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
 });
 
-// Change language dynamically - SIMPLE METHOD ONLY
-export const changeLanguage = () => api.get("/change_lang");
+// ==================== API Functions ====================
 
-// ==================== SETTINGS & FIXED WORDS ====================
+// Change language dynamically
+export const changeLanguage = () => api.get("/change_lang");
 
 // GET /settings
 export const getSettings = () => api.get("/settings");
 
-// GET /fixed_words - preserving the structure from image
+// GET /fixed_words
 export const getFixedWords = () => {
   const lang = getLang();
   return axios.get(
@@ -78,7 +81,7 @@ export const getSubscribeDetails = () => api.get("/showSubscribesDetails");
 
 // ==================== CUSTOMER AUTH ====================
 
-// POST /login (using the api instance)
+// POST /login
 export const loginCustomer = (email, password) =>
   api.post("/login", { email, password });
 
@@ -96,7 +99,22 @@ export const loginCompany = (email, password) =>
   api.post("/company/login", { email, password });
 
 // POST /company/register
-export const registerCompany = (data) => api.post("/company/register", data);
+export const registerCompany = (data) => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === "categories") {
+      formData.append(key, JSON.stringify(value));
+    } else if (value !== null && value !== undefined) {
+      formData.append(key, value);
+    }
+  });
+  
+  return api.post("/company/register", formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
 
 // POST /company/logout
 export const logoutCompany = () => api.post("/company/logout");
@@ -108,7 +126,16 @@ export const updateApiInstance = (newLang) => {
   Cookies.set("lang", newLang);
   api = axios.create({
     baseURL: `https://catalogueyanew.com.awu.zxu.temporary.site/${newLang}/api`,
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
   });
-  return changeLanguage(); // This will call the backend change_lang endpoint
+  return changeLanguage();
+};
+
+// Remove CSRF token function since endpoint doesn't exist
+export const fetchCsrfToken = async () => {
+  console.log('⚠️ CSRF endpoint not available, skipping CSRF token');
+  return false; // Return false to indicate no CSRF
 };

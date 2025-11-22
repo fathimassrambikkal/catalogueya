@@ -6,9 +6,11 @@ import {
   FaArrowLeft,
   FaHeart,
   FaShareAlt,
+  FaComments, // Add chat icon
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFavourites } from "../context/FavouriteContext";
+import { useAuth } from "../context/AuthContext.jsx";
 import { getCompany, getSettings, getFixedWords } from "../api"; 
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
@@ -19,6 +21,7 @@ export default function ProductProfile() {
   const navigate = useNavigate();
   const whatsappNumber = "97400000000";
   const { favourites, toggleFavourite } = useFavourites();
+  const { isAuthenticated, user } = useAuth(); // Add this
 
   const { companyId, id: routeProductId, productId, pid } = params;
   const resolvedProductId = routeProductId || productId || pid;
@@ -193,6 +196,19 @@ export default function ProductProfile() {
     return safeRating.toFixed(1);
   };
 
+  // Chat handler function
+  const handleChat = (e) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      alert("Please register or login to start a chat with the seller.");
+      navigate("/register");
+      return;
+    }
+    // Handle chat functionality here
+    alert(`Starting chat about ${product.name} with ${product.companyName}`);
+    // You can implement actual chat functionality here
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen text-gray-600">
@@ -361,6 +377,17 @@ export default function ProductProfile() {
                 <FaShareAlt className="text-gray-600 text-lg" />
               </button>
 
+              {/* CHAT ICON - Only show for authenticated users */}
+              {isAuthenticated && (
+                <button
+                  onClick={handleChat}
+                  className="p-3 rounded-full bg-blue-500 text-white shadow-md hover:shadow-lg transition-all hover:scale-105"
+                  title="Chat with seller"
+                >
+                  <FaComments className="text-lg" />
+                </button>
+              )}
+
               <a
                 href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(
                   product.name
@@ -415,6 +442,21 @@ export default function ProductProfile() {
                 `Introducing our ${product.name} – designed for superior quality and style.`}
             </p>
           </div>
+
+          {/* Chat prompt for unauthenticated users */}
+          {!isAuthenticated && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <p className="text-blue-800 text-sm mb-2">
+                💬 Want to chat with the seller about this product?
+              </p>
+              <button
+                onClick={() => navigate("/register")}
+                className="text-blue-600 hover:text-blue-800 font-medium text-sm underline"
+              >
+                Register now to enable chat
+              </button>
+            </div>
+          )}
 
           {/* Rating + Review Section */}
           <div className="mt-4">

@@ -1,24 +1,16 @@
 // src/pages/Sign.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { loginCustomer, logoutCustomer } from "../api"; 
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Sign() {
   const navigate = useNavigate();
+  const { isRegistered } = useAuth();
   const [loginType, setLoginType] = useState("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      setIsLoggedIn(true);
-      navigate("/dashboard");
-    }
-  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,144 +20,135 @@ export default function Sign() {
     setError("");
 
     try {
-      const response = await loginCustomer(email, password);
-      const { token, user } = response.data;
+      // TEMPORARY: Bypass actual login and redirect directly
+      console.log("Temporary login bypass - redirecting to customer page");
+      
+      // Simulate successful login
+      const mockUser = {
+        id: 1,
+        name: email.split('@')[0] || 'Customer',
+        email: email,
+        type: 'customer'
+      };
+      
+      // Store in localStorage temporarily
+      localStorage.setItem("authToken", "temp_token_" + Date.now());
+      localStorage.setItem("user", JSON.stringify(mockUser));
+      localStorage.setItem("isRegistered", "true");
 
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      setIsLoggedIn(true);
-      alert("Customer logged in successfully!");
-      navigate("/dashboard");
+      alert("Temporary login successful! Redirecting...");
+      navigate("/customer-login"); // Redirect to customer login page
+      
     } catch (err) {
       console.error(err);
-      setError(
-        err.response?.data?.message ||
-          "Invalid email or password. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      await logoutCustomer();
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-
-      setIsLoggedIn(false);
-      alert("Customer logged out successfully!");
-      navigate("/sign");
-    } catch (err) {
-      console.error(err);
-      alert("Logout failed. Try again.");
+      setError("Temporary login error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <section className="min-h-[80vh] flex items-center justify-center bg-gray-50 py-16 px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl border border-gray-100 shadow-xl p-8 backdrop-blur-sm">
+    <section className="min-h-[80vh] flex items-center justify-center bg-[#f7f6f5] py-16 px-4">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)] p-8">
+        
+        {/* Success message for newly registered users */}
+        {isRegistered && (
+          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-xl text-sm">
+            ✅ Registration successful! Please sign in to continue.
+          </div>
+        )}
+
+        {/* Info message about temporary login */}
+        <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded-xl text-sm">
+            ⚠️ Temporary Login: Bypassing authentication for development
+          </div>
+
         {/* Tabs */}
         <div className="flex justify-center mb-8 bg-gray-100 rounded-2xl p-1">
           <button
             onClick={() => setLoginType("customer")}
             className={`w-1/2 py-2.5 rounded-xl font-medium transition-all duration-200 ${
               loginType === "customer"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-600"
+                ? "bg-white text-black shadow-sm"
+                : "text-gray-500"
             }`}
           >
             Customer
           </button>
+
           <button
             onClick={() => setLoginType("company")}
             className={`w-1/2 py-2.5 rounded-xl font-medium transition-all duration-200 ${
               loginType === "company"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-600"
+                ? "bg-white text-black shadow-sm"
+                : "text-gray-500"
             }`}
           >
             Company
           </button>
         </div>
 
-        {/* Form or Logout */}
+        {/* Customer Login Form */}
         {loginType === "customer" ? (
-          !isLoggedIn ? (
-            <form className="flex flex-col gap-4" onSubmit={handleLogin}>
-              {error && (
-                <p className="text-red-500 text-center text-sm">{error}</p>
-              )}
+          <form className="flex flex-col gap-4" onSubmit={handleLogin}>
+            {error && (
+              <p className="text-red-500 text-center text-sm">{error}</p>
+            )}
 
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                required
-              />
-              <div className="flex justify-end items-center text-sm">
-                <Link
-                  to="/forgot-password"
-                  className="text-blue-600 hover:underline"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 transition-all duration-200 disabled:opacity-50"
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm focus:ring-2 focus:ring-black/10"
+              required
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm focus:ring-2 focus:ring-black/10"
+              required
+            />
+
+            <div className="flex justify-end items-center text-sm">
+              <Link
+                to="/forgot-password"
+                className="text-gray-500 hover:text-black"
               >
-                {loading ? "Signing In..." : "Sign In"}
-              </button>
-            </form>
-          ) : (
-            <div className="w-full flex flex-col items-center gap-4">
-              <p className="text-gray-700 text-center">
-                You are logged in as a customer.
-              </p>
-              <button
-                onClick={handleLogout}
-                disabled={loading}
-                className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl transition-all duration-200"
-              >
-                {loading ? "Logging out..." : "Logout"}
-              </button>
+                Forgot Password?
+              </Link>
             </div>
-          )
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#45a8ff] text-white py-3 rounded-full text-sm font-medium hover:bg-[#1b93ff] transition disabled:opacity-50"
+            >
+              {loading ? "Signing In..." : "Sign In"}
+            </button>
+          </form>
         ) : (
-          <p className="text-gray-600 text-center text-sm">
-            Access the company portal by clicking here:{" "}
+          /* Company Login Option */
+          <div className="text-center">
+            <p className="text-gray-600 mb-6 text-sm">
+              Company login portal for business accounts
+            </p>
             <Link
               to="/company-login"
-              className="text-blue-600 font-semibold hover:underline"
+              className="w-full text-blue-500 py-3 rounded-xl hover:underline transition-all duration-200 block"
             >
-              Company Login
+              Go to Company Login
             </Link>
-          </p>
+          </div>
         )}
 
         {/* Registration link */}
         <p className="mt-6 text-center text-gray-600 text-sm">
-          Don’t have an account?{" "}
-          <Link
-            to="/register"
-            className="text-blue-600 font-semibold hover:underline"
-          >
+          Don't have an account?{" "}
+          <Link to="/register" className="text-blue-600 font-semibold hover:underline">
             Register
           </Link>
         </p>

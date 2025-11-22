@@ -41,7 +41,9 @@ export default function Banner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState({});
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [progress, setProgress] = useState(0);
   const resizeTimeout = useRef(null);
+  const progressInterval = useRef(null);
 
   // Preload images asynchronously (non-blocking)
   useEffect(() => {
@@ -55,13 +57,35 @@ export default function Banner() {
     });
   }, [loadedImages]);
 
-  // Auto-slide every 5s
+  // Auto-slide every 5s with progress indicator
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    const startProgress = () => {
+      setProgress(0);
+      progressInterval.current = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(progressInterval.current);
+            setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 50); // Update every 50ms for smooth progress (5000ms / 100 = 50ms per 1%)
+    };
+
+    startProgress();
+
+    return () => {
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+      }
+    };
+  }, [currentIndex]);
+
+  // Reset progress when manually changing slide
+  useEffect(() => {
+    setProgress(0);
+  }, [currentIndex]);
 
   // Window resize handler with debounce
   useEffect(() => {
@@ -105,8 +129,12 @@ export default function Banner() {
     []
   );
 
-const headingText = "Welcome to Catalogueya";
+  const headingText = "Welcome to Catalogueya";
 
+  const handleDotClick = (index) => {
+    setCurrentIndex(index);
+    setProgress(0);
+  };
 
   return (
     <section
@@ -184,23 +212,51 @@ const headingText = "Welcome to Catalogueya";
         </motion.p>
       </motion.div>
 
-      {/* Navigation dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20 p-1.5 rounded-full bg-white/20 backdrop-blur-md">
-        {responsiveImages.map((_, idx) => (
-          <button
-            key={idx}
-            className={`${
-              windowWidth < 640 ? "w-2.5 h-2.5" : "w-4 h-4"
-            } rounded-full transition-colors ${
-              idx === currentIndex ? "bg-white" : "bg-white/50"
-            }`}
-            onClick={() => setCurrentIndex(idx)}
-            aria-label={`Go to slide ${idx + 1}`}
-          />
-        ))}
+      {/* Glassmorphic Navigation Dots with Progress Bar - Smaller size */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <div className="flex gap-2 p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
+          {responsiveImages.map((_, idx) => (
+            <button
+              key={idx}
+              className="relative group"
+              onClick={() => handleDotClick(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+            >
+              {idx === currentIndex ? (
+                // Active dot with expanding width
+                <div className="relative">
+                  {/* Background track */}
+                  <div 
+                    className={`
+                      ${windowWidth < 640 ? "w-6 h-1" : "w-8 h-1.5"} 
+                      bg-white/30 rounded-full overflow-hidden
+                    `}
+                  />
+                  {/* Progress fill */}
+                  <motion.div
+                    className={`
+                      absolute top-0 left-0 h-full bg-white rounded-full
+                      ${windowWidth < 640 ? "h-1" : "h-1.5"}
+                    `}
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.1 }}
+                  />
+                </div>
+              ) : (
+                // Inactive dot
+                <div
+                  className={`
+                    ${windowWidth < 640 ? "w-2 h-2" : "w-2.5 h-2.5"} 
+                    rounded-full transition-all duration-300 ease-out
+                    bg-white/40 group-hover:bg-white/60
+                  `}
+                />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
-   
-
     </section>
   );
 }

@@ -8,46 +8,43 @@ export default function HomeServices() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
-const [categories, setCategories] = useState([]);
-const [fixedWords, setFixedWords] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [fixedWords, setFixedWords] = useState({});
 
   const [cardsPerView, setCardsPerView] = useState(6);
 
-// Fetch backend data safely
-useEffect(() => {
-  let mounted = true;
+  // Fetch backend data safely
+  useEffect(() => {
+    let mounted = true;
 
-  const fetchData = async () => {
-    try {
-      const [catRes, wordsRes] = await Promise.all([
-        getCategories(),
-        getFixedWords()
-      ]);
+    const fetchData = async () => {
+      try {
+        const [catRes, wordsRes] = await Promise.all([
+          getCategories(),
+          getFixedWords()
+        ]);
 
-      console.log("showCategories API full response:", catRes);
-      console.log("showCategories API data:", catRes?.data);
-      console.log("fixedWords response:", wordsRes?.data);
+        console.log("showCategories API full response:", catRes);
+        console.log("showCategories API data:", catRes?.data);
+        console.log("fixedWords response:", wordsRes?.data);
 
-      if (mounted) {
-        // FIXED HERE 👇
-        const categoriesArray = catRes?.data?.data || [];
-        const fixedWordsObj = wordsRes?.data?.data || {};
+        if (mounted) {
+          const categoriesArray = catRes?.data?.data || [];
+          const fixedWordsObj = wordsRes?.data?.data || {};
 
-        setCategories(categoriesArray);
-        setFixedWords(fixedWordsObj);
+          setCategories(categoriesArray);
+          setFixedWords(fixedWordsObj);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch home services data:", err);
       }
-    } catch (err) {
-      console.warn("Failed to fetch home services data:", err);
-    }
-  };
+    };
 
-  fetchData();
-  return () => {
-    mounted = false;
-  };
-}, []);
-
-
+    fetchData();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Update cards per view
   useEffect(() => {
@@ -180,11 +177,18 @@ useEffect(() => {
 
       {/* Carousel */}
       <div className="relative px-4 sm:px-8 md:px-12 lg:px-16">
+
+        {/* UPDATED LEFT BUTTON */}
         <button
           onClick={handlePrev}
-          className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10
-                     bg-gray-900 hover:bg-gray-800 text-white rounded-full
-                     p-1.5 sm:p-2.5 transition-all shadow-md"
+          className="
+            absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10
+            bg-[#E6E7EB] hover:bg-[#DCDDDF] text-gray-600
+            rounded-full p-1.5 sm:p-2.5
+            shadow-[0_1px_4px_rgba(0,0,0,0.15)]
+            transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]
+            hover:scale-[1.06] active:scale-[0.95]
+          "
         >
           <FaChevronLeft size={16} />
         </button>
@@ -197,10 +201,7 @@ useEffect(() => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div
-            className="flex flex-nowrap will-change-transform"
-            ref={containerRef}
-          >
+          <div className="flex flex-nowrap will-change-transform" ref={containerRef}>
             {duplicatedCategories.map((service, index) => (
               <div
                 key={`${service?.id}-${index}`}
@@ -235,14 +236,21 @@ useEffect(() => {
           </div>
         </div>
 
+        {/* UPDATED RIGHT BUTTON */}
         <button
           onClick={handleNext}
-          className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10
-                     bg-gray-900 hover:bg-gray-800 text-white rounded-full
-                     p-1.5 sm:p-2.5 transition-all shadow-md"
+          className="
+            absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10
+            bg-[#E6E7EB] hover:bg-[#DCDDDF] text-gray-600
+            rounded-full p-1.5 sm:p-2.5
+            shadow-[0_1px_4px_rgba(0,0,0,0.15)]
+            transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]
+            hover:scale-[1.06] active:scale-[0.95]
+          "
         >
           <FaChevronRight size={16} />
         </button>
+
       </div>
     </section>
   );

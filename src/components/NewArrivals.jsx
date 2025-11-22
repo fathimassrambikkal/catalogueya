@@ -45,9 +45,9 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
     </div>
 
     <div
-      className="relative w-full rounded-b-3xl p-3 sm:p-4 border-t border-white/20 
+      className="relative w-full rounded-b-2xl p-3 sm:p-4 border-t border-white/20 
                  bg-white 
-                 before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/30 before:to-white/10 before:rounded-b-3xl before:pointer-events-none 
+                 before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/30 before:to-white/10 before:rounded-b-2xl before:pointer-events-none 
                  shadow-[0_4px_20px_rgba(255,255,255,0.15)] 
                  flex items-center justify-between overflow-hidden"
     >
@@ -127,7 +127,7 @@ function NewArrivalsComponent() {
     <section className="py-6 sm:py-10 bg-amber-300 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
       <div className="flex flex-col md:flex-row items-start justify-between mb-8 sm:mb-12 gap-6">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black">
-          New Arrivals
+         Products
         </h1>
         <div className="md:w-1/3 flex justify-start md:justify-end">
           <Link

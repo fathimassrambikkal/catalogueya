@@ -52,7 +52,7 @@ const cardVariant = {
 
 const SubscribeSection = memo(() => {
   return (
-    <section className="relative flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 md:px-12 py-10 overflow-hidden">
+    <section className="relative flex flex-col items-center justify-center bg-neutral-100 px-4 sm:px-6 md:px-12 py-10 overflow-hidden">
       {/* Animated Heading */}
       <motion.h1
         className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 tracking-tighter flex flex-wrap justify-center mb-10"

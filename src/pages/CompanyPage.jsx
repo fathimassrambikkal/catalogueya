@@ -17,6 +17,12 @@ const FaHeart = React.lazy(() =>
 const FaArrowLeft = React.lazy(() =>
   import("react-icons/fa").then((m) => ({ default: m.FaArrowLeft }))
 );
+const FaMapMarkerAlt = React.lazy(() =>
+  import("react-icons/fa").then((m) => ({ default: m.FaMapMarkerAlt }))
+);
+const FaUser = React.lazy(() =>
+  import("react-icons/fa").then((m) => ({ default: m.FaUser }))
+);
 
 export default function CompanyPage() {
   const { categoryId, companyId } = useParams();
@@ -28,6 +34,7 @@ export default function CompanyPage() {
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState({});
   const [fixedWords, setFixedWords] = useState({});
+  const [isFollowing, setIsFollowing] = useState(false);
 
   // Helper to check favourites
   const isFavourite = (id) => favourites.some((fav) => fav.id === id);
@@ -219,57 +226,165 @@ export default function CompanyPage() {
               <p className="text-xs sm:text-sm opacity-90 mt-1">{title}</p>
             )}
 
-            {/* ⭐ Rating + WhatsApp */}
+            {/* ⭐ Rating - White stars */}
             <div className="flex items-center gap-4 mt-3 text-sm sm:text-base">
-              <button
-                onClick={() => navigate(`${basePath}/reviews`)}
-                className="flex items-center gap-1 text-yellow-400 font-semibold drop-shadow-lg"
-              >
-                <FaStar className="text-lg sm:text-xl" />
+              <div className="flex items-center gap-1 text-white font-semibold drop-shadow-lg">
+                <FaStar className="text-white text-lg sm:text-xl" />
                 <span>{displayRating.toFixed(1)}</span>
                 <span className="text-gray-200 ml-1 text-xs sm:text-sm hover:underline">
                   (See Reviews)
                 </span>
-              </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* ===== FLOATING ACTION ICONS - Horizontal ===== */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl">
+            <div className="flex flex-row gap-2 sm:gap-3">
+              
+              {/* 📍 Location */}
+              {displayLocation && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`
+                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                    rounded-lg sm:rounded-xl
+                    bg-gray-700/10 backdrop-blur-xl 
+                    border border-white/20
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                    transition-all duration-300 ease-out group relative
+                    text-sm sm:text-base
+                    hover:bg-gray-300/20
+                    hover:shadow-[0_0_5px_currentColor]
+                    hover:scale-110 hover:-translate-y-1
+                    text-white
+                  `}
+                >
+                  {/* Icon */}
+                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                    <Suspense fallback={<span>📍</span>}>
+                      <FaMapMarkerAlt className="text-sm" />
+                    </Suspense>
+                  </div>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                    bg-black/80 text-white text-xs px-2 py-1  
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                    Location
+                  </div>
+                </a>
+              )}
+
+              {/* 📱 WhatsApp */}
               {phone && (
                 <a
                   href={`https://wa.me/${phone}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 
-                             rounded-full bg-green-500 hover:bg-green-600 shadow-xl transition hover:scale-105"
+                  className={`
+                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                    rounded-lg sm:rounded-xl
+                    bg-gray-700/10 backdrop-blur-xl 
+                    border border-white/20
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                    transition-all duration-300 ease-out group relative
+                    text-sm sm:text-base
+                    hover:bg-gray-300/20
+                    hover:shadow-[0_0_5px_currentColor]
+                    hover:scale-110 hover:-translate-y-1
+                    text-white
+                  `}
                 >
-                  <Suspense fallback={<span>💬</span>}>
-                    <FaWhatsapp className="text-white text-lg sm:text-2xl" />
-                  </Suspense>
+                  {/* Icon */}
+                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                    <Suspense fallback={<span>💬</span>}>
+                      <FaWhatsapp className="text-sm" />
+                    </Suspense>
+                  </div>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                    bg-black/80 text-white text-xs px-2 py-1  
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                    WhatsApp
+                  </div>
                 </a>
               )}
-            </div>
 
-            {/* 📍 Location */}
-            {displayLocation && (
-              <div className="flex items-center gap-1 mt-2 text-xs sm:text-sm opacity-85">
-                <span role="img" aria-label="location">
-                  📍
-                </span>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    displayLocation
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-blue-200"
-                >
-                  {displayLocation}
-                </a>
-              </div>
-            )}
+              {/* 👤 Follow */}
+              <button
+                onClick={() => setIsFollowing(!isFollowing)}
+                className={`
+                  w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                  rounded-lg sm:rounded-xl
+                  bg-gray-700/10 backdrop-blur-xl 
+                  border border-white/20
+                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                  transition-all duration-300 ease-out group relative
+                  text-sm sm:text-base
+                  hover:bg-gray-300/20
+                  hover:shadow-[0_0_5px_currentColor]
+                  hover:scale-110 hover:-translate-y-1
+                  ${isFollowing ? "text-purple-400" : "text-white"}
+                `}
+              >
+                {/* Icon */}
+                <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                  <Suspense fallback={<span>👤</span>}>
+                    <FaUser className="text-sm" />
+                  </Suspense>
+                </div>
+                
+                {/* Tooltip */}
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                  bg-black/80 text-white text-xs px-2 py-1  
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                  whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                  {isFollowing ? "Following" : "Follow"}
+                </div>
+              </button>
+
+              {/* 📝 Company Reviews */}
+              <button
+                onClick={() => navigate(`${basePath}/reviews`)}
+                className={`
+                  w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                  rounded-lg sm:rounded-xl
+                  bg-gray-700/10 backdrop-blur-xl 
+                  border border-white/20
+                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                  transition-all duration-300 ease-out group relative
+                  text-sm sm:text-base
+                  hover:bg-gray-300/20
+                  hover:shadow-[0_0_5px_currentColor]
+                  hover:scale-110 hover:-translate-y-1
+                  text-white
+                `}
+              >
+                {/* Icon */}
+                <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                  <FaStar className="text-sm" />
+                </div>
+                
+                {/* Tooltip */}
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                  bg-black/80 text-white text-xs px-2 py-1  
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                  whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                  Reviews
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-  
 
       {/* ============ Products Section ============ */}
       <section className="py-12">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { IoCheckmark } from "react-icons/io5";
+import { IoCheckmark, IoChevronForward } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSubscribeDetails } from "../api";
 
@@ -66,12 +66,14 @@ const Pricing = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.15, duration: 0.5 }}
-        className="flex gap-3 items-start"
+        className="flex gap-4 items-start"
       >
-        <IoCheckmark className="mt-1 text-xl text-blue-500" />
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+          <IoChevronForward className="text-white text-sm" />
+        </div>
         <div>
-          <p className="font-medium text-gray-700 text-sm md:text-base">{item.feature}</p>
-          <p className="text-gray-500 text-xs md:text-sm">{item.benefit}</p>
+          <p className="font-semibold text-gray-800 text-sm md:text-base mb-1">{item.feature}</p>
+          <p className="text-gray-600 text-xs md:text-sm">{item.benefit}</p>
         </div>
       </motion.li>
     ));
@@ -107,7 +109,7 @@ const Pricing = () => {
         >
           {billingCycle === "monthly" ? (
             <>
-              <h2 className="text-2xl font-bold text-blue-600">{monthlyPrice} QAR</h2>
+              <h2 className="text-2xl font-bold text-blue-500">{monthlyPrice} QAR</h2>
               <p className="text-sm text-gray-500 mt-1">per month</p>
             </>
           ) : (
@@ -138,19 +140,25 @@ const Pricing = () => {
 
       <motion.div
         key={activeTab + "-container"}
-        className="bg-gradient-to-b from-[#E8E6FF] via-[#FFFCFF] to-[#FFFCFF] w-full max-w-6xl border border-gray-100 shadow-xl rounded-3xl p-10 md:p-16 backdrop-blur-lg flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden"
+        className="bg-white w-full max-w-6xl border border-gray-100 rounded-3xl p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden neomorphic-card"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 50, damping: 22 }}
+        style={{
+          boxShadow: `
+            20px 20px 60px #d9d9d9,
+            -20px -20px 60px #ffffff
+          `
+        }}
       >
         <div className="w-full md:w-1/2 text-center md:text-left">
           <span className="inline-block bg-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full mb-3">{activeTab.toUpperCase()}</span>
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
+          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
             {activeTab === "Core Management" && "Manage your entire product catalog easily"}
             {activeTab === "Sales & Promotions" && "Boost visibility with sales and deals"}
             {activeTab === "Insight & Support" && "Get insights and build customer trust"}
           </h3>
-          <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">
+          <p className="text-gray-700 text-base md:text-lg leading-relaxed mb-6 font-medium">
             {activeTab === "Core Management" && "Company profiles will be in both languages."}
             {activeTab === "Sales & Promotions" && "Showcase your best deals instantly and draw customer attention to promotional sections with ease."}
             {activeTab === "Insight & Support" && "Track performance metrics, collect real customer reviews, and offer 24/7 assistance to keep your business trusted and efficient."}
@@ -160,12 +168,34 @@ const Pricing = () => {
         <AnimatePresence mode="wait">
           <motion.ul
             key={activeTab}
-            className="w-full md:w-1/2 bg-white text-gray-900 rounded-3xl p-8 shadow-lg space-y-5"
+            className="w-full md:w-1/2 bg-white/80 backdrop-blur-md text-gray-900 rounded-3xl p-8 space-y-6 border border-white/50"
+            style={{
+              boxShadow: `
+                8px 8px 16px #d1d1d1,
+                -8px -8px 16px #ffffff,
+                inset 2px 2px 5px #f0f0f0,
+                inset -2px -2px 5px #ffffff
+              `
+            }}
           >
             {renderListItems}
           </motion.ul>
         </AnimatePresence>
       </motion.div>
+
+      {/* Add custom styles for the neomorphic effect */}
+      <style jsx>{`
+        .neomorphic-card {
+          background: #ffffff;
+        }
+        @media (max-width: 768px) {
+          .neomorphic-card {
+            box-shadow: 
+              10px 10px 30px #d9d9d9,
+              -10px -10px 30px #ffffff !important;
+          }
+        }
+      `}</style>
     </section>
   );
 };

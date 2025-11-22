@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import "./i18n";
 import { useTranslation } from "react-i18next";
-
+import CustomerLogin from "./pages/CustomerLogin";
 // Components
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -20,6 +20,12 @@ import CompanyLogin from "./pages/Companylogin";
 import CompanyForgotPassword from "./pages/CompanyForgotPassword";
 import PricingPage from "./pages/PricingPage";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import Messages from "./customer/Messages"; 
+import Settings from "./customer/Settings"; 
+import Reviews from "./customer/Reviews"; 
+import Notifications from "./customer/notifications"; 
+
+
 // Category + Product + Company
 import CategoryPage from "./pages/CategoryPage";
 import CompanyPage from "./pages/CompanyPage";
@@ -50,7 +56,11 @@ function AppContent() {
     "/register",
     "/company-login",
     "/company-forgot-password",
-     "/company-dashboard",
+    "/company-dashboard",
+    "/messages",
+    "/settings",
+     "/reviews",
+     "/notifications",
   ];
 
   const hideLayout = hideLayoutPaths.includes(location.pathname);
@@ -71,6 +81,11 @@ function AppContent() {
           <Route path="/register" element={<Register />} />
           <Route path="/company-login" element={<CompanyLogin />} />
           <Route path="/company-dashboard" element={<CompanyDashboard />} />
+          <Route path="/customer-login" element={<CustomerLogin />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/settings" element={<Settings />} />
+           <Route path="/reviews" element={<Reviews />} />
+            <Route path="/notifications" element={<Notifications />} />
           <Route
             path="/company-forgot-password"
             element={<CompanyForgotPassword />}

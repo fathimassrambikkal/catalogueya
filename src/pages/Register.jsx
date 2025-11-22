@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { registerCustomer, registerCompany } from "../api";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const [regType, setRegType] = useState("customer");
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   // ==================== Customer State ====================
   const [customerData, setCustomerData] = useState({
@@ -96,10 +100,15 @@ export default function Register() {
     try {
       const fullName = `${customerData.firstName} ${customerData.lastName}`;
 
-      // FIXED ACCORDING TO API
-      await registerCustomer(fullName, customerData.email, customerData.password);
+      const response = await registerCustomer(fullName, customerData.email, customerData.password);
+      
+      // Use the auth context to register user
+      register(response.data.token, response.data.user);
 
       alert("Customer Registered Successfully!");
+      
+      // Redirect to sign-in page
+      navigate("/sign");
 
       setCustomerData({
         firstName: "",
@@ -175,7 +184,7 @@ export default function Register() {
     }
   };
 
-  // ==================== Dropdown ====================
+  // ==================== Category Dropdown ====================
   const dropdownRef = useRef();
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -247,27 +256,28 @@ export default function Register() {
 
   // ==================== JSX ====================
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white px-4 py-16">
-      <div className="w-full max-w-6xl bg-white/90 backdrop-blur-md border border-gray-100 shadow-2xl rounded-3xl p-8">
+    <section className="min-h-screen flex items-center justify-center bg-[#f7f6f5] px-4 py-16">
+      <div className="w-full max-w-6xl bg-white border border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)] rounded-3xl p-8">
 
         {/* Tabs */}
-        <div className="flex justify-center mb-8 gap-4">
+        <div className="flex justify-center mb-8 bg-gray-100 p-2 rounded-2xl w-fit mx-auto">
           <button
             onClick={() => setRegType("customer")}
-            className={`px-6 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-sm ${
+            className={`px-6 py-2.5 rounded-xl font-medium transition-all duration-200 ${
               regType === "customer"
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-white text-black shadow-sm"
+                : "text-gray-600"
             }`}
           >
             Customer Registration
           </button>
+
           <button
             onClick={() => setRegType("company")}
-            className={`px-6 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-sm ${
+            className={`px-6 py-2.5 rounded-xl font-medium transition-all duration-200 ${
               regType === "company"
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-white text-black shadow-sm"
+                : "text-gray-600"
             }`}
           >
             Company Registration
@@ -277,6 +287,7 @@ export default function Register() {
         {/* ================= CUSTOMER FORM ================= */}
         {regType === "customer" && (
           <form className="flex flex-col gap-4" onSubmit={handleCustomerSubmit}>
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <input
@@ -285,12 +296,14 @@ export default function Register() {
                   placeholder="First Name *"
                   value={customerData.firstName}
                   onChange={handleCustomerChange}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200"
+                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10 transition"
                 />
                 {customerErrors.firstName && (
                   <p className="text-red-500 text-sm mt-1">{customerErrors.firstName}</p>
                 )}
               </div>
+
               <div>
                 <input
                   type="text"
@@ -298,7 +311,8 @@ export default function Register() {
                   placeholder="Last Name *"
                   value={customerData.lastName}
                   onChange={handleCustomerChange}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200"
+                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10 transition"
                 />
                 {customerErrors.lastName && (
                   <p className="text-red-500 text-sm mt-1">{customerErrors.lastName}</p>
@@ -306,7 +320,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Remaining customer fields */}
             {["email", "phone", "password", "confirmPassword"].map((field) => (
               <div key={field}>
                 <input
@@ -319,7 +332,8 @@ export default function Register() {
                   }
                   value={customerData[field]}
                   onChange={handleCustomerChange}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200"
+                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10 transition"
                 />
                 {customerErrors[field] && (
                   <p className="text-red-500 text-sm mt-1">{customerErrors[field]}</p>
@@ -329,7 +343,7 @@ export default function Register() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md transition-all duration-200"
+              className="w-full bg-[#45a8ff] text-white py-3 rounded-full text-sm font-medium hover:bg-[#1b93ff] transition disabled:opacity-50"
             >
               Sign Up
             </button>
@@ -340,8 +354,11 @@ export default function Register() {
         {regType === "company" && (
           <form className="flex flex-col gap-6" onSubmit={handleCompanySubmit}>
             <div className="flex flex-col lg:flex-row gap-6">
+
               {/* LEFT COLUMN */}
               <div className="flex-1 flex flex-col gap-4">
+
+                {/* Inputs */}
                 {[
                   { name: "companyName", placeholder: "Company Name *" },
                   { name: "companyEmail", placeholder: "Company Email *", type: "email" },
@@ -355,7 +372,8 @@ export default function Register() {
                       placeholder={placeholder}
                       value={companyData[name]}
                       onChange={handleCompanyChange}
-                      className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200"
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                      focus:ring-2 focus:ring-black/10 transition"
                     />
                     {companyErrors[name] && (
                       <p className="text-red-500 text-sm mt-1">{companyErrors[name]}</p>
@@ -363,15 +381,17 @@ export default function Register() {
                   </div>
                 ))}
 
-                {/* Company Logo */}
-                <div className="flex flex-col gap-2 font-medium">
+                {/* Logo Upload */}
+                <div className="flex flex-col gap-1 font-medium">
                   Company Logo *
                   <input
                     type="file"
                     name="logo"
                     accept="image/*"
                     onChange={handleCompanyChange}
-                    className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition"
+                    className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl 
+                    file:border file:border-gray-300 file:bg-white file:text-gray-700 
+                    hover:file:bg-gray-100 transition"
                   />
                   {companyErrors.logo && (
                     <p className="text-red-500 text-sm">{companyErrors.logo}</p>
@@ -381,6 +401,7 @@ export default function Register() {
                 {/* Category Dropdown */}
                 <div ref={dropdownRef} className="relative">
                   <label className="font-medium text-gray-800">Product Categories *</label>
+
                   <input
                     type="text"
                     placeholder="Search categories..."
@@ -388,10 +409,12 @@ export default function Register() {
                     onChange={(e) =>
                       setCompanyData({ ...companyData, categorySearch: e.target.value })
                     }
-                    className="w-full px-4 py-2 mb-1 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 mb-1 rounded-2xl bg-gray-50 border border-gray-200 
+                    focus:ring-2 focus:ring-black/10 transition"
                   />
+
                   <div
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 cursor-pointer hover:bg-gray-100"
                     onClick={() =>
                       setCompanyData({ ...companyData, dropdownOpen: !companyData.dropdownOpen })
                     }
@@ -400,11 +423,13 @@ export default function Register() {
                       ? companyData.categories.join(", ")
                       : "Select Categories"}
                   </div>
+
                   {companyErrors.categories && (
                     <p className="text-red-500 text-sm mt-1">{companyErrors.categories}</p>
                   )}
+
                   {companyData.dropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg">
+                    <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto border border-gray-200 rounded-2xl bg-white shadow-md">
                       {filteredCategories.map((cat) => (
                         <label
                           key={cat}
@@ -427,24 +452,30 @@ export default function Register() {
                   )}
                 </div>
 
+                {/* Address */}
                 <textarea
                   name="address"
                   placeholder="Company Address *"
                   value={companyData.address}
                   onChange={handleCompanyChange}
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10 transition"
                 />
 
-                {/* Map Section */}
+                {/* Map */}
                 <label className="font-semibold text-gray-800">Company Location</label>
+
                 <input
                   type="text"
                   id="autocomplete"
                   placeholder="Search place"
-                  className="w-full px-4 py-3 mb-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 mb-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10"
                 />
-                <div id="map" className="w-full h-64 border rounded-xl"></div>
+
+                <div id="map" className="w-full h-64 border border-gray-200 rounded-2xl"></div>
+
                 {companyData.coordinates && (
                   <p className="text-sm text-gray-600 mt-2">
                     Coordinates: <b>{companyData.coordinates}</b>
@@ -454,32 +485,37 @@ export default function Register() {
 
               {/* RIGHT COLUMN */}
               <div className="flex-1 flex flex-col gap-4">
+                
                 <input
                   type="text"
                   name="registrationNumber"
                   placeholder="Registration Number"
                   value={companyData.registrationNumber}
                   onChange={handleCompanyChange}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10 transition"
                 />
+
                 <textarea
                   name="about"
                   placeholder="About Company"
                   value={companyData.about}
                   onChange={handleCompanyChange}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10 transition"
                 />
+
                 <input
                   type="text"
                   name="workingHours"
                   placeholder="Working Hours"
                   value={companyData.workingHours}
                   onChange={handleCompanyChange}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                  focus:ring-2 focus:ring-black/10 transition"
                 />
 
-                {/* Social Links */}
                 {["facebook", "instagram", "twitter", "youtube", "linkedIn"].map(
                   (platform) => (
                     <input
@@ -489,12 +525,12 @@ export default function Register() {
                       placeholder={`${platform.charAt(0).toUpperCase() + platform.slice(1)} URL`}
                       value={companyData[platform]}
                       onChange={handleCompanyChange}
-                      className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
+                      focus:ring-2 focus:ring-black/10 transition"
                     />
                   )
                 )}
 
-                {/* Delivery & Implementation */}
                 <div className="flex gap-4">
                   <div>
                     <label className="mr-2 font-medium">Do you deliver?</label>
@@ -502,19 +538,22 @@ export default function Register() {
                       name="deliver"
                       value={companyData.deliver}
                       onChange={handleCompanyChange}
-                      className="px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                      className="px-4 py-2 rounded-2xl bg-gray-50 border border-gray-200 
+                      focus:ring-2 focus:ring-black/10"
                     >
                       <option>No</option>
                       <option>Yes</option>
                     </select>
                   </div>
+
                   <div>
                     <label className="mr-2 font-medium">Do you implement?</label>
                     <select
                       name="implement"
                       value={companyData.implement}
                       onChange={handleCompanyChange}
-                      className="px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                      className="px-4 py-2 rounded-2xl bg-gray-50 border border-gray-200 
+                      focus:ring-2 focus:ring-black/10"
                     >
                       <option>No</option>
                       <option>Yes</option>
@@ -524,7 +563,8 @@ export default function Register() {
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md transition-all duration-200 mt-4"
+                  className="w-full bg-[#45a8ff] text-white py-3 rounded-full text-sm font-medium 
+                  hover:bg-[#1b93ff] transition mt-4"
                 >
                   Register Company
                 </button>
@@ -532,6 +572,7 @@ export default function Register() {
             </div>
           </form>
         )}
+
       </div>
     </section>
   );
