@@ -4,6 +4,7 @@ import Messages from "../customer/Messages";
 import Notifications from "../customer/Notifications";
 import Reviews from "../customer/Reviews";
 import Settings from "../customer/Settings";
+import Help from "../customer/Help"; 
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
 
 export default function CustomerLogin() {
