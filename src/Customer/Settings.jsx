@@ -280,7 +280,7 @@ function Settings() {
           </div>
 
           {/* Update Profile Button */}
-          <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-2xl font-medium hover:shadow-lg transition-all duration-200
+          <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-2xl font-medium  transition-all duration-200
             shadow-[3px_3px_15px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_20px_rgba(59,130,246,0.4)]
             hover:scale-[1.02] active:scale-[0.98]">
             Update Profile
@@ -380,7 +380,7 @@ function Settings() {
           </div>
 
           {/* Update Password Button */}
-          <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-2xl font-medium hover:shadow-lg transition-all duration-200
+          <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-2xl font-medium  transition-all duration-200
             shadow-[3px_3px_15px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_20px_rgba(59,130,246,0.4)]
             hover:scale-[1.02] active:scale-[0.98]">
             Update Password
@@ -443,7 +443,7 @@ function Settings() {
           {/* Delete Account Button */}
           <button 
             onClick={() => setActiveView('deleteConfirm')}
-            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium hover:shadow-lg transition-all duration-200
+            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium  transition-all duration-200
               shadow-[3px_3px_15px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_20px_rgba(239,68,68,0.4)]
               hover:scale-[1.02] active:scale-[0.98]"
           >
@@ -515,7 +515,7 @@ function Settings() {
           </div>
 
           {/* Final Delete Account Button */}
-          <button className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium hover:shadow-lg transition-all duration-200
+          <button className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium  transition-all duration-200
             shadow-[3px_3px_15px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_20px_rgba(239,68,68,0.4)]
             hover:scale-[1.02] active:scale-[0.98]">
             Delete My Account
