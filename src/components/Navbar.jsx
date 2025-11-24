@@ -96,12 +96,12 @@ const FavouritesCounter = memo(function FavouritesCounter() {
 
 // Memoized Language Toggle - UPDATED with better click handling
 const LanguageToggle = memo(function LanguageToggle({ toggleLanguage, language }) {
-  console.log("🔤 LanguageToggle rendering - current language:", language);
+  console.log(" LanguageToggle rendering - current language:", language);
   
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("🖱️ Language button clicked!");
+    console.log(" Language button clicked!");
     toggleLanguage();
   };
   
@@ -127,10 +127,10 @@ export default function Navbar() {
   // Initialize language - with proper cookie settings
   useEffect(() => {
     const cookieLang = Cookies.get("lang") || "en";
-    console.log("🔄 Navbar initialization - cookie language:", cookieLang, "i18n language:", i18n.language);
+    console.log(" Navbar initialization - cookie language:", cookieLang, "i18n language:", i18n.language);
     
     if (i18n.language !== cookieLang) {
-      console.log("🔄 Updating i18n language from cookie...");
+      console.log(" Updating i18n language from cookie...");
       i18n.changeLanguage(cookieLang);
       document.documentElement.setAttribute("dir", cookieLang === "ar" ? "rtl" : "ltr");
     }
@@ -140,14 +140,14 @@ export default function Navbar() {
     const currentLang = i18n.language;
     const newLang = currentLang === "en" ? "ar" : "en";
     
-    console.log("🔄 Language toggle function called:");
+    console.log(" Language toggle function called:");
     console.log("   - Current language:", currentLang);
     console.log("   - New language:", newLang);
     console.log("   - Cookie before change:", Cookies.get("lang"));
 
     // Update cookie with proper expiration (30 days)
     Cookies.set("lang", newLang, { 
-      expires: 30, // 30 days
+      expires: 30,
       path: '/',
       sameSite: 'lax'
     });
@@ -155,17 +155,17 @@ export default function Navbar() {
     console.log("   - Cookie after update:", Cookies.get("lang"));
 
     try {
-      console.log("🌐 Calling API to change language...");
-      console.log("🌐 API function:", apiChangeLanguage);
+      console.log(" Calling API to change language...");
+      console.log(" API function:", apiChangeLanguage);
       
       // Call the API function
       const response = await apiChangeLanguage();
-      console.log("✅ API response received:", response);
+      console.log(" API response received:", response);
       
       // Check if API call was successful
       if (response?.data?.status === 200) {
-        console.log("🎉 Language change successful! Backend confirmed:", response.data.message);
-        console.log("🔄 Reloading page to apply language changes...");
+        console.log(" Language change successful! Backend confirmed:", response.data.message);
+        console.log(" Reloading page to apply language changes...");
         
         // Reload the page after successful API call
         window.location.reload();
@@ -179,7 +179,7 @@ export default function Navbar() {
       console.error("❌ Error details:", error.response?.data || error.message);
       
       // Even if API fails, still reload to apply cookie changes
-      console.log("🔄 Reloading page despite API error (cookie is set)...");
+      console.log(" Reloading page despite API error (cookie is set)...");
       window.location.reload();
     }
   }, [i18n]);
@@ -202,7 +202,7 @@ export default function Navbar() {
 
   // Log when language changes via i18n
   useEffect(() => {
-    console.log("📢 i18n language changed to:", i18n.language);
+    console.log(" i18n language changed to:", i18n.language);
   }, [i18n.language]);
 
   return (
@@ -231,7 +231,7 @@ export default function Navbar() {
         >
           {t("login")}
         </Link>
-        {/* UPDATED: LanguageToggle with better click handling */}
+        {/*  LanguageToggle with better click handling */}
         <LanguageToggle 
           toggleLanguage={toggleLanguage} 
           language={i18n.language} 

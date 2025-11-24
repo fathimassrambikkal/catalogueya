@@ -89,7 +89,7 @@ export default function Favourite() {
   if (!favourites || favourites.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center text-gray-600">
-        <FaHeart className="text-red-500 text-5xl mb-3" />
+
         <h2 className="text-2xl font-semibold mb-2">No Saved Items</h2>
         <p className="text-gray-500">
           Your favourite items will appear here 
@@ -100,7 +100,7 @@ export default function Favourite() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16 mt-24 relative">
-      {/* 🔙 Back Button */}
+      {/*  Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="absolute top-6 left-4 sm:-left-6 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full

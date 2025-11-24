@@ -1,4 +1,3 @@
-// src/pages/CompanyLogin.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
@@ -11,11 +10,11 @@ export default function CompanyLogin() {
   const [error, setError] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // ✅ FIXED: No auto-redirect, only detect login state
+  
   useEffect(() => {
     const token = localStorage.getItem("companyToken");
     if (token) {
-      setIsLoggedIn(true);  // ⬅️ Removed navigate()
+      setIsLoggedIn(true);  
     }
   }, []);
 

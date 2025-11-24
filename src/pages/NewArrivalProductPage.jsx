@@ -1,4 +1,4 @@
-// ✅ SAFE, CLEAN, NULL-PROOF VERSION
+
 import React, { useState, useMemo, useEffect, Suspense, memo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ function NewArrivalProductPageComponent() {
   const { favourites, toggleFavourite } = useFavourites();
   const whatsappNumber = "97400000000";
 
-  // ✅ Safe API fetch with strict null-checks
+  //  API fetch with strict null-checks
   useEffect(() => {
     const fetchProducts = async () => {
       try {

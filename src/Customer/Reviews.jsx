@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 
 function Reviews() {
-  const [activeView, setActiveView] = useState('main'); // 'main', 'leaveReview'
-  const [activeTab, setActiveTab] = useState('awaiting'); // 'awaiting', 'reviewed'
+  const [activeView, setActiveView] = useState('main'); 
+  const [activeTab, setActiveTab] = useState('awaiting'); 
   const [reviewText, setReviewText] = useState('');
   const [rating, setRating] = useState(0);
   const [hideProfile, setHideProfile] = useState(false);
@@ -336,7 +336,7 @@ function Reviews() {
     </div>
   );
 
-  // Render appropriate view based on activeView state
+  
   switch (activeView) {
     case 'leaveReview':
       return renderLeaveReview();

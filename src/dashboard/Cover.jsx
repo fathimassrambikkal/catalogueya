@@ -24,7 +24,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
     google = "",
   } = companyInfo;
 
-  // Memoized src for images (avoids creating new URL each render)
+  // Memoized src for images 
   const coverSrc = useMemo(() => {
     if (!coverPhoto) return "/cover.jpg";
     return typeof coverPhoto === "string" ? coverPhoto : URL.createObjectURL(coverPhoto);
@@ -83,7 +83,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
     },
   };
 
-  // Filter social icons that have values (now includes WhatsApp)
+  // Filter social icons that have values 
   const activeSocialIcons = Object.entries(socialIcons).filter(([key, { value }]) => 
     value
   );
@@ -106,7 +106,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
       <div className="w-full h-52 sm:h-48 md:h-56 lg:h-64 bg-gray-300 relative">
         <img src={coverSrc} alt="cover" className="object-cover w-full h-full" />
         {/* Dark overlay gradient only on the image for better text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none"></div>
+       
       </div>
 
       {/* EDIT BUTTON - Matching the dark theme */}
@@ -127,14 +127,17 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
         <span className="hidden xs:inline">Edit</span>
       </button>
 
-      {/* FLOATING SOCIAL ICONS DOCK - 3 icons per row on mobile */}
+      {/* FLOATING SOCIAL ICONS DOCK - Glass effect only here */}
       {activeSocialIcons.length > 0 && (
         <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl">
+          <div className="rounded-2xl p-3 sm:p-4
+         bg-white/20 backdrop-blur-md  border border-white/20
+          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+            ">
             {/* Mobile: Vertical layout with 3 icons per row */}
-            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               {iconChunks.map((chunk, chunkIndex) => (
-                <div key={chunkIndex} className="flex gap-2 justify-center sm:justify-start">
+                <div key={chunkIndex} className="flex gap-3 justify-center sm:justify-start">
                   {chunk.map(([key, { icon, color, value }]) => (
                     <a
                       key={key}
@@ -142,15 +145,14 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`
-                        w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center 
-                        rounded-lg sm:rounded-xl
-                        bg-gray-700/10 backdrop-blur-xl 
-                        border border-white/20
-                        shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                        w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center 
+                        rounded-xl
+                        bg-white/20 backdrop-blur-md  border-white/30
+                        
                         transition-all duration-300 ease-out group relative
-                        text-sm sm:text-base md:text-lg
-                        hover:bg-gray-300/20
-                        hover:shadow-[0_0_5px_currentColor]
+                        text-base sm:text-lg
+                        hover:bg-white/30
+                        hover:shadow-[3px_3px_15px_rgba(255,255,255,0.4),-3px_-3px_15px_rgba(255,255,255,0.2)]
                         hover:scale-110 hover:-translate-y-1
                         ${color}
                       `}
@@ -160,12 +162,20 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
                         {icon}
                       </div>
                       
-                      {/* Tooltip - Responsive positioning */}
-                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
-                        bg-black/80 text-white text-xs px-2 py-1  
+                      {/* Tooltip - Glassmorphic style */}
+                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 
+                        bg-white/20 backdrop-blur-lg text-white text-xs px-3 py-1.5 rounded-lg
                         opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                        whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                        whitespace-nowrap pointer-events-none border border-white/30
+                        shadow-[3px_3px_10px_rgba(0,0,0,0.2)]">
                         {key.charAt(0).toUpperCase() + key.slice(1)}
+                      </div>
+
+                      {/* Liquid shine effect on hover */}
+                      <div className="absolute inset-0 rounded-xl overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
+                          translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out">
+                        </div>
                       </div>
                     </a>
                   ))}
@@ -176,10 +186,10 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
         </div>
       )}
 
-      {/* COMPANY INFO - Updated to match right floating card theme */}
+      {/* COMPANY INFO - Keep original dark theme (no glass effect) */}
       <div className="flex flex-row items-start p-3 sm:p-4 absolute bottom-0 left-0 w-full">
 
-        {/* LOGO - Matching dark glass theme */}
+        {/* LOGO - Keep original dark theme */}
         <div className={`
           w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center
            backdrop-blur-md border border-white/20
@@ -189,7 +199,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
           <img src={logoSrc} alt="logo" className="w-full h-full object-contain p-1" />
         </div>
 
-        {/* DETAILS - Dark glass container matching right side */}
+        {/* DETAILS - Keep original dark glass container */}
         <div className="flex-1 ml-2 sm:ml-3 md:ml-4 max-w-full">
           <div className="  
             ">
@@ -199,7 +209,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
               {companyDescription}
             </p>
 
-            {/* SPECIALTIES - Matching dark badges */}
+            {/* SPECIALTIES - Keep original dark badges */}
             {specialties.length > 0 && (
               <div className="flex flex-wrap gap-1 sm:gap-2 mt-1 sm:mt-2">
                 {specialties.map((spec) => (
@@ -220,7 +230,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
               </div>
             )}
 
-            {/* CONTACT INFO & ADDRESS - Matching dark theme */}
+            {/* CONTACT INFO & ADDRESS - Keep original dark theme */}
             <div className="flex flex-wrap gap-2 mt-2">
               {contactMobile && (
                 <div className={`
@@ -233,7 +243,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
                 </div>
               )}
 
-              {/* ADDRESS - Matching theme */}
+              {/* ADDRESS - Keep original theme */}
               {address && (
                 <div className="flex items-center gap-1 sm:gap-2 w-fit">
                   <div className={`

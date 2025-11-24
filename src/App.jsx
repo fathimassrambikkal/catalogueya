@@ -18,7 +18,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Register from "./pages/Register";
 import CompanyLogin from "./pages/Companylogin";
 import CompanyForgotPassword from "./pages/CompanyForgotPassword";
-import PricingPage from "./pages/PricingPage";
 import CompanyDashboard from "./pages/CompanyDashboard";
 
 // Category + Product + Company
@@ -52,7 +51,7 @@ function AppContent() {
     "/company-login",
     "/company-forgot-password",
     "/company-dashboard",
-    "/customer-dashboard", // Use this single route for all customer pages
+    "/customer-login", 
   ];
 
   const hideLayout = hideLayoutPaths.includes(location.pathname);
@@ -73,12 +72,12 @@ function AppContent() {
           <Route path="/register" element={<Register />} />
           <Route path="/company-login" element={<CompanyLogin />} />
           <Route path="/company-dashboard" element={<CompanyDashboard />} />
-          <Route path="/customer-login" element={<CustomerLogin />} /> {/* Single customer dashboard route */}
+          <Route path="/customer-login" element={<CustomerLogin />} />
           <Route
             path="/company-forgot-password"
             element={<CompanyForgotPassword />}
           />
-          <Route path="/pricing" element={<PricingPage />} />
+        
 
           {/* Category + Company + Product */}
           <Route path="/category/:categoryId" element={<CategoryPage />} />

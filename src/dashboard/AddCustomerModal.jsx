@@ -37,35 +37,42 @@ const AddCustomerModal = ({ showAddCustomerModal, setShowAddCustomerModal }) => 
   return (
     <>
       {showAddCustomerModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white/90 backdrop-blur-lg rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200/60
+            shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+            
             {/* Modal Header */}
-            <div className="p-6 border-b relative">
+            <div className="p-6 border-b border-gray-200/60 relative">
               <button
                 onClick={() => setShowAddCustomerModal(false)}
-                className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+                className="absolute right-6 top-6 text-gray-500 hover:text-red-500 transition-colors p-2 rounded-xl
+                  bg-white/80 backdrop-blur-lg border border-gray-200/60
+                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                  hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
               >
-                <FaTimes size={20} />
+                <FaTimes size={18} />
               </button>
-              <h2 className="text-2xl font-bold text-gray-800">Add Customers</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Add Customers</h2>
               <p className="text-gray-600 mt-2">Customers who sent you Direct Messages</p>
             </div>
 
             {/* Search Bar */}
-            <div className="p-6 border-b">
+            <div className="p-6 border-b border-gray-200/60">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                <FaSearch className="absolute left-4 top-3.5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search customers..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-12 pr-10 py-3 border border-gray-300/60 rounded-xl bg-white/80 backdrop-blur-sm
+                    focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <FaTimes size={16} />
                   </button>
@@ -75,12 +82,12 @@ const AddCustomerModal = ({ showAddCustomerModal, setShowAddCustomerModal }) => 
 
             {/* Search Results */}
             {isSearching && (
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold mb-4">
+              <div className="p-6 border-b border-gray-200/60">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Search Results {filteredCustomers.length > 0 && `(${filteredCustomers.length})`}
                 </h3>
                 {filteredCustomers.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-200/60">
                     No customers found for "{searchTerm}"
                   </div>
                 ) : (
@@ -90,16 +97,20 @@ const AddCustomerModal = ({ showAddCustomerModal, setShowAddCustomerModal }) => 
                       <div>
                         <h4 className="font-medium text-gray-700 mb-3">Direct Message Customers</h4>
                         {searchResultsByType.direct.map((customer) => (
-                          <div key={customer.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-3">
+                          <div key={customer.id} className="flex items-center justify-between p-4 rounded-xl mb-3
+                            bg-white/80 backdrop-blur-lg border border-gray-200/60
+                            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
                             <div>
-                              <div className="font-semibold text-gray-800">{customer.name}</div>
+                              <div className="font-semibold text-gray-900">{customer.name}</div>
                               <div className="text-gray-600">{customer.phone}</div>
                             </div>
                             <div className="flex gap-2">
-                              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                              <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200
+                                shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]">
                                 Add Customer
                               </button>
-                              <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                              <button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-200
+                                shadow-[3px_3px_10px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_15px_rgba(239,68,68,0.4)]">
                                 Remove
                               </button>
                             </div>
@@ -113,16 +124,20 @@ const AddCustomerModal = ({ showAddCustomerModal, setShowAddCustomerModal }) => 
                       <div>
                         <h4 className="font-medium text-gray-700 mb-3">Suggested Customers</h4>
                         {searchResultsByType.suggested.map((customer) => (
-                          <div key={customer.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-3">
+                          <div key={customer.id} className="flex items-center justify-between p-4 rounded-xl mb-3
+                            bg-white/80 backdrop-blur-lg border border-gray-200/60
+                            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
                             <div>
-                              <div className="font-semibold text-gray-800">{customer.name}</div>
+                              <div className="font-semibold text-gray-900">{customer.name}</div>
                               <div className="text-gray-600">{customer.phone}</div>
                             </div>
                             <div className="flex gap-2">
-                              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                              <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200
+                                shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]">
                                 Add Customer
                               </button>
-                              <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                              <button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-200
+                                shadow-[3px_3px_10px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_15px_rgba(239,68,68,0.4)]">
                                 Remove
                               </button>
                             </div>
@@ -135,24 +150,28 @@ const AddCustomerModal = ({ showAddCustomerModal, setShowAddCustomerModal }) => 
               </div>
             )}
 
-            {/* Regular View (when not searching) */}
+            {/* Regular View  */}
             {!isSearching && (
               <>
                 {/* Direct Message Customers */}
-                <div className="p-6 border-b">
-                  <h3 className="text-lg font-semibold mb-4">Direct Message Customers</h3>
+                <div className="p-6 border-b border-gray-200/60">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Direct Message Customers</h3>
                   <div className="space-y-4">
                     {directMessageCustomers.map((customer) => (
-                      <div key={customer.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div key={customer.id} className="flex items-center justify-between p-4 rounded-xl
+                        bg-white/80 backdrop-blur-lg border border-gray-200/60
+                        shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
                         <div>
-                          <div className="font-semibold text-gray-800">{customer.name}</div>
+                          <div className="font-semibold text-gray-900">{customer.name}</div>
                           <div className="text-gray-600">{customer.phone}</div>
                         </div>
                         <div className="flex gap-2">
-                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200
+                            shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]">
                             Add Customer
                           </button>
-                          <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                          <button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-200
+                            shadow-[3px_3px_10px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_15px_rgba(239,68,68,0.4)]">
                             Remove
                           </button>
                         </div>
@@ -163,19 +182,23 @@ const AddCustomerModal = ({ showAddCustomerModal, setShowAddCustomerModal }) => 
 
                 {/* Suggested Customers */}
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Suggested Customers</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Suggested Customers</h3>
                   <div className="space-y-4">
                     {suggestedCustomers.map((customer) => (
-                      <div key={customer.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div key={customer.id} className="flex items-center justify-between p-4 rounded-xl
+                        bg-white/80 backdrop-blur-lg border border-gray-200/60
+                        shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
                         <div>
-                          <div className="font-semibold text-gray-800">{customer.name}</div>
+                          <div className="font-semibold text-gray-900">{customer.name}</div>
                           <div className="text-gray-600">{customer.phone}</div>
                         </div>
                         <div className="flex gap-2">
-                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200
+                            shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]">
                             Add Customer
                           </button>
-                          <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                          <button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-200
+                            shadow-[3px_3px_10px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_15px_rgba(239,68,68,0.4)]">
                             Remove
                           </button>
                         </div>

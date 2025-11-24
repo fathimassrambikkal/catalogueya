@@ -126,16 +126,13 @@ export default function AnalyticsAppleFull({ products = [] }) {
     return () => clearInterval(id);
   }, [range]);
 
- /* -------------------------
+  /* -------------------------
    Safe Top Product
 ---------------------------*/
-const topProduct = useMemo(() => {
-  // CLEAN: no need to check Array.isArray(safeProducts)
-  if (safeProducts.length === 0) return {};
-
-  return safeProducts.reduce((a, b) => (b.views > a.views ? b : a));
-}, [safeProducts]);
-
+  const topProduct = useMemo(() => {
+    if (safeProducts.length === 0) return {};
+    return safeProducts.reduce((a, b) => (b.views > a.views ? b : a));
+  }, [safeProducts]);
 
   /* -------------------------
      Safe chart data
@@ -165,7 +162,7 @@ const topProduct = useMemo(() => {
   );
 
   /* -------------------------
-     Styles
+     Styles - Updated to match Messages theme
   ---------------------------*/
   const palette = {
     primary: "#0A84FF",
@@ -173,14 +170,10 @@ const topProduct = useMemo(() => {
     soft2: "#3B82F6",
   };
 
-  const containerBg = theme === "light" ? "bg-neutral-100" : "bg-gray-900";
-  const cardBase =
-    theme === "light"
-      ? "bg-white border border-white/60"
-      : "bg-gray-800 border border-gray-700";
-
-  const textSub = theme === "light" ? "text-gray-500" : "text-gray-300";
-  const muted = theme === "light" ? "text-gray-400" : "text-gray-400/80";
+  const containerBg = "bg-gradient-to-br from-gray-50 to-blue-50/30";
+  const cardBase = "bg-white/80 backdrop-blur-lg border border-gray-200/60";
+  const textSub = "text-gray-600";
+  const muted = "text-gray-500";
 
   const cardVariant = {
     initial: { opacity: 0, y: 6 },
@@ -189,348 +182,335 @@ const topProduct = useMemo(() => {
   };
 
   return (
-    <div className={`${containerBg} min-h-screen font-sans text-sm mt-10`}>
-      <div className="flex">
-        <main className="flex-1 p-4 md:p-6">
-          {/* Header */}
-          <header className="flex items-center justify-between mb-4">
-            <div>
-              <h1
-                className={`text-xl md:text-2xl font-semibold ${
-                  theme === "light" ? "text-gray-800" : "text-white"
-                }`}
-              >
-                Analytics
-              </h1>
-            </div>
+    <div className={`${containerBg} min-h-screen font-sans text-sm mt-10 p-4 sm:p-6`}>
+      {/* Header */}
+      <header className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          Analytics
+        </h1>
+<div className="flex items-center gap-3">
+  {/* Range Selector with Sliding Animation */}
+  <div className="relative flex items-center gap-1 rounded-xl border border-gray-200/60 px-1 py-1 bg-white/80 backdrop-blur-lg
+    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
+    <div 
+      className={`absolute top-1 bottom-1 w-[calc(33.333%-8px)] rounded-lg transition-all duration-300 ease-in-out ${
+        range === "weekly" 
+          ? "left-1 bg-blue-500" 
+          : range === "monthly" 
+          ? "left-[calc(33.333%+4px)] bg-blue-500" 
+          : "left-[calc(66.666%+8px)] bg-blue-500"
+      }`}
+    />
+    {["weekly", "monthly", "yearly"].map((r) => (
+      <button
+        key={r}
+        onClick={() => setRange(r)}
+        className={`relative px-3 py-1 text-xs rounded-lg transition-all duration-300 z-10 ${
+          range === r ? "text-white" : "text-gray-600 hover:text-blue-500"
+        }`}
+      >
+        {r[0].toUpperCase() + r.slice(1)}
+      </button>
+    ))}
+  </div>
+</div>
+      </header>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 rounded-xl border px-1 py-1">
-                {["weekly", "monthly", "yearly"].map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setRange(r)}
-                    className={`px-2 py-1 text-xs rounded-md ${
-                      range === r
-                        ? "bg-gradient-to-r from-blue-500 to-sky-400 text-white"
-                        : `bg-transparent ${muted}`
-                    }`}
-                  >
-                    {r[0].toUpperCase() + r.slice(1)}
-                  </button>
-                ))}
+      <div className={`max-w-7xl mx-auto ${compact ? "space-y-4" : "space-y-6"}`}>
+        {/* Top grid */}
+        <div
+          className={`grid grid-cols-1 lg:grid-cols-4 gap-4 ${
+            compact ? "mb-3" : "mb-6"
+          } items-start`}
+        >
+          {/* AREA CHART */}
+          <motion.div
+            variants={cardVariant}
+            initial="initial"
+            animate="enter"
+            className={`lg:col-span-2 rounded-2xl p-4 ${cardBase}
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className={`text-xs ${textSub}`}>Views Trend</div>
+                <div className="text-lg font-semibold text-gray-900">Recent Views</div>
               </div>
-
-              <button
-                onClick={() => setCompact((c) => !c)}
-                className="px-2 py-1 text-xs rounded-md border"
-              >
-                {compact ? "Compact" : "Spacious"}
-              </button>
-
-              <button
-                onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
-                className="flex items-center gap-2 px-3 py-2 rounded-md border"
-              >
-                {theme === "light" ? <FaMoon /> : <FaSun className="text-yellow-400" />}
-              </button>
+              <div className={`text-xs ${muted}`}>Live</div>
             </div>
-          </header>
 
-          <div className={`max-w-7xl mx-auto ${compact ? "space-y-3" : "space-y-5"}`}>
-            {/* Top grid */}
-            <div
-              className={`grid grid-cols-1 lg:grid-cols-4 gap-3 ${
-                compact ? "mb-2" : "mb-4"
-              } items-start`}
+            <div className={`min-w-0 min-h-0 ${compact ? "h-36" : "h-44"}`}>
+              {loading ? (
+                <Skeleton className="w-full h-full rounded-lg" />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={areaData}>
+                    <defs>
+                      <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="5%" stopColor={palette.primary} stopOpacity={0.28} />
+                        <stop offset="95%" stopColor={palette.primary} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#374151" }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#374151" }}
+                    />
+
+                    <Tooltip
+                      wrapperStyle={{ borderRadius: 8 }}
+                      contentStyle={{
+                        background: "#fff",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 8,
+                      }}
+                    />
+
+                    <Area
+                      type="monotone"
+                      dataKey="views"
+                      stroke={palette.primary}
+                      fill="url(#g1)"
+                      strokeWidth={2.2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </motion.div>
+
+          {/* TOP PRODUCT */}
+          <motion.div
+            variants={cardVariant}
+            initial="initial"
+            animate="enter"
+            className={`rounded-2xl p-4 ${cardBase}
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className={`text-xs ${textSub}`}>Top product</div>
+                <div className="text-lg font-semibold text-gray-900">{topProduct.name || "—"}</div>
+              </div>
+              <div className={`text-xs ${muted}`}>live</div>
+            </div>
+
+            <div className="flex items-center gap-3 mt-3">
+              <img
+                src={topProduct.image || topProduct.img || "/placeholder.png"}
+                alt=""
+                className="w-16 h-16 rounded-lg object-cover border border-gray-200/60"
+              />
+              <div>
+                <div className={`text-xs ${textSub}`}>Views</div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={viewsPulse}
+                    initial={{ scale: 0.98 }}
+                    animate={{ scale: [1, 1.02, 1] }}
+                    transition={{ duration: 0.7 }}
+                    className="text-2xl font-semibold text-gray-900"
+                  >
+                    {viewsAnimated.toLocaleString()}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <div className="h-24 mt-3 min-w-0 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} margin={{ left: 6, right: 6 }}>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Tooltip />
+
+                  <Bar dataKey="views" barSize={20} radius={[6, 6, 6, 6]}>
+                    {barData.map((_, idx) => {
+                      const colors = [
+                        palette.primary,
+                        palette.soft2,
+                        palette.soft,
+                      ];
+                      return <Cell key={idx} fill={colors[idx % 3]} />;
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* MINI STATS */}
+          <div className="space-y-3">
+            <motion.div
+              variants={cardVariant}
+              initial="initial"
+              animate="enter"
+              className={`${cardBase} rounded-2xl p-3
+                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
             >
-              {/* AREA CHART */}
-              <motion.div
-                variants={cardVariant}
-                initial="initial"
-                animate="enter"
-                className={`lg:col-span-2 rounded-2xl p-3 border-4 border-white ${cardBase}`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <div>
-                    <div className={`text-xs ${textSub}`}>Views Trend</div>
-                    <div className="text-lg font-semibold">Recent Views</div>
-                  </div>
-                  <div className={`text-xs ${muted}`}>Live</div>
+              <div className="flex items-center gap-3">
+                <div className="text-xl text-blue-500">
+                  <FaShoppingBag />
                 </div>
+                <div>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {safeProducts.length}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Most Viewed Products
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
-                {/* FIX 1 */}
-                <div className={`min-w-0 min-h-0 ${compact ? "h-36" : "h-44"}`}>
-                  {loading ? (
-                    <Skeleton className="w-full h-full rounded-lg" />
-                  ) : (
+            <motion.div
+              variants={cardVariant}
+              initial="initial"
+              animate="enter"
+              className={`${cardBase} rounded-2xl p-3
+                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="text-xl text-blue-500">
+                  <FaEye />
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {totalViewsCount.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Total Product Views
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              variants={cardVariant}
+              initial="initial"
+              animate="enter"
+              className={`${cardBase} rounded-2xl p-3
+                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="text-xl text-blue-500">
+                  <FaUsers />
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-semibold text-gray-900">830</div>
+                  <div className="text-xs text-gray-600">
+                    Customer Profile Views
+                  </div>
+
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60">
+                      <FaThumbsUp className="text-blue-500" />{" "}
+                      <span className="text-gray-700">{topProduct.likes || 0}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60">
+                      <FaThumbsDown className="text-blue-400" />{" "}
+                      <span className="text-gray-700">{topProduct.dislikes || 0}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* PRODUCT GRID */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Products Performance</h2>
+            <div className="text-xs text-gray-600">
+              Updated live
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`${cardBase} rounded-2xl p-4
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
+                >
+                  <Skeleton className="w-full h-36 object-cover rounded-lg" />
+                  <div className="mt-3 flex items-center justify-between">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-1/6" />
+                  </div>
+                  <div className="mt-3 h-12">
+                    <Skeleton className="w-full h-full rounded" />
+                  </div>
+                </div>
+              ))
+            ) : (
+              safeProducts.map((p) => (
+                <motion.div
+                  key={p.id}
+                  whileHover={{ y: -6 }}
+                  className={`${cardBase} rounded-2xl p-4 cursor-pointer transition-all duration-200
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                    hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]`}
+                >
+                  <img
+                    src={p.image || p.img || "/placeholder.png"}
+                    alt=""
+                    className="w-full h-36 object-cover rounded-lg border border-gray-200/60"
+                  />
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-gray-900">{p.name}</div>
+                      <div className="text-xs text-gray-600">
+                        {p.reviews || 0} reviews • {p.rating || 0}★
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="font-medium text-gray-900">
+                        {(p.views || 0).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        views
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 h-12 min-w-0 min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={areaData}>
-                        <defs>
-                          <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="5%" stopColor={palette.primary} stopOpacity={0.28} />
-                            <stop offset="95%" stopColor={palette.primary} stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-
-                        <XAxis
-                          dataKey="name"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{
-                            fill: theme === "light" ? "#374151" : "#d1d5db",
-                          }}
-                        />
-                        <YAxis
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{
-                            fill: theme === "light" ? "#374151" : "#d1d5db",
-                          }}
-                        />
-
-                        <Tooltip
-                          wrapperStyle={{ borderRadius: 8 }}
-                          contentStyle={{
-                            background: theme === "dark" ? "#111827" : "#fff",
-                          }}
-                        />
-
+                      <AreaChart
+                        data={
+                          Array.isArray(p.spark)
+                            ? p.spark.map((v, i) => ({ x: i, v }))
+                            : []
+                        }
+                      >
                         <Area
                           type="monotone"
-                          dataKey="views"
+                          dataKey="v"
                           stroke={palette.primary}
-                          fill="url(#g1)"
-                          strokeWidth={2.2}
+                          fill={palette.soft}
+                          strokeWidth={2}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
-                  )}
-                </div>
-              </motion.div>
-
-              {/* TOP PRODUCT */}
-              <motion.div
-                variants={cardVariant}
-                initial="initial"
-                animate="enter"
-                className={`rounded-2xl p-3 ${cardBase}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className={`text-xs ${textSub}`}>Top product</div>
-                    <div className="text-lg font-semibold">{topProduct.name || "—"}</div>
-                  </div>
-                  <div className={`text-xs ${muted}`}>live</div>
-                </div>
-
-                <div className="flex items-center gap-3 mt-2">
-                  <img
-                    src={topProduct.image || topProduct.img || "/placeholder.png"}
-                    alt=""
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                  <div>
-                    <div className={`text-xs ${textSub}`}>Views</div>
-
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={viewsPulse}
-                        initial={{ scale: 0.98 }}
-                        animate={{ scale: [1, 1.02, 1] }}
-                        transition={{ duration: 0.7 }}
-                        className="text-2xl font-semibold"
-                      >
-                        {viewsAnimated.toLocaleString()}
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </div>
-
-                {/* FIX 2 */}
-                <div className="h-24 mt-3 min-w-0 min-h-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={barData} margin={{ left: 6, right: 6 }}>
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                      <YAxis axisLine={false} tickLine={false} />
-                      <Tooltip />
-
-                      <Bar dataKey="views" barSize={20} radius={[6, 6, 6, 6]}>
-                        {barData.map((_, idx) => {
-                          const colors = [
-                            palette.primary,
-                            palette.soft2,
-                            palette.soft,
-                          ];
-                          return <Cell key={idx} fill={colors[idx % 3]} />;
-                        })}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
-
-              {/* MINI STATS */}
-              <div className="space-y-2">
-                <motion.div
-                  variants={cardVariant}
-                  initial="initial"
-                  animate="enter"
-                  className={`${cardBase} rounded-2xl p-2`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="text-xl text-blue-600">
-                      <FaShoppingBag />
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold">
-                        {safeProducts.length}
-                      </div>
-                      <div className="text-xs" style={{ color: "#6b7280" }}>
-                        Most Viewed Products
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
-
-                <motion.div
-                  variants={cardVariant}
-                  initial="initial"
-                  animate="enter"
-                  className={`${cardBase} rounded-2xl p-2`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="text-xl text-blue-600">
-                      <FaEye />
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold">
-                        {totalViewsCount.toLocaleString()}
-                      </div>
-                      <div className="text-xs" style={{ color: "#6b7280" }}>
-                        Total Product Views
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  variants={cardVariant}
-                  initial="initial"
-                  animate="enter"
-                  className={`${cardBase} rounded-2xl p-2`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="text-xl text-blue-600">
-                      <FaUsers />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-lg font-semibold">830</div>
-                      <div className="text-xs" style={{ color: "#6b7280" }}>
-                        Customer Profile Views
-                      </div>
-
-                      <div className="flex gap-2 mt-2">
-                        <div className="flex items-center gap-1 px-2 py-1 rounded-full border text-sm">
-                          <FaThumbsUp className="text-blue-500" />{" "}
-                          <span>{topProduct.likes || 0}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 px-2 py-1 rounded-full border text-sm">
-                          <FaThumbsDown className="text-blue-400" />{" "}
-                          <span>{topProduct.dislikes || 0}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-
-            {/* PRODUCT GRID */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold">Products Performance</h2>
-                <div className="text-xs" style={{ color: "#6b7280" }}>
-                  Updated live
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {loading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`${cardBase} rounded-3xl p-3 border-8 bg-white`}
-                    >
-                      <Skeleton className="w-full h-36 object-cover rounded-lg" />
-                      <div className="mt-3 flex items-center justify-between">
-                        <Skeleton className="h-4 w-2/3" />
-                        <Skeleton className="h-4 w-1/6" />
-                      </div>
-                      <div className="mt-3 h-12">
-                        <Skeleton className="w-full h-full rounded" />
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  safeProducts.map((p) => (
-                    <motion.div
-                      key={p.id}
-                      whileHover={{ y: -6 }}
-                      className={`${cardBase} rounded-2xl p-3`}
-                    >
-                      <img
-                        src={p.image || p.img || "/placeholder.png"}
-                        alt=""
-                        className="w-full h-36 object-cover rounded-lg"
-                      />
-
-                      <div className="mt-3 flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold">{p.name}</div>
-                          <div className="text-xs" style={{ color: "#6b7280" }}>
-                            {p.reviews || 0} reviews • {p.rating || 0}★
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <div className="font-medium">
-                            {(p.views || 0).toLocaleString()}
-                          </div>
-                          <div className="text-xs" style={{ color: "#6b7280" }}>
-                            views
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* FIX 3 */}
-                      <div className="mt-3 h-12 min-w-0 min-h-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart
-                            data={
-                              Array.isArray(p.spark)
-                                ? p.spark.map((v, i) => ({ x: i, v }))
-                                : []
-                            }
-                          >
-                            <Area
-                              type="monotone"
-                              dataKey="v"
-                              stroke={palette.primary}
-                              fill={palette.soft}
-                              strokeWidth={2}
-                            />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            </div>
+              ))
+            )}
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

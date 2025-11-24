@@ -219,21 +219,19 @@ export default function CompanyPage() {
             }}
           />
           <div className="flex flex-col justify-center text-white flex-1 min-w-0">
-            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight drop-shadow-2xl leading-tight">
+            <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight">
               {name}
             </h1>
             {title && (
               <p className="text-xs sm:text-sm opacity-90 mt-1">{title}</p>
             )}
 
-            {/* ⭐ Rating - White stars */}
+            {/*  Rating - White stars */}
             <div className="flex items-center gap-4 mt-3 text-sm sm:text-base">
               <div className="flex items-center gap-1 text-white font-semibold drop-shadow-lg">
                 <FaStar className="text-white text-lg sm:text-xl" />
                 <span>{displayRating.toFixed(1)}</span>
-                <span className="text-gray-200 ml-1 text-xs sm:text-sm hover:underline">
-                  (See Reviews)
-                </span>
+               
               </div>
             </div>
           </div>
@@ -244,7 +242,7 @@ export default function CompanyPage() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl">
             <div className="flex flex-row gap-2 sm:gap-3">
               
-              {/* 📍 Location */}
+              {/*  Location */}
               {displayLocation && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation)}`}
@@ -281,7 +279,7 @@ export default function CompanyPage() {
                 </a>
               )}
 
-              {/* 📱 WhatsApp */}
+              {/*  WhatsApp */}
               {phone && (
                 <a
                   href={`https://wa.me/${phone}`}
@@ -318,7 +316,7 @@ export default function CompanyPage() {
                 </a>
               )}
 
-              {/* 👤 Follow */}
+              {/*  Follow */}
               <button
                 onClick={() => setIsFollowing(!isFollowing)}
                 className={`
@@ -351,7 +349,7 @@ export default function CompanyPage() {
                 </div>
               </button>
 
-              {/* 📝 Company Reviews */}
+              {/*  Company Reviews */}
               <button
                 onClick={() => navigate(`${basePath}/reviews`)}
                 className={`
@@ -418,7 +416,7 @@ export default function CompanyPage() {
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                 </div>
 
-                {/* ❤️ Favourite Toggle */}
+                {/*  Favourite Toggle */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

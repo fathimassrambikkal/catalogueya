@@ -10,7 +10,7 @@ export const Lens = ({
   position = { x: 200, y: 150 },
   hovering,
   setHovering,
-  disableOnMobile = true, // 👈 new prop
+  disableOnMobile = true, 
 }) => {
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -45,7 +45,7 @@ export const Lens = ({
     handleMove(touch.clientX, touch.clientY, rect);
   };
 
-  // Disable zoom on mobile if requested
+
   if (isMobile && disableOnMobile) {
     return <div className="relative overflow-hidden rounded-lg">{children}</div>;
   }

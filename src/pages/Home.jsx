@@ -13,8 +13,6 @@ function Home() {
     <>
     <Banner/>
     <HomeServices/>
-    {/* <LogoMarquee/> */}
-
    <Sales/>
    <NewArrivals/>
    <Pricing/>

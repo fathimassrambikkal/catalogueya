@@ -51,6 +51,20 @@ export default function Sign() {
     <section className="min-h-[80vh] flex items-center justify-center bg-[#f7f6f5] py-16 px-4">
       <div className="w-full max-w-md bg-white rounded-3xl border border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)] p-8">
         
+        {/* Login.png at top to navigate to home */}
+        <div className="flex justify-center mb-6">
+          <button 
+            onClick={() => navigate("/")}
+            className="hover:opacity-80 transition-opacity duration-200"
+          >
+            <img 
+              src="/logo.png" 
+              alt="Home" 
+              className="h-12 w-auto"
+            />
+          </button>
+        </div>
+
         {/* Success message for newly registered users */}
         {isRegistered && (
           <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-xl text-sm">

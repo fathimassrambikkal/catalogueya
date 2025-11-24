@@ -44,19 +44,19 @@ const CompanyCard = memo(({ company, categoryId, navigate }) => {
         />
       </div>
       
-      <div className="flex items-center justify-between p-3 pt-2">
-        <div className="flex flex-col">
-          <h3 className="text-gray-900 font-medium text-sm sm:text-base truncate mb-1">
+      <div className="flex items-start justify-between p-3 pt-2 gap-2">
+        <div className="flex flex-col min-w-0 flex-1">
+          <h3 className="text-gray-900 font-medium text-sm sm:text-base line-clamp-2 mb-1 leading-tight">
             {company.name || company.title}
           </h3>
           <div className="flex items-center gap-1">
-            <FaStar className="w-3 h-3 text-yellow-400" />
+            <FaStar className="w-3 h-3 text-yellow-400 flex-shrink-0" />
             <span className="text-xs text-gray-600 font-medium">
               {formatRating(rating)}
             </span>
           </div>
         </div>
-        <div className="bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300">
+        <div className="flex-shrink-0 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300 mt-1">
           <MdOutlineArrowOutward className="text-gray-700 text-sm" />
         </div>
       </div>
@@ -325,42 +325,46 @@ export default function CategoryPage() {
             </h2>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center justify-center md:justify-end gap-4">
-            <div className="flex border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm">
-              <button
-                onClick={() => setViewType("companies")}
-                className={`px-5 py-2 text-sm font-medium transition rounded-l-full ${
-                  viewType === "companies"
-                    ? "bg-blue-500 text-white"
-                    : "text-gray-900"
-                }`}
-              >
-                Companies ({sortedCompanies.length})
-              </button>
-              <button
-                onClick={() => setViewType("products")}
-                className={`px-5 py-2 text-sm font-medium transition rounded-r-full ${
-                  viewType === "products"
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                Products ({sortedProducts.length})
-              </button>
-            </div>
+            {/* Filters */}
+<div className="flex flex-wrap items-center justify-center md:justify-end gap-4  ">
+  {/* Toggle Button */}
+<div className="relative border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm   ">
+  <div 
+    className={`absolute top-0 bottom-0 w-1/2 rounded-full transition-all duration-300 ease-in-out ${
+      viewType === "companies" 
+        ? "left-0 bg-blue-500" 
+        : "left-1/2 bg-gray-900"
+    }`}
+  />
+  <button
+    onClick={() => setViewType("companies")}
+    className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
+      viewType === "companies" ? "text-white" : "text-gray-900"
+    }`}
+  >
+    Companies
+  </button>
+  <button
+    onClick={() => setViewType("products")}
+    className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
+      viewType === "products" ? "text-white" : "text-gray-700"
+    }`}
+  >
+    Products
+  </button>
+</div>
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="border border-gray-300 rounded-full px-4 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="relevance">Sort by Relevance</option>
-              <option value="rating">Top Rated</option>
-              <option value="priceLow">Price: Low → High</option>
-              <option value="priceHigh">Price: High → Low</option>
-            </select>
-          </div>
+  <select
+    value={sortBy}
+    onChange={(e) => setSortBy(e.target.value)}
+    className="border border-gray-300 rounded-full px-4 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-400"
+  >
+    <option value="relevance">Sort by Relevance</option>
+    <option value="rating">Top Rated</option>
+    <option value="priceLow">Price: Low → High</option>
+    <option value="priceHigh">Price: High → Low</option>
+  </select>
+</div>
         </div>
 
         {/* Companies */}

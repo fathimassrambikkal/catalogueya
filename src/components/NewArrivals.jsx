@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaStar, FaHeart, FaWhatsapp } from "react-icons/fa";
+import { MdArrowOutward } from "react-icons/md";
 import { unifiedData } from "../data/unifiedData";
 import { useFavourites } from "../context/FavouriteContext";
 import { getArrivalsProducts } from "../api";
@@ -125,23 +126,29 @@ function NewArrivalsComponent() {
 
   return (
     <section className="py-6 sm:py-10 bg-amber-300 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24">
-      <div className="flex flex-col md:flex-row items-start justify-between mb-8 sm:mb-12 gap-6">
+      <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black">
          Products
         </h1>
-        <div className="md:w-1/3 flex justify-start md:justify-end">
+        <div className="flex justify-end">
           <Link
             to="/newarrivalproducts"
-            className="relative font-medium text-black px-2 py-2 overflow-hidden group h-5 sm:h-6 flex items-center gap-1 text-xs sm:text-base"
+            className="relative font-medium text-black overflow-hidden group h-6 sm:h-7 flex items-center text-xs sm:text-base mt-1"
           >
-            <span className="transition-transform duration-300 transform group-hover:-translate-y-full flex items-center gap-1 sm:gap-2">
-              View more <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+            {/* Default text */}
+            <span className="flex items-center gap-1 sm:gap-1.5 transition-transform duration-300 group-hover:-translate-y-full text-sm md:text-lg tracking-tighter">
+              View more
+              <span className="inline-block text-gray-700 transition-transform duration-300 group-hover:translate-x-1">
+                <MdArrowOutward className="text-lg" />
+              </span>
             </span>
-            <span className="absolute left-3 top-full w-full transition-transform duration-300 transform group-hover:-translate-y-[100%] flex items-center gap-1">
-              View more <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
-            </span>
-            <span className="absolute bottom-0 left-2 h-[1px] w-4/5 bg-black overflow-hidden">
-              <span className="absolute left-0 top-0 h-full w-full bg-black origin-left transform scale-x-[0.9] opacity-30 transition-all duration-300 group-hover:scale-x-100 group-hover:opacity-100"></span>
+
+            {/* Hover text sliding up */}
+            <span className="absolute left-0 top-full flex items-center gap-1 sm:gap-1.5 transition-transform duration-300 group-hover:-translate-y-full text-sm md:text-lg tracking-tighter">
+              View more
+              <span className="inline-block text-gray-700 transition-transform duration-300 group-hover:translate-x-1">
+                <MdArrowOutward className="text-lg" />
+              </span>
             </span>
           </Link>
         </div>

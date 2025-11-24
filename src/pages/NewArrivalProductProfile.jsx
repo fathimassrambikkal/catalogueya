@@ -416,7 +416,7 @@ export default function NewArrivalProductProfile() {
       {/* Similar Products */}
       {similarProducts.length > 0 && (
         <section className="max-w-6xl mx-auto px-6 py-20">
-          <h2 className="text-3xl font-semibold text-gray-900 text-center mb-12">Similar Products</h2>
+          <h2 className="text-3xl font-light text-gray-900 text-start mb-12">Similar Products</h2>
           <motion.div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {similarProducts.map((sp) => {
               const isFav = favourites.some((f) => f.id === sp.id);

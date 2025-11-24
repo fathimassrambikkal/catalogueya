@@ -247,7 +247,6 @@ function Notifications() {
     </div>
   );
 
-  // Render appropriate view based on activeView state
   switch (activeView) {
     case 'promotions':
       return renderPromotions();

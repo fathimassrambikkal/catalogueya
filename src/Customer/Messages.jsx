@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
 
 function Messages() {
-  const [activeView, setActiveView] = useState('main'); // 'main', 'alRyhan'
+  const [activeView, setActiveView] = useState('main');
 
   const renderMainView = () => (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-6">
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">My Messages</h1>
       
       <div className="space-y-4 max-w-2xl mx-auto">
-        {/* AlRyhan card with neomorphic design */}
+       
         <div 
           onClick={() => setActiveView('alRyhan')}
           className="flex items-center p-4 sm:p-6 rounded-2xl cursor-pointer transition-all duration-200

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 function Settings() {
-  const [activeView, setActiveView] = useState('main'); // 'main', 'personalInfo', 'changePassword', 'deleteAccount', 'deleteConfirm'
+  const [activeView, setActiveView] = useState('main'); 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [selectedReason, setSelectedReason] = useState('');
   const [formData, setFormData] = useState({
@@ -525,7 +525,6 @@ function Settings() {
     </div>
   );
 
-  // Render appropriate view based on activeView state
   switch (activeView) {
     case 'personalInfo':
       return renderPersonalInfo();

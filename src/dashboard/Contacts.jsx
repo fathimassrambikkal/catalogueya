@@ -47,18 +47,20 @@ function Contacts({ companyInfo, products }) {
   return (
     <>
       {/* Main Contacts View */}
-      <div className="p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-6">
         {/* Our Customers Card */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-gray-200/60 p-6
+          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
+          
           {/* Header Section with Title and Buttons in one line */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             {/* Left side - Title and customer count */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <FaUsers className="text-blue-600" />
-                <span className="text-xl font-semibold">Our Customers</span>
+                <FaUsers className="text-blue-500" />
+                <span className="text-2xl font-bold text-gray-900">Our Customers</span>
               </div>
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+              <span className="bg-blue-500/10 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold border border-blue-200/60">
                 {loyalCustomers.length} Loyal Customers
               </span>
             </div>
@@ -67,7 +69,8 @@ function Contacts({ companyInfo, products }) {
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setShowAddCustomerModal(true)}
-                className="flex items-center gap-2 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className="flex items-center gap-2 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm
+                  shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
               >
                 <FaPlus size={14} />
                 Add Customers
@@ -75,7 +78,9 @@ function Contacts({ companyInfo, products }) {
               
               <button 
                 onClick={() => setShowNotificationModal(true)}
-                className="flex items-center gap-2 bg-white text-gray-700 py-2 px-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
+                className="flex items-center gap-2 bg-white/80 text-gray-700 py-2 px-3 rounded-lg border border-gray-200/60 hover:bg-white transition-all duration-200 text-sm
+                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                  hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
               >
                 <FaBell size={14} />
                 Send Notification

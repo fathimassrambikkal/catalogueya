@@ -6,7 +6,10 @@ import { BrowserRouter } from "react-router-dom";
 import { FavouriteProvider } from "./context/FavouriteContext";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary"; 
-import { getGoogleMap } from "./api"; // Remove fetchCsrfToken import
+import { getGoogleMap } from "./api";
+
+// Import Lenis directly
+import Lenis from 'lenis';
 
 // Function to dynamically load Google Maps script
 const loadGoogleMaps = (apiKey) => {
@@ -20,14 +23,42 @@ const loadGoogleMaps = (apiKey) => {
   }
 };
 
+// Lenis initialization component
+const LenisProvider = ({ children }) => {
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+      smoothTouch: false,
+      infinite: false,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  return children;
+};
+
 const Main = () => {
   useEffect(() => {
-    // Simplified initialization without CSRF
     const initializeApp = async () => {
       try {
         console.log('🚀 Starting application...');
         
-        // Load Google Maps directly (no CSRF dependency)
         try {
           const res = await getGoogleMap();
           const apiKey = res.data.apiKey; 
@@ -55,7 +86,9 @@ const Main = () => {
       <BrowserRouter>
         <AuthProvider>
           <FavouriteProvider>
-            <App />
+            <LenisProvider>
+              <App />
+            </LenisProvider>
           </FavouriteProvider>
         </AuthProvider>
       </BrowserRouter>

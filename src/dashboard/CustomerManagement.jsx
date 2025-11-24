@@ -87,16 +87,20 @@ const CustomerManagement = ({
       {loyalCustomers.map((customer) => (
         <div 
           key={customer.id} 
-          className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-200
+            bg-white/80 backdrop-blur-lg border border-gray-200/60
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]
+            hover:border-blue-200/60"
           onClick={() => handleCustomerClick(customer)}
         >
           <div className="flex-1">
-            <div className="font-semibold text-gray-800">{customer.name}</div>
+            <div className="font-semibold text-gray-900">{customer.name}</div>
             <div className="text-gray-600 text-sm">{customer.phone}</div>
           </div>
           <div className="flex items-center gap-3">
             {customer.orders > 0 && (
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold">
+              <span className="bg-blue-500/10 text-blue-600 px-2 py-1 rounded text-sm font-semibold border border-blue-200/60">
                 {customer.orders}
               </span>
             )}
@@ -109,16 +113,20 @@ const CustomerManagement = ({
 
   // Customer Actions View
   const renderCustomerActions = () => (
-    <div className="bg-white rounded-lg w-full">
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
+      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="p-6 border-b text-center relative">
+      <div className="p-6 border-b border-gray-200/60 text-center relative">
         <button
           onClick={handleBack}
-          className="absolute left-4 top-4 text-gray-500 hover:text-gray-700"
+          className="absolute left-6 top-6 text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+            bg-white/80 backdrop-blur-lg border border-gray-200/60
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
         >
-          <FaArrowLeft size={20} />
+          <FaArrowLeft size={18} />
         </button>
-        <h2 className="text-2xl font-bold text-gray-800">{selectedCustomer.name}</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{selectedCustomer.name}</h2>
         <p className="text-gray-600 mt-1">{selectedCustomer.phone}</p>
       </div>
 
@@ -126,42 +134,52 @@ const CustomerManagement = ({
       <div className="p-6 space-y-4">
         <button 
           onClick={() => setCurrentView('notification')}
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 px-4 rounded-lg border border-gray-300 hover:bg-blue-50 hover:border-blue-500 transition-colors"
+          className="w-full flex items-center justify-center gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]"
         >
-          <FaBell className="text-blue-600" />
+          <FaBell className="text-blue-500" />
           Send Notification
         </button>
         
         <button 
           onClick={() => setCurrentView('payment')}
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 px-4 rounded-lg border border-gray-300 hover:bg-blue-50 hover:border-blue-500 transition-colors"
+          className="w-full flex items-center justify-center gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]"
         >
-          <FaMoneyBillWave className="text-blue-600" />
+          <FaMoneyBillWave className="text-blue-500" />
           Request Payment
         </button>
         
         <button 
           onClick={() => setCurrentView('review')}
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 px-4 rounded-lg border border-gray-300 hover:bg-blue-50 hover:border-blue-500 transition-colors"
+          className="w-full flex items-center justify-center gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]"
         >
-          <FaRegStar className="text-blue-600" />
+          <FaRegStar className="text-blue-500" />
           Request Review
         </button>
         
         <button 
           onClick={() => setCurrentView('chat')}
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 px-4 rounded-lg border border-gray-300 hover:bg-blue-50 hover:border-blue-500 transition-colors"
+          className="w-full flex items-center justify-center gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]"
         >
-          <FaRegCommentDots className="text-blue-600" />
+          <FaRegCommentDots className="text-blue-500" />
           Chat
         </button>
       </div>
 
       {/* Remove Customer Button */}
-      <div className="p-6 border-t">
+      <div className="p-6 border-t border-gray-200/60">
         <button 
           onClick={handleRemoveCustomer}
-          className="w-full flex items-center justify-center gap-3 bg-white text-red-600 py-3 px-4 rounded-lg border border-red-300 hover:bg-red-50 hover:border-red-500 transition-colors"
+          className="w-full flex items-center justify-center gap-3 bg-white/80 text-red-600 py-3 px-4 rounded-xl border border-red-300 hover:bg-red-500/10 hover:border-red-500 transition-all duration-200
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]"
         >
           <FaTimes />
           Remove Customer
@@ -172,16 +190,20 @@ const CustomerManagement = ({
 
   // Send Notification View
   const renderSendNotification = () => (
-    <div className="bg-white rounded-lg w-full">
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
+      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="p-6 border-b text-center relative">
+      <div className="p-6 border-b border-gray-200/60 text-center relative">
         <button
           onClick={handleBack}
-          className="absolute left-4 top-4 text-gray-500 hover:text-gray-700"
+          className="absolute left-6 top-6 text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+            bg-white/80 backdrop-blur-lg border border-gray-200/60
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
         >
-          <FaArrowLeft size={20} />
+          <FaArrowLeft size={18} />
         </button>
-        <h2 className="text-xl font-semibold text-gray-800">Send Notification</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Send Notification</h2>
         <p className="text-gray-600 mt-1">{selectedCustomer.name}</p>
       </div>
 
@@ -191,13 +213,13 @@ const CustomerManagement = ({
           <button
             key={notification.type}
             onClick={() => handleSingleSendNotification(notification.type)}
-            className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
               notification.special 
-                ? 'border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300' 
-                : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
-            }`}
+                ? 'border-blue-200 bg-blue-500/10 hover:bg-blue-500/20 hover:border-blue-300' 
+                : 'border-gray-200/60 bg-white/80 hover:bg-gray-50/60 hover:border-gray-300/60'
+            } shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
           >
-            <div className="font-semibold text-gray-800">{notification.type}</div>
+            <div className="font-semibold text-gray-900">{notification.type}</div>
             <div className="text-gray-600 text-sm mt-1">{notification.description}</div>
           </button>
         ))}
@@ -207,25 +229,32 @@ const CustomerManagement = ({
 
   // Request Payment View
   const renderRequestPayment = () => (
-    <div className="bg-white rounded-lg w-full">
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
+      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="p-6 border-b text-center relative">
+      <div className="p-6 border-b border-gray-200/60 text-center relative">
         <div className="flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+              bg-white/80 backdrop-blur-lg border border-gray-200/60
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+              hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
           >
-            <FaArrowLeft size={20} />
+            <FaArrowLeft size={18} />
           </button>
           <div className="flex-1 text-center">
-            <h2 className="text-xl font-semibold text-gray-800">Request Payment</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Request Payment</h2>
             <p className="text-gray-600 mt-1">{selectedCustomer.name}</p>
           </div>
           <button
             onClick={handleCloseAll}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+              bg-white/80 backdrop-blur-lg border border-gray-200/60
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+              hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
           >
-            <FaTimes size={20} />
+            <FaTimes size={18} />
           </button>
         </div>
       </div>
@@ -238,14 +267,17 @@ const CustomerManagement = ({
         
         <button
           onClick={handleRequestPayment}
-          className="w-full bg-white text-gray-800 py-3 px-4 rounded-lg border border-gray-300 hover:bg-blue-50 hover:border-blue-500 transition-colors"
+          className="w-full bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200
+            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]"
         >
           SkipCash
         </button>
         
         <button
           onClick={handleRequestPayment}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full bg-blue-500 text-white py-3 px-4 rounded-xl hover:bg-blue-600 transition-all duration-200
+            shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
         >
           Register
         </button>
@@ -255,31 +287,38 @@ const CustomerManagement = ({
 
   // Request Review View
   const renderRequestReview = () => (
-    <div className="bg-white rounded-lg w-full">
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
+      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Header */}
-      <div className="p-6 border-b relative">
+      <div className="p-6 border-b border-gray-200/60 relative">
         <div className="flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+              bg-white/80 backdrop-blur-lg border border-gray-200/60
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+              hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
           >
-            <FaArrowLeft size={20} />
+            <FaArrowLeft size={18} />
           </button>
           <div className="flex-1 text-center">
-            <h2 className="text-xl font-semibold text-gray-800">Request Review</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Request Review</h2>
             <p className="text-gray-600 mt-1">{selectedCustomer.name}</p>
           </div>
           <button
             onClick={handleCloseAll}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+              bg-white/80 backdrop-blur-lg border border-gray-200/60
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+              hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
           >
-            <FaTimes size={20} />
+            <FaTimes size={18} />
           </button>
         </div>
       </div>
 
       {/* Review Description */}
-      <div className="p-6 border-b">
+      <div className="p-6 border-b border-gray-200/60">
         <p className="text-gray-600 text-sm">
           A form will be sent to {selectedCustomer.name} to submit her review on the product you sell her or the service you provide
         </p>
@@ -287,40 +326,42 @@ const CustomerManagement = ({
 
       {/* Review Options */}
       <div className="p-6 space-y-4">
-        <label className="flex items-center space-x-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-blue-50">
+        <label className="flex items-center space-x-3 cursor-pointer p-3 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 transition-all duration-200
+          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
           <input
             type="radio"
             name="reviewType"
             value="company"
             checked={reviewType === 'company'}
             onChange={(e) => setReviewType(e.target.value)}
-            className="w-4 h-4 text-blue-600"
+            className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
-          <span className="text-gray-800">Review for the Company</span>
+          <span className="text-gray-900">Review for the Company</span>
         </label>
         
-        <label className="flex items-center space-x-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-blue-50">
+        <label className="flex items-center space-x-3 cursor-pointer p-3 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 transition-all duration-200
+          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
           <input
             type="radio"
             name="reviewType"
             value="product"
             checked={reviewType === 'product'}
             onChange={(e) => setReviewType(e.target.value)}
-            className="w-4 h-4 text-blue-600"
+            className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
-          <span className="text-gray-800">Review a product</span>
+          <span className="text-gray-900">Review a product</span>
         </label>
       </div>
 
       {/* Action Buttons */}
-      <div className="p-6 border-t">
+      <div className="p-6 border-t border-gray-200/60">
         <button
           onClick={handleRequestReview}
           disabled={!reviewType}
-          className={`w-full py-3 px-4 rounded-lg transition-colors ${
+          className={`w-full py-3 px-4 rounded-xl transition-all duration-200 ${
             reviewType
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]'
+              : 'bg-gray-400 text-gray-200 cursor-not-allowed'
           }`}
         >
           Request a Review
@@ -331,23 +372,27 @@ const CustomerManagement = ({
 
   // Chat View
   const renderChat = () => (
-    <div className="bg-white rounded-lg w-full h-[600px] flex flex-col">
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full h-[600px] flex flex-col border border-gray-200/60
+      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Chat Header */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b border-gray-200/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <button
               onClick={handleBack}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+                bg-white/80 backdrop-blur-lg border border-gray-200/60
+                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
             >
-              <FaArrowLeft size={20} />
+              <FaArrowLeft size={18} />
             </button>
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">{selectedCustomer.name}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h2>
               <span className={`text-xs px-2 py-1 rounded-full ${
                 selectedCustomer.online 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-green-500/10 text-green-600 border border-green-200/60' 
+                  : 'bg-gray-500/10 text-gray-600 border border-gray-200/60'
               }`}>
                 {selectedCustomer.online ? 'Online' : 'Offline'}
               </span>
@@ -355,28 +400,33 @@ const CustomerManagement = ({
           </div>
           <button
             onClick={handleCloseAll}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+              bg-white/80 backdrop-blur-lg border border-gray-200/60
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+              hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
           >
-            <FaTimes size={20} />
+            <FaTimes size={18} />
           </button>
         </div>
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+      <div className="flex-1 p-4 overflow-y-auto bg-gray-50/60">
         {/* Messages would go here */}
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-500 py-8 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-200/60">
           No messages yet. Start a conversation!
         </div>
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t border-gray-200/60">
         <div className="flex space-x-2">
           <input
             type="text"
             placeholder="Type your message..."
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 border border-gray-300/60 rounded-xl px-4 py-2 bg-white/80 backdrop-blur-sm
+              focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]"
             onKeyPress={(e) => {
               if (e.key === 'Enter' && e.target.value.trim()) {
                 handleSendMessage(e.target.value);
@@ -392,7 +442,8 @@ const CustomerManagement = ({
                 input.value = '';
               }
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-all duration-200
+              shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
           >
             Send
           </button>

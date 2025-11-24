@@ -39,9 +39,9 @@ const MemoizedFaqItem = React.memo(
             "
           >
             {isOpen ? (
-              <IoIosRemove className="text-white text-2xl" />
+              <IoIosRemove className="text-blue-100 hover:text-white text-3xl" />
             ) : (
-              <IoIosAdd className="text-white text-2xl" />
+              <IoIosAdd className="text-blue-100 hover:text-white  text-3xl" />
             )}
           </motion.div>
         </button>
@@ -123,7 +123,6 @@ export default function Faq() {
       })
       .catch((err) => {
         console.error("Failed to fetch FAQs:", err);
-        // fallback will automatically be used, no error message shown
       })
       .finally(() => {
         if (mounted) setLoading(false);

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
@@ -8,7 +8,8 @@ import {
   FaCog,
   FaQuestionCircle,
   FaSignOutAlt,
-  FaChevronRight
+  FaChevronRight,
+  FaHeart
 } from "react-icons/fa";
 
 // Menu items configuration
@@ -16,6 +17,7 @@ const menuItems = [
   { label: "Messages", icon: <FaComments className="text-sm" />, page: "messages" },
   { label: "Notifications", icon: <FaBell className="text-sm" />, page: "notifications" },
   { label: "Reviews", icon: <FaStar className="text-sm" />, page: "reviews" },
+   { label: "Fav", icon: <FaHeart className="text-sm" />, page: "fav" },
   { label: "Settings", icon: <FaCog className="text-sm" />, page: "settings" },
   { label: "Help", icon: <FaQuestionCircle className="text-sm" />, page: "help" }
 ];

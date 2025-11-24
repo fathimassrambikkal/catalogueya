@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { FaTag, FaRocket, FaCrown, FaExclamationTriangle } from 'react-icons/fa';
+
 const SendNotificationModal = ({ 
   showNotificationModal, 
   setShowNotificationModal,
@@ -177,35 +178,41 @@ const SendNotificationModal = ({
   return (
     <>
       {showNotificationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white/90 backdrop-blur-lg rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto border border-gray-200/60
+            shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+            
             {/* Modal Header */}
-            <div className="p-6 border-b relative">
+            <div className="p-6 border-b border-gray-200/60 relative">
               <button
                 onClick={handleCloseNotification}
-                className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+                className="absolute right-6 top-6 text-gray-500 hover:text-red-500 transition-colors p-2 rounded-xl
+                  bg-white/80 backdrop-blur-lg border border-gray-200/60
+                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                  hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
               >
-                <FaTimes size={20} />
+                <FaTimes size={18} />
               </button>
+              
               {/* Stepper */}
               <div className="flex justify-center items-center gap-4 mb-6">
                 {[1, 2, 3].map((step) => (
                   <div key={step} className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      step <= notificationStep ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      step <= notificationStep ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-300 text-gray-600'
                     }`}>
                       {step}
                     </div>
                     {step < 3 && (
-                      <div className={`w-12 h-1 mx-2 ${
-                        step < notificationStep ? 'bg-blue-600' : 'bg-gray-300'
+                      <div className={`w-12 h-1 mx-2 transition-all duration-300 ${
+                        step < notificationStep ? 'bg-blue-500' : 'bg-gray-300'
                       }`} />
                     )}
                   </div>
                 ))}
               </div>
 
-              <h2 className="text-xl font-semibold mb-4 text-center">Send Notification</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Send Notification</h2>
             </div>
 
             {/* Step 1: Select Customers */}
@@ -218,7 +225,7 @@ const SendNotificationModal = ({
                   </span>
                   <button
                     onClick={handleSelectAllCustomers}
-                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    className="text-blue-500 hover:text-blue-600 font-medium text-sm transition-colors"
                   >
                     {selectedCustomers.length === loyalCustomers.length ? 'Deselect All' : 'Select All'}
                   </button>
@@ -229,17 +236,17 @@ const SendNotificationModal = ({
                     <div
                       key={customer.id}
                       onClick={() => handleCustomerSelect(customer)}
-                      className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                         isCustomerSelected(customer)
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border-gray-200/60 bg-white/80 backdrop-blur-lg hover:border-gray-300/60'
+                      } shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
                     >
                       <div className="flex items-center gap-4">
                         {/* Selection Checkbox */}
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                           isCustomerSelected(customer)
-                            ? 'bg-blue-600 border-blue-600'
+                            ? 'bg-blue-500 border-blue-500'
                             : 'border-gray-300'
                         }`}>
                           {isCustomerSelected(customer) && (
@@ -248,7 +255,7 @@ const SendNotificationModal = ({
                         </div>
                         
                         <div>
-                          <div className="font-semibold text-gray-800">{customer.name}</div>
+                          <div className="font-semibold text-gray-900">{customer.name}</div>
                           <div className="text-gray-600 text-sm">{customer.phone}</div>
                           {customer.orders > 0 && (
                             <div className="text-green-600 text-xs font-medium">
@@ -260,7 +267,7 @@ const SendNotificationModal = ({
                       
                       <div className="flex items-center gap-3">
                         {customer.orders > 0 && (
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
+                          <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded text-sm font-semibold border border-green-200/60">
                             {customer.orders}
                           </span>
                         )}
@@ -272,16 +279,17 @@ const SendNotificationModal = ({
                 <div className="flex gap-3">
                   <button
                     onClick={handleCloseNotification}
-                    className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                    className="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200
+                      shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)]"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleNotificationNext}
                     disabled={selectedCustomers.length === 0}
-                    className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
+                    className={`flex-1 py-3 px-4 rounded-lg transition-all duration-200 ${
                       selectedCustomers.length > 0
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]'
                         : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     }`}
                   >
@@ -290,114 +298,117 @@ const SendNotificationModal = ({
                 </div>
               </div>
             )}
-          {/* Step 2: Select Notification Type */}
-{notificationStep === 2 && (
-  <div className="p-6">
-    <p className="text-gray-600 mb-6 text-center">Select what you want to notify your customers with</p>
-    
-    <div className="space-y-3 mb-6">
-      {[
-        { 
-          type: 'Product Sale', 
-          description: 'Notify customers about discounted products',
-          icon: <FaTag className="text-blue-600" />
-        },
-        { 
-          type: 'New Arrivals', 
-          description: 'Alert customers about new product arrivals',
-          icon: <FaRocket className="text-blue-600" />
-        },
-        { 
-          type: 'Limited Editions', 
-          description: 'Notify about limited edition products',
-          icon: <FaCrown className="text-blue-600" />
-        },
-        { 
-          type: 'Low in Stock', 
-          description: 'Alert customers about low stock items',
-          icon: <FaExclamationTriangle className="text-blue-600" />
-        }
-      ].map((notification) => (
-        <div
-          key={notification.type}
-          className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
-            selectedNotificationType === notification.type
-              ? 'border-blue-600 bg-blue-50'
-              : 'border-gray-200 bg-white hover:border-gray-300'
-          }`}
-          onClick={() => handleNotificationTypeSelect(notification.type)}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              {/* Blue Icon */}
-              <div className="text-xl">
-                {notification.icon}
-              </div>
-              
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-800 text-lg">
-                  {notification.type}
-                </h3>
-                <p className="text-gray-600 text-sm mt-1">
-                  {notification.description}
-                </p>
-              </div>
-            </div>
-            
-            {/* Selection Indicator - Simple Radio Button */}
-            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-              selectedNotificationType === notification.type
-                ? 'bg-blue-600 border-blue-600'
-                : 'border-gray-300'
-            }`}>
-              {selectedNotificationType === notification.type && (
-                <div className="w-2 h-2 rounded-full bg-white" />
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
 
-    <div className="flex gap-3">
-      <button
-        onClick={handleCloseNotification}
-        className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-      >
-        Cancel
-      </button>
-      <button
-        onClick={handleNotificationBack}
-        className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors"
-      >
-        Back
-      </button>
-      <button
-        onClick={handleNotificationNext}
-        disabled={!selectedNotificationType}
-        className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
-          selectedNotificationType
-            ? 'bg-blue-600 text-white hover:bg-blue-700'
-            : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-        }`}
-      >
-        Continue
-      </button>
-    </div>
+            {/* Step 2: Select Notification Type */}
+            {notificationStep === 2 && (
+              <div className="p-6">
+                <p className="text-gray-600 mb-6 text-center">Select what you want to notify your customers with</p>
+                
+                <div className="space-y-3 mb-6">
+                  {[
+                    { 
+                      type: 'Product Sale', 
+                      description: 'Notify customers about discounted products',
+                      icon: <FaTag className="text-blue-500" />
+                    },
+                    { 
+                      type: 'New Arrivals', 
+                      description: 'Alert customers about new product arrivals',
+                      icon: <FaRocket className="text-blue-500" />
+                    },
+                    { 
+                      type: 'Limited Editions', 
+                      description: 'Notify about limited edition products',
+                      icon: <FaCrown className="text-blue-500" />
+                    },
+                    { 
+                      type: 'Low in Stock', 
+                      description: 'Alert customers about low stock items',
+                      icon: <FaExclamationTriangle className="text-blue-500" />
+                    }
+                  ].map((notification) => (
+                    <div
+                      key={notification.type}
+                      className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 ${
+                        selectedNotificationType === notification.type
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border-gray-200/60 bg-white/80 backdrop-blur-lg hover:border-gray-300/60'
+                      } shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
+                      onClick={() => handleNotificationTypeSelect(notification.type)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          {/* Blue Icon */}
+                          <div className="text-xl">
+                            {notification.icon}
+                          </div>
+                          
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 text-lg">
+                              {notification.type}
+                            </h3>
+                            <p className="text-gray-600 text-sm mt-1">
+                              {notification.description}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Selection Indicator - Simple Radio Button */}
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          selectedNotificationType === notification.type
+                            ? 'bg-blue-500 border-blue-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {selectedNotificationType === notification.type && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-    {/* Sign Out Link */}
-    <div className="mt-6 pt-4 border-t text-center">
-      <button className="text-gray-600 hover:text-gray-800 text-sm">
-        Sign Out
-      </button>
-    </div>
-  </div>
-)}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleCloseNotification}
+                    className="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200
+                      shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleNotificationBack}
+                    className="flex-1 bg-gray-400/60 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-500/60 transition-all duration-200
+                      shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)]"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleNotificationNext}
+                    disabled={!selectedNotificationType}
+                    className={`flex-1 py-3 px-4 rounded-lg transition-all duration-200 ${
+                      selectedNotificationType
+                        ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]'
+                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    }`}
+                  >
+                    Continue
+                  </button>
+                </div>
+
+                {/* Sign Out Link */}
+                <div className="mt-6 pt-4 border-t border-gray-200/60 text-center">
+                  <button className="text-gray-600 hover:text-gray-800 text-sm transition-colors">
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Step 3: Select Products - UPDATED TO MATCH PRODUCTS COMPONENT */}
             {notificationStep === 3 && (
               <div className="p-6">
-                <h3 className="text-lg font-semibold mb-4 text-center">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
                   {getStep3Title()}
                 </h3>
                 
@@ -409,10 +420,10 @@ const SendNotificationModal = ({
                   <button
                     onClick={handleSelectAllProducts}
                     disabled={filteredProducts.length === 0}
-                    className={`text-sm font-medium ${
+                    className={`text-sm font-medium transition-colors ${
                       filteredProducts.length === 0 
                         ? 'text-gray-400 cursor-not-allowed' 
-                        : 'text-blue-600 hover:text-blue-700'
+                        : 'text-blue-500 hover:text-blue-600'
                     }`}
                   >
                     {selectedProducts.length === filteredProducts.length ? 'Deselect All' : 'Select All'}
@@ -424,26 +435,26 @@ const SendNotificationModal = ({
                 </p>
                 
                 {filteredProducts.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-200/60">
                     {getEmptyStateMessage()}
                   </div>
                 ) : (
                   <>
-                    {/* UPDATED: Product Grid matching the Products component */}
+                    {/*  Product Grid matching the Products component */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
                       {filteredProducts.map((product) => (
                         <div
                           key={product.id}
-                          className={`bg-white shadow-sm rounded-xl p-4 border hover:shadow-md transition cursor-pointer ${
-                            isProductSelected(product) ? 'ring-2 ring-blue-600 bg-blue-50' : ''
-                          }`}
+                          className={`bg-white/80 backdrop-blur-lg rounded-2xl p-4 border border-gray-200/60 hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] transition-all duration-700 cursor-pointer ${
+                            isProductSelected(product) ? 'ring-2 ring-blue-500 bg-blue-500/10' : ''
+                          } shadow-[0_8px_30px_rgba(0,0,0,0.08)]`}
                           onClick={() => handleProductSelect(product)}
                         >
                           {/* Selection Checkbox */}
                           <div className="flex justify-end mb-2">
-                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                               isProductSelected(product)
-                                ? 'bg-blue-600 border-blue-600'
+                                ? 'bg-blue-500 border-blue-500'
                                 : 'border-gray-300 bg-white'
                             }`}>
                               {isProductSelected(product) && (
@@ -456,7 +467,7 @@ const SendNotificationModal = ({
                           {product.tags && product.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-2">
                               {product.tags.map((tag, index) => (
-                                <div key={index} className="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-md">
+                                <div key={index} className="inline-block px-2 py-1 text-xs font-semibold bg-blue-500/10 text-blue-600 rounded-md border border-blue-200">
                                   {tag}
                                 </div>
                               ))}
@@ -467,17 +478,17 @@ const SendNotificationModal = ({
                           {product.image ? (
                             <img 
                               src={product.image} 
-                              className="w-full h-32 object-cover rounded-md mb-3" 
+                              className="w-full h-32 object-cover rounded-lg mb-3 border border-gray-200/60" 
                               alt={product.name} 
                             />
                           ) : (
-                            <div className="w-full h-32 rounded-md mb-3 bg-gray-50 border flex items-center justify-center text-gray-400">
+                            <div className="w-full h-32 rounded-lg mb-3 bg-gray-50/60 border border-gray-200/60 flex items-center justify-center text-gray-400 backdrop-blur-sm">
                               No image
                             </div>
                           )}
                           
                           {/* Product Name */}
-                          <h3 className="font-semibold text-[17px] mb-1">{product.name}</h3>
+                          <h3 className="font-semibold text-gray-900 text-[17px] mb-1">{product.name}</h3>
                           
                           {/* Product Description */}
                           {product.description && (
@@ -505,16 +516,17 @@ const SendNotificationModal = ({
                     <div className="flex gap-3">
                       <button
                         onClick={handleNotificationBack}
-                        className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200
+                          shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)]"
                       >
                         Back
                       </button>
                       <button
                         onClick={handleSendNotification}
                         disabled={selectedProducts.length === 0}
-                        className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
+                        className={`flex-1 py-3 px-4 rounded-lg transition-all duration-200 ${
                           selectedProducts.length > 0
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]'
                             : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                         }`}
                       >
