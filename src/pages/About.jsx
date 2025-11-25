@@ -1,11 +1,11 @@
 "use client";
 
-import React, { memo, lazy, Suspense, useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { memo, lazy, Suspense, useRef, useState, useEffect, useCallback } from "react";
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from "framer-motion";
 
 // Lazy-load heavy components
 const SubscribeSection = lazy(() => import("../components/SubscribeSection"));
-const CallToAction = lazy(() => import("../components/CallToAction"));
+// const CallToAction = lazy(() => import("../components/CallToAction"));
 
 // Images
 import slider1 from "../assets/slider1.avif";
@@ -28,43 +28,69 @@ import logo6 from "../assets/logo6.png";
 const sliderImages = [slider1, slider2, slider3, slider4, slider5, slider6, slider7, slider8];
 const clientLogos = [logo1, logo2, logo3, logo4, logo5, logo6];
 
-// Memoized Logo Item
-const LogoItem = memo(({ logo, index }) => (
-  <img
-    key={index}
-    src={logo}
-    alt={`client-logo-${index}`}
-    className="w-full h-32 sm:h-36 md:h-44 object-contain rounded-2xl"
-    loading="lazy"
-  />
-));
+// Optimized Logo Item with loading state
+const LogoItem = memo(({ logo, index }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  return (
+    <div className="flex-shrink-0 w-48 h-32">
+      <img
+        src={logo}
+        alt={`client-logo-${index}`}
+        className={`w-full h-full object-contain transition-opacity duration-300 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+      />
+    </div>
+  );
+});
 
-// Parallax Gallery Component
+// Optimized Parallax Gallery Component
 const ParallaxGallery = ({ images }) => {
   const gallery = useRef(null);
   const [dimension, setDimension] = useState({ width: 0, height: 0 });
+  const shouldReduceMotion = useReducedMotion();
 
   const { scrollYProgress } = useScroll({
     target: gallery,
     offset: ["start end", "end start"],
   });
 
+  // Smoother spring-based scroll progress
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
   const { height } = dimension;
-  const y = useTransform(scrollYProgress, [0, 1], [0, height * 2]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, height * 3.3]);
-  const y3 = useTransform(scrollYProgress, [0, 1], [0, height * 1.25]);
-  const y4 = useTransform(scrollYProgress, [0, 1], [0, height * 3]);
+  
+  // Respect reduced motion preference
+  const y = shouldReduceMotion ? 0 : useTransform(smoothProgress, [0, 1], [0, height * 2]);
+  const y2 = shouldReduceMotion ? 0 : useTransform(smoothProgress, [0, 1], [0, height * 3.3]);
+  const y3 = shouldReduceMotion ? 0 : useTransform(smoothProgress, [0, 1], [0, height * 1.25]);
+  const y4 = shouldReduceMotion ? 0 : useTransform(smoothProgress, [0, 1], [0, height * 3]);
 
   useEffect(() => {
+    let timeoutId;
     const resize = () => {
       setDimension({ width: window.innerWidth, height: window.innerHeight });
     };
 
-    window.addEventListener("resize", resize);
-    resize();
+    // Throttled resize handler
+    const throttledResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(resize, 100);
+    };
+
+    window.addEventListener("resize", throttledResize, { passive: true });
+    resize(); // Initial call
 
     return () => {
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", throttledResize);
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -81,78 +107,97 @@ const ParallaxGallery = ({ images }) => {
   );
 };
 
-// Column Component for Parallax
-const Column = ({ images, y }) => {
+// Optimized Column Component with lazy loading
+const Column = memo(({ images, y }) => {
   return (
     <motion.div
       className="relative -top-[45%] flex h-full w-1/4 min-w-[200px] flex-col gap-[2vw] first:top-[-45%] [&:nth-child(2)]:top-[-95%] [&:nth-child(3)]:top-[-45%] [&:nth-child(4)]:top-[-75%]"
       style={{ y }}
     >
       {images.map((src, i) => (
-        <div key={i} className="relative h-full w-full overflow-hidden rounded-2xl shadow-lg">
-          <img
-            src={src}
-            alt="image"
-            className="pointer-events-none object-cover w-full h-full"
-          />
-        </div>
+        <LazyImage key={i} src={src} index={i} />
       ))}
     </motion.div>
   );
-};
+});
 
-// Marquee Component for Logos
-const LogoMarquee = ({ logos }) => {
-  const [windowWidth, setWindowWidth] = useState(0);
+// Lazy loaded image with intersection observer
+const LazyImage = memo(({ src, index }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef();
 
   useEffect(() => {
-    setWindowWidth(window.innerWidth);
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: '100px' } // Load 100px before entering viewport
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   return (
+    <div ref={ref} className="relative h-full w-full overflow-hidden rounded-2xl shadow-lg">
+      {isVisible && (
+        <img
+          src={src}
+          alt={`gallery-image-${index}`}
+          className="pointer-events-none object-cover w-full h-full"
+          loading="lazy"
+        />
+      )}
+    </div>
+  );
+});
+
+// CSS-based Marquee for 60fps performance
+const LogoMarquee = ({ logos }) => {
+  return (
     <div className="relative w-full overflow-hidden py-8">
-      <motion.div 
-        className="flex gap-8"
-        animate={{
-          x: [0, -windowWidth]
-        }}
-        transition={{
-          x: {
-            repeat: Infinity,
-            repeatType: "loop",
-            duration: 20,
-            ease: "linear"
-          }
-        }}
-      >
+      <div className="flex gap-8 animate-marquee">
         {logos.map((logo, index) => (
-          <div key={index} className="flex-shrink-0 w-48 h-32">
-            <img
-              src={logo}
-              alt={`client-logo-${index}`}
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <LogoItem key={index} logo={logo} index={index} />
         ))}
         {/* Duplicate for seamless loop */}
         {logos.map((logo, index) => (
-          <div key={`dup-${index}`} className="flex-shrink-0 w-48 h-32">
-            <img
-              src={logo}
-              alt={`client-logo-${index}`}
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <LogoItem key={`dup-${index}`} logo={logo} index={index} />
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 };
 
+// Add this CSS to your global styles for smooth marquee
+/*
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+  will-change: transform;
+}
+*/
+
 export default function About() {
+  // Preload critical images
+  useEffect(() => {
+    // Preload first few images for better perceived performance
+    const preloadImages = [sliderImages[0], sliderImages[1], clientLogos[0]];
+    preloadImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
+
   return (
     <>
       <div className="w-full bg-neutral-100">
@@ -216,7 +261,7 @@ export default function About() {
         {/* Lazy-loaded Subscribe & CTA */}
         <Suspense fallback={null}>
           <SubscribeSection />
-          <CallToAction />
+          {/* <CallToAction /> */}
         </Suspense>
       </div>
     </>

@@ -17,7 +17,7 @@ function Home() {
    <NewArrivals/>
    <Pricing/>
    <Faq/>
-   <CallToAction/>
+   {/* <CallToAction/> */}
     </>
   )
 }

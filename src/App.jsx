@@ -16,7 +16,6 @@ import Sign from "./pages/Sign";
 import Favourite from "./pages/Favourite";
 import ForgotPassword from "./pages/ForgotPassword";
 import Register from "./pages/Register";
-import CompanyLogin from "./pages/Companylogin";
 import CompanyForgotPassword from "./pages/CompanyForgotPassword";
 import CompanyDashboard from "./pages/CompanyDashboard";
 
@@ -48,7 +47,6 @@ function AppContent() {
     "/sign",
     "/forgot-password",
     "/register",
-    "/company-login",
     "/company-forgot-password",
     "/company-dashboard",
     "/customer-login", 
@@ -70,7 +68,7 @@ function AppContent() {
           <Route path="/favourite" element={<Favourite />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/company-login" element={<CompanyLogin />} />
+         
           <Route path="/company-dashboard" element={<CompanyDashboard />} />
           <Route path="/customer-login" element={<CustomerLogin />} />
           <Route

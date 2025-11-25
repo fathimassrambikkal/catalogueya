@@ -30,7 +30,7 @@ const MemoizedFaqItem = React.memo(
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.3 }}
             className="
-              w-9 h-9 
+              w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 
               rounded-full 
               flex items-center justify-center
               bg-blue-500 shadow-sm
@@ -39,9 +39,9 @@ const MemoizedFaqItem = React.memo(
             "
           >
             {isOpen ? (
-              <IoIosRemove className="text-blue-100 hover:text-white text-3xl" />
+              <IoIosRemove className="text-blue-100 hover:text-white text-lg md:text-2xl" />
             ) : (
-              <IoIosAdd className="text-blue-100 hover:text-white  text-3xl" />
+              <IoIosAdd className="text-blue-100 hover:text-white  text-lg md:text-2xl" />
             )}
           </motion.div>
         </button>

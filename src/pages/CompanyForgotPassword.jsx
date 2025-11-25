@@ -1,74 +1,107 @@
-
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 
 export default function CompanyForgotPassword() {
   const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
     if (!username.trim()) {
       alert("Please enter your username or email.");
       return;
     }
-    alert(`Password reset link sent to ${username}`);
-    setUsername("");
+
+    setLoading(true);
+    
+    // Simulate API call with delay
+    setTimeout(() => {
+      alert(`Password reset link sent to ${username}`);
+      setUsername("");
+      setLoading(false);
+    }, 1500);
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 flex flex-col items-center">
-        {/* Logo */}
-        <img src={logo} alt="Company Logo" className="w-20 mb-4" />
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-          Company Forgot Password
-        </h1>
-        <p className="text-gray-500 mb-6 text-sm text-center">
-          Enter your username or registered email, and we'll send you a reset link.
-        </p>
-
-        {/* Form */}
-        <form onSubmit={handleReset} className="w-full space-y-4">
-          <div>
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-gray-700 mb-1"
+    <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/30 py-16 px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl p-8">
+          
+          {/* Logo at top */}
+          <div className="flex justify-center mb-8">
+            <button 
+              onClick={() => navigate("/")}
+              className="hover:opacity-80 transition-all duration-300 transform hover:scale-105"
             >
-              Username or Email
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username or email"
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+              <img 
+                src={logo} 
+                alt="Home" 
+                className="h-14 w-auto"
+              />
+            </button>
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all duration-200"
-          >
-            Reset Password
-          </button>
-        </form>
+          {/* Info message */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200/50 text-blue-700 rounded-2xl text-sm backdrop-blur-sm">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3 shadow-sm">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <span className="font-medium">We'll send a reset link to your email</span>
+            </div>
+          </div>
 
-        <div className="mt-6 text-sm">
-          <Link
-            to="/company-login"
-            className="text-blue-600 font-semibold hover:underline"
-          >
-            Back to Company Login
-          </Link>
-        </div>
+          {/* Header */}
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2 text-center">
+            Company Forgot Password
+          </h1>
+          <p className="text-gray-500 mb-6 text-sm text-center">
+            Enter your username or registered email, and we'll send you a reset link.
+          </p>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-gray-500 text-sm flex items-center justify-center gap-2">
-          <img src={logo} alt="Logo" className="w-5 h-5 opacity-70" />
-          <span>© 2025 All rights reserved</span>
+          <form onSubmit={handleReset} className="space-y-5">
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Enter your username or email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-2xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none shadow-lg hover:shadow-xl"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  Sending Reset Link...
+                </div>
+              ) : (
+                "Reset Password"
+              )}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center text-sm">
+            <p className="text-gray-600">
+              Remember your password?{" "}
+              <Link
+                to="/sign"
+                className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200"
+              >
+                Back to Company Login
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </section>

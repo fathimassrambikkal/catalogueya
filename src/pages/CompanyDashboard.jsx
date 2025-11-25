@@ -5,22 +5,21 @@ import Sales from "../dashboard/Sales.jsx";
 import Analytics from "../dashboard/Analytics.jsx";
 import Settings from "../dashboard/Settings.jsx";
 import Cover from "../dashboard/Cover.jsx";
-import Contacts from "../dashboard/Contacts.jsx"; 
+import Contacts from "../dashboard/Contacts.jsx";
+import Followers from "../dashboard/Followers.jsx";
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
+import { FollowersProvider } from "../context/FollowersContext"; // ADD THIS IMPORT
 
 export default function CompanyDashboard() {
   const [activeTab, setActiveTab] = useState("Products");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  //  ADDED — scroll to top when tab changes (Fixes Edit button)
+  // Scroll to top when tab changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeTab]);
-  // END FIX
 
-  // ============================
-  // PRODUCTS (Already Working)
-  // ============================
+  // Products state
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem("products");
     return saved ? JSON.parse(saved) : [];
@@ -32,12 +31,9 @@ export default function CompanyDashboard() {
     localStorage.setItem("products", JSON.stringify(products));
   }, [products]);
 
-  // ======================================
-  // COMPANY INFO (FIXED + LOCAL STORAGE)
-  // ======================================
+  // Company info state
   const [companyInfo, setCompanyInfo] = useState(() => {
     const saved = localStorage.getItem("companyInfo");
-
     return saved
       ? JSON.parse(saved)
       : {
@@ -63,9 +59,7 @@ export default function CompanyDashboard() {
     localStorage.setItem("companyInfo", JSON.stringify(companyInfo));
   }, [companyInfo]);
 
-  // ======================================
-  // RENDER CONTENT
-  // ======================================
+  // Render content
   const renderContent = () => {
     switch (activeTab) {
       case "Products":
@@ -88,6 +82,9 @@ export default function CompanyDashboard() {
       case "Contacts": 
         return <Contacts companyInfo={companyInfo} products={products} />;
 
+      case "Followers":
+        return <Followers />;
+
       case "Settings":
         return (
           <Settings
@@ -102,42 +99,45 @@ export default function CompanyDashboard() {
   };
 
   return (
-    <div className="flex bg-gray-100 min-h-screen overflow-x-hidden">
-      {/* Sidebar */}
-      <div
-        className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      </div>
-
-      {/* Sidebar Overlay for when sidebar is open */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-300 min-w-0">
-
-        {/* Sidebar Toggle Button - Visible on ALL screens */}
-        <button
-          onClick={() => setSidebarOpen((s) => !s)}
-          className="fixed top-4 left-6 z-50 p-3 rounded-xl text-sm bg-white text-gray-500 shadow-md hover:bg-gray-100"
+    // WRAP THE ENTIRE COMPANY DASHBOARD WITH FOLLOWERS PROVIDER
+    <FollowersProvider>
+      <div className="flex bg-gray-100 min-h-screen overflow-x-hidden">
+        {/* Sidebar */}
+        <div
+          className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
-          <TbLayoutSidebarRightFilled size={18} />
-        </button>
+          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </div>
 
-        {/* Cover only on Products page */}
-        {activeTab === "Products" && (
-          <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
+        {/* Sidebar Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
 
-        <div className="flex-1 p-6">{renderContent()}</div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-300 min-w-0">
+
+          {/* Sidebar Toggle Button */}
+          <button
+            onClick={() => setSidebarOpen((s) => !s)}
+            className="fixed top-4 left-6 z-50 p-3 rounded-xl text-sm bg-white text-gray-500 shadow-md hover:bg-gray-100"
+          >
+            <TbLayoutSidebarRightFilled size={18} />
+          </button>
+
+          {/* Cover only on Products page */}
+          {activeTab === "Products" && (
+            <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
+          )}
+
+          <div className="flex-1 p-6">{renderContent()}</div>
+        </div>
       </div>
-    </div>
+    </FollowersProvider>
   );
 }

@@ -33,7 +33,7 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     "Limited Edition",
     "Best Seller",
     "Low in Stock",
-    "Out in Stock"
+    "Out of Stock"
   ];
 
   useEffect(() => {
@@ -270,7 +270,10 @@ export default function Products({ products, setProducts, editingProduct, setEdi
       {/* Modal */}
       {editingProduct && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start py-10 overflow-auto z-50">
-          <div className="bg-white/90 backdrop-blur-lg w-full max-w-3xl rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] overflow-hidden border border-gray-200/60">
+         <div className="bg-white/90 backdrop-blur-lg w-full max-w-3xl rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] 
+     border border-gray-200/60 
+     max-h-[90vh] overflow-y-auto">
+
             {/* Header */}
             <div className="bg-blue-500 text-white px-6 py-4 flex justify-between">
               <h2 className="text-lg font-semibold">{formData.id ? "Edit Product" : "Add Product"}</h2>

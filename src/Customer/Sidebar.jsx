@@ -9,15 +9,18 @@ import {
   FaQuestionCircle,
   FaSignOutAlt,
   FaChevronRight,
-  FaHeart
+  FaHeart,
+  FaUserPlus
 } from "react-icons/fa";
+import { useFollowing } from "../context/FollowingContext";
 
 // Menu items configuration
 const menuItems = [
   { label: "Messages", icon: <FaComments className="text-sm" />, page: "messages" },
   { label: "Notifications", icon: <FaBell className="text-sm" />, page: "notifications" },
   { label: "Reviews", icon: <FaStar className="text-sm" />, page: "reviews" },
-   { label: "Fav", icon: <FaHeart className="text-sm" />, page: "fav" },
+  { label: "Favourites", icon: <FaHeart className="text-sm" />, page: "fav" },
+  { label: "Following", icon: <FaUserPlus className="text-sm" />, page: "following" },
   { label: "Settings", icon: <FaCog className="text-sm" />, page: "settings" },
   { label: "Help", icon: <FaQuestionCircle className="text-sm" />, page: "help" }
 ];
@@ -25,6 +28,7 @@ const menuItems = [
 function Sidebar({ activeTab, setActiveTab }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { getFollowingCount } = useFollowing();
 
   const handleLogout = useCallback(() => {
     logout();
@@ -45,7 +49,7 @@ function Sidebar({ activeTab, setActiveTab }) {
 
   const activeIconStyles = "bg-blue-500 text-white shadow-md";
   const inactiveIconStyles =
-    "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
+    "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
 
   return (
     <div className="bg-white/80 backdrop-blur-lg text-gray-900 h-full p-3 flex flex-col border-r border-gray-200/60 w-48">
@@ -66,6 +70,8 @@ function Sidebar({ activeTab, setActiveTab }) {
       <nav className="flex-1 flex flex-col gap-1">
         {menuItems.map((item) => {
           const isActive = activeTab === item.page;
+          const showBadge = item.page === "following" && getFollowingCount() > 0;
+          
           return (
             <button
               key={item.page}
@@ -83,6 +89,13 @@ function Sidebar({ activeTab, setActiveTab }) {
               </div>
 
               <span className="ml-3 text-sm font-medium flex-1 text-left">{item.label}</span>
+
+              {/* Following Badge */}
+              {showBadge && (
+                <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                  {getFollowingCount()}
+                </span>
+              )}
 
               {isActive && <FaChevronRight className="text-blue-500 text-xs" />}
             </button>

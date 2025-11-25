@@ -4,7 +4,9 @@ import App from "./App";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { FavouriteProvider } from "./context/FavouriteContext";
-import { AuthProvider } from "./context/AuthContext.jsx";
+import { FollowingProvider } from "./context/FollowingContext";
+import { FollowersProvider } from "./context/FollowersContext";
+import { AuthProvider } from "./context/AuthContext.jsx"; // FIXED PATH
 import ErrorBoundary from "./components/ErrorBoundary"; 
 import { getGoogleMap } from "./api";
 
@@ -86,9 +88,13 @@ const Main = () => {
       <BrowserRouter>
         <AuthProvider>
           <FavouriteProvider>
-            <LenisProvider>
-              <App />
-            </LenisProvider>
+            <FollowingProvider>
+              <FollowersProvider>
+                <LenisProvider>
+                  <App />
+                </LenisProvider>
+              </FollowersProvider>
+            </FollowingProvider>
           </FavouriteProvider>
         </AuthProvider>
       </BrowserRouter>

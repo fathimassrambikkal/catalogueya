@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-
 import { getCategories, getFixedWords } from "../api";
 
 // Pre-fetch data immediately when module loads
@@ -33,6 +32,7 @@ const preloadImages = (categories) => {
     if (category?.image) {
       const img = new Image();
       img.src = category.image;
+      img.fetchPriority = 'high';
     }
   });
 };
@@ -42,9 +42,35 @@ if (preloadedData.categories) {
   preloadImages(preloadedData.categories);
 }
 
+// Intersection Observer Hook for pausing animations when not visible
+const useIsInViewport = (ref) => {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsIntersecting(entry.isIntersecting);
+    }, { threshold: 0.1 });
+
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [ref]);
+
+  return isIntersecting;
+};
+
 export default function HomeServices() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
+  const sectionRef = useRef(null);
+  const isInViewport = useIsInViewport(sectionRef);
 
   const [categories, setCategories] = useState(preloadedData.categories || []);
   const [fixedWords, setFixedWords] = useState(preloadedData.fixedWords || {});
@@ -110,8 +136,10 @@ export default function HomeServices() {
     }
   }, [categories, imagesLoaded]);
 
-  // Optimized resize handler
+  // Optimized resize handler with debouncing
   useEffect(() => {
+    let resizeTimeout;
+    
     const updateCardsPerView = () => {
       const width = window.innerWidth;
       if (width >= 1600) setCardsPerView(6);
@@ -119,15 +147,18 @@ export default function HomeServices() {
       else setCardsPerView(4);
     };
 
-    // Use ResizeObserver for better performance
-    const resizeObserver = new ResizeObserver(() => {
-      updateCardsPerView();
-    });
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateCardsPerView, 16); // 60fps
+    };
 
+    // Use ResizeObserver for better performance
+    const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(document.body);
     updateCardsPerView();
 
     return () => {
+      clearTimeout(resizeTimeout);
       resizeObserver.disconnect();
     };
   }, []);
@@ -141,7 +172,7 @@ export default function HomeServices() {
   // Ultra-smooth continuous scroll with optimized RAF
   const scrollRef = useRef(0);
   const requestRef = useRef(null);
-  const isPaused = useRef(false);
+  const isPaused = useRef(!isInViewport);
   const lastTimeRef = useRef(0);
   const SCROLL_SPEED = 0.25;
 
@@ -173,6 +204,11 @@ export default function HomeServices() {
       }
     };
   }, [duplicatedCategories]);
+
+  // Pause animation when not in viewport
+  useEffect(() => {
+    isPaused.current = !isInViewport;
+  }, [isInViewport]);
 
   // Optimized smooth scroll for arrows
   const smoothScroll = useCallback((distance) => {
@@ -235,8 +271,8 @@ export default function HomeServices() {
   }, []);
 
   const handleTouchEnd = useCallback(() => {
-    isPaused.current = false;
-  }, []);
+    isPaused.current = !isInViewport;
+  }, [isInViewport]);
 
   // Memoized circle size calculation
   const circleSize = useMemo(() => 
@@ -249,18 +285,23 @@ export default function HomeServices() {
     return Array.from({ length: 12 }).map((_, index) => (
       <div
         key={`skeleton-${index}`}
-        className="flex-shrink-0 px-1 sm:px-2 flex justify-center items-center"
-        style={{ flexBasis: `${100 / cardsPerView}%` }}
+        className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center transform-gpu"
+        style={{ 
+          flexBasis: `${100 / cardsPerView}%`,
+          willChange: 'transform'
+        }}
       >
         <div
-          className={`relative aspect-square ${circleSize} p-[2px] bg-gray-200 animate-pulse`}
+          className={`relative aspect-square ${circleSize} p-[2px] bg-gray-200 animate-pulse transform-gpu`}
+          style={{ willChange: 'transform' }}
         >
-          <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-300">
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-400/50 via-gray-300/30 to-transparent flex items-center justify-center">
-              <div className="h-4 bg-gray-400 rounded w-16"></div>
+          <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-300 transform-gpu">
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-400/50 via-gray-300/30 to-transparent flex items-center justify-center transform-gpu">
+              <div className="h-4 bg-gray-400 rounded w-16 transform-gpu"></div>
             </div>
           </div>
         </div>
+        <div className="h-4 bg-gray-300 rounded w-20 mt-2 transform-gpu"></div>
       </div>
     ));
   }, [cardsPerView, circleSize]);
@@ -274,8 +315,11 @@ export default function HomeServices() {
     return duplicatedCategories.map((service, index) => (
       <div
         key={`${service?.id}-${index}`}
-        className="flex-shrink-0 px-1 sm:px-2 flex justify-center items-center"
-        style={{ flexBasis: `${100 / cardsPerView}%` }}
+        className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center transform-gpu"
+        style={{ 
+          flexBasis: `${100 / cardsPerView}%`,
+          willChange: 'transform'
+        }}
       >
         <div
           className={`relative group aspect-square ${circleSize} p-[2px]
@@ -285,93 +329,89 @@ export default function HomeServices() {
           onClick={() => navigate(`/category/${service?.id}`)}
           style={{ willChange: 'transform' }}
         >
-          <div className="relative w-full h-full rounded-full overflow-hidden">
+          <div className="relative w-full h-full rounded-full overflow-hidden transform-gpu">
             {/* ULTRA FAST IMAGE - No lazy loading, eager loading, immediate display */}
             <img
               src={service?.image}
               alt={service?.title_en || service?.title}
-              loading="eager"  // Changed from 'lazy' to 'eager'
-              decoding="sync"  // Changed from 'async' to 'sync'
+              loading="eager"
+              decoding="sync"
               width={160}
               height={160}
               className="w-full h-full object-cover rounded-full opacity-100 group-hover:opacity-100 transition duration-300 transform-gpu"
               style={{ 
                 contentVisibility: 'auto',
-                // Force immediate rendering
                 transform: 'translateZ(0)',
                 backfaceVisibility: 'hidden'
               }}
               onLoad={(e) => {
-                // Force immediate display
                 e.target.style.opacity = '1';
               }}
               onError={(e) => {
-                // Fallback to prevent broken images
                 e.target.style.display = 'none';
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-center justify-center">
-              <h3 className="text-white text-[10px] sm:text-xs md:text-sm font-medium text-center px-3 py-[4px] leading-tight bg-black/10 rounded-sm transition duration-300">
-                {service?.title_en || service?.title}
-              </h3>
-            </div>
           </div>
         </div>
+        <h3 className="text-gray-900 text-[12px] sm:text-base md:text-sm font-medium text-center mt-2 px-2 leading-tight max-w-full truncate transform-gpu">
+          {service?.title_en || service?.title}
+        </h3>
       </div>
     ));
   }, [duplicatedCategories, cardsPerView, circleSize, navigate, isLoading, skeletonLoader, imagesLoaded]);
 
   return (
     <section
+      ref={sectionRef}
       dir="ltr"
-      className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-visible bg-neutral-100"
+      className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-visible bg-neutral-100 transform-gpu"
       style={{ 
         contain: 'layout style paint',
         contentVisibility: 'auto'
       }}
     >
-      <div className="text-center mb-8 sm:mb-12">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
+      <div className="text-center mb-8 sm:mb-12 transform-gpu">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight transform-gpu">
           {fixedWords?.homeServicesTitle || "Home Services"}
         </h2>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">
+        <p className="text-gray-500 mt-2 text-sm sm:text-base transform-gpu">
           {fixedWords?.homeServicesSubtitle ||
             "Explore trusted service categories for your home and garden"}
         </p>
       </div>
 
       {/* Carousel */}
-      <div className="relative px-4 sm:px-8 md:px-12 lg:px-16">
+      <div className="relative px-4 sm:px-8 md:px-12 lg:px-16 transform-gpu">
 
-        {/* Premium Apple-style Navigation Buttons */}
+        {/* Navigation buttons */}
         <button
           onClick={handlePrev}
           className="
             absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10
-            bg-white/10 hover:bg-white/20 text-gray-800
-            rounded-full p-3 sm:p-4
-            shadow-xl border border-gray-300/80
-            transition-all duration-200 ease-out
-            hover:scale-110 active:scale-95
-            backdrop-blur-sm
-            hover:shadow-2xl
+            bg-[#E6E7EB] hover:bg-[#DCDDDF] text-gray-600
+            rounded-full p-1.5 sm:p-2.5
+            shadow-[0_1px_4px_rgba(0,0,0,0.15)]
+            transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]
+            hover:scale-[1.06] active:scale-[0.95]
+            transform-gpu
           "
           aria-label="Previous categories"
           style={{ willChange: 'transform' }}
         >
-          <FaChevronLeft className="text-sm sm:text-base" />
+          <FaChevronLeft size={16} />
         </button>
 
         <div
-          className="overflow-visible w-full"
+          className="overflow-visible w-full transform-gpu"
           onMouseEnter={() => (isPaused.current = true)}
-          onMouseLeave={() => (isPaused.current = false)}
+          onMouseLeave={() => (isPaused.current = !isInViewport)}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          style={{ willChange: 'transform' }}
         >
           <div 
-            className="flex flex-nowrap" 
+            className="flex flex-nowrap transform-gpu" 
             ref={containerRef}
             style={{ 
               willChange: 'transform',
@@ -382,23 +422,21 @@ export default function HomeServices() {
           </div>
         </div>
 
-        {/*  Navigation Buttons */}
         <button
           onClick={handleNext}
           className="
             absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10
-            bg-white/10 hover:bg-white/20 text-gray-900
-            rounded-full p-3 sm:p-4
-            shadow-xl border border-gray-300/80
-            transition-all duration-200 ease-out
-            hover:scale-110 active:scale-95
-            backdrop-blur-sm
-            hover:shadow-2xl
+            bg-[#E6E7EB] hover:bg-[#DCDDDF] text-gray-600
+            rounded-full p-1.5 sm:p-2.5
+            shadow-[0_1px_4px_rgba(0,0,0,0.15)]
+            transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]
+            hover:scale-[1.06] active:scale-[0.95]
+            transform-gpu
           "
           aria-label="Next categories"
           style={{ willChange: 'transform' }}
         >
-          <FaChevronRight className="text-sm sm:text-base" />
+          <FaChevronRight size={16} />
         </button>
 
       </div>

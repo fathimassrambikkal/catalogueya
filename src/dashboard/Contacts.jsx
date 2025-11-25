@@ -58,10 +58,10 @@ function Contacts({ companyInfo, products }) {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <FaUsers className="text-blue-500" />
-                <span className="text-2xl font-bold text-gray-900">Our Customers</span>
+                <span className="text-2xl font-bold text-gray-900">Contacts</span>
               </div>
               <span className="bg-blue-500/10 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold border border-blue-200/60">
-                {loyalCustomers.length} Loyal Customers
+                {loyalCustomers.length}  Contacts
               </span>
             </div>
 
@@ -73,7 +73,7 @@ function Contacts({ companyInfo, products }) {
                   shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
               >
                 <FaPlus size={14} />
-                Add Customers
+                Add Contacts
               </button>
               
               <button 

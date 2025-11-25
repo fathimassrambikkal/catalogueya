@@ -5,6 +5,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MdIosShare } from "react-icons/md";
 import { FaStar } from "react-icons/fa";
 import { useFavourites } from "../context/FavouriteContext";
+import { useFollowing } from "../context/FollowingContext";
+import { useFollowers } from "../context/FollowersContext";
 import { getCompany, getSettings, getFixedWords } from "../api";
 
 // Lazy load heavy icons only
@@ -28,16 +30,38 @@ export default function CompanyPage() {
   const { categoryId, companyId } = useParams();
   const navigate = useNavigate();
   const { favourites, toggleFavourite } = useFavourites();
+  const { isFollowing: checkFollowing, toggleFollow } = useFollowing();
+  const { simulateCustomerFollow } = useFollowers();
 
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState({});
   const [fixedWords, setFixedWords] = useState({});
-  const [isFollowing, setIsFollowing] = useState(false);
 
   // Helper to check favourites
   const isFavourite = (id) => favourites.some((fav) => fav.id === id);
+
+  // Check if current company is being followed
+  const isFollowing = company ? checkFollowing(company.id) : false;
+
+  // Handle follow toggle with followers integration
+  const handleFollowToggle = () => {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (!isFollowing) {
+      // When following, add to company's followers
+      simulateCustomerFollow(companyId, {
+        id: currentUser.id || `user-${Date.now()}`,
+        name: currentUser.name || 'Anonymous User',
+        email: currentUser.email || 'unknown@email.com',
+        avatar: currentUser.avatar
+      });
+    }
+    
+    // Toggle the follow state
+    toggleFollow(company);
+  };
 
   // Determine base path for navigation based on available params
   const getBasePath = () => {
@@ -318,7 +342,7 @@ export default function CompanyPage() {
 
               {/*  Follow */}
               <button
-                onClick={() => setIsFollowing(!isFollowing)}
+                onClick={handleFollowToggle}
                 className={`
                   w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
                   rounded-lg sm:rounded-xl
@@ -336,7 +360,7 @@ export default function CompanyPage() {
                 {/* Icon */}
                 <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
                   <Suspense fallback={<span>👤</span>}>
-                    <FaUser className="text-sm" />
+                    <FaUser className={`text-sm ${isFollowing ? 'fill-current' : ''}`} />
                   </Suspense>
                 </div>
                 

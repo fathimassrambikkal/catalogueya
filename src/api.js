@@ -85,9 +85,9 @@ export const getSubscribeDetails = () => api.get("/showSubscribesDetails");
 export const loginCustomer = (email, password) =>
   api.post("/login", { email, password });
 
-// POST /register
-export const registerCustomer = (name, email, password) =>
-  api.post("/register", { name, email, password });
+// POST /register - UPDATED with phone field
+export const registerCustomer = (name, email, password, phone) =>
+  api.post("/register", { name, email, password, phone });
 
 // POST /logout
 export const logoutCustomer = () => api.post("/logout");
@@ -98,13 +98,11 @@ export const logoutCustomer = () => api.post("/logout");
 export const loginCompany = (email, password) =>
   api.post("/company/login", { email, password });
 
-// POST /company/register
+// POST /company/register - UPDATED without categories
 export const registerCompany = (data) => {
   const formData = new FormData();
   Object.entries(data).forEach(([key, value]) => {
-    if (key === "categories") {
-      formData.append(key, JSON.stringify(value));
-    } else if (value !== null && value !== undefined) {
+    if (value !== null && value !== undefined) {
       formData.append(key, value);
     }
   });

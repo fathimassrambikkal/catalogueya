@@ -4,6 +4,7 @@ import Messages from "../Customer/Messages.jsx";
 import Notifications from "../Customer/Notifications.jsx";
 import Reviews from "../Customer/Reviews.jsx";
 import Fav from "../Customer/Fav.jsx";
+import Following from "../Customer/Following.jsx";
 import Settings from "../Customer/Settings.jsx";
 import Help from "../Customer/Help.jsx"; 
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
@@ -26,7 +27,9 @@ export default function CustomerLogin() {
       case "reviews":
         return <Reviews />;
       case "fav": 
-  return <Fav />;
+        return <Fav />;
+      case "following":
+        return <Following />;
       case "settings":
         return <Settings />;
       case "help":
