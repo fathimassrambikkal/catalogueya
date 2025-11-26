@@ -33,15 +33,15 @@ const MemoizedFaqItem = React.memo(
               w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 
               rounded-full 
               flex items-center justify-center
-              bg-blue-500 shadow-sm
-              hover:bg-[#007AFF]/90
+              
+              
               transition-colors duration-200
             "
           >
             {isOpen ? (
-              <IoIosRemove className="text-blue-100 hover:text-white text-lg md:text-2xl" />
+              <IoIosRemove className="text-blue-500  text-lg md:text-2xl" />
             ) : (
-              <IoIosAdd className="text-blue-100 hover:text-white  text-lg md:text-2xl" />
+              <IoIosAdd className="text-blue-500   text-lg md:text-2xl" />
             )}
           </motion.div>
         </button>
@@ -90,7 +90,7 @@ export default function Faq() {
         answer: "Yes, all providers are certified professionals with verified experience.",
       },
       {
-        question: "Do you provide emergency help?",
+        question: "Do you provide help?",
         answer:
           "Yes, we offer emergency services for certain categories like plumbing and electrical issues. Please contact our customer support for immediate assistance.",
       },

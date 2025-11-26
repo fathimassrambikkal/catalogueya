@@ -354,7 +354,7 @@ export default function HomeServices() {
           </div>
         </div>
         {/* Increased text size and spacing */}
-        <h3 className="text-gray-900 text-[14px] sm:text-base md:text-[16px] font-medium text-center mt-5 px-2 leading-tight max-w-full truncate transform-gpu">
+        <h3 className="text-gray-900 text-[13px] sm:text-base md:text-[15px] font-medium text-center mt-5 px-2 leading-tight max-w-full truncate transform-gpu">
           {service?.title_en || service?.title}
         </h3>
       </div>

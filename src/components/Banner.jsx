@@ -188,9 +188,10 @@ export default function Banner() {
         );
       })}
 
-      {/* Overlay Content - PROPER Z-INDEX HIERARCHY */}
+      {/* Overlay Content - ADJUSTED FOR MOBILE ONLY */}
       <motion.div
-        className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4 transform-gpu"
+        className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4 transform-gpu
+                   pt-12 sm:pt-0" // Added top padding only for mobile
         variants={container}
         initial="hidden"
         animate="visible"

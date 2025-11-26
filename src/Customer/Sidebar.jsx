@@ -12,10 +12,12 @@ import {
   FaHeart,
   FaUserPlus
 } from "react-icons/fa";
+import { TbLayoutSidebarRightFilled } from "react-icons/tb"; // Import the icon
 import { useFollowing } from "../context/FollowingContext";
 
 // Menu items configuration
-const menuItems = [ { label: "Favourites", icon: <FaHeart className="text-sm" />, page: "fav" },
+const menuItems = [ 
+  { label: "Favourites", icon: <FaHeart className="text-sm" />, page: "fav" },
   { label: "Messages", icon: <FaComments className="text-sm" />, page: "messages" },
   { label: "Notifications", icon: <FaBell className="text-sm" />, page: "notifications" },
   { label: "Reviews", icon: <FaStar className="text-sm" />, page: "reviews" },
@@ -24,7 +26,7 @@ const menuItems = [ { label: "Favourites", icon: <FaHeart className="text-sm" />
   { label: "Help", icon: <FaQuestionCircle className="text-sm" />, page: "help" }
 ];
 
-function Sidebar({ activeTab, setActiveTab }) {
+function Sidebar({ activeTab, setActiveTab, onCloseSidebar }) { // Added onCloseSidebar prop
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { getFollowingCount } = useFollowing();
@@ -51,9 +53,19 @@ function Sidebar({ activeTab, setActiveTab }) {
     "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
 
   return (
-    <div className="bg-white/80 backdrop-blur-lg text-gray-900 h-full p-3 flex flex-col border-r border-gray-200/60 w-48">
+    <div className="bg-white text-gray-900 h-full p-3 flex flex-col border-r border-gray-200/60 w-48 z-50">
+      {/* Close Button at the same position as in main content */}
+      <div className="absolute top-4 left-6">
+        <button
+          onClick={onCloseSidebar}
+          className="p-3 rounded-xl text-sm bg-white text-gray-500 shadow-md hover:bg-gray-100"
+        >
+          <TbLayoutSidebarRightFilled size={18} />
+        </button>
+      </div>
+
       {/* User Profile */}
-      <div className="p-3 border-b border-gray-200/60 mb-4 mt-6">
+      <div className="p-3 border-b border-gray-200/60 mb-4 mt-16"> {/* Added mt-16 to account for close button */}
         <div className="flex items-center">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3 shadow-lg">
             <span className="text-white font-medium text-sm">S</span>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { IoCheckmark, IoChevronForward } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSubscribeDetails } from "../api";
+import { useTranslation } from "react-i18next"; // Add this import
 
 let preloadedSubscription = null;
 
@@ -19,6 +20,7 @@ const Pricing = () => {
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [subscriptionDetails, setSubscriptionDetails] = useState(preloadedSubscription || []);
   const [isLoading, setIsLoading] = useState(!preloadedSubscription);
+  const { i18n } = useTranslation(); // Add this hook
 
   // Memoize static tabs and fallback content
   const tabs = useMemo(() => ["Core Management", "Sales & Promotions", "Insight & Support"], []);
@@ -121,11 +123,11 @@ const Pricing = () => {
           duration: 0.4,
           ease: [0.25, 0.46, 0.45, 0.94]
         }}
-        className="flex gap-4 items-start"
+        className={`flex gap-4 items-start ${i18n.language === "ar" ? "flex-row-reverse text-right" : ""}`}
         style={{ willChange: 'transform, opacity' }}
       >
         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center transform-gpu">
-          <IoChevronForward className="text-white text-sm transform-gpu" />
+          <IoChevronForward className={`text-white text-sm transform-gpu ${i18n.language === "ar" ? "rotate-180" : ""}`} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm md:text-base mb-1 leading-tight">
@@ -137,7 +139,7 @@ const Pricing = () => {
         </div>
       </motion.li>
     ));
-  }, [activeTab, subscriptionDetails, content]);
+  }, [activeTab, subscriptionDetails, content, i18n.language]);
 
   // Price display with optimized animations
   const PriceDisplay = useMemo(() => {
@@ -202,8 +204,22 @@ const Pricing = () => {
     </div>
   ), [tabs]);
 
+  // Get correct tab position based on language direction
+  const getTabPosition = useCallback((tab) => {
+    const isRTL = i18n.language === "ar";
+    
+    if (tab === "Core Management") {
+      return isRTL ? "right-2" : "left-2";
+    } else if (tab === "Sales & Promotions") {
+      return "left-1/2 -translate-x-1/2";
+    } else if (tab === "Insight & Support") {
+      return isRTL ? "left-2" : "right-2";
+    }
+    return "left-2";
+  }, [i18n.language]);
+
   return (
-    <section className="bg-neutral-100 py-20 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden">
+    <section dir={i18n.language === "ar" ? "rtl" : "ltr"} className="bg-neutral-100 py-20 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden">
       <div className="flex flex-col items-center justify-center mb-8 w-full max-w-3xl">
         <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4 text-center transform-gpu">
           Simple Pricing
@@ -255,7 +271,7 @@ const Pricing = () => {
         Benefits of Subscription
       </h2>
 
-      {/* Tabs with Sliding Animation */}
+      {/* Tabs with Sliding Animation - Fixed for RTL */}
       {isLoading ? (
         TabSkeleton
       ) : (
@@ -266,16 +282,12 @@ const Pricing = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          {/* Sliding Background */}
+          {/* Sliding Background - Fixed positioning for RTL */}
           <div 
-            className={`absolute top-2 bottom-2 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 transition-all duration-500 ease-in-out transform-gpu
-              ${activeTab === "Core Management" 
-                ? "left-2 w-[calc(33.333%-12px)]" 
-                : activeTab === "Sales & Promotions" 
-                ? "left-[calc(33.333%+4px)] w-[calc(33.333%-12px)]" 
-                : "left-[calc(66.666%+8px)] w-[calc(33.333%-12px)]"
-              }`}
-            style={{ willChange: 'transform, left, width' }}
+            className={`absolute top-2 bottom-2 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 transition-all duration-500 ease-in-out transform-gpu w-[calc(33.333%-12px)] ${
+              getTabPosition(activeTab)
+            }`}
+            style={{ willChange: 'transform, left, right, width' }}
           />
           
           {tabs.map((tab) => (
@@ -313,7 +325,7 @@ const Pricing = () => {
           willChange: 'transform, opacity'
         }}
       >
-        <div className="w-full md:w-1/2 text-center md:text-left transform-gpu">
+        <div className={`w-full md:w-1/2 text-center md:text-left transform-gpu ${i18n.language === "ar" ? "md:text-right" : ""}`}>
           <span className="inline-block bg-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full mb-3 transform-gpu">
             {activeTab.toUpperCase()}
           </span>
@@ -333,9 +345,9 @@ const Pricing = () => {
           <motion.ul
             key={activeTab}
             className="w-full md:w-1/2 bg-white/80 backdrop-blur-md text-gray-900 rounded-3xl p-8 space-y-6 border border-white/50 transform-gpu"
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: i18n.language === "ar" ? -20 : 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            exit={{ opacity: 0, x: i18n.language === "ar" ? 20 : -20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
             style={{
               boxShadow: `

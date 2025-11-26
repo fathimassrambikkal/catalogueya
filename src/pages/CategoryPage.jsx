@@ -6,6 +6,42 @@ import { MdOutlineArrowOutward } from "react-icons/md";
 import { useFavourites } from "../context/FavouriteContext";
 import { getCategory, getSettings, getFixedWords, getCompanies, getProducts } from "../api";
 
+// =================== Pre-fetch Data ===================
+let preloadedData = {
+  category: null,
+  companies: [],
+  products: [],
+  settings: {},
+  fixedWords: {}
+};
+
+// Pre-fetch all data immediately when module loads
+(async () => {
+  try {
+    // Get category ID from current path or use a default
+    const pathSegments = window.location.pathname.split('/');
+    const categoryId = pathSegments[pathSegments.length - 1];
+    
+    if (categoryId) {
+      const [catRes, companiesRes, productsRes, setRes, wordsRes] = await Promise.allSettled([
+        getCategory(categoryId),
+        getCompanies(),
+        getProducts(),
+        getSettings(),
+        getFixedWords(),
+      ]);
+
+      preloadedData.category = catRes.status === 'fulfilled' ? catRes.value?.data?.data?.category : null;
+      preloadedData.companies = companiesRes.status === 'fulfilled' ? companiesRes.value?.data?.data?.companies : [];
+      preloadedData.products = productsRes.status === 'fulfilled' ? productsRes.value?.data?.data?.products : [];
+      preloadedData.settings = setRes.status === 'fulfilled' ? setRes.value?.data?.data : {};
+      preloadedData.fixedWords = wordsRes.status === 'fulfilled' ? wordsRes.value?.data?.data : {};
+    }
+  } catch (err) {
+    console.warn("Pre-fetch failed:", err);
+  }
+})();
+
 // =================== Rating Helper Function ===================
 const getSafeRating = (rating) => {
   if (typeof rating === 'number') return rating;
@@ -173,16 +209,38 @@ const ProductCard = memo(({ product, isFav, toggleFavourite, whatsappNumber, nav
   );
 });
 
+// =================== Skeleton Loaders ===================
+const CompanyCardSkeleton = memo(() => (
+  <div className="relative bg-white rounded-xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] overflow-hidden w-full max-w-[220px] animate-pulse">
+    <div className="w-full h-[120px] bg-gray-200 rounded-t-xl"></div>
+    <div className="p-3 pt-2">
+      <div className="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+    </div>
+  </div>
+));
+
+const ProductCardSkeleton = memo(() => (
+  <div className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.08)] animate-pulse">
+    <div className="w-full h-[200px] bg-gray-200"></div>
+    <div className="p-4">
+      <div className="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+    </div>
+  </div>
+));
+
 // =================== Main CategoryPage Component ===================
 export default function CategoryPage() {
   const { categoryId } = useParams();
   const navigate = useNavigate();
-  const [category, setCategory] = useState(null);
-  const [companies, setCompanies] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [settings, setSettings] = useState({});
-  const [fixedWords, setFixedWords] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState(preloadedData.category);
+  const [companies, setCompanies] = useState(preloadedData.companies);
+  const [products, setProducts] = useState(preloadedData.products);
+  const [settings, setSettings] = useState(preloadedData.settings);
+  const [fixedWords, setFixedWords] = useState(preloadedData.fixedWords);
+  const [loading, setLoading] = useState(false); // Start with false since we have preloaded data
   const [error, setError] = useState(null);
   const [viewType, setViewType] = useState("companies");
   const [sortBy, setSortBy] = useState("relevance");
@@ -191,14 +249,13 @@ export default function CategoryPage() {
   const whatsappNumber = "97400000000";
   const isFavourite = (id) => favourites.some((f) => f.id === id);
 
-  // =================== Fetch Data ===================
+  // =================== Background Data Refresh (No UI Blocking) ===================
   useEffect(() => {
     let mounted = true;
 
-    const fetchData = async () => {
-      setLoading(true);
+    const refreshData = async () => {
       try {
-        const [catRes, companiesRes, productsRes, setRes, wordsRes] = await Promise.all([
+        const [catRes, companiesRes, productsRes, setRes, wordsRes] = await Promise.allSettled([
           getCategory(categoryId),
           getCompanies(),
           getProducts(),
@@ -208,36 +265,44 @@ export default function CategoryPage() {
 
         if (!mounted) return;
 
-        // Extract data
-        const categoryData = catRes?.data?.data?.category || null;
-        const companiesData = companiesRes?.data?.data?.companies || [];
-        const productsData = productsRes?.data?.data?.products || [];
-        const settingsData = setRes?.data?.data || {};
-        const fixedWordsData = wordsRes?.data?.data || {};
-
-        console.log("First company rating:", companiesData[0]?.rating, typeof companiesData[0]?.rating);
-        console.log("First product rating:", productsData[0]?.rating, typeof productsData[0]?.rating);
-
-        if (categoryData) {
-          setCategory(categoryData);
-        } else {
-          setError("Category not found.");
+        // Update state silently in background
+        if (catRes.status === 'fulfilled' && catRes.value?.data?.data?.category) {
+          setCategory(catRes.value.data.data.category);
+        }
+        
+        if (companiesRes.status === 'fulfilled') {
+          setCompanies(companiesRes.value?.data?.data?.companies || []);
+        }
+        
+        if (productsRes.status === 'fulfilled') {
+          setProducts(productsRes.value?.data?.data?.products || []);
+        }
+        
+        if (setRes.status === 'fulfilled') {
+          setSettings(setRes.value?.data?.data || {});
+        }
+        
+        if (wordsRes.status === 'fulfilled') {
+          setFixedWords(wordsRes.value?.data?.data || {});
         }
 
-        setCompanies(companiesData);
-        setProducts(productsData);
-        setSettings(settingsData);
-        setFixedWords(fixedWordsData);
-
       } catch (e) {
-        console.error("Failed to fetch category data:", e);
-        setError("Failed to load category.");
-      } finally {
-        if (mounted) setLoading(false);
+        console.error("Background data refresh failed:", e);
+        // Don't show error to user for background refresh
       }
     };
 
-    fetchData();
+    // Only refresh if we don't have data or need updates
+    if (!category || companies.length === 0 || products.length === 0) {
+      setLoading(true);
+      refreshData().finally(() => {
+        if (mounted) setLoading(false);
+      });
+    } else {
+      // Still refresh in background but don't show loading
+      refreshData();
+    }
+
     return () => (mounted = false);
   }, [categoryId]);
 
@@ -283,13 +348,8 @@ export default function CategoryPage() {
     return productsArray;
   }, [products, sortBy]);
 
-  // =================== UI ===================
-  if (loading)
-    return <div className="text-center py-20 text-gray-600">Loading...</div>;
-  if (error)
-    return <div className="text-center py-20 text-red-600">{error}</div>;
-  if (!category)
-    return <div className="text-center py-20 text-red-600">Category not found</div>;
+  // Show content immediately with preloaded data, show skeletons only if truly loading
+  const showContent = category || companies.length > 0 || products.length > 0;
 
   return (
     <section
@@ -309,114 +369,127 @@ export default function CategoryPage() {
       </button>
 
       <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-20">
-        {/* Header */}
+        {/* Header - Always show immediately */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
           <div className="flex items-center gap-4 ml-10 md:ml-0">
-            {category.image && (
+            {category?.image && (
               <img
                 src={category.image}
                 alt={category.name || category.title}
                 className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover"
-                loading="lazy"
+                loading="eager"
               />
             )}
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900">
-              {category.name || category.title || "Category"}
+              {category?.name || category?.title || "Category"}
             </h2>
           </div>
 
-            {/* Filters */}
-<div className="flex flex-wrap items-center justify-center md:justify-end gap-4  ">
-  {/* Toggle Button */}
-<div className="relative border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm   ">
-  <div 
-    className={`absolute top-0 bottom-0 w-1/2 rounded-full transition-all duration-300 ease-in-out ${
-      viewType === "companies" 
-        ? "left-0 bg-blue-500" 
-        : "left-1/2 bg-gray-900"
-    }`}
-  />
-  <button
-    onClick={() => setViewType("companies")}
-    className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
-      viewType === "companies" ? "text-white" : "text-gray-900"
-    }`}
-  >
-    Companies
-  </button>
-  <button
-    onClick={() => setViewType("products")}
-    className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
-      viewType === "products" ? "text-white" : "text-gray-700"
-    }`}
-  >
-    Products
-  </button>
-</div>
+          {/* Filters - Always show immediately */}
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-4">
+            <div className="relative border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm">
+              <div 
+                className={`absolute top-0 bottom-0 w-1/2 rounded-full transition-all duration-300 ease-in-out ${
+                  viewType === "companies" 
+                    ? "left-0 bg-blue-500" 
+                    : "left-1/2 bg-gray-900"
+                }`}
+              />
+              <button
+                onClick={() => setViewType("companies")}
+                className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
+                  viewType === "companies" ? "text-white" : "text-gray-900"
+                }`}
+              >
+                Companies
+              </button>
+              <button
+                onClick={() => setViewType("products")}
+                className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
+                  viewType === "products" ? "text-white" : "text-gray-700"
+                }`}
+              >
+                Products
+              </button>
+            </div>
 
-  <select
-    value={sortBy}
-    onChange={(e) => setSortBy(e.target.value)}
-    className="border border-gray-300 rounded-full px-4 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-400"
-  >
-    <option value="relevance">Sort by Relevance</option>
-    <option value="rating">Top Rated</option>
-    <option value="priceLow">Price: Low → High</option>
-    <option value="priceHigh">Price: High → Low</option>
-  </select>
-</div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="border border-gray-300 rounded-full px-4 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="relevance">Sort by Relevance</option>
+              <option value="rating">Top Rated</option>
+              <option value="priceLow">Price: Low → High</option>
+              <option value="priceHigh">Price: High → Low</option>
+            </select>
+          </div>
         </div>
 
-        {/* Companies */}
-        {viewType === "companies" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center"
-          >
-            {sortedCompanies.length > 0 ? (
-              sortedCompanies.map((c) => (
-                <CompanyCard
-                  key={c.id}
-                  company={c}
-                  categoryId={category.id}
-                  navigate={navigate}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10 text-gray-500">
-                No companies found
-              </div>
+        {/* Content Area - Show immediately with preloaded data */}
+        {showContent ? (
+          <>
+            {/* Companies */}
+            {viewType === "companies" && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center"
+              >
+                {sortedCompanies.length > 0 ? (
+                  sortedCompanies.map((c) => (
+                    <CompanyCard
+                      key={c.id}
+                      company={c}
+                      categoryId={category?.id}
+                      navigate={navigate}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-10 text-gray-500">
+                    No companies found
+                  </div>
+                )}
+              </motion.div>
             )}
-          </motion.div>
-        )}
 
-        {/* Products */}
-        {viewType === "products" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-7 place-items-center"
-          >
-            {sortedProducts.length > 0 ? (
-              sortedProducts.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  isFav={isFavourite(p.id)}
-                  toggleFavourite={toggleFavourite}
-                  whatsappNumber={whatsappNumber}
-                  navigate={navigate}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10 text-gray-500">
-                No products found
-              </div>
+            {/* Products */}
+            {viewType === "products" && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-7 place-items-center"
+              >
+                {sortedProducts.length > 0 ? (
+                  sortedProducts.map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      isFav={isFavourite(p.id)}
+                      toggleFavourite={toggleFavourite}
+                      whatsappNumber={whatsappNumber}
+                      navigate={navigate}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-10 text-gray-500">
+                    No products found
+                  </div>
+                )}
+              </motion.div>
             )}
-          </motion.div>
+          </>
+        ) : (
+          // Show skeletons only if we have no preloaded data
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center">
+            {Array.from({ length: 8 }).map((_, index) => (
+              viewType === "companies" ? 
+                <CompanyCardSkeleton key={index} /> : 
+                <ProductCardSkeleton key={index} />
+            ))}
+          </div>
         )}
       </div>
     </section>

@@ -9,6 +9,37 @@ import { useFollowing } from "../context/FollowingContext";
 import { useFollowers } from "../context/FollowersContext";
 import { getCompany, getSettings, getFixedWords } from "../api";
 
+// =================== Pre-fetch Data ===================
+let preloadedData = {
+  company: null,
+  settings: {},
+  fixedWords: {}
+};
+
+// Pre-fetch company data immediately when module loads
+(async () => {
+  try {
+    // Get company ID from current path
+    const pathSegments = window.location.pathname.split('/');
+    const companyId = pathSegments[pathSegments.length - 1];
+    
+    if (companyId && companyId !== 'company') {
+      const [companyRes, settingsRes, fixedWordsRes] = await Promise.allSettled([
+        getCompany(companyId),
+        getSettings(),
+        getFixedWords(),
+      ]);
+
+      preloadedData.company = companyRes.status === 'fulfilled' ? 
+        (companyRes.value?.data?.data?.company || companyRes.value?.data?.company || companyRes.value?.data) : null;
+      preloadedData.settings = settingsRes.status === 'fulfilled' ? settingsRes.value?.data || {} : {};
+      preloadedData.fixedWords = fixedWordsRes.status === 'fulfilled' ? fixedWordsRes.value?.data || {} : {};
+    }
+  } catch (err) {
+    console.warn("Pre-fetch failed:", err);
+  }
+})();
+
 // Lazy load heavy icons only
 const FaWhatsapp = React.lazy(() =>
   import("react-icons/fa").then((m) => ({ default: m.FaWhatsapp }))
@@ -26,6 +57,33 @@ const FaUser = React.lazy(() =>
   import("react-icons/fa").then((m) => ({ default: m.FaUser }))
 );
 
+// =================== Skeleton Components ===================
+const BannerSkeleton = () => (
+  <div className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-hidden bg-gray-300 animate-pulse">
+    <div className="absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 rounded-full w-10 h-10"></div>
+    <div className="absolute top-24 right-4 sm:right-8 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20"></div>
+    <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-10 w-full">
+      <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl bg-gray-400"></div>
+      <div className="flex flex-col justify-center flex-1 min-w-0">
+        <div className="h-6 sm:h-8 bg-gray-400 rounded w-3/4 mb-2"></div>
+        <div className="h-4 bg-gray-400 rounded w-1/2"></div>
+        <div className="h-4 bg-gray-400 rounded w-1/4 mt-3"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const ProductGridSkeleton = () => (
+  <div className="py-12">
+    <div className="h-8 bg-gray-300 rounded w-1/4 mb-10 mx-6 sm:mx-12"></div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 px-6 sm:px-12">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <div key={index} className="aspect-square bg-gray-300 rounded-lg animate-pulse"></div>
+      ))}
+    </div>
+  </div>
+);
+
 export default function CompanyPage() {
   const { categoryId, companyId } = useParams();
   const navigate = useNavigate();
@@ -33,11 +91,11 @@ export default function CompanyPage() {
   const { isFollowing: checkFollowing, toggleFollow } = useFollowing();
   const { simulateCustomerFollow } = useFollowers();
 
-  const [company, setCompany] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [company, setCompany] = useState(preloadedData.company);
+  const [loading, setLoading] = useState(false); // Start with false since we have preloaded data
   const [error, setError] = useState(null);
-  const [settings, setSettings] = useState({});
-  const [fixedWords, setFixedWords] = useState({});
+  const [settings, setSettings] = useState(preloadedData.settings);
+  const [fixedWords, setFixedWords] = useState(preloadedData.fixedWords);
 
   // Helper to check favourites
   const isFavourite = (id) => favourites.some((fav) => fav.id === id);
@@ -73,74 +131,66 @@ export default function CompanyPage() {
     return "/";
   };
 
-  // ===== Fetch backend data =====
+  // ===== Background Data Refresh (No UI Blocking) =====
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
-    setError(null);
 
-    console.log("🔄 Fetching company with ID:", companyId);
-    console.log("📁 Category ID:", categoryId);
+    const refreshData = async () => {
+      try {
+        const [companyRes, settingsRes, fixedWordsRes] = await Promise.allSettled([
+          getCompany(companyId),
+          getSettings(),
+          getFixedWords(),
+        ]);
 
-    // Fetch company data from API only
-    getCompany(companyId)
-      .then((res) => {
         if (!mounted) return;
 
-        console.log("📦 Full API Response:", res);
-        console.log("📊 Response data:", res.data);
-        console.log("🔍 Response data.data:", res.data?.data);
-        console.log("🏢 Company data:", res.data?.data?.company);
+        // Update state silently in background
+        if (companyRes.status === 'fulfilled') {
+          const companyData = companyRes.value?.data?.data?.company || companyRes.value?.data?.company || companyRes.value?.data;
+          if (companyData) {
+            setCompany(companyData);
+          }
+        }
         
-        // Extract company data from API response
-        const companyData = res?.data?.data?.company || res?.data?.company || res?.data;
-
-        console.log("✅ Extracted company data:", companyData);
-
-        if (companyData) {
-          setCompany(companyData);
-          console.log("🎉 Company data successfully set:", companyData);
-        } else {
-          console.error("❌ No company data found in response");
-          setError("Company not found in API response");
+        if (settingsRes.status === 'fulfilled') {
+          setSettings(settingsRes.value?.data || {});
         }
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        console.error("❌ Failed to fetch company:", err);
-        console.error("Error details:", err.response?.data || err.message);
-        setError("Failed to load company data");
-      })
-      .finally(() => {
-        if (mounted) {
-          console.log("🏁 Loading completed");
-          setLoading(false);
+        
+        if (fixedWordsRes.status === 'fulfilled') {
+          setFixedWords(fixedWordsRes.value?.data || {});
         }
-      });
 
-    // Fetch settings & fixed words in parallel
-    Promise.all([getSettings(), getFixedWords()])
-      .then(([settingsRes, fixedWordsRes]) => {
-        if (!mounted) return;
-        console.log("⚙️ Settings loaded:", settingsRes.data);
-        console.log("🔤 Fixed words loaded:", fixedWordsRes.data);
-        setSettings(settingsRes.data || {});
-        setFixedWords(fixedWordsRes.data || {});
-      })
-      .catch((err) => {
-        console.error("Failed to load settings/fixed words:", err);
+      } catch (err) {
+        console.error("Background data refresh failed:", err);
+        // Don't show error to user for background refresh
+      }
+    };
+
+    // Only refresh if we don't have preloaded data
+    if (!company) {
+      setLoading(true);
+      refreshData().finally(() => {
+        if (mounted) setLoading(false);
       });
+    } else {
+      // Still refresh in background but don't show loading
+      refreshData();
+    }
 
     return () => {
-      console.log("🧹 Cleaning up company page");
       mounted = false;
     };
   }, [categoryId, companyId]);
 
-  if (loading) {
+  // Show content immediately with preloaded data
+  const showContent = company;
+
+  if (!showContent && loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen text-gray-600">
-        Loading...
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white">
+        <BannerSkeleton />
+        <ProductGridSkeleton />
       </div>
     );
   }
@@ -179,294 +229,297 @@ export default function CompanyPage() {
   const displayRating = typeof rating === 'number' ? rating : parseFloat(rating) || 0;
   const basePath = getBasePath();
 
-  console.log("📍 Base path for navigation:", basePath);
-  console.log("📱 Company phone:", phone);
-  console.log("⭐ Company rating:", displayRating);
-  console.log("📦 Company products count:", products.length);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white">
       {/* ============ Banner Section ============ */}
-      <div
-        className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-hidden"
-        style={{
-          background: `linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${
-            banner || logo || "/api/placeholder/1200/400"
-          }) center/cover no-repeat`,
-          willChange: "transform, opacity",
-        }}
-      >
-        {/* 🔙 Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full
-                     border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300"
-        >
-          <Suspense fallback={<span>←</span>}>
-            <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
-          </Suspense>
-        </button>
-
-        {/* 🔗 Share Button */}
-        <button
-          onClick={() => {
-            if (navigator.share) {
-              navigator.share({
-                title: name,
-                text: `Check out ${name} on Catalogueya!`,
-                url: window.location.href,
-              });
-            } else {
-              navigator.clipboard.writeText(window.location.href);
-              alert("Link copied to clipboard!");
-            }
+      {showContent ? (
+        <div
+          className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${
+              banner || logo || "/api/placeholder/1200/400"
+            }) center/cover no-repeat`,
+            willChange: "transform, opacity",
           }}
-          className="absolute top-24 right-4 sm:right-8 z-30 flex items-center justify-center 
-                     w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-md 
-                     hover:bg-white/30 shadow-xl hover:scale-105 transition-all duration-300"
         >
-          <MdIosShare className="text-white text-xl sm:text-2xl" />
-        </button>
+          {/* 🔙 Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full
+                       border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300"
+          >
+            <Suspense fallback={<span>←</span>}>
+              <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
+            </Suspense>
+          </button>
 
-        {/* ===== Company Info ===== */}
-        <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-10 w-full">
-          <img
-            src={logo || "/api/placeholder/200/200"}
-            alt={name}
-            loading="eager"
-            decoding="async"
-            className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain rounded-xl 
-                       border-2 border-white/50 shadow-2xl backdrop-blur-sm bg-white/10"
-            style={{ willChange: "transform" }}
-            onError={(e) => {
-              e.target.src = "/api/placeholder/200/200";
+          {/* 🔗 Share Button */}
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: name,
+                  text: `Check out ${name} on Catalogueya!`,
+                  url: window.location.href,
+                });
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert("Link copied to clipboard!");
+              }
             }}
-          />
-          <div className="flex flex-col justify-center text-white flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight">
-              {name}
-            </h1>
-            {title && (
-              <p className="text-xs sm:text-sm opacity-90 mt-1">{title}</p>
-            )}
+            className="absolute top-24 right-4 sm:right-8 z-30 flex items-center justify-center 
+                       w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-md 
+                       hover:bg-white/30 shadow-xl hover:scale-105 transition-all duration-300"
+          >
+            <MdIosShare className="text-white text-xl sm:text-2xl" />
+          </button>
 
-            {/*  Rating - White stars */}
-            <div className="flex items-center gap-4 mt-3 text-sm sm:text-base">
-              <div className="flex items-center gap-1 text-white font-semibold drop-shadow-lg">
-                <FaStar className="text-white text-lg sm:text-xl" />
-                <span>{displayRating.toFixed(1)}</span>
-               
+          {/* ===== Company Info ===== */}
+          <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-10 w-full">
+            <img
+              src={logo || "/api/placeholder/200/200"}
+              alt={name}
+              loading="eager"
+              decoding="async"
+              className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain rounded-xl 
+                         border-2 border-white/50 shadow-2xl backdrop-blur-sm bg-white/10"
+              style={{ willChange: "transform" }}
+              onError={(e) => {
+                e.target.src = "/api/placeholder/200/200";
+              }}
+            />
+            <div className="flex flex-col justify-center text-white flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight">
+                {name}
+              </h1>
+              {title && (
+                <p className="text-xs sm:text-sm opacity-90 mt-1">{title}</p>
+              )}
+
+              {/*  Rating - White stars */}
+              <div className="flex items-center gap-4 mt-3 text-sm sm:text-base">
+                <div className="flex items-center gap-1 text-white font-semibold drop-shadow-lg">
+                  <FaStar className="text-white text-lg sm:text-xl" />
+                  <span>{displayRating.toFixed(1)}</span>
+                 
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ===== FLOATING ACTION ICONS - Horizontal ===== */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl">
-            <div className="flex flex-row gap-2 sm:gap-3">
-              
-              {/*  Location */}
-              {displayLocation && (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`
-                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                    rounded-lg sm:rounded-xl
-                    bg-gray-700/10 backdrop-blur-xl 
-                    border border-white/20
-                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                    transition-all duration-300 ease-out group relative
-                    text-sm sm:text-base
-                    hover:bg-gray-300/20
-                    hover:shadow-[0_0_5px_currentColor]
-                    hover:scale-110 hover:-translate-y-1
-                    text-white
-                  `}
-                >
-                  {/* Icon */}
-                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-                    <Suspense fallback={<span>📍</span>}>
-                      <FaMapMarkerAlt className="text-sm" />
-                    </Suspense>
-                  </div>
-                  
-                  {/* Tooltip */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
-                    bg-black/80 text-white text-xs px-2 py-1  
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
-                    Location
-                  </div>
-                </a>
-              )}
-
-              {/*  WhatsApp */}
-              {phone && (
-                <a
-                  href={`https://wa.me/${phone}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`
-                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                    rounded-lg sm:rounded-xl
-                    bg-gray-700/10 backdrop-blur-xl 
-                    border border-white/20
-                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                    transition-all duration-300 ease-out group relative
-                    text-sm sm:text-base
-                    hover:bg-gray-300/20
-                    hover:shadow-[0_0_5px_currentColor]
-                    hover:scale-110 hover:-translate-y-1
-                    text-white
-                  `}
-                >
-                  {/* Icon */}
-                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-                    <Suspense fallback={<span>💬</span>}>
-                      <FaWhatsapp className="text-sm" />
-                    </Suspense>
-                  </div>
-                  
-                  {/* Tooltip */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
-                    bg-black/80 text-white text-xs px-2 py-1  
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
-                    WhatsApp
-                  </div>
-                </a>
-              )}
-
-              {/*  Follow */}
-              <button
-                onClick={handleFollowToggle}
-                className={`
-                  w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                  rounded-lg sm:rounded-xl
-                  bg-gray-700/10 backdrop-blur-xl 
-                  border border-white/20
-                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                  transition-all duration-300 ease-out group relative
-                  text-sm sm:text-base
-                  hover:bg-gray-300/20
-                  hover:shadow-[0_0_5px_currentColor]
-                  hover:scale-110 hover:-translate-y-1
-                  ${isFollowing ? "text-purple-400" : "text-white"}
-                `}
-              >
-                {/* Icon */}
-                <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-                  <Suspense fallback={<span>👤</span>}>
-                    <FaUser className={`text-sm ${isFollowing ? 'fill-current' : ''}`} />
-                  </Suspense>
-                </div>
+          {/* ===== FLOATING ACTION ICONS - Horizontal ===== */}
+          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl">
+              <div className="flex flex-row gap-2 sm:gap-3">
                 
-                {/* Tooltip */}
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
-                  bg-black/80 text-white text-xs px-2 py-1  
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                  whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
-                  {isFollowing ? "Following" : "Follow"}
-                </div>
-              </button>
+                {/*  Location */}
+                {displayLocation && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`
+                      w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                      rounded-lg sm:rounded-xl
+                      bg-gray-700/10 backdrop-blur-xl 
+                      border border-white/20
+                      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                      transition-all duration-300 ease-out group relative
+                      text-sm sm:text-base
+                      hover:bg-gray-300/20
+                      hover:shadow-[0_0_5px_currentColor]
+                      hover:scale-110 hover:-translate-y-1
+                      text-white
+                    `}
+                  >
+                    {/* Icon */}
+                    <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                      <Suspense fallback={<span>📍</span>}>
+                        <FaMapMarkerAlt className="text-sm" />
+                      </Suspense>
+                    </div>
+                    
+                    {/* Tooltip */}
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                      bg-black/80 text-white text-xs px-2 py-1  
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                      whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                      Location
+                    </div>
+                  </a>
+                )}
 
-              {/*  Company Reviews */}
-              <button
-                onClick={() => navigate(`${basePath}/reviews`)}
-                className={`
-                  w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                  rounded-lg sm:rounded-xl
-                  bg-gray-700/10 backdrop-blur-xl 
-                  border border-white/20
-                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                  transition-all duration-300 ease-out group relative
-                  text-sm sm:text-base
-                  hover:bg-gray-300/20
-                  hover:shadow-[0_0_5px_currentColor]
-                  hover:scale-110 hover:-translate-y-1
-                  text-white
-                `}
-              >
-                {/* Icon */}
-                <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-                  <FaStar className="text-sm" />
-                </div>
-                
-                {/* Tooltip */}
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
-                  bg-black/80 text-white text-xs px-2 py-1  
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                  whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
-                  Reviews
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+                {/*  WhatsApp */}
+                {phone && (
+                  <a
+                    href={`https://wa.me/${phone}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`
+                      w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                      rounded-lg sm:rounded-xl
+                      bg-gray-700/10 backdrop-blur-xl 
+                      border border-white/20
+                      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                      transition-all duration-300 ease-out group relative
+                      text-sm sm:text-base
+                      hover:bg-gray-300/20
+                      hover:shadow-[0_0_5px_currentColor]
+                      hover:scale-110 hover:-translate-y-1
+                      text-white
+                    `}
+                  >
+                    {/* Icon */}
+                    <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                      <Suspense fallback={<span>💬</span>}>
+                        <FaWhatsapp className="text-sm" />
+                      </Suspense>
+                    </div>
+                    
+                    {/* Tooltip */}
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                      bg-black/80 text-white text-xs px-2 py-1  
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                      whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                      WhatsApp
+                    </div>
+                  </a>
+                )}
 
-      {/* ============ Products Section ============ */}
-      <section className="py-12">
-        <h2 className="text-2xl md:text-3xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12">
-          Our Products
-        </h2>
-
-        {products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 px-6 sm:px-12">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="relative overflow-hidden cursor-pointer aspect-square group 
-                            bg-white rounded-lg border border-gray-200 
-                            shadow-md hover:shadow-2xl hover:scale-[1.02] transition-all duration-400"
-                onClick={() => navigate(`${basePath}/product/${product.id}`)}
-              >
-                {/* Lazy-load images for speed */}
-                <img
-                  src={product.image || product.img || "/api/placeholder/300/300"}
-                  alt={product.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => {
-                    e.target.src = "/api/placeholder/300/300";
-                  }}
-                />
-
-                {/* Product Info Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                </div>
-
-                {/*  Favourite Toggle */}
+                {/*  Follow */}
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavourite(product);
-                  }}
-                  className="absolute top-2 right-2 z-10"
+                  onClick={handleFollowToggle}
+                  className={`
+                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                    rounded-lg sm:rounded-xl
+                    bg-gray-700/10 backdrop-blur-xl 
+                    border border-white/20
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                    transition-all duration-300 ease-out group relative
+                    text-sm sm:text-base
+                    hover:bg-gray-300/20
+                    hover:shadow-[0_0_5px_currentColor]
+                    hover:scale-110 hover:-translate-y-1
+                    ${isFollowing ? "text-purple-400" : "text-white"}
+                  `}
                 >
-                  <Suspense fallback={<span>♡</span>}>
-                    <FaHeart
-                      className={`text-xl ${
-                        isFavourite(product.id)
-                          ? "text-red-500 scale-110"
-                          : "text-white/90 hover:text-red-400"
-                      } drop-shadow-lg transition-transform duration-200`}
-                    />
-                  </Suspense>
+                  {/* Icon */}
+                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                    <Suspense fallback={<span>👤</span>}>
+                      <FaUser className={`text-sm ${isFollowing ? 'fill-current' : ''}`} />
+                    </Suspense>
+                  </div>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                    bg-black/80 text-white text-xs px-2 py-1  
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                    {isFollowing ? "Following" : "Follow"}
+                  </div>
+                </button>
+
+                {/*  Company Reviews */}
+                <button
+                  onClick={() => navigate(`${basePath}/reviews`)}
+                  className={`
+                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                    rounded-lg sm:rounded-xl
+                    bg-gray-700/10 backdrop-blur-xl 
+                    border border-white/20
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                    transition-all duration-300 ease-out group relative
+                    text-sm sm:text-base
+                    hover:bg-gray-300/20
+                    hover:shadow-[0_0_5px_currentColor]
+                    hover:scale-110 hover:-translate-y-1
+                    text-white
+                  `}
+                >
+                  {/* Icon */}
+                  <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                    <FaStar className="text-sm" />
+                  </div>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                    bg-black/80 text-white text-xs px-2 py-1  
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor]">
+                    Reviews
+                  </div>
                 </button>
               </div>
-            ))}
+            </div>
           </div>
-        ) : (
-          <p className="text-gray-500 text-center py-10 text-lg">
-            No products available for this company.
-          </p>
-        )}
-      </section>
+        </div>
+      ) : (
+        <BannerSkeleton />
+      )}
+
+      {/* ============ Products Section ============ */}
+      {showContent ? (
+        <section className="py-12">
+          <h2 className="text-2xl md:text-3xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12">
+            Our Products
+          </h2>
+
+          {products.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 px-6 sm:px-12">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="relative overflow-hidden cursor-pointer aspect-square group 
+                              bg-white rounded-lg border border-gray-200 
+                              shadow-md hover:shadow-2xl hover:scale-[1.02] transition-all duration-400"
+                  onClick={() => navigate(`${basePath}/product/${product.id}`)}
+                >
+                  {/* Lazy-load images for speed */}
+                  <img
+                    src={product.image || product.img || "/api/placeholder/300/300"}
+                    alt={product.name}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      e.target.src = "/api/placeholder/300/300";
+                    }}
+                  />
+
+                  {/* Product Info Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                  </div>
+
+                  {/*  Favourite Toggle */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavourite(product);
+                    }}
+                    className="absolute top-2 right-2 z-10"
+                  >
+                    <Suspense fallback={<span>♡</span>}>
+                      <FaHeart
+                        className={`text-xl ${
+                          isFavourite(product.id)
+                            ? "text-red-500 scale-110"
+                            : "text-white/90 hover:text-red-400"
+                        } drop-shadow-lg transition-transform duration-200`}
+                      />
+                    </Suspense>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-10 text-lg">
+              No products available for this company.
+            </p>
+          )}
+        </section>
+      ) : (
+        <ProductGridSkeleton />
+      )}
     </div>
   );
 }

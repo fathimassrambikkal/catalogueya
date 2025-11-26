@@ -74,7 +74,7 @@ const useIsInViewport = (ref) => {
 
 const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => (
   <div
-    className="flex-none rounded-3xl overflow-hidden group cursor-pointer
+    className="flex-none rounded-2xl overflow-hidden group cursor-pointer
                bg-white/10 border border-white/30 backdrop-blur-2xl 
                shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
                hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
@@ -90,23 +90,23 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
         e.stopPropagation();
         onToggleFavourite(product);
       }}
-      className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-20 p-1.5 sm:p-2 rounded-full shadow-md transition backdrop-blur-md border transform-gpu
+      className={`absolute top-2 right-2 sm:top-2 sm:right-2 z-20 p-1.5 rounded-full shadow-md transition backdrop-blur-md border transform-gpu
         ${isFav ? "bg-red-100 text-red-600 border-red-200" : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"}`}
       style={{ willChange: 'transform' }}
     >
-      <FaHeart className={`text-xs sm:text-sm md:text-base ${isFav ? "text-red-500" : "hover:text-red-400"}`} />
+      <FaHeart className={`text-xs ${isFav ? "text-red-500" : "hover:text-red-400"}`} />
     </button>
 
-    <div className="relative w-full h-[200px] xs:h-[220px] sm:h-[240px] md:h-[260px] overflow-hidden rounded-t-3xl">
+    <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
       <img
         src={product.img}
         alt={product.name}
         loading="eager"
         decoding="sync"
         fetchPriority="high"
-        width={280}
-        height={260}
-        className="w-full h-full object-cover object-top rounded-t-3xl border-b border-white/20 
+        width={240}
+        height={200}
+        className="w-full h-full object-cover object-top rounded-t-2xl border-b border-white/20 
                  transition-transform duration-500 ease-out group-hover:scale-105 transform-gpu"
         style={{ 
           contentVisibility: 'auto',
@@ -122,27 +122,27 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
           e.target.style.display = 'none';
         }}
       />
-      <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg transform-gpu">
+      <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg transform-gpu">
         {Array.from({ length: 5 }).map((_, i) => (
-          <FaStar key={i} className={`w-3 h-3 transform-gpu ${i < Math.floor(product.rating ?? 0) ? "text-white" : "text-gray-400"}`} />
+          <FaStar key={i} className={`w-2 h-2 transform-gpu ${i < Math.floor(product.rating ?? 0) ? "text-white" : "text-gray-400"}`} />
         ))}
-        <span className="text-[10px] text-white/90 ml-1 transform-gpu">{(product.rating ?? 0).toFixed(1)}</span>
+        <span className="text-[9px] text-white/90 ml-1 transform-gpu">{(product.rating ?? 0).toFixed(1)}</span>
       </div>
     </div>
 
     <div
-      className="relative w-full rounded-b-2xl p-3 sm:p-4 border-t border-white/20 
+      className="relative w-full rounded-b-2xl p-3 border-t border-white/20 
                  bg-white/70 backdrop-blur-xl
                  shadow-[0_4px_20px_rgba(255,255,255,0.15)] 
                  flex items-center justify-between overflow-hidden transform-gpu"
       style={{ willChange: 'transform' }}
     >
       <div className="flex flex-col w-[80%] z-10 transform-gpu">
-        <h3 className="font-semibold text-xs xs:text-sm sm:text-base truncate text-gray-900 mb-1 transform-gpu">{product.name}</h3>
+        <h3 className="font-semibold text-xs truncate text-gray-900 mb-1 transform-gpu">{product.name}</h3>
         <div className="flex items-center gap-1 transform-gpu">
-          <span className="text-xs xs:text-sm sm:text-base font-bold text-gray-900 transform-gpu">QAR {product.price}</span>
+          <span className="text-xs font-bold text-gray-900 transform-gpu">QAR {product.price}</span>
           {product.oldPrice && (
-            <span className="text-[10px] xs:text-xs sm:text-sm line-through text-gray-500 transform-gpu">QAR {product.oldPrice}</span>
+            <span className="text-[10px] line-through text-gray-500 transform-gpu">QAR {product.oldPrice}</span>
           )}
         </div>
       </div>
@@ -152,11 +152,11 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
-        className="p-2 bg-green-500/80 backdrop-blur-sm rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10 transform-gpu"
+        className="p-1.5 bg-green-500/80 backdrop-blur-sm rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10 transform-gpu"
         title="Chat on WhatsApp"
         style={{ willChange: 'transform' }}
       >
-        <FaWhatsapp className="text-sm sm:text-base md:text-lg transform-gpu" />
+        <FaWhatsapp className="text-sm transform-gpu" />
       </a>
     </div>
   </div>
@@ -171,7 +171,7 @@ function SalesComponent() {
   const scrollContainerRef = useRef(null);
   const sectionRef = useRef(null);
   const isInViewport = useIsInViewport(sectionRef);
-  const [cardWidth, setCardWidth] = useState('260px');
+  const [cardWidth, setCardWidth] = useState('220px');
   const resizeTimeoutRef = useRef(null);
 
   // Ultra-fast data loading with preloaded data
@@ -213,11 +213,11 @@ function SalesComponent() {
     const updateCardWidth = () => {
       const width = window.innerWidth;
       if (width < 640) {
-        setCardWidth('calc(50vw - 20px)');
+        setCardWidth('calc(45vw - 20px)');
       } else if (width < 768) {
-        setCardWidth('260px');
+        setCardWidth('220px');
       } else {
-        setCardWidth('280px');
+        setCardWidth('240px');
       }
     };
 
@@ -280,7 +280,7 @@ function SalesComponent() {
   const handleScrollLeft = useCallback(() => {
     if (scrollContainerRef.current && isInViewport) {
       const scrollAmount = window.innerWidth < 640 ? 
-        (window.innerWidth / 2) : 280;
+        (window.innerWidth / 2) : 220;
       scrollContainerRef.current.scrollBy({
         left: -scrollAmount,
         behavior: 'smooth'
@@ -291,7 +291,7 @@ function SalesComponent() {
   const handleScrollRight = useCallback(() => {
     if (scrollContainerRef.current && isInViewport) {
       const scrollAmount = window.innerWidth < 640 ? 
-        (window.innerWidth / 2) : 280;
+        (window.innerWidth / 2) : 220;
       scrollContainerRef.current.scrollBy({
         left: scrollAmount,
         behavior: 'smooth'
@@ -304,16 +304,16 @@ function SalesComponent() {
     return Array.from({ length: 4 }).map((_, index) => (
       <div
         key={`skeleton-${index}`}
-        className="flex-none rounded-3xl overflow-hidden bg-gray-200 animate-pulse transform-gpu"
+        className="flex-none rounded-2xl overflow-hidden bg-gray-200 animate-pulse transform-gpu"
         style={{
           width: cardWidth,
           minWidth: cardWidth,
           willChange: 'transform'
         }}
       >
-        <div className="w-full h-[160px] xs:h-[180px] sm:h-[200px] md:h-[220px] bg-gray-300 rounded-t-3xl transform-gpu" />
-        <div className="p-3 sm:p-4 bg-gray-200 rounded-b-2xl transform-gpu">
-          <div className="h-4 bg-gray-300 rounded mb-2 w-3/4 transform-gpu"></div>
+        <div className="w-full h-[140px] xs:h-[160px] sm:h-[180px] bg-gray-300 rounded-t-2xl transform-gpu" />
+        <div className="p-3 bg-gray-200 rounded-b-2xl transform-gpu">
+          <div className="h-3 bg-gray-300 rounded mb-2 w-3/4 transform-gpu"></div>
           <div className="h-3 bg-gray-300 rounded w-1/2 transform-gpu"></div>
         </div>
       </div>
@@ -371,7 +371,7 @@ function SalesComponent() {
             willChange: 'transform'
           }}
         >
-          <div className="flex gap-4 sm:gap-6 transform-gpu">
+          <div className="flex gap-3 sm:gap-4 transform-gpu">
             {isLoading ? skeletonLoader : combinedProducts.map((product) => (
               <div
                 key={product.id}
@@ -399,7 +399,7 @@ function SalesComponent() {
             onClick={i18n.language === "ar" ? handleScrollRight : handleScrollLeft}
             className="
               bg-white/10 hover:bg-white 
-              rounded-full p-3 sm:p-4
+              rounded-full p-3
               shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900
               transition-all duration-300 ease-out
               hover:scale-110 active:scale-95
@@ -412,9 +412,9 @@ function SalesComponent() {
             style={{ willChange: 'transform' }}
           >
             {i18n.language === "ar" ? (
-              <FaChevronRight className="text-sm sm:text-base transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
+              <FaChevronRight className="text-sm transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
             ) : (
-              <FaChevronLeft className="text-sm sm:text-base transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
+              <FaChevronLeft className="text-sm transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
             )}
           </button>
 
@@ -422,7 +422,7 @@ function SalesComponent() {
             onClick={i18n.language === "ar" ? handleScrollLeft : handleScrollRight}
             className="
               bg-white/10 hover:bg-white 
-              rounded-full p-3 sm:p-4
+              rounded-full p-3
               shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900
               transition-all duration-300 ease-out
               hover:scale-110 active:scale-95
@@ -435,9 +435,9 @@ function SalesComponent() {
             style={{ willChange: 'transform' }}
           >
             {i18n.language === "ar" ? (
-              <FaChevronLeft className="text-sm sm:text-base transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
+              <FaChevronLeft className="text-sm transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
             ) : (
-              <FaChevronRight className="text-sm sm:text-base transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
+              <FaChevronRight className="text-sm transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
             )}
           </button>
         </div>

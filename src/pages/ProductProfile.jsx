@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   FaStar,
@@ -6,7 +6,7 @@ import {
   FaArrowLeft,
   FaHeart,
   FaShareAlt,
-  FaComments, // Add chat icon
+  FaComments,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFavourites } from "../context/FavouriteContext";
@@ -16,12 +16,24 @@ import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { Lens } from "../components/Lens";
 
+// Memoized image component to prevent re-renders
+const MemoizedImage = React.memo(({ src, alt, className, onError, onClick }) => (
+  <img
+    src={src}
+    alt={alt}
+    className={className}
+    onError={onError}
+    onClick={onClick}
+    loading="lazy"
+  />
+));
+
 export default function ProductProfile() {
   const params = useParams();
   const navigate = useNavigate();
   const whatsappNumber = "97400000000";
   const { favourites, toggleFavourite } = useFavourites();
-  const { isAuthenticated, user } = useAuth(); // Add this
+  const { isAuthenticated, user } = useAuth();
 
   const { companyId, id: routeProductId, productId, pid } = params;
   const resolvedProductId = routeProductId || productId || pid;
@@ -38,16 +50,137 @@ export default function ProductProfile() {
   const [reviewName, setReviewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [similarProducts, setSimilarProducts] = useState([]); // Separate state for similar products
+  const [similarProducts, setSimilarProducts] = useState([]);
 
-  // ===== Fetch product data from company API =====
+  // Memoized values for better performance
+  const productImages = useMemo(() => [
+    product?.image,
+    product?.image2,
+    product?.image3,
+    product?.image4
+  ].filter(Boolean), [product]);
+
+  const averageRating = useMemo(() => {
+    const getSafeRating = (rating) => {
+      if (typeof rating === 'number') return rating;
+      if (typeof rating === 'string') return parseFloat(rating) || 0;
+      return 0;
+    };
+
+    if (reviews.length > 0) {
+      return reviews.reduce((sum, r) => sum + getSafeRating(r.rating), 0) / reviews.length;
+    }
+    return getSafeRating(product?.rating);
+  }, [reviews, product]);
+
+  const basePath = useMemo(() => {
+    if (product?.categoryId && product?.companyId) {
+      return `/category/${product.categoryId}/company/${product.companyId}`;
+    } else if (product?.companyId) {
+      return `/company/${product.companyId}`;
+    }
+    return "/";
+  }, [product]);
+
+  const isFavourite = useMemo(() => 
+    favourites.some((fav) => fav.id === product?.id),
+    [favourites, product]
+  );
+
+  // Optimized handlers
+  const handleChat = useCallback((e) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      alert("Please register or login to start a chat with the seller.");
+      navigate("/register");
+      return;
+    }
+    alert(`Starting chat about ${product.name} with ${product.companyName}`);
+  }, [isAuthenticated, navigate, product]);
+
+  const handleShare = useCallback((p) => {
+    const shareData = {
+      title: p.name,
+      text: `Check out ${p.name} from ${p.companyName} on Catalogueya!`,
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      navigator.share(shareData).catch(() => alert("Share cancelled."));
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert("🔗 Link copied to clipboard!");
+    }
+  }, []);
+
+  const handleReviewSubmit = useCallback(() => {
+    if (!reviewName || !reviewText || reviewRating === 0) {
+      alert("Please enter your name, rating, and comment.");
+      return;
+    }
+
+    const storageKey = `reviews_${product.id}`;
+    const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+    const newReviewObj = {
+      id: Date.now(),
+      name: reviewName,
+      rating: reviewRating,
+      comment: reviewText,
+      date: new Date().toLocaleDateString(),
+    };
+
+    const updatedReviews = [...savedReviews, newReviewObj];
+    localStorage.setItem(storageKey, JSON.stringify(updatedReviews));
+    setReviews(updatedReviews);
+    setShowReviewModal(false);
+    setReviewText("");
+    setReviewRating(0);
+    setReviewName("");
+  }, [reviewName, reviewText, reviewRating, product]);
+
+  const handleThumbnailClick = useCallback((img) => {
+    setSelectedImage(img);
+  }, []);
+
+  const handleToggleFavourite = useCallback((product) => {
+    toggleFavourite(product);
+  }, [toggleFavourite]);
+
+  // Optimized calculateSimilarProducts
+  const calculateSimilarProducts = useCallback((companyData, currentProduct) => {
+    if (!companyData || !currentProduct || !companyData.products) {
+      setSimilarProducts([]);
+      return;
+    }
+
+    const similar = companyData.products
+      .filter(p => {
+        const isSameProduct = String(p.id) === String(currentProduct.id);
+        const hasValidImage = p.image || p.img;
+        return !isSameProduct && hasValidImage;
+      })
+      .slice(0, 4)
+      .map(p => ({
+        ...p,
+        id: p.id,
+        name: p.name || "Unnamed Product",
+        price: p.price || 0,
+        oldPrice: p.oldPrice,
+        image: p.image || p.img || "/api/placeholder/300/300",
+        categoryId: currentProduct.categoryId,
+        companyId: currentProduct.companyId,
+        companyName: currentProduct.companyName,
+        categoryName: currentProduct.categoryName
+      }));
+
+    setSimilarProducts(similar);
+  }, []);
+
+  // Optimized data fetching
   useEffect(() => {
     let mounted = true;
     setLoading(true);
     setError(null);
-
-    console.log("🔄 Fetching company data for product ID:", resolvedProductId);
-    console.log("🏢 Company ID:", companyId);
 
     if (!companyId) {
       setError("Company ID is required");
@@ -55,25 +188,16 @@ export default function ProductProfile() {
       return;
     }
 
-    // Get company data and find the specific product in the company's products list
     getCompany(companyId)
       .then((res) => {
         if (!mounted) return;
 
-        console.log("📦 Company API Response:", res);
-        
-        // Extract company data from API response
         const companyData = res?.data?.data?.company || res?.data?.company || res?.data;
-        console.log("🏢 Company data:", companyData);
 
         if (companyData && companyData.products) {
-          // Find the specific product in the company's products array
           const foundProduct = companyData.products.find(
             p => String(p.id) === String(resolvedProductId)
           );
-
-          console.log("🔍 Found product:", foundProduct);
-          console.log("📦 All company products:", companyData.products);
 
           if (foundProduct) {
             const productWithImages = {
@@ -91,85 +215,30 @@ export default function ProductProfile() {
             setProduct(productWithImages);
             setCompanyData(companyData);
             setSelectedImage(productWithImages.image);
-            console.log("🎉 Product data successfully set from company API:", productWithImages);
-
-            // Calculate similar products after setting company data
             calculateSimilarProducts(companyData, productWithImages);
           } else {
-            console.error("❌ Product not found in company products");
-            console.error("Available product IDs:", companyData.products.map(p => p.id));
             setError(`Product with ID ${resolvedProductId} not found in company ${companyId}`);
           }
         } else {
-          console.error("❌ No products found for this company");
           setError("No products available for this company");
         }
       })
       .catch((err) => {
         if (!mounted) return;
-        console.error("❌ Failed to fetch company data:", err);
-        console.error("Error details:", err.response?.data || err.message);
         setError("Failed to load product data");
       })
       .finally(() => {
         if (mounted) {
-          console.log("🏁 Product loading completed");
           setLoading(false);
         }
       });
 
     return () => {
-      console.log("🧹 Cleaning up product page");
       mounted = false;
     };
-  }, [resolvedProductId, companyId]);
+  }, [resolvedProductId, companyId, calculateSimilarProducts]);
 
-  // Function to calculate similar products
-  const calculateSimilarProducts = (companyData, currentProduct) => {
-    if (!companyData || !currentProduct || !companyData.products) {
-      console.log("❌ Cannot calculate similar products: missing data");
-      setSimilarProducts([]);
-      return;
-    }
-
-    const similar = companyData.products
-      .filter(p => {
-        const isSameProduct = String(p.id) === String(currentProduct.id);
-        const hasValidImage = p.image || p.img;
-        console.log(`Product ${p.id}: same=${isSameProduct}, hasImage=${hasValidImage}`);
-        return !isSameProduct && hasValidImage;
-      })
-      .slice(0, 4) // Limit to 4 products
-      .map(p => {
-        const similarProduct = {
-          ...p,
-          id: p.id,
-          name: p.name || "Unnamed Product",
-          price: p.price || 0,
-          oldPrice: p.oldPrice,
-          image: p.image || p.img || "/api/placeholder/300/300",
-          categoryId: currentProduct.categoryId,
-          companyId: currentProduct.companyId,
-          companyName: currentProduct.companyName,
-          categoryName: currentProduct.categoryName
-        };
-        console.log("🔄 Mapped similar product:", similarProduct);
-        return similarProduct;
-      });
-
-    console.log("🔄 Final similar products calculated:", similar);
-    console.log("🔄 Total products available:", companyData.products.length);
-    console.log("🔄 Current product ID:", currentProduct.id);
-    setSimilarProducts(similar);
-  };
-
-  // Recalculate similar products when product or companyData changes
-  useEffect(() => {
-    if (product && companyData) {
-      calculateSimilarProducts(companyData, product);
-    }
-  }, [product, companyData]);
-
+  // Separate effects for independent data
   useEffect(() => {
     if (product) {
       const storageKey = `reviews_${product.id}`;
@@ -185,29 +254,16 @@ export default function ProductProfile() {
   }, []);
 
   // Safe rating calculation
-  const getSafeRating = (rating) => {
+  const getSafeRating = useCallback((rating) => {
     if (typeof rating === 'number') return rating;
     if (typeof rating === 'string') return parseFloat(rating) || 0;
     return 0;
-  };
+  }, []);
 
-  const formatRating = (rating) => {
+  const formatRating = useCallback((rating) => {
     const safeRating = getSafeRating(rating);
     return safeRating.toFixed(1);
-  };
-
-  // Chat handler function
-  const handleChat = (e) => {
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      alert("Please register or login to start a chat with the seller.");
-      navigate("/register");
-      return;
-    }
-    // Handle chat functionality here
-    alert(`Starting chat about ${product.name} with ${product.companyName}`);
-    // You can implement actual chat functionality here
-  };
+  }, [getSafeRating]);
 
   if (loading) {
     return (
@@ -233,73 +289,6 @@ export default function ProductProfile() {
     );
   }
 
-  const isFavourite = favourites.some((fav) => fav.id === product.id);
-
-  const handleShare = (p) => {
-    const shareData = {
-      title: p.name,
-      text: `Check out ${p.name} from ${p.companyName} on Catalogueya!`,
-      url: window.location.href,
-    };
-    if (navigator.share) {
-      navigator.share(shareData).catch(() => alert("Share cancelled."));
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("🔗 Link copied to clipboard!");
-    }
-  };
-
-  // Determine base path for navigation
-  const getBasePath = () => {
-    if (product.categoryId && product.companyId) {
-      return `/category/${product.categoryId}/company/${product.companyId}`;
-    } else if (product.companyId) {
-      return `/company/${product.companyId}`;
-    }
-    return "/";
-  };
-
-  const basePath = getBasePath();
-
-  // Safe average rating calculation
-  const averageRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + getSafeRating(r.rating), 0) / reviews.length
-    : getSafeRating(product.rating);
-
-  const handleReviewSubmit = () => {
-    if (!reviewName || !reviewText || reviewRating === 0) {
-      alert("Please enter your name, rating, and comment.");
-      return;
-    }
-
-    const storageKey = `reviews_${product.id}`;
-    const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
-
-    const newReviewObj = {
-      id: Date.now(),
-      name: reviewName,
-      rating: reviewRating,
-      comment: reviewText,
-      date: new Date().toLocaleDateString(),
-    };
-
-    const updatedReviews = [...savedReviews, newReviewObj];
-    localStorage.setItem(storageKey, JSON.stringify(updatedReviews));
-    setReviews(updatedReviews);
-    setShowReviewModal(false);
-    setReviewText("");
-    setReviewRating(0);
-    setReviewName("");
-  };
-
-  // Get all available images for the gallery
-  const productImages = [
-    product.image,
-    product.image2,
-    product.image3,
-    product.image4
-  ].filter(Boolean);
-
   return (
     <>
       {/* Back button */}
@@ -322,11 +311,11 @@ export default function ProductProfile() {
         <div className="flex flex-col md:flex-row gap-6 md:sticky md:top-24 h-fit">
           <div className="flex md:flex-col gap-3 order-2 md:order-1 self-start">
             {productImages.map((img, idx) => (
-              <img
+              <MemoizedImage
                 key={idx}
                 src={img}
                 alt={`${product.name}-${idx}`}
-                onClick={() => setSelectedImage(img)}
+                onClick={() => handleThumbnailClick(img)}
                 className={`w-20 h-20 object-cover rounded-xl cursor-pointer border transition-all duration-300 ${
                   selectedImage === img
                     ? "border-gray-900 scale-105 shadow-sm"
@@ -341,7 +330,7 @@ export default function ProductProfile() {
 
           <div className="relative flex-1 order-1 md:order-2 overflow-hidden rounded-2xl shadow-sm border border-gray-100">
             <Lens zoomFactor={1.8} lensSize={160} disableOnMobile={true}>
-              <img
+              <MemoizedImage
                 src={selectedImage || product.image}
                 alt={product.name}
                 className="w-full h-[500px] object-cover rounded-2xl transition-transform duration-500 ease-out hover:scale-[1.02]"
@@ -356,7 +345,7 @@ export default function ProductProfile() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleFavourite(product);
+                  handleToggleFavourite(product);
                 }}
                 className="p-3 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all hover:scale-105"
               >
@@ -530,7 +519,7 @@ export default function ProductProfile() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleFavourite(sp);
+                      handleToggleFavourite(sp);
                     }}
                     className={`absolute top-3 right-3 z-20 p-2 rounded-full border border-gray-200 bg-white hover:bg-gray-100 shadow-sm transition-all hover:scale-110 ${
                       isFav ? "text-red-500" : "text-gray-500"
@@ -540,7 +529,7 @@ export default function ProductProfile() {
                   </button>
 
                   <div className="w-full h-[220px] overflow-hidden rounded-t-2xl">
-                    <img
+                    <MemoizedImage
                       src={sp.image}
                       alt={sp.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"

@@ -42,16 +42,20 @@ function CustomerLogin() {
 
   return (
     <div className="flex bg-gray-100 min-h-screen overflow-x-hidden">
-      {/* Sidebar */}
+      {/* Sidebar - Highest z-index */}
       <div
-        className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 ${
+        className={`fixed top-0 left-0 h-screen transition-all duration-300 w-48 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } bg-white z-50`}
       >
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          onCloseSidebar={() => setSidebarOpen(false)} // Pass close function
+        />
       </div>
 
-      {/* Sidebar Overlay for when sidebar is open */}
+      {/* Sidebar Overlay for when sidebar is open - Lower z-index */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
@@ -59,8 +63,8 @@ function CustomerLogin() {
         />
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-300 min-w-0 w-full">
+      {/* Main Content - Lowest z-index */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-300 min-w-0 w-full relative z-30">
 
         {/* Sidebar Toggle Button and Logo */}
         <div className="fixed top-4 left-6 z-50 flex items-center gap-4">
@@ -85,4 +89,4 @@ function CustomerLogin() {
   );
 }
 
-export default CustomerLogin; // Make sure this line is present
+export default CustomerLogin;
