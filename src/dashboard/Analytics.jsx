@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AreaChart,
@@ -17,52 +17,94 @@ import {
   FaShoppingBag,
   FaThumbsUp,
   FaThumbsDown,
-  FaMoon,
-  FaSun,
 } from "react-icons/fa";
 
-/* -------------------------
-   Count-up hook
----------------------------*/
+// Ultra-smooth count-up hook with Apple-like easing
 function useCountUp(value, duration = 900) {
   const [display, setDisplay] = useState(0);
-  const [pulseKey, setPulseKey] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const animationRef = useRef(null);
 
   useEffect(() => {
-    let start = null;
-    const from = Number(display);
-    const to = Number(value);
-    const raf = { id: 0 };
+    if (value === display) return;
 
-    function step(ts) {
-      if (!start) start = ts;
-      const t = Math.min((ts - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const cur = Math.round(from + (to - from) * eased);
-      setDisplay(cur);
-      if (t < 1) raf.id = requestAnimationFrame(step);
-    }
+    setIsAnimating(true);
+    let startTime = null;
+    const startValue = display;
 
-    raf.id = requestAnimationFrame(step);
-    const p = setTimeout(() => setPulseKey((k) => k + 1), duration + 40);
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Apple's signature easing curve
+      const eased = progress < 0.5 
+        ? 4 * progress * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      
+      const current = Math.round(startValue + (value - startValue) * eased);
+      setDisplay(current);
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        setIsAnimating(false);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
-      cancelAnimationFrame(raf.id);
-      clearTimeout(p);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
-  }, [value]);
+  }, [value, duration]);
 
-  return [display, pulseKey];
+  return [display, isAnimating];
 }
 
-/* -------------------------
-   Skeleton
----------------------------*/
-function Skeleton({ className = "" }) {
+// Enhanced skeleton with shimmer effect
+function Skeleton({ className = "", shimmer = false }) {
   return (
-    <div className={`animate-pulse bg-gray-200/60 dark:bg-gray-700/40 rounded ${className}`} />
+    <div className={`relative overflow-hidden animate-pulse bg-gray-200/60 rounded ${className}`}>
+      {shimmer && (
+        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      )}
+    </div>
   );
 }
+
+// Optimized card component with micro-interactions
+const AnalyticsCard = ({ 
+  children, 
+  className = "",
+  hoverable = true,
+  ...props 
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      className={`bg-white/80 backdrop-blur-lg border border-gray-200/60 rounded-2xl p-4 transition-all duration-300 ${
+        hoverable ? 'cursor-pointer' : ''
+      } ${className}`}
+      initial="initial"
+      animate="enter"
+      whileHover={hoverable ? { 
+        y: -4, 
+        transition: { type: "spring", stiffness: 400, damping: 30 }
+      } : {}}
+      onHoverStart={() => hoverable && setIsHovered(true)}
+      onHoverEnd={() => hoverable && setIsHovered(false)}
+      {...props}
+    >
+      <div className="relative z-10">
+        {children}
+      </div>
+    </motion.div>
+  );
+};
 
 /* -------------------------
    Main Component
@@ -71,16 +113,17 @@ export default function AnalyticsAppleFull({ products = [] }) {
   // SAFE: default to empty array
   const safeProducts = Array.isArray(products) ? products : [];
 
-  const [theme, setTheme] = useState("light");
-  const [compact, setCompact] = useState(true);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState("weekly");
+  const [hoveredProduct, setHoveredProduct] = useState(null);
 
+  // Optimized loading with progressive enhancement
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 900);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
   }, []);
 
+  // Memoized data with useCallback for stability
   const baseData = useMemo(
     () => ({
       weekly: Array.from({ length: 7 }, (_, i) => ({
@@ -99,15 +142,20 @@ export default function AnalyticsAppleFull({ products = [] }) {
     []
   );
 
-  const [trend, setTrend] = useState(baseData[range]?.slice() || []);
+  const [trend, setTrend] = useState(() => baseData[range]?.slice() || []);
 
+  // Throttled data updates for performance
   useEffect(() => {
     if (!baseData[range]) return;
     setTrend(baseData[range].map((d) => ({ ...d })));
   }, [range, baseData]);
 
+  // Optimized interval with cleanup
   useEffect(() => {
-    const id = setInterval(() => {
+    let timeoutId;
+    const updateInterval = range === "weekly" ? 2800 : range === "monthly" ? 3200 : 4000;
+
+    const updateTrend = () => {
       setTrend((t) =>
         t.map((d) => ({
           ...d,
@@ -121,9 +169,16 @@ export default function AnalyticsAppleFull({ products = [] }) {
           ),
         }))
       );
-    }, 2800);
+    };
 
-    return () => clearInterval(id);
+    const intervalId = setInterval(() => {
+      timeoutId = setTimeout(updateTrend, 50); // Small delay for batching
+    }, updateInterval);
+
+    return () => {
+      clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [range]);
 
   /* -------------------------
@@ -154,212 +209,281 @@ export default function AnalyticsAppleFull({ products = [] }) {
   /* -------------------------
      Safe Countups
   ---------------------------*/
-  const [viewsAnimated, viewsPulse] = useCountUp(topProduct.views || 0, 800);
-
+  const [viewsAnimated] = useCountUp(topProduct.views || 0, 800);
   const [totalViewsCount] = useCountUp(
     safeProducts.reduce((s, p) => s + (p.views || 0), 0),
     900
   );
 
-  /* -------------------------
-     Styles - Updated to match Messages theme
-  ---------------------------*/
-  const palette = {
+  // Memoized styles and configuration
+  const palette = useMemo(() => ({
     primary: "#0A84FF",
     soft: "#66C7FF",
     soft2: "#3B82F6",
-  };
+  }), []);
 
-  const containerBg = "bg-gradient-to-br from-gray-50 to-blue-50/30";
-  const cardBase = "bg-white/80 backdrop-blur-lg border border-gray-200/60";
-  const textSub = "text-gray-600";
-  const muted = "text-gray-500";
+  const cardVariant = useMemo(() => ({
+    initial: { opacity: 0, y: 8 },
+    enter: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 30 
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: -8,
+      transition: { duration: 0.2 }
+    },
+  }), []);
 
-  const cardVariant = {
-    initial: { opacity: 0, y: 6 },
-    enter: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 6 },
-  };
+  // Optimized event handlers
+  const handleRangeChange = useCallback((newRange) => {
+    setRange(newRange);
+  }, []);
+
+  const handleProductHover = useCallback((productId) => {
+    setHoveredProduct(productId);
+  }, []);
+
+  const handleProductLeave = useCallback(() => {
+    setHoveredProduct(null);
+  }, []);
 
   return (
-    <div className={`${containerBg} min-h-screen font-sans text-sm mt-10 p-4 sm:p-6`}>
-      {/* Header */}
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-          Analytics
-        </h1>
-<div className="flex items-center gap-3">
-  {/* Range Selector with Sliding Animation */}
-  <div className="relative flex items-center gap-1 rounded-xl border border-gray-200/60 px-1 py-1 bg-white/80 backdrop-blur-lg
-    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
-    <div 
-      className={`absolute top-1 bottom-1 w-[calc(33.333%-8px)] rounded-lg transition-all duration-300 ease-in-out ${
-        range === "weekly" 
-          ? "left-1 bg-blue-500" 
-          : range === "monthly" 
-          ? "left-[calc(33.333%+4px)] bg-blue-500" 
-          : "left-[calc(66.666%+8px)] bg-blue-500"
-      }`}
-    />
-    {["weekly", "monthly", "yearly"].map((r) => (
-      <button
-        key={r}
-        onClick={() => setRange(r)}
-        className={`relative px-3 py-1 text-xs rounded-lg transition-all duration-300 z-10 ${
-          range === r ? "text-white" : "text-gray-600 hover:text-blue-500"
-        }`}
+    <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-screen font-sans text-sm p-4 sm:p-6">
+      {/* Header with enhanced micro-interactions */}
+      <motion.header 
+        className="flex items-center justify-between mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
       >
-        {r[0].toUpperCase() + r.slice(1)}
-      </button>
-    ))}
-  </div>
-</div>
-      </header>
+        <motion.h1 
+          className="text-2xl sm:text-3xl font-bold text-gray-900"
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        >
+          Analytics
+        </motion.h1>
+        
+        <div className="flex items-center gap-3">
+          {/* Original Range Selector with Sliding Animation */}
+          <div className="relative flex items-center gap-1 rounded-xl border border-gray-200/60 px-1 py-1 bg-white/80 backdrop-blur-lg shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
+            <motion.div 
+              className={`absolute top-1 bottom-1 w-[calc(33.333%-8px)] rounded-lg transition-all duration-300 ease-in-out bg-blue-500`}
+              initial={false}
+              animate={{
+                left: range === "weekly" 
+                  ? "4px" 
+                  : range === "monthly" 
+                  ? "calc(33.333% + 4px)" 
+                  : "calc(66.666% + 4px)"
+              }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+            {["weekly", "monthly", "yearly"].map((r) => (
+              <button
+                key={r}
+                onClick={() => handleRangeChange(r)}
+                className={`relative px-3 py-1 text-xs rounded-lg transition-all duration-300 z-10 ${
+                  range === r ? "text-white" : "text-gray-600 hover:text-blue-500"
+                }`}
+              >
+                {r[0].toUpperCase() + r.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </motion.header>
 
-      <div className={`max-w-7xl mx-auto ${compact ? "space-y-4" : "space-y-6"}`}>
-        {/* Top grid */}
-        <div
-          className={`grid grid-cols-1 lg:grid-cols-4 gap-4 ${
-            compact ? "mb-3" : "mb-6"
-          } items-start`}
+      <div className="max-w-7xl mx-auto space-y-4">
+        {/* Top grid with staggered animations */}
+        <motion.div 
+          className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start"
+          initial="initial"
+          animate="enter"
+          variants={{
+            enter: {
+              transition: {
+                staggerChildren: 0.1
+              }
+            }
+          }}
         >
           {/* AREA CHART */}
-          <motion.div
-            variants={cardVariant}
-            initial="initial"
-            animate="enter"
-            className={`lg:col-span-2 rounded-2xl p-4 ${cardBase}
-              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className={`text-xs ${textSub}`}>Views Trend</div>
-                <div className="text-lg font-semibold text-gray-900">Recent Views</div>
+          <motion.div variants={cardVariant} className="lg:col-span-2">
+            <AnalyticsCard>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-xs text-gray-600">Views Trend</div>
+                  <div className="text-lg font-semibold text-gray-900">Recent Views</div>
+                </div>
+                <motion.div 
+                  className="text-xs text-gray-500 flex items-center gap-1"
+                  animate={{ opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                  Live
+                </motion.div>
               </div>
-              <div className={`text-xs ${muted}`}>Live</div>
-            </div>
 
-            <div className={`min-w-0 min-h-0 ${compact ? "h-36" : "h-44"}`}>
-              {loading ? (
-                <Skeleton className="w-full h-full rounded-lg" />
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={areaData}>
-                    <defs>
-                      <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="5%" stopColor={palette.primary} stopOpacity={0.28} />
-                        <stop offset="95%" stopColor={palette.primary} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
+              <div className="h-36 min-w-0 min-h-0">
+                {loading ? (
+                  <Skeleton className="w-full h-full rounded-lg" shimmer />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={areaData}>
+                      <defs>
+                        <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="5%" stopColor={palette.primary} stopOpacity={0.4} />
+                          <stop offset="95%" stopColor={palette.primary} stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
 
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#374151" }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#374151" }}
-                    />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#374151", fontSize: 12 }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#374151", fontSize: 12 }}
+                      />
 
-                    <Tooltip
-                      wrapperStyle={{ borderRadius: 8 }}
-                      contentStyle={{
-                        background: "#fff",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 8,
-                      }}
-                    />
+                      <Tooltip
+                        wrapperStyle={{ 
+                          borderRadius: 12,
+                          backdropFilter: 'blur(20px)',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                        }}
+                        contentStyle={{
+                          background: 'transparent',
+                          border: 'none',
+                          borderRadius: 8,
+                        }}
+                        animationDuration={300}
+                      />
 
-                    <Area
-                      type="monotone"
-                      dataKey="views"
-                      stroke={palette.primary}
-                      fill="url(#g1)"
-                      strokeWidth={2.2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+                      <Area
+                        type="monotone"
+                        dataKey="views"
+                        stroke={palette.primary}
+                        fill="url(#g1)"
+                        strokeWidth={2.5}
+                        dot={{ fill: palette.primary, strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                        animationDuration={300}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </AnalyticsCard>
           </motion.div>
 
           {/* TOP PRODUCT */}
-          <motion.div
-            variants={cardVariant}
-            initial="initial"
-            animate="enter"
-            className={`rounded-2xl p-4 ${cardBase}
-              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className={`text-xs ${textSub}`}>Top product</div>
-                <div className="text-lg font-semibold text-gray-900">{topProduct.name || "—"}</div>
+          <motion.div variants={cardVariant}>
+            <AnalyticsCard>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-xs text-gray-600">Top product</div>
+                  <div className="text-lg font-semibold text-gray-900 truncate">
+                    {topProduct.name || "—"}
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500">live</div>
               </div>
-              <div className={`text-xs ${muted}`}>live</div>
-            </div>
 
-            <div className="flex items-center gap-3 mt-3">
-              <img
-                src={topProduct.image || topProduct.img || "/placeholder.png"}
-                alt=""
-                className="w-16 h-16 rounded-lg object-cover border border-gray-200/60"
-              />
-              <div>
-                <div className={`text-xs ${textSub}`}>Views</div>
-
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={viewsPulse}
-                    initial={{ scale: 0.98 }}
-                    animate={{ scale: [1, 1.02, 1] }}
-                    transition={{ duration: 0.7 }}
-                    className="text-2xl font-semibold text-gray-900"
-                  >
-                    {viewsAnimated.toLocaleString()}
-                  </motion.div>
-                </AnimatePresence>
+              <div className="flex items-center gap-3 mt-3">
+                <motion.div 
+                  className="relative"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
+                  <img
+                    src={topProduct.image || topProduct.img || "/placeholder.png"}
+                    alt=""
+                    className="w-16 h-16 rounded-xl object-cover border border-gray-200/60"
+                  />
+                  <motion.div 
+                    className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </motion.div>
+                <div>
+                  <div className="text-xs text-gray-600">Views</div>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={viewsAnimated}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 1.1, opacity: 0 }}
+                      className="text-2xl font-semibold text-gray-900"
+                    >
+                      {viewsAnimated.toLocaleString()}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
               </div>
-            </div>
 
-            <div className="h-24 mt-3 min-w-0 min-h-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} margin={{ left: 6, right: 6 }}>
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <Tooltip />
+              <div className="h-24 mt-3 min-w-0 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barData.slice(0, 5)} margin={{ left: 6, right: 6 }}>
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false}
+                      tick={{ fontSize: 10 }}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false}
+                      tick={{ fontSize: 10 }}
+                    />
+                    <Tooltip animationDuration={300} />
 
-                  <Bar dataKey="views" barSize={20} radius={[6, 6, 6, 6]}>
-                    {barData.map((_, idx) => {
-                      const colors = [
-                        palette.primary,
-                        palette.soft2,
-                        palette.soft,
-                      ];
-                      return <Cell key={idx} fill={colors[idx % 3]} />;
-                    })}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+                    <Bar 
+                      dataKey="views" 
+                      barSize={20} 
+                      radius={[4, 4, 4, 4]}
+                      animationDuration={300}
+                    >
+                      {barData.slice(0, 5).map((_, idx) => {
+                        const colors = [palette.primary, palette.soft2, palette.soft];
+                        return (
+                          <Cell 
+                            key={idx} 
+                            fill={colors[idx % 3]}
+                          />
+                        );
+                      })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </AnalyticsCard>
           </motion.div>
 
           {/* MINI STATS */}
-          <div className="space-y-3">
-            <motion.div
-              variants={cardVariant}
-              initial="initial"
-              animate="enter"
-              className={`${cardBase} rounded-2xl p-3
-                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-            >
+          <motion.div variants={cardVariant} className="space-y-3">
+            <AnalyticsCard hoverable={false}>
               <div className="flex items-center gap-3">
-                <div className="text-xl text-blue-500">
+                <motion.div 
+                  className="text-xl text-blue-500"
+                  whileHover={{ rotate: 15, scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
                   <FaShoppingBag />
-                </div>
+                </motion.div>
                 <div>
                   <div className="text-lg font-semibold text-gray-900">
                     {safeProducts.length}
@@ -369,19 +493,17 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </AnalyticsCard>
 
-            <motion.div
-              variants={cardVariant}
-              initial="initial"
-              animate="enter"
-              className={`${cardBase} rounded-2xl p-3
-                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-            >
+            <AnalyticsCard hoverable={false}>
               <div className="flex items-center gap-3">
-                <div className="text-xl text-blue-500">
+                <motion.div 
+                  className="text-xl text-blue-500"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
                   <FaEye />
-                </div>
+                </motion.div>
                 <div>
                   <div className="text-lg font-semibold text-gray-900">
                     {totalViewsCount.toLocaleString()}
@@ -391,19 +513,17 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </AnalyticsCard>
 
-            <motion.div
-              variants={cardVariant}
-              initial="initial"
-              animate="enter"
-              className={`${cardBase} rounded-2xl p-3
-                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-            >
+            <AnalyticsCard hoverable={false}>
               <div className="flex items-center gap-3">
-                <div className="text-xl text-blue-500">
+                <motion.div 
+                  className="text-xl text-blue-500"
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
                   <FaUsers />
-                </div>
+                </motion.div>
                 <div className="flex-1">
                   <div className="text-lg font-semibold text-gray-900">830</div>
                   <div className="text-xs text-gray-600">
@@ -411,106 +531,134 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   </div>
 
                   <div className="flex gap-2 mt-2">
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60">
-                      <FaThumbsUp className="text-blue-500" />{" "}
+                    <motion.div 
+                      className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FaThumbsUp className="text-blue-500" />
                       <span className="text-gray-700">{topProduct.likes || 0}</span>
-                    </div>
+                    </motion.div>
 
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60">
-                      <FaThumbsDown className="text-blue-400" />{" "}
+                    <motion.div 
+                      className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FaThumbsDown className="text-blue-400" />
                       <span className="text-gray-700">{topProduct.dislikes || 0}</span>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
               </div>
-            </motion.div>
-          </div>
-        </div>
+            </AnalyticsCard>
+          </motion.div>
+        </motion.div>
 
-        {/* PRODUCT GRID */}
-        <div className="mt-6">
+        {/* PRODUCT GRID with enhanced interactions */}
+        <motion.div 
+          className="mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">Products Performance</h2>
-            <div className="text-xs text-gray-600">
+            <motion.div 
+              className="text-xs text-gray-600 flex items-center gap-1"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
               Updated live
-            </div>
+            </motion.div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`${cardBase} rounded-2xl p-4
-                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-                >
-                  <Skeleton className="w-full h-36 object-cover rounded-lg" />
+                <AnalyticsCard key={i} hoverable={false}>
+                  <Skeleton className="w-full h-36 rounded-lg" shimmer />
                   <div className="mt-3 flex items-center justify-between">
                     <Skeleton className="h-4 w-2/3" />
                     <Skeleton className="h-4 w-1/6" />
                   </div>
                   <div className="mt-3 h-12">
-                    <Skeleton className="w-full h-full rounded" />
+                    <Skeleton className="w-full h-full rounded" shimmer />
                   </div>
-                </div>
+                </AnalyticsCard>
               ))
             ) : (
               safeProducts.map((p) => (
                 <motion.div
                   key={p.id}
-                  whileHover={{ y: -6 }}
-                  className={`${cardBase} rounded-2xl p-4 cursor-pointer transition-all duration-200
-                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-                    hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  whileHover={{ 
+                    y: -4,
+                    transition: { type: "spring", stiffness: 400, damping: 30 }
+                  }}
                 >
-                  <img
-                    src={p.image || p.img || "/placeholder.png"}
-                    alt=""
-                    className="w-full h-36 object-cover rounded-lg border border-gray-200/60"
-                  />
+                  <AnalyticsCard
+                    onMouseEnter={() => handleProductHover(p.id)}
+                    onMouseLeave={handleProductLeave}
+                  >
+                    <motion.img
+                      src={p.image || p.img || "/placeholder.png"}
+                      alt=""
+                      className="w-full h-36 object-cover rounded-lg border border-gray-200/60"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    />
 
-                  <div className="mt-3 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-600">
-                        {p.reviews || 0} reviews • {p.rating || 0}★
+                    <div className="mt-3 flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-gray-900 truncate">{p.name}</div>
+                        <div className="text-xs text-gray-600">
+                          {p.reviews || 0} reviews • {p.rating || 0}★
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="text-right">
-                      <div className="font-medium text-gray-900">
-                        {(p.views || 0).toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        views
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 h-12 min-w-0 min-h-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={
-                          Array.isArray(p.spark)
-                            ? p.spark.map((v, i) => ({ x: i, v }))
-                            : []
-                        }
+                      <motion.div 
+                        className="text-right"
+                        whileHover={{ scale: 1.05 }}
                       >
-                        <Area
-                          type="monotone"
-                          dataKey="v"
-                          stroke={palette.primary}
-                          fill={palette.soft}
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
+                        <div className="font-medium text-gray-900">
+                          {(p.views || 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          views
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    <div className="mt-3 h-12 min-w-0 min-h-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart
+                          data={
+                            Array.isArray(p.spark)
+                              ? p.spark.map((v, i) => ({ x: i, v }))
+                              : []
+                          }
+                        >
+                          <Area
+                            type="monotone"
+                            dataKey="v"
+                            stroke={palette.primary}
+                            fill={palette.soft}
+                            strokeWidth={2}
+                            animationDuration={300}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </AnalyticsCard>
                 </motion.div>
               ))
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

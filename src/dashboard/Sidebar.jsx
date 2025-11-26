@@ -9,7 +9,8 @@ import {
   FaDownload,
   FaChevronDown,
   FaChevronRight,
-  FaUserFriends
+  FaUserFriends,
+  FaBell
 } from "react-icons/fa";
 import barImage from "../assets/bar.jpg";
 import { useFollowers } from "../context/FollowersContext";
@@ -23,7 +24,8 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { label: "Sales", icon: <FaShoppingCart className="text-sm" /> },
     { label: "Analytics", icon: <FaChartLine className="text-sm" /> },
     { label: "Contacts", icon: <FaUsers className="text-sm" /> },
-    { label: "Followers", icon: <FaUserFriends className="text-sm" /> }, // NEW
+    { label: "Followers", icon: <FaUserFriends className="text-sm" /> },
+    { label: "Notifications", icon: <FaBell className="text-sm" /> }, // NEW
     { label: "Settings", icon: <FaCog className="text-sm" /> },
   ];
 
@@ -47,7 +49,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
 
   const activeIconStyles = "bg-blue-500 text-white shadow-md";
   const inactiveIconStyles =
-    "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
+    "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px rgba(0,0,0,0.05),inset_-2px_-2px_4px rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
 
   return (
     <div className="bg-white/80 backdrop-blur-lg text-gray-900 h-full p-3 flex flex-col border-r border-gray-200/60 w-48">
@@ -70,6 +72,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         {tabs.map((t) => {
           const isActive = activeTab === t.label;
           const showBadge = t.label === "Followers" && getFollowersCount() > 0;
+          const showNotificationBadge = t.label === "Notifications" && getUnreadNotificationsCount() > 0;
           
           return (
             <button
@@ -93,6 +96,13 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
               {showBadge && (
                 <span className="bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
                   {getFollowersCount()}
+                </span>
+              )}
+
+              {/* Notifications Badge */}
+              {showNotificationBadge && (
+                <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                  {getUnreadNotificationsCount()}
                 </span>
               )}
 
@@ -151,13 +161,13 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       <button
         onClick={handleSignOut}
         className="group mt-4 flex items-center p-2.5 rounded-xl bg-white/60 text-gray-700 border border-gray-200/50 
-          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-          hover:shadow-[3px_3px_10px_rgba(220,38,38,0.1),-3px_-3px_10px_rgba(255,255,255,0.8)]
+          shadow-[inset_1px_1px_2px rgba(255,255,255,0.8),inset_-1px_-1px_2px rgba(0,0,0,0.05)]
+          hover:shadow-[3px_3px_10px rgba(220,38,38,0.1),-3px_-3px_10px rgba(255,255,255,0.8)]
           hover:text-red-500 hover:border-red-200 transition-all duration-200"
       >
         <div
           className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-100 text-gray-600 
-            shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]
+            shadow-[inset_2px_2px_4px rgba(0,0,0,0.05),inset_-2px_-2px_4px rgba(255,255,255,0.8)]
             group-hover:bg-red-50 group-hover:text-red-500 transition-all duration-200"
         >
           <FaSignOutAlt className="text-xs" />
@@ -175,6 +185,13 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       </div>
     </div>
   );
+};
+
+// Helper function for notification count (you can replace this with actual logic)
+const getUnreadNotificationsCount = () => {
+  // This would typically come from a context or state
+  // For now, returning a mock number
+  return 3;
 };
 
 export default Sidebar;

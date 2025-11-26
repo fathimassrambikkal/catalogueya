@@ -7,8 +7,9 @@ import Settings from "../dashboard/Settings.jsx";
 import Cover from "../dashboard/Cover.jsx";
 import Contacts from "../dashboard/Contacts.jsx";
 import Followers from "../dashboard/Followers.jsx";
+import Notifications from "../dashboard/Notifications.jsx"; // ADD THIS IMPORT
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
-import { FollowersProvider } from "../context/FollowersContext"; // ADD THIS IMPORT
+import { FollowersProvider } from "../context/FollowersContext";
 
 export default function CompanyDashboard() {
   const [activeTab, setActiveTab] = useState("Products");
@@ -85,6 +86,9 @@ export default function CompanyDashboard() {
       case "Followers":
         return <Followers />;
 
+      case "Notifications": // ADD THIS CASE
+        return <Notifications />;
+
       case "Settings":
         return (
           <Settings
@@ -99,33 +103,31 @@ export default function CompanyDashboard() {
   };
 
   return (
-    // WRAP THE ENTIRE COMPANY DASHBOARD WITH FOLLOWERS PROVIDER
     <FollowersProvider>
       <div className="flex bg-gray-100 min-h-screen overflow-x-hidden">
-        {/* Sidebar */}
+        {/* Sidebar - Fixed and hidden by default on desktop */}
         <div
-          className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 lg:w-48
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+            lg:translate-x-0 lg:static lg:z-auto`}
         >
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
 
-        {/* Sidebar Overlay */}
+        {/* Sidebar Overlay - Only show on mobile when sidebar is open */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-300 min-w-0">
-
+        {/* Main Content - Fixed spacing issues */}
+        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto min-w-0 lg:ml-0">
           {/* Sidebar Toggle Button */}
           <button
             onClick={() => setSidebarOpen((s) => !s)}
-            className="fixed top-4 left-6 z-50 p-3 rounded-xl text-sm bg-white text-gray-500 shadow-md hover:bg-gray-100"
+            className="fixed top-4 left-4 z-50 p-2 rounded-xl bg-white text-gray-500 shadow-md hover:bg-gray-100 lg:hidden"
           >
             <TbLayoutSidebarRightFilled size={18} />
           </button>
@@ -135,7 +137,10 @@ export default function CompanyDashboard() {
             <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
           )}
 
-          <div className="flex-1 p-6">{renderContent()}</div>
+          {/* Main content area - removed extra margins and reduced padding */}
+          <div className="flex-1 mt-0">
+            {renderContent()}
+          </div>
         </div>
       </div>
     </FollowersProvider>

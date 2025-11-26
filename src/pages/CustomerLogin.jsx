@@ -8,8 +8,9 @@ import Following from "../Customer/Following.jsx";
 import Settings from "../Customer/Settings.jsx";
 import Help from "../Customer/Help.jsx"; 
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
+import logo from "../assets/logo.png";
 
-export default function CustomerLogin() {
+function CustomerLogin() {
   const [activeTab, setActiveTab] = useState("messages");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -59,18 +60,29 @@ export default function CustomerLogin() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-300 min-w-0">
+      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-300 min-w-0 w-full">
 
-        {/* Sidebar Toggle Button - Visible on ALL screens */}
-        <button
-          onClick={() => setSidebarOpen((s) => !s)}
-          className="fixed top-4 left-6 z-50 p-3 rounded-xl text-sm bg-white text-gray-500 shadow-md hover:bg-gray-100"
-        >
-          <TbLayoutSidebarRightFilled size={18} />
-        </button>
+        {/* Sidebar Toggle Button and Logo */}
+        <div className="fixed top-4 left-6 z-50 flex items-center gap-4">
+          <button
+            onClick={() => setSidebarOpen((s) => !s)}
+            className="p-3 rounded-xl text-sm bg-white text-gray-500 shadow-md hover:bg-gray-100"
+          >
+            <TbLayoutSidebarRightFilled size={18} />
+          </button>
+          
+          {/* Logo placed after the sidebar toggle button */}
+          <img 
+            src={logo} 
+            alt="Logo" 
+            className="h-12 w-auto"
+          />
+        </div>
 
-        <div className="flex-1 p-6 mt-16">{renderContent()}</div>
+        <div className="flex-1 p-6 mt-16 overflow-x-hidden">{renderContent()}</div>
       </div>
     </div>
   );
 }
+
+export default CustomerLogin; // Make sure this line is present

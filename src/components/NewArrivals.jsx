@@ -97,15 +97,15 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
       <FaHeart className={`text-xs sm:text-sm md:text-base transform-gpu ${isFav ? "text-red-500" : "hover:text-red-400"}`} />
     </button>
 
-    <div className="relative w-full h-[240px] xs:h-[260px] sm:h-[280px] md:h-[300px] overflow-hidden rounded-t-3xl transform-gpu">
+    <div className="relative w-full h-[200px] xs:h-[220px] sm:h-[240px] md:h-[260px] overflow-hidden rounded-t-3xl transform-gpu">
       <img
         src={product.img}
         alt={product.name}
         loading="eager"
         decoding="sync"
         fetchPriority="high"
-        width={320}
-        height={300}
+        width={280}
+        height={260}
         className="w-full h-full object-cover object-top rounded-t-3xl border-b border-white/20 
                  transition-transform duration-500 ease-out group-hover:scale-105 transform-gpu"
         style={{ 
@@ -138,11 +138,11 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
       style={{ willChange: 'transform' }}
     >
       <div className="flex flex-col w-[80%] z-10 transform-gpu">
-        <h3 className="font-semibold text-[11px] xs:text-xs sm:text-sm truncate text-gray-900 mb-1 transform-gpu">{product.name}</h3>
+        <h3 className="font-semibold text-xs xs:text-sm sm:text-base truncate text-gray-900 mb-1 transform-gpu">{product.name}</h3>
         <div className="flex items-center gap-1 transform-gpu">
-          <span className="text-[11px] xs:text-[12px] sm:text-sm font-bold text-gray-900 transform-gpu">QAR {product.price}</span>
+          <span className="text-xs xs:text-sm sm:text-base font-bold text-gray-900 transform-gpu">QAR {product.price}</span>
           {product.oldPrice && (
-            <span className="text-[9px] xs:text-[10px] sm:text-xs line-through text-gray-500 transform-gpu">QAR {product.oldPrice}</span>
+            <span className="text-[10px] xs:text-xs sm:text-sm line-through text-gray-500 transform-gpu">QAR {product.oldPrice}</span>
           )}
         </div>
       </div>
@@ -171,7 +171,7 @@ function NewArrivalsComponent() {
   const scrollContainerRef = useRef(null);
   const sectionRef = useRef(null);
   const isInViewport = useIsInViewport(sectionRef);
-  const [cardWidth, setCardWidth] = useState('280px');
+  const [cardWidth, setCardWidth] = useState('260px');
   const resizeTimeoutRef = useRef(null);
 
   // Ultra-fast data loading with preloaded data
@@ -213,11 +213,11 @@ function NewArrivalsComponent() {
     const updateCardWidth = () => {
       const width = window.innerWidth;
       if (width < 640) {
-        setCardWidth('calc(50vw - 24px)');
+        setCardWidth('calc(50vw - 20px)');
       } else if (width < 768) {
-        setCardWidth('280px');
+        setCardWidth('260px');
       } else {
-        setCardWidth('320px');
+        setCardWidth('280px');
       }
     };
 
@@ -280,7 +280,7 @@ function NewArrivalsComponent() {
   const handleScrollLeft = useCallback(() => {
     if (scrollContainerRef.current && isInViewport) {
       const scrollAmount = window.innerWidth < 640 ? 
-        (window.innerWidth / 2) : 300;
+        (window.innerWidth / 2) : 280;
       scrollContainerRef.current.scrollBy({
         left: -scrollAmount,
         behavior: 'smooth'
@@ -291,7 +291,7 @@ function NewArrivalsComponent() {
   const handleScrollRight = useCallback(() => {
     if (scrollContainerRef.current && isInViewport) {
       const scrollAmount = window.innerWidth < 640 ? 
-        (window.innerWidth / 2) : 300;
+        (window.innerWidth / 2) : 280;
       scrollContainerRef.current.scrollBy({
         left: scrollAmount,
         behavior: 'smooth'
@@ -311,7 +311,7 @@ function NewArrivalsComponent() {
           willChange: 'transform'
         }}
       >
-        <div className="w-full h-[240px] xs:h-[260px] sm:h-[280px] md:h-[300px] bg-gray-300 rounded-t-3xl transform-gpu" />
+        <div className="w-full h-[160px] xs:h-[180px] sm:h-[200px] md:h-[220px] bg-gray-300 rounded-t-3xl transform-gpu" />
         <div className="p-3 sm:p-4 bg-gray-200 rounded-b-2xl transform-gpu">
           <div className="h-4 bg-gray-300 rounded mb-2 w-3/4 transform-gpu"></div>
           <div className="h-3 bg-gray-300 rounded w-1/2 transform-gpu"></div>
@@ -323,7 +323,7 @@ function NewArrivalsComponent() {
   return (
     <section 
       ref={sectionRef}
-      className="py-6 sm:py-10 bg-amber-300 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden transform-gpu"
+      className="py-6 sm:py-10 bg-neutral-100 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden transform-gpu"
       style={{ 
         contentVisibility: 'auto',
         willChange: 'transform'

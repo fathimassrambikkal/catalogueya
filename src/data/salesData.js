@@ -3,6 +3,7 @@ import g1 from "../assets/g1.jpg";
 import g2 from "../assets/g2.jpg";
 import g3 from "../assets/g3.jpg";
 import g4 from "../assets/g4.jpg";
+import g20 from "../assets/g20.jpg";
 
 // 🏷️ Base sales products (linked to REAL gardening companies)
 const baseSales = [
@@ -55,6 +56,19 @@ const baseSales = [
     price: 85,
     oldPrice: 120,
     img: g4,
+    rating: 4.6,
+    offerEnds: "Dec 7, 2025",
+  },
+    {
+    id: "sale4",
+    name: "Flowering Plant Pack",
+    category: "Flowering Plants",
+    categoryId: "gardening",
+    company: "Mashatil discovery",
+    companyId: "gardenCo2",
+    price: 85,
+    oldPrice: 120,
+    img: g20,
     rating: 4.6,
     offerEnds: "Dec 7, 2025",
   },

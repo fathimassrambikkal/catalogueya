@@ -15,11 +15,10 @@ import {
 import { useFollowing } from "../context/FollowingContext";
 
 // Menu items configuration
-const menuItems = [
+const menuItems = [ { label: "Favourites", icon: <FaHeart className="text-sm" />, page: "fav" },
   { label: "Messages", icon: <FaComments className="text-sm" />, page: "messages" },
   { label: "Notifications", icon: <FaBell className="text-sm" />, page: "notifications" },
   { label: "Reviews", icon: <FaStar className="text-sm" />, page: "reviews" },
-  { label: "Favourites", icon: <FaHeart className="text-sm" />, page: "fav" },
   { label: "Following", icon: <FaUserPlus className="text-sm" />, page: "following" },
   { label: "Settings", icon: <FaCog className="text-sm" />, page: "settings" },
   { label: "Help", icon: <FaQuestionCircle className="text-sm" />, page: "help" }

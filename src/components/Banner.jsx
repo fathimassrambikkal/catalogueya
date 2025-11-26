@@ -226,7 +226,7 @@ export default function Banner() {
           className="text-white/90 text-md md:text-xl lg:text-2xl font-semibold tracking-wide text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] max-w-2xl -mt-4 sm:-mt-1 transform-gpu relative z-10"
           style={{ willChange: 'transform' }}
         >
-          Enhance Everyday Living.
+          Enhance Everyday Living
         </motion.p>
       </motion.div>
 

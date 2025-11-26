@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { FaBell, FaChevronRight, FaTimes, FaRegCommentDots, FaMoneyBillWave, FaRegStar, FaArrowLeft } from 'react-icons/fa';
+import { FaChevronRight, FaTimes, FaRegCommentDots, FaMoneyBillWave, FaRegStar, FaArrowLeft, FaPlus } from 'react-icons/fa';
+import AddCustomerModal from './AddCustomerModal';
 
 const CustomerManagement = ({ 
   loyalCustomers = [], 
   onRemoveCustomer,
-  onSendNotification,
   onRequestPayment,
   onRequestReview,
   onSendMessage
 }) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [currentView, setCurrentView] = useState('list'); // 'list', 'actions', 'notification', 'payment', 'review', 'chat'
+  const [currentView, setCurrentView] = useState('list'); 
   const [reviewType, setReviewType] = useState('');
+  const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
 
   // Handle customer click to show actions page
   const handleCustomerClick = (customer) => {
@@ -26,14 +27,6 @@ const CustomerManagement = ({
     }
     setCurrentView('list');
     setSelectedCustomer(null);
-  };
-
-  // Handle send notification for single customer
-  const handleSingleSendNotification = (type) => {
-    if (selectedCustomer && onSendNotification) {
-      onSendNotification(selectedCustomer, type);
-    }
-    setCurrentView('actions');
   };
 
   // Handle request payment
@@ -65,7 +58,7 @@ const CustomerManagement = ({
     if (currentView === 'actions') {
       setCurrentView('list');
       setSelectedCustomer(null);
-    } else if (['notification', 'payment', 'review', 'chat'].includes(currentView)) {
+    } else if (['payment', 'review', 'chat'].includes(currentView)) {
       setCurrentView('actions');
     }
   };
@@ -75,11 +68,6 @@ const CustomerManagement = ({
     setCurrentView('list');
     setSelectedCustomer(null);
   };
-
-  const notificationTypes = [
-    { type: 'New Sales', special: true, description: 'Notify customers about discounted products' },
-    { type: 'Low in Stock', special: false, description: 'Alert customers about low stock items' }
-  ];
 
   // Customers List View
   const renderCustomersList = () => (
@@ -111,9 +99,9 @@ const CustomerManagement = ({
     </div>
   );
 
-  // Customer Actions View
+  // Customer Actions View - FIXED WIDTH
   const renderCustomerActions = () => (
-    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full max-w-md  border border-gray-200/60
       shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Header */}
       <div className="p-6 border-b border-gray-200/60 relative">
@@ -134,16 +122,6 @@ const CustomerManagement = ({
 
       {/* Action Buttons */}
       <div className="p-6 space-y-4">
-        <button 
-          onClick={() => setCurrentView('notification')}
-          className="w-full flex items-center justify-start gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200
-            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-            hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]"
-        >
-          <FaBell className="text-blue-500" />
-          <span className="text-left">Send Notification</span>
-        </button>
-        
         <button 
           onClick={() => setCurrentView('payment')}
           className="w-full flex items-center justify-start gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60 hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200
@@ -190,50 +168,9 @@ const CustomerManagement = ({
     </div>
   );
 
-  // Send Notification View
-  const renderSendNotification = () => (
-    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
-      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200/60 relative">
-        <button
-          onClick={handleBack}
-          className="absolute left-6 top-6 text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
-            bg-white/80 backdrop-blur-lg border border-gray-200/60
-            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-            hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
-        >
-          <FaArrowLeft size={18} />
-        </button>
-        <div className="text-left pl-12">
-          <h2 className="text-2xl font-bold text-gray-900">Send Notification</h2>
-          <p className="text-gray-600 mt-1">{selectedCustomer.name}</p>
-        </div>
-      </div>
-
-      {/* Notification Options */}
-      <div className="p-6 space-y-4">
-        {notificationTypes.map((notification) => (
-          <button
-            key={notification.type}
-            onClick={() => handleSingleSendNotification(notification.type)}
-            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
-              notification.special 
-                ? 'border-blue-200 bg-blue-500/10 hover:bg-blue-500/20 hover:border-blue-300' 
-                : 'border-gray-200/60 bg-white/80 hover:bg-gray-50/60 hover:border-gray-300/60'
-            } shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-          >
-            <div className="font-semibold text-gray-900 text-left">{notification.type}</div>
-            <div className="text-gray-600 text-sm mt-1 text-left">{notification.description}</div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Request Payment View
+  // Request Payment View - FIXED WIDTH
   const renderRequestPayment = () => (
-    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full max-w-md  border border-gray-200/60
       shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Header */}
       <div className="p-6 border-b border-gray-200/60">
@@ -289,9 +226,9 @@ const CustomerManagement = ({
     </div>
   );
 
-  // Request Review View
+  // Request Review View - FIXED WIDTH
   const renderRequestReview = () => (
-    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full border border-gray-200/60
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full max-w-md  border border-gray-200/60
       shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Header */}
       <div className="p-6 border-b border-gray-200/60">
@@ -374,9 +311,9 @@ const CustomerManagement = ({
     </div>
   );
 
-  // Chat View
+  // Chat View - FIXED WIDTH
   const renderChat = () => (
-    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full h-[600px] flex flex-col border border-gray-200/60
+    <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full max-w-2xl  h-[600px] flex flex-col border border-gray-200/60
       shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
       {/* Chat Header */}
       <div className="p-4 border-b border-gray-200/60">
@@ -402,15 +339,28 @@ const CustomerManagement = ({
               </span>
             </div>
           </div>
-          <button
-            onClick={handleCloseAll}
-            className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
-              bg-white/80 backdrop-blur-lg border border-gray-200/60
-              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-              hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
-          >
-            <FaTimes size={18} />
-          </button>
+          
+          {/* Add Contact Button Only */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowAddCustomerModal(true)}
+              className="flex items-center gap-2 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm
+                shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
+            >
+              <FaPlus size={14} />
+              Add Contact
+            </button>
+            
+            <button
+              onClick={handleCloseAll}
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-xl
+                bg-white/80 backdrop-blur-lg border border-gray-200/60
+                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
+            >
+              <FaTimes size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -461,10 +411,15 @@ const CustomerManagement = ({
     <div className="w-full">
       {currentView === 'list' && renderCustomersList()}
       {currentView === 'actions' && renderCustomerActions()}
-      {currentView === 'notification' && renderSendNotification()}
       {currentView === 'payment' && renderRequestPayment()}
       {currentView === 'review' && renderRequestReview()}
       {currentView === 'chat' && renderChat()}
+
+      {/* Render the actual AddCustomerModal component */}
+      <AddCustomerModal 
+        showAddCustomerModal={showAddCustomerModal}
+        setShowAddCustomerModal={setShowAddCustomerModal}
+      />
     </div>
   );
 };

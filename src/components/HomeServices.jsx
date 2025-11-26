@@ -149,7 +149,7 @@ export default function HomeServices() {
 
     const handleResize = () => {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(updateCardsPerView, 16); // 60fps
+      resizeTimeout = setTimeout(updateCardsPerView, 16); 
     };
 
     // Use ResizeObserver for better performance
@@ -301,7 +301,7 @@ export default function HomeServices() {
             </div>
           </div>
         </div>
-        <div className="h-4 bg-gray-300 rounded w-20 mt-2 transform-gpu"></div>
+        <div className="h-4 bg-gray-300 rounded w-20 mt-3 transform-gpu"></div>
       </div>
     ));
   }, [cardsPerView, circleSize]);
@@ -353,7 +353,8 @@ export default function HomeServices() {
             />
           </div>
         </div>
-        <h3 className="text-gray-900 text-[12px] sm:text-base md:text-sm font-medium text-center mt-2 px-2 leading-tight max-w-full truncate transform-gpu">
+        {/* Increased text size and spacing */}
+        <h3 className="text-gray-900 text-[14px] sm:text-base md:text-[16px] font-medium text-center mt-5 px-2 leading-tight max-w-full truncate transform-gpu">
           {service?.title_en || service?.title}
         </h3>
       </div>

@@ -282,7 +282,7 @@ const Pricing = () => {
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`relative flex-1 max-w-[140px] sm:max-w-[160px] md:max-w-[180px] text-center px-4 sm:px-5 py-3 rounded-2xl text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap transform-gpu z-10 ${
+              className={`relative flex-1 max-w-[130px] sm:max-w-[160px] md:max-w-[180px] text-center px-4 sm:px-5 py-3 rounded-2xl text-[11px] sm:text-sm font-medium transition-all duration-300 whitespace-nowrap transform-gpu z-10 ${
                 activeTab === tab 
                   ? "text-white scale-105" 
                   : "text-gray-700 hover:text-blue-500 hover:scale-105"

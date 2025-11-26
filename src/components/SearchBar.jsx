@@ -74,7 +74,7 @@ export default function SearchBar() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Optimized placeholder animation with proper cleanup
+  // SLOWER placeholder animation with proper cleanup
   useEffect(() => {
     if (searchTerm || categoryTitles.length === 0) return;
     
@@ -87,8 +87,8 @@ export default function SearchBar() {
         setTimeout(() => {
           setCurrentWordIndex((prev) => (prev + 1) % categoryTitles.length);
           setShowPlaceholder(true);
-        }, 150);
-      }, 2000);
+        }, 300); // Increased from 150ms to 300ms for slower fade out
+      }, 3000); // Increased from 2000ms to 3000ms for slower transitions
     };
 
     animationFrame = requestAnimationFrame(animatePlaceholder);
@@ -195,9 +195,10 @@ export default function SearchBar() {
         `}
         style={{ willChange: 'transform' }}
       >
+        {/* Search Icon - Bigger size */}
         <AiOutlineSearch
           className={`text-white transform-gpu
-            text-lg sm:text-xl md:text-2xl
+            text-xl sm:text-2xl md:text-2xl /* Increased sizes */
             ${i18n.language === "ar" ? "ml-3" : "mr-2"}
           `}
           style={{ willChange: 'transform' }}
@@ -221,14 +222,14 @@ export default function SearchBar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ 
-                opacity: { duration: 0.2 }, 
-                y: { duration: 0.2 },
+                opacity: { duration: 0.4 },
+                y: { duration: 0.6 }, 
                 willChange: "opacity, transform"
               }}
               className={`absolute top-3 pointer-events-none select-none text-gray-400 transform-gpu ${
                 i18n.language === "ar"
-                  ? "right-12 text-right"
-                  : "left-12 text-left"
+                  ? "right-14 text-right"
+                  : "left-14 text-left"
               }`}
               style={{ willChange: 'transform, opacity' }}
             >

@@ -13,8 +13,8 @@ function Home() {
     <>
     <Banner/>
     <HomeServices/>
+    <NewArrivals/>
    <Sales/>
-   <NewArrivals/>
    <Pricing/>
    <Faq/>
    {/* <CallToAction/> */}
