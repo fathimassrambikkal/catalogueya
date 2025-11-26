@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaChevronRight, FaTimes, FaRegCommentDots, FaMoneyBillWave, FaRegStar, FaArrowLeft, FaPlus } from 'react-icons/fa';
+import { FaChevronRight, FaTimes, FaRegCommentDots, FaMoneyBillWave, FaRegStar, FaArrowLeft, FaPlus, FaPaperPlane } from 'react-icons/fa';
 import AddCustomerModal from './AddCustomerModal';
 
 const CustomerManagement = ({ 
@@ -372,15 +372,16 @@ const CustomerManagement = ({
         </div>
       </div>
 
-      {/* Message Input */}
+      {/* Message Input - RESPONSIVE SEND BUTTON */}
       <div className="p-4 border-t border-gray-200/60">
-        <div className="flex space-x-2">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             placeholder="Type your message..."
             className="flex-1 border border-gray-300/60 rounded-xl px-4 py-2 bg-white/80 backdrop-blur-sm
               focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-left
-              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]"
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+              text-sm sm:text-base"
             onKeyPress={(e) => {
               if (e.key === 'Enter' && e.target.value.trim()) {
                 handleSendMessage(e.target.value);
@@ -396,10 +397,13 @@ const CustomerManagement = ({
                 input.value = '';
               }
             }}
-            className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-all duration-200
-              shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
+            className="bg-blue-500 text-white p-2 sm:px-4 sm:py-2 rounded-xl hover:bg-blue-600 transition-all duration-200
+              shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]
+              flex items-center justify-center min-w-[40px] sm:min-w-[60px]"
           >
-            Send
+            {/* Show icon only on mobile, icon + text on larger screens */}
+            <FaPaperPlane className="text-xs sm:text-sm" />
+            <span className="hidden sm:inline ml-2 text-sm">Send</span>
           </button>
         </div>
       </div>
