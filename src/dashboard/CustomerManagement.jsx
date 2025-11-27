@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaChevronRight, FaTimes, FaRegCommentDots, FaMoneyBillWave, FaRegStar, FaArrowLeft, FaPlus, FaPaperPlane } from 'react-icons/fa';
+import { FaChevronRight, FaTimes, FaRegCommentDots, FaMoneyBillWave, FaRegStar, FaArrowLeft, FaPlus, FaPaperPlane, FaUserPlus } from 'react-icons/fa';
 import AddCustomerModal from './AddCustomerModal';
 
 const CustomerManagement = ({ 
@@ -342,14 +342,14 @@ const CustomerManagement = ({
           
           {/* Add Contact Button Only */}
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setShowAddCustomerModal(true)}
-              className="flex items-center gap-2 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm
-                shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
-            >
-              <FaPlus size={14} />
-              Add Contact
-            </button>
+          <button 
+  onClick={() => setShowAddCustomerModal(true)}
+  className="flex items-center gap-1.5 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm
+    shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
+>
+  <FaUserPlus size={14} />
+  Add 
+</button>
             
             <button
               onClick={handleCloseAll}

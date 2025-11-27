@@ -158,11 +158,11 @@ const LazyImage = memo(({ src, index }) => {
   );
 });
 
-// CSS-based Marquee for 60fps performance
-const LogoMarquee = ({ logos }) => {
+// CSS-based Marquee for 60fps performance with RTL support
+const LogoMarquee = ({ logos, isRTL }) => {
   return (
     <div className="relative w-full overflow-hidden py-8">
-      <div className="flex gap-8 animate-marquee">
+      <div className={`flex gap-8 ${isRTL ? 'animate-marquee-rtl' : 'animate-marquee'}`}>
         {logos.map((logo, index) => (
           <LogoItem key={index} logo={logo} index={index} />
         ))}
@@ -175,19 +175,28 @@ const LogoMarquee = ({ logos }) => {
   );
 };
 
-// Add this CSS to your global styles for smooth marquee
-/*
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 20s linear infinite;
-  will-change: transform;
-}
-*/
-
 export default function About() {
+  const [isRTL, setIsRTL] = useState(false);
+
+  // Check for RTL language
+  useEffect(() => {
+    const checkRTL = () => {
+      const htmlDir = document.documentElement.getAttribute('dir');
+      const isRTL = htmlDir === 'rtl';
+      setIsRTL(isRTL);
+    };
+
+    checkRTL();
+    
+    const observer = new MutationObserver(checkRTL);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['dir'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   // Preload critical images
   useEffect(() => {
     // Preload first few images for better perceived performance
@@ -254,8 +263,8 @@ export default function About() {
             </div>
           </div>
 
-          {/* Logo Marquee */}
-          <LogoMarquee logos={clientLogos} />
+          {/* Logo Marquee with RTL support */}
+          <LogoMarquee logos={clientLogos} isRTL={isRTL} />
         </section>
 
         {/* Lazy-loaded Subscribe & CTA */}

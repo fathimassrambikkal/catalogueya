@@ -257,7 +257,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
     <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-screen font-sans text-sm p-4 sm:p-6">
       {/* Header with enhanced micro-interactions */}
       <motion.header 
-        className="flex items-center justify-between mb-6"
+        className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -301,7 +301,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
       </motion.header>
 
       <div className="max-w-7xl mx-auto space-y-4">
-        {/* Top grid with staggered animations */}
+        {/* Top grid with staggered animations - Updated for mobile */}
         <motion.div 
           className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start"
           initial="initial"
@@ -314,7 +314,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
             }
           }}
         >
-          {/* AREA CHART */}
+          {/* AREA CHART - Full width on mobile, 2 cols on lg+ */}
           <motion.div variants={cardVariant} className="lg:col-span-2">
             <AnalyticsCard>
               <div className="flex items-center justify-between mb-3">
@@ -389,7 +389,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
             </AnalyticsCard>
           </motion.div>
 
-          {/* TOP PRODUCT */}
+          {/* TOP PRODUCT - Full width on mobile, 1 col on lg+ */}
           <motion.div variants={cardVariant}>
             <AnalyticsCard>
               <div className="flex items-start justify-between">
@@ -473,10 +473,10 @@ export default function AnalyticsAppleFull({ products = [] }) {
             </AnalyticsCard>
           </motion.div>
 
-          {/* MINI STATS */}
-          <motion.div variants={cardVariant} className="space-y-3">
-            <AnalyticsCard hoverable={false}>
-              <div className="flex items-center gap-3">
+          {/* MINI STATS - 3-column grid on mobile, stacked on lg+ */}
+          <motion.div variants={cardVariant} className="grid grid-cols-3 gap-3 lg:block lg:space-y-3">
+            <AnalyticsCard hoverable={false} className="flex flex-col justify-center">
+              <div className="flex flex-col items-center text-center gap-2">
                 <motion.div 
                   className="text-xl text-blue-500"
                   whileHover={{ rotate: 15, scale: 1.1 }}
@@ -488,15 +488,15 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   <div className="text-lg font-semibold text-gray-900">
                     {safeProducts.length}
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-gray-600 leading-tight">
                     Most Viewed Products
                   </div>
                 </div>
               </div>
             </AnalyticsCard>
 
-            <AnalyticsCard hoverable={false}>
-              <div className="flex items-center gap-3">
+            <AnalyticsCard hoverable={false} className="flex flex-col justify-center">
+              <div className="flex flex-col items-center text-center gap-2">
                 <motion.div 
                   className="text-xl text-blue-500"
                   animate={{ scale: [1, 1.1, 1] }}
@@ -508,15 +508,15 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   <div className="text-lg font-semibold text-gray-900">
                     {totalViewsCount.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-gray-600 leading-tight">
                     Total Product Views
                   </div>
                 </div>
               </div>
             </AnalyticsCard>
 
-            <AnalyticsCard hoverable={false}>
-              <div className="flex items-center gap-3">
+            <AnalyticsCard hoverable={false} className="flex flex-col justify-center">
+              <div className="flex flex-col items-center text-center gap-2">
                 <motion.div 
                   className="text-xl text-blue-500"
                   whileHover={{ scale: 1.1 }}
@@ -524,30 +524,10 @@ export default function AnalyticsAppleFull({ products = [] }) {
                 >
                   <FaUsers />
                 </motion.div>
-                <div className="flex-1">
+                <div>
                   <div className="text-lg font-semibold text-gray-900">830</div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-gray-600 leading-tight">
                     Customer Profile Views
-                  </div>
-
-                  <div className="flex gap-2 mt-2">
-                    <motion.div 
-                      className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FaThumbsUp className="text-blue-500" />
-                      <span className="text-gray-700">{topProduct.likes || 0}</span>
-                    </motion.div>
-
-                    <motion.div 
-                      className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200/60 text-sm bg-white/60"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FaThumbsDown className="text-blue-400" />
-                      <span className="text-gray-700">{topProduct.dislikes || 0}</span>
-                    </motion.div>
                   </div>
                 </div>
               </div>
@@ -562,7 +542,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
             <h2 className="text-xl font-bold text-gray-900">Products Performance</h2>
             <motion.div 
               className="text-xs text-gray-600 flex items-center gap-1"
@@ -574,7 +554,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <AnalyticsCard key={i} hoverable={false}>

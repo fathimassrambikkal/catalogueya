@@ -255,10 +255,10 @@ export default function Sales({ products }) {
 
       {/* Start Sale Modal */}
       {showStartModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center p-4 z-50 overflow-auto">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl w-full max-w-5xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] relative border border-gray-200/60">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start p-4 sm:p-6 overflow-auto z-50">
+          <div className="bg-white/90 backdrop-blur-lg rounded-2xl w-full max-w-5xl p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] relative border border-gray-200/60 my-auto">
             <button
-              className="absolute top-4 right-6 text-gray-800 hover:text-red-500 transition-colors p-2 rounded-xl
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-800 hover:text-red-500 transition-colors p-2 rounded-xl
                 bg-white/80 backdrop-blur-lg border border-gray-200/60
                 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
                 hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
@@ -266,36 +266,37 @@ export default function Sales({ products }) {
             >
               <FaTimes size={18} />
             </button>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b border-gray-200/60 pb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 border-b border-gray-200/60 pb-4">
               Start Sale
             </h2>
 
-            <div className="grid grid-cols-3 gap-4 h-72 overflow-y-auto p-2">
+            {/* Responsive Product Grid */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-h-72 overflow-y-auto p-2">
               {saleProducts.map((item) => {
                 const { status } = getSaleInfo(item);
                 return (
                   <div
                     key={item.id}
-                    className="rounded-xl overflow-hidden relative border border-gray-200/60 p-2
+                    className="rounded-xl overflow-hidden relative border border-gray-200/60 p-2 min-w-0
                       bg-white/80 backdrop-blur-lg
                       shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]"
                   >
                     {item.tag && (
                       <span className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 py-0.5 rounded font-semibold
-                        shadow-[1px_1px_3px_rgba(59,130,246,0.3)]">
+                        shadow-[1px_1px_3px_rgba(59,130,246,0.3)] truncate max-w-[80px]">
                         {item.tag}
                       </span>
                     )}
-                    <span className={`absolute top-1 right-1 px-1 py-0.5 text-xs rounded ${getStatusBadge(status)}`}>
+                    <span className={`absolute top-1 right-1 px-1 py-0.5 text-xs rounded ${getStatusBadge(status)} truncate max-w-[80px]`}>
                       {getStatusText(status)}
                     </span>
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="h-32 w-full object-cover rounded-lg"
+                      className="h-24 sm:h-32 w-full object-cover rounded-lg"
                     />
-                    <div className="p-2 text-sm flex flex-col gap-1">
-                      <p className="font-medium truncate text-gray-900">{item.name}</p>
+                    <div className="p-2 text-sm flex flex-col gap-1 min-w-0">
+                      <p className="font-medium truncate text-gray-900 text-xs sm:text-sm">{item.name}</p>
                       <div className="flex justify-between text-xs mt-1">
                         <span className="text-red-600 font-bold">{item.rate}%</span>
                         <span className="font-bold text-gray-800">
@@ -312,7 +313,7 @@ export default function Sales({ products }) {
                           onChange={(e) =>
                             handleRateChange(item.id, e.target.value)
                           }
-                          className="border border-gray-300/60 rounded px-2 py-1 w-16 text-xs bg-white/80 backdrop-blur-sm
+                          className="border border-gray-300/60 rounded px-2 py-1 w-12 sm:w-16 text-xs bg-white/80 backdrop-blur-sm
                             focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                         />
                       </div>
@@ -323,29 +324,29 @@ export default function Sales({ products }) {
             </div>
 
             {/* "Is this product in sale?" Text */}
-            <div className="mt-6 mb-4">
-              <p className="text-lg font-semibold text-gray-700 text-center">
+            <div className="mt-4 sm:mt-6 mb-4">
+              <p className="text-base sm:text-lg font-semibold text-gray-700 text-center">
                 Is this product in sale?
               </p>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-6 bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-gray-200/60
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-gray-200/60
               shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
               <div>
-                <label className="font-medium text-gray-700">From Date</label>
+                <label className="font-medium text-gray-700 text-sm sm:text-base">From Date</label>
                 <input
                   type="date"
-                  className="border border-gray-300/60 p-2 rounded-lg w-full mt-1 bg-white/80 backdrop-blur-sm
+                  className="border border-gray-300/60 p-2 rounded-lg w-full mt-1 bg-white/80 backdrop-blur-sm text-sm sm:text-base
                     focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={bulkFromDate}
                   onChange={(e) => setBulkFromDate(e.target.value)}
                 />
               </div>
               <div>
-                <label className="font-medium text-gray-700">To Date</label>
+                <label className="font-medium text-gray-700 text-sm sm:text-base">To Date</label>
                 <input
                   type="date"
-                  className="border border-gray-300/60 p-2 rounded-lg w-full mt-1 bg-white/80 backdrop-blur-sm
+                  className="border border-gray-300/60 p-2 rounded-lg w-full mt-1 bg-white/80 backdrop-blur-sm text-sm sm:text-base
                     focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={bulkToDate}
                   onChange={(e) => setBulkToDate(e.target.value)}
@@ -355,7 +356,7 @@ export default function Sales({ products }) {
 
             <button
               onClick={handlePublishSales}
-              className="mt-6 bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold
+              className="mt-4 sm:mt-6 bg-blue-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base w-full sm:w-auto
                 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)] 
                 hover:scale-105 transition-all duration-200"
             >
@@ -367,10 +368,10 @@ export default function Sales({ products }) {
 
       {/* Edit Sale Modal */}
       {showEditModal && selectedEditProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl w-full max-w-lg p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] relative border border-gray-200/60">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start p-4 sm:p-6 overflow-auto z-50">
+          <div className="bg-white/90 backdrop-blur-lg rounded-2xl w-full max-w-lg p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] relative border border-gray-200/60 my-auto">
             <button
-              className="absolute top-4 right-6 text-gray-800 hover:text-red-500 transition-colors p-2 rounded-xl
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-800 hover:text-red-500 transition-colors p-2 rounded-xl
                 bg-white/80 backdrop-blur-lg border border-gray-200/60
                 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
                 hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
@@ -379,7 +380,7 @@ export default function Sales({ products }) {
               <FaTimes size={18} />
             </button>
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b border-gray-200/60 pb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 border-b border-gray-200/60 pb-4">
               Edit Sale
             </h2>
 
@@ -393,27 +394,27 @@ export default function Sales({ products }) {
               )}
               <img
                 src={selectedEditProduct.image}
-                className="h-48 w-full object-cover"
+                className="h-32 sm:h-48 w-full object-cover"
                 alt={selectedEditProduct.name}
               />
-              <div className="p-4">
-                <p className="font-medium text-gray-900">{selectedEditProduct.name}</p>
-                <p className="text-red-600 font-bold text-sm">
+              <div className="p-3 sm:p-4">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">{selectedEditProduct.name}</p>
+                <p className="text-red-600 font-bold text-xs sm:text-sm">
                   {selectedEditProduct.rate}% Sale
                 </p>
               </div>
             </div>
 
             {/* Edit Inputs */}
-            <div className="space-y-4 bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-gray-200/60
+            <div className="space-y-4 bg-white/80 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-gray-200/60
               shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
               <div>
-                <label className="font-medium block mb-2 text-gray-700">Sale Rate (%)</label>
+                <label className="font-medium block mb-2 text-gray-700 text-sm sm:text-base">Sale Rate (%)</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
-                  className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm
+                  className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm text-sm sm:text-base
                     focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={selectedEditProduct.rate}
                   onChange={(e) =>
@@ -425,12 +426,12 @@ export default function Sales({ products }) {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-medium block mb-2 text-gray-700">From Date</label>
+                  <label className="font-medium block mb-2 text-gray-700 text-sm sm:text-base">From Date</label>
                   <input
                     type="date"
-                    className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm
+                    className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm text-sm sm:text-base
                       focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                     value={selectedEditProduct.fromDate || ""}
                     onChange={(e) =>
@@ -442,10 +443,10 @@ export default function Sales({ products }) {
                   />
                 </div>
                 <div>
-                  <label className="font-medium block mb-2 text-gray-700">To Date</label>
+                  <label className="font-medium block mb-2 text-gray-700 text-sm sm:text-base">To Date</label>
                   <input
                     type="date"
-                    className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm
+                    className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm text-sm sm:text-base
                       focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                     value={selectedEditProduct.toDate || ""}
                     onChange={(e) =>
@@ -474,9 +475,9 @@ export default function Sales({ products }) {
               </div>
             </div>
 
-            <div className="mt-6 flex gap-4">
+            <div className="mt-4 sm:mt-6 flex gap-3 sm:gap-4 flex-col sm:flex-row">
               <button
-                className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold
+                className="bg-blue-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base flex-1
                   shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)] 
                   hover:scale-105 transition-all duration-200"
                 onClick={handlePublishEdit}
@@ -484,7 +485,7 @@ export default function Sales({ products }) {
                 Publish Changes
               </button>
               <button
-                className="bg-gray-400/60 px-6 py-3 rounded-lg font-semibold backdrop-blur-sm
+                className="bg-gray-400/60 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold backdrop-blur-sm text-sm sm:text-base flex-1
                   shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)] 
                   hover:scale-105 transition-all duration-200"
                 onClick={() => setShowEditModal(false)}

@@ -47,30 +47,29 @@ function Contacts({ companyInfo, products }) {
   return (
     <>
       {/* Main Contacts View */}
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-0">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-6">
         {/* Our Customers Card */}
-        <div className="bg-white/80 backdrop-blur-lg p-6
-          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
+        <div className="bg-white/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8
+          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] rounded-xl">
           
           {/* Header Section with Title and customer count */}
-          <div className="flex flex-row sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-row justify-between items-center gap-3 mb-6">
             {/* Left side - Title and customer count */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-gray-900">Contacts</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Contacts</span>
               </div>
-              
             </div>
 
             {/* Right side - Send Notification Button */}
-            <div>
+            <div className="flex-shrink-0">
               <button 
                 onClick={() => setShowNotificationModal(true)}
-                className="flex  items-center gap-2 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-all duration-200
-                  shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]"
+                className="flex items-center justify-center gap-2 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all duration-200
+                  shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)] text-sm font-medium whitespace-nowrap"
               >
-                <FaBell size={16} />
-                Send Notification
+                <FaBell className="text-sm" />
+                <span>Notify</span>
               </button>
             </div>
           </div>

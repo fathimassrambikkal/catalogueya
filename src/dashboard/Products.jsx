@@ -179,12 +179,12 @@ export default function Products({ products, setProducts, editingProduct, setEdi
   };
 
   return (
-    <div className="w-full px-4 md:px-8">
+    <div className="w-full px-4 md:px-8 overflow-x-hidden">
       {/* Header with Top-right Add Button */}
       <div className="flex items-center justify-between mb-6 mt-10">
         <h2 className="text-lg font-semibold text-gray-900">Our Products</h2>
         <button
-          className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all"
+          className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all"
           onClick={() => setEditingProduct({})} 
         >
           <FaPlus /> Add Product
@@ -269,22 +269,19 @@ export default function Products({ products, setProducts, editingProduct, setEdi
 
       {/* Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start py-10 overflow-auto z-50">
-         <div className="bg-white/90 backdrop-blur-lg w-full max-w-3xl rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] 
-     border border-gray-200/60 
-     max-h-[90vh] overflow-y-auto">
-
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start p-4 sm:p-6 md:py-10 overflow-auto z-50">
+          <div className="bg-white/90 backdrop-blur-lg w-full max-w-3xl rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-gray-200/60 max-h-[90vh] overflow-y-auto mx-auto">
             {/* Header */}
-            <div className="bg-blue-500 text-white px-6 py-4 flex justify-between">
+            <div className="bg-blue-500 text-white px-4 sm:px-6 py-4 flex justify-between items-center">
               <h2 className="text-lg font-semibold">{formData.id ? "Edit Product" : "Add Product"}</h2>
-              <button className="text-white text-xl hover:text-gray-200 transition-colors" onClick={() => setEditingProduct(null)}>×</button>
+              <button className="text-white text-xl hover:text-gray-200 transition-colors flex-shrink-0" onClick={() => setEditingProduct(null)}>×</button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Upload Area */}
-              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Images / Videos</h3>
-                <label className="border-2 border-dashed border-gray-300/60 rounded-xl p-6 flex flex-col items-center text-gray-500 cursor-pointer hover:bg-gray-50/60 transition-all duration-200 backdrop-blur-sm">
+                <label className="border-2 border-dashed border-gray-300/60 rounded-xl p-4 sm:p-6 flex flex-col items-center text-gray-500 cursor-pointer hover:bg-gray-50/60 transition-all duration-200 backdrop-blur-sm text-center">
                   <FaUpload className="text-2xl mb-2" />
                   <span>Upload from Files</span>
                   <input type="file" className="hidden" onChange={(e) => handleMediaFiles(e.target.files)} multiple accept="image/*,video/*" />
@@ -297,24 +294,24 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                         ? "bg-red-100/60 border-red-300/60" 
                         : "bg-blue-100/60 border-blue-300/60"
                     }`}>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         {m.type === "image" ? (
-                          <img src={m.url} alt={m.title} className="w-12 h-8 object-cover rounded-lg border border-gray-200/60" />
+                          <img src={m.url} alt={m.title} className="w-10 h-8 sm:w-12 sm:h-8 object-cover rounded-lg border border-gray-200/60 flex-shrink-0" />
                         ) : (
-                          <div className="w-12 h-8 flex items-center justify-center bg-gray-100/60 rounded-lg text-xs backdrop-blur-sm">VIDEO</div>
+                          <div className="w-10 h-8 sm:w-12 sm:h-8 flex items-center justify-center bg-gray-100/60 rounded-lg text-xs backdrop-blur-sm flex-shrink-0">VIDEO</div>
                         )}
-                        <span className="truncate max-w-xs text-gray-700">{m.title}</span>
+                        <span className="truncate text-gray-700 flex-1 text-sm sm:text-base">{m.title}</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {m.status === "ok" ? <FaCheck className="text-green-600" /> : <FaTimes className="text-red-600" />}
-                        <button className="text-gray-700 hover:text-red-600 transition-colors" onClick={() => handleRemoveMedia(m.id)}><FaTrash /></button>
+                      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        {m.status === "ok" ? <FaCheck className="text-green-600 text-sm sm:text-base" /> : <FaTimes className="text-red-600 text-sm sm:text-base" />}
+                        <button className="text-gray-700 hover:text-red-600 transition-colors" onClick={() => handleRemoveMedia(m.id)}><FaTrash className="text-sm sm:text-base" /></button>
                       </div>
                     </div>
                   ))}
                   <div className="flex gap-3 mt-2">
                     <button 
                       type="button" 
-                      className="px-3 py-1 rounded-lg bg-gray-100/60 border border-gray-200/60 text-sm backdrop-blur-sm hover:bg-gray-200/60 transition-all disabled:opacity-50" 
+                      className="px-3 py-1 rounded-lg bg-gray-100/60 border border-gray-200/60 text-xs sm:text-sm backdrop-blur-sm hover:bg-gray-200/60 transition-all disabled:opacity-50 whitespace-nowrap" 
                       onClick={pickFirstMediaAsImage} 
                       disabled={formData.media.length === 0}
                     >
@@ -325,72 +322,67 @@ export default function Products({ products, setProducts, editingProduct, setEdi
               </div>
 
               {/* Product Info */}
-              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
                 <h3 className="text-lg font-semibold text-gray-900">Product Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4">
                   <div>
                     <label className="font-medium mb-1 block text-gray-700">Product Title <span className="text-red-500">*</span></label>
-                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} />
+                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} />
                   </div>
                   <div>
                     <label className="font-medium mb-1 block text-gray-700">Product Price (QAR)</label>
-                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" type="number" value={formData.price} onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))} />
+                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" type="number" value={formData.price} onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))} />
                   </div>
                   <div className="md:col-span-2">
                     <label className="font-medium mb-1 block text-gray-700">Product Description</label>
-                    <textarea className="border border-gray-300/60 p-2 rounded-lg w-full h-24 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" value={formData.description} onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))} />
+                    <textarea className="border border-gray-300/60 p-2 rounded-lg w-full h-24 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" value={formData.description} onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))} />
                   </div>
                 </div>
               </div>
 
-              {/* Product Category Section - Scroll Area with Fade Effect */}
-      <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Category</h3>
-        
-        {/* Scroll Area Container */}
-        <div className="rounded-xl border border-gray-300/60">
-          <div className="relative h-48 overflow-hidden rounded-xl">
-            {/* Fade Effect Top */}
-            <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white/90 to-transparent z-10 pointer-events-none"></div>
-            
-            {/* Fade Effect Bottom */}
-            <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white/90 to-transparent z-10 pointer-events-none"></div>
-            
-            {/* Scrollable Content */}
-            <div className="h-full overflow-y-auto">
-              <div className="space-y-1 p-1">
-                {availableCategories.map((category, index) => (
-                  <div
-                    key={category}
-                    className={`text-gray-700 hover:bg-gray-100/60 bg-gray-50/60 flex h-10 w-full items-center gap-2 rounded-lg px-4 cursor-pointer transition-all duration-200 ${
-                      formData.category === category ? "bg-blue-500/10 text-blue-600 border border-blue-200" : ""
-                    }`}
-                    onClick={() => handleCategoryChange(category)}
-                  >
-                    <span className="text-sm font-medium flex-1">{category}</span>
-                    {formData.category === category && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    )}
+              {/* Product Category Section */}
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Category</h3>
+                
+                <div className="rounded-xl border border-gray-300/60">
+                  <div className="relative h-40 sm:h-48 overflow-hidden rounded-xl">
+                    <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white/90 to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white/90 to-transparent z-10 pointer-events-none"></div>
+                    
+                    <div className="h-full overflow-y-auto">
+                      <div className="space-y-1 p-1">
+                        {availableCategories.map((category, index) => (
+                          <div
+                            key={category}
+                            className={`text-gray-700 hover:bg-gray-100/60 bg-gray-50/60 flex h-9 sm:h-10 w-full items-center gap-2 rounded-lg px-3 sm:px-4 cursor-pointer transition-all duration-200 ${
+                              formData.category === category ? "bg-blue-500/10 text-blue-600 border border-blue-200" : ""
+                            }`}
+                            onClick={() => handleCategoryChange(category)}
+                          >
+                            <span className="text-sm font-medium flex-1">{category}</span>
+                            {formData.category === category && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+                </div>
 
-        {/* Selected Category Display */}
-        {formData.category && (
-          <div className="mt-3 p-3 bg-blue-500/10 rounded-lg border border-blue-200/60">
-            <p className="text-sm text-blue-600">
-              Selected: <span className="font-semibold">{formData.category}</span>
-            </p>
-          </div>
-        )}
-      </div>
-              {/*  Tags & Stock - Now multiple checkboxes for tags */}
-              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+                {formData.category && (
+                  <div className="mt-3 p-3 bg-blue-500/10 rounded-lg border border-blue-200/60">
+                    <p className="text-sm text-blue-600">
+                      Selected: <span className="font-semibold">{formData.category}</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags & Stock */}
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
                 <h3 className="text-lg font-semibold text-gray-900">Product Tags & Stock</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4">
                   <div>
                     <label className="font-medium mb-1 block text-gray-700">Special Mark</label>
                     <div className="space-y-2">
@@ -402,7 +394,7 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                             onChange={() => handleTagToggle(tag)}
                             className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500/20"
                           />
-                          <span className="text-gray-700">{tag}</span>
+                          <span className="text-gray-700 text-sm sm:text-base">{tag}</span>
                         </label>
                       ))}
                     </div>
@@ -416,19 +408,19 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                   </div>
                   <div>
                     <label className="font-medium mb-1 block text-gray-700">Number of Current Stock</label>
-                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" type="number" value={formData.stock} onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))} />
+                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" type="number" value={formData.stock} onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))} />
                   </div>
                 </div>
               </div>
 
-              {/*  Visibility Toggle in Modal */}
+              {/* Visibility Toggle in Modal */}
               {formData.id && (
-                <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+                <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Visibility</h3>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <button
                       onClick={() => setFormData(prev => ({ ...prev, hidden: !prev.hidden }))}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm sm:text-base ${
                         formData.hidden 
                           ? "bg-yellow-500 text-white shadow-lg shadow-yellow-500/30" 
                           : "bg-green-500 text-white shadow-lg shadow-green-500/30"
@@ -437,7 +429,7 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                       {formData.hidden ? <FaEyeSlash /> : <FaEye />}
                       {formData.hidden ? "Hidden from Users" : "Visible to Users"}
                     </button>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 text-center sm:text-left">
                       {formData.hidden 
                         ? "This product is hidden from customer view" 
                         : "This product is visible to customers"}
@@ -448,22 +440,21 @@ export default function Products({ products, setProducts, editingProduct, setEdi
             </div>
 
             {/* Footer buttons */}
-            <div className="flex justify-between items-center px-6 py-4 bg-gray-50/60 backdrop-blur-sm border-t border-gray-200/60">
-              {/*  Sale question text */}
-              <div className="text-sm text-gray-700 font-medium">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 sm:px-6 py-4 bg-gray-50/60 backdrop-blur-sm border-t border-gray-200/60">
+              <div className="text-sm text-gray-700 font-medium text-center sm:text-left mb-2 sm:mb-0">
                 Do you want to add this product on sale?
               </div>
               
-              <div className="flex gap-4">
+              <div className="flex gap-2 sm:gap-4 flex-wrap justify-center sm:justify-end">
                 {formData.id && (
-                  <button className="px-6 py-2 rounded-lg bg-red-500 text-white shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transition-all" onClick={handleDeleteProduct}>
+                  <button className="px-4 sm:px-6 py-2 rounded-lg bg-red-500 text-white shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transition-all text-sm sm:text-base whitespace-nowrap" onClick={handleDeleteProduct}>
                     Delete
                   </button>
                 )}
-                <button className="px-6 py-2 rounded-lg bg-gray-300/60 backdrop-blur-sm border border-gray-300/60 hover:bg-gray-400/60 transition-all" onClick={() => setEditingProduct(null)}>
+                <button className="px-4 sm:px-6 py-2 rounded-lg bg-gray-300/60 backdrop-blur-sm border border-gray-300/60 hover:bg-gray-400/60 transition-all text-sm sm:text-base whitespace-nowrap" onClick={() => setEditingProduct(null)}>
                   Cancel
                 </button>
-                <button className="px-6 py-2 rounded-lg bg-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all" onClick={handleSave}>
+                <button className="px-4 sm:px-6 py-2 rounded-lg bg-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all text-sm sm:text-base whitespace-nowrap" onClick={handleSave}>
                   {formData.id ? "Update" : "Add"}
                 </button>
               </div>

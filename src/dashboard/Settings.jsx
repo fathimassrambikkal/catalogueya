@@ -392,7 +392,7 @@ export default function Settings({ companyInfo, setCompanyInfo }) {
                     hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]
                     focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
-                  <span>Select Specialties ({form.specialties.length} selected)</span>
+                  <span>Select({form.specialties.length} selected)</span>
                   {isSpecialtiesOpen ? <FaChevronUp className="text-gray-600" /> : <FaChevronDown className="text-gray-600" />}
                 </button>
 

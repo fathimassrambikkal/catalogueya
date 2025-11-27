@@ -92,10 +92,31 @@ export default function CompanyPage() {
   const { simulateCustomerFollow } = useFollowers();
 
   const [company, setCompany] = useState(preloadedData.company);
-  const [loading, setLoading] = useState(false); // Start with false since we have preloaded data
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState(preloadedData.settings);
   const [fixedWords, setFixedWords] = useState(preloadedData.fixedWords);
+  const [isRTL, setIsRTL] = useState(false);
+
+  // Check for RTL language on component mount and when language changes
+  useEffect(() => {
+    const checkRTL = () => {
+      const htmlDir = document.documentElement.getAttribute('dir');
+      const isRTL = htmlDir === 'rtl';
+      setIsRTL(isRTL);
+    };
+
+    checkRTL();
+    
+    // Listen for language changes
+    const observer = new MutationObserver(checkRTL);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['dir'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Helper to check favourites
   const isFavourite = (id) => favourites.some((fav) => fav.id === id);
@@ -229,6 +250,23 @@ export default function CompanyPage() {
   const displayRating = typeof rating === 'number' ? rating : parseFloat(rating) || 0;
   const basePath = getBasePath();
 
+  // Dynamic positioning classes for RTL support
+  const backButtonClass = isRTL 
+    ? "absolute top-20 right-4 sm:right-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300"
+    : "absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300";
+
+  const shareButtonClass = isRTL
+    ? "absolute top-24 left-4 sm:left-8 z-30 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 shadow-xl hover:scale-105 transition-all duration-300"
+    : "absolute top-24 right-4 sm:right-8 z-30 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 shadow-xl hover:scale-105 transition-all duration-300";
+
+  const floatingIconsClass = isRTL
+    ? "absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-40"
+    : "absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40";
+
+  const favouriteButtonClass = isRTL
+    ? "absolute top-2 left-2 z-10"
+    : "absolute top-2 right-2 z-10";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white">
       {/* ============ Banner Section ============ */}
@@ -242,18 +280,17 @@ export default function CompanyPage() {
             willChange: "transform, opacity",
           }}
         >
-          {/* 🔙 Back Button */}
+          {/* 🔙 Back Button - Dynamic positioning for RTL */}
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full
-                       border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300"
+            className={backButtonClass}
           >
             <Suspense fallback={<span>←</span>}>
               <FaArrowLeft className="text-gray-700 text-sm sm:text-md md:text-lg" />
             </Suspense>
           </button>
 
-          {/* 🔗 Share Button */}
+          {/* 🔗 Share Button - Dynamic positioning for RTL */}
           <button
             onClick={() => {
               if (navigator.share) {
@@ -267,9 +304,7 @@ export default function CompanyPage() {
                 alert("Link copied to clipboard!");
               }
             }}
-            className="absolute top-24 right-4 sm:right-8 z-30 flex items-center justify-center 
-                       w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-md 
-                       hover:bg-white/30 shadow-xl hover:scale-105 transition-all duration-300"
+            className={shareButtonClass}
           >
             <MdIosShare className="text-white text-xl sm:text-2xl" />
           </button>
@@ -289,30 +324,29 @@ export default function CompanyPage() {
               }}
             />
             <div className="flex flex-col justify-center text-white flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight">
+              <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight break-words text-start rtl:text-right">
                 {name}
               </h1>
               {title && (
-                <p className="text-xs sm:text-sm opacity-90 mt-1">{title}</p>
+                <p className="text-xs sm:text-sm opacity-90 mt-1 break-words text-start rtl:text-right">{title}</p>
               )}
 
-              {/*  Rating - White stars */}
-              <div className="flex items-center gap-4 mt-3 text-sm sm:text-base">
-                <div className="flex items-center gap-1 text-white font-semibold drop-shadow-lg">
-                  <FaStar className="text-white text-lg sm:text-xl" />
-                  <span>{displayRating.toFixed(1)}</span>
-                 
-                </div>
-              </div>
+              {/* Rating - White stars */}
+<div className={`flex items-center gap-4 mt-3 text-sm sm:text-base ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+  <div className={`flex items-center gap-1 text-white font-semibold drop-shadow-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
+    <FaStar className="text-white text-lg sm:text-xl" />
+    <span>{displayRating.toFixed(1)}</span>
+  </div>
+</div>
             </div>
           </div>
 
-          {/* ===== FLOATING ACTION ICONS - Horizontal ===== */}
-          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
+          {/* ===== FLOATING ACTION ICONS - Horizontal with RTL support ===== */}
+          <div className={floatingIconsClass}>
             <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl">
-              <div className="flex flex-row gap-2 sm:gap-3">
+              <div className={`flex flex-row gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 
-                {/*  Location */}
+                {/* Location */}
                 {displayLocation && (
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation)}`}
@@ -349,7 +383,7 @@ export default function CompanyPage() {
                   </a>
                 )}
 
-                {/*  WhatsApp */}
+                {/* WhatsApp */}
                 {phone && (
                   <a
                     href={`https://wa.me/${phone}`}
@@ -386,7 +420,7 @@ export default function CompanyPage() {
                   </a>
                 )}
 
-                {/*  Follow */}
+                {/* Follow */}
                 <button
                   onClick={handleFollowToggle}
                   className={`
@@ -419,7 +453,7 @@ export default function CompanyPage() {
                   </div>
                 </button>
 
-                {/*  Company Reviews */}
+                {/* Company Reviews */}
                 <button
                   onClick={() => navigate(`${basePath}/reviews`)}
                   className={`
@@ -460,7 +494,7 @@ export default function CompanyPage() {
       {/* ============ Products Section ============ */}
       {showContent ? (
         <section className="py-12">
-          <h2 className="text-2xl md:text-3xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12">
+          <h2 className="text-2xl md:text-3xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12 break-words text-start rtl:text-right">
             Our Products
           </h2>
 
@@ -490,13 +524,13 @@ export default function CompanyPage() {
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                   </div>
 
-                  {/*  Favourite Toggle */}
+                  {/* Favourite Toggle - Dynamic positioning for RTL */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleFavourite(product);
                     }}
-                    className="absolute top-2 right-2 z-10"
+                    className={favouriteButtonClass}
                   >
                     <Suspense fallback={<span>♡</span>}>
                       <FaHeart

@@ -421,29 +421,43 @@ function Settings() {
             bg-white/80 backdrop-blur-lg border border-gray-200/60
             shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Can you tell us why you are leaving?</h3>
-            <div className="p-4 rounded-xl
-              bg-white/60 backdrop-blur-lg border border-gray-200/60
-              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
-              <select 
-                value={selectedReason}
-                onChange={(e) => setSelectedReason(e.target.value)}
-                className="w-full bg-transparent border-none outline-none text-gray-700 text-sm sm:text-base"
-              >
-                <option value="">Select a reason</option>
-                <option value="another-account">I have another account</option>
-                <option value="not-shopping">I'm not shopping from here anymore</option>
-                <option value="not-using">I don't use this account anymore</option>
-                <option value="too-many-emails">You send too many emails and notifications</option>
-                <option value="security">Security concerns</option>
-                <option value="other">Non of the above</option>
-              </select>
+            
+            {/* Responsive Reason Selection - Fixed */}
+            <div className="space-y-3">
+              {[
+                { value: 'another-account', label: 'I have another account' },
+                { value: 'not-shopping', label: 'I\'m not shopping from here anymore' },
+                { value: 'not-using', label: 'I don\'t use this account anymore' },
+                { value: 'too-many-emails', label: 'You send too many emails and notifications' },
+                { value: 'security', label: 'Security concerns' },
+                { value: 'other', label: 'Non of the above' }
+              ].map((reason) => (
+                <label 
+                  key={reason.value}
+                  className="flex items-center space-x-3 p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-200
+                    bg-white/60 backdrop-blur-lg border border-gray-200/60
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                    hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]
+                    hover:border-blue-200/60"
+                >
+                  <input
+                    type="radio"
+                    name="reason"
+                    value={reason.value}
+                    checked={selectedReason === reason.value}
+                    onChange={(e) => setSelectedReason(e.target.value)}
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-700 text-sm sm:text-base flex-1">{reason.label}</span>
+                </label>
+              ))}
             </div>
           </div>
 
           {/* Delete Account Button */}
           <button 
             onClick={() => setActiveView('deleteConfirm')}
-            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium  transition-all duration-200
+            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium transition-all duration-200
               shadow-[3px_3px_15px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_20px_rgba(239,68,68,0.4)]
               hover:scale-[1.02] active:scale-[0.98]"
           >
@@ -486,6 +500,7 @@ function Settings() {
             shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Can you tell us why you are leaving?</h3>
             
+            {/* Responsive Reason Selection - Fixed */}
             <div className="space-y-3">
               {[
                 'I have another account',
@@ -495,27 +510,30 @@ function Settings() {
                 'Security concerns',
                 'Non of the above'
               ].map((reason, index) => (
-                <label key={index} className="flex items-center space-x-3 p-4 rounded-xl cursor-pointer transition-all duration-200
-                  bg-white/60 backdrop-blur-lg border border-gray-200/60
-                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-                  hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]
-                  hover:border-blue-200/60">
+                <label 
+                  key={index}
+                  className="flex items-center space-x-3 p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-200
+                    bg-white/60 backdrop-blur-lg border border-gray-200/60
+                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+                    hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]
+                    hover:border-blue-200/60"
+                >
                   <input
                     type="radio"
                     name="reason"
                     value={reason}
                     checked={selectedReason === reason}
                     onChange={(e) => setSelectedReason(e.target.value)}
-                    className="text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-gray-700 text-sm sm:text-base">{reason}</span>
+                  <span className="text-gray-700 text-sm sm:text-base flex-1">{reason}</span>
                 </label>
               ))}
             </div>
           </div>
 
           {/* Final Delete Account Button */}
-          <button className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium  transition-all duration-200
+          <button className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-medium transition-all duration-200
             shadow-[3px_3px_15px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_20px_rgba(239,68,68,0.4)]
             hover:scale-[1.02] active:scale-[0.98]">
             Delete My Account

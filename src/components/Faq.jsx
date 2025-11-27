@@ -21,7 +21,7 @@ const MemoizedFaqItem = React.memo(
           aria-controls={`faq-answer-${index}`}
           className="w-full flex justify-between items-center px-6 py-5 text-left"
         >
-          <span className="font-medium text-gray-900 text-lg">
+          <span className="font-medium text-gray-900 text-base">
             {faq.question}
           </span>
 
@@ -73,41 +73,35 @@ export default function Faq() {
   const [loadedAnswers, setLoadedAnswers] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const fallbackFaqs = useMemo(
-    () => [
-      {
-        question: "What is Catalogueya?",
-        answer:
-          "Catalogueya is a comprehensive platform offering a wide range of home services, including painting, carpentry, lighting installation, security systems, wallpaper application, curtain fitting, and gardening. Our goal is to provide professional services delivered with care and convenience, right to your doorstep.",
-      },
-      {
-        question: "How do I book a service?",
-        answer:
-          "Booking a service is simple. Visit our Services page, select the service you need, and follow the prompts to schedule an appointment at your convenience.",
-      },
-      {
-        question: "Are providers certified?",
-        answer: "Yes, all providers are certified professionals with verified experience.",
-      },
-      {
-        question: "Do you provide help?",
-        answer:
-          "Yes, we offer emergency services for certain categories like plumbing and electrical issues. Please contact our customer support for immediate assistance.",
-      },
-      {
-        question: "What areas do you serve?",
-        answer:
-          "Currently, we serve multiple locations across the region. For a detailed list of serviceable areas, please refer to our Coverage Area page.",
-      },
-      {
-        question: "How to contact support?",
-        answer:
-          "You can reach our customer support team via the Contact Us page on our website. We are available to assist you with any inquiries or issues.",
-      },
-    ],
-    []
-  );
-
+ const fallbackFaqs = useMemo(
+  () => [
+    {
+      question: "What is Catalogueya?",
+      answer: "Home services platform for painting, carpentry, lighting, and gardening."
+    },
+    {
+      question: "How to book?",
+      answer: "Select service on app/website and schedule appointment."
+    },
+    {
+      question: "Providers certified?",
+      answer: "Yes, all are verified professionals."
+    },
+    {
+      question: "Emergency help?",
+      answer: "Yes, for plumbing and electrical issues."
+    },
+    {
+      question: "Service areas?",
+      answer: "Multiple regions - check Coverage page."
+    },
+    {
+      question: "Contact support?",
+      answer: "Via Contact Us page on website."
+    }
+  ],
+  []
+);
   const displayedFaqs = faqs.length ? faqs : fallbackFaqs;
 
   // Fetch FAQs from your API

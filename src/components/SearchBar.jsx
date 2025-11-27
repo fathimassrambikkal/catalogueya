@@ -187,19 +187,19 @@ export default function SearchBar() {
   }, [isLoading, categoryTitles, currentWordIndex]);
 
   return (
-    <div ref={searchRef} className="w-full relative transform-gpu" style={{ willChange: 'transform' }}>
+    <div ref={searchRef} className="w-full min-w-[280px] relative transform-gpu" style={{ willChange: 'transform' }}>
       {/* Search Input Container - Higher z-index */}
       <div
-        className={`flex items-center px-4 py-3 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl relative z-40 transform-gpu
-          ${i18n.language === "ar" ? "pr-6" : "pl-6"}
+        className={`flex items-center px-3 xs:px-4 py-3 xs:py-4 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl relative z-40 transform-gpu
+          ${i18n.language === "ar" ? "pr-4 xs:pr-6" : "pl-4 xs:pl-6"}
         `}
         style={{ willChange: 'transform' }}
       >
         {/* Search Icon - Bigger size */}
         <AiOutlineSearch
           className={`text-white transform-gpu
-            text-xl sm:text-2xl md:text-2xl /* Increased sizes */
-            ${i18n.language === "ar" ? "ml-3" : "mr-2"}
+            text-xl xs:text-2xl sm:text-2xl md:text-2xl /* Increased sizes */
+            ${i18n.language === "ar" ? "ml-2 xs:ml-3" : "mr-2 xs:mr-2"}
           `}
           style={{ willChange: 'transform' }}
         />
@@ -209,7 +209,7 @@ export default function SearchBar() {
           value={searchTerm}
           onChange={handleInputChange}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          className="flex-1 outline-none bg-transparent text-white transform-gpu placeholder-transparent"
+          className="flex-1 outline-none bg-transparent text-white text-sm xs:text-base transform-gpu placeholder-transparent"
           style={{ willChange: 'transform' }}
           placeholder={isLoading ? "Loading..." : "Search categories..."}
         />
@@ -226,10 +226,10 @@ export default function SearchBar() {
                 y: { duration: 0.6 }, 
                 willChange: "opacity, transform"
               }}
-              className={`absolute top-3 pointer-events-none select-none text-gray-400 transform-gpu ${
+              className={`absolute top-3 xs:top-4 pointer-events-none select-none text-gray-400 text-sm xs:text-base transform-gpu ${
                 i18n.language === "ar"
-                  ? "right-14 text-right"
-                  : "left-14 text-left"
+                  ? "right-12 xs:right-14 text-right"
+                  : "left-12 xs:left-14 text-left"
               }`}
               style={{ willChange: 'transform, opacity' }}
             >
@@ -249,7 +249,7 @@ export default function SearchBar() {
           >
             <AiOutlineClose
               onClick={handleClear}
-              className="text-gray-300 hover:text-white text-xl cursor-pointer ml-2 transform-gpu"
+              className="text-gray-300 hover:text-white text-lg xs:text-xl cursor-pointer ml-2 transform-gpu"
               style={{ willChange: 'transform' }}
             />
           </motion.div>
@@ -259,10 +259,10 @@ export default function SearchBar() {
           src={qatarflag}
           alt="Qatar Flag"
           className="
-            w-7 h-5          
+            w-7 h-5 xs:w-7 xs:h-5          
             sm:w-8 sm:h-6    
             md:w-9 md:h-7     
-            ml-2 rounded-sm shadow-md object-cover transform-gpu
+            ml-2 mr-3 xs:mr-4 rounded-sm shadow-md object-cover transform-gpu
           "
           loading="lazy"
           decoding="async"
