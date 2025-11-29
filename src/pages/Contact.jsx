@@ -1,13 +1,12 @@
 "use client";
 
-import React, { memo, lazy, Suspense} from "react";
+import React, { memo, lazy, Suspense } from "react";
 import { FaFacebookF, FaInstagram, FaTiktok, FaSnapchatGhost } from "react-icons/fa";
 
-// Lazy-load heavy components
 const Faq = lazy(() => import("../components/Faq"));
 const CallToAction = lazy(() => import("../components/CallToAction"));
 
-// Memoized Social Icons (outside render)
+// Social Icons
 const socialLinks = [
   { icon: <FaFacebookF size={18} />, url: "https://www.facebook.com/share/1BGBgzNm9d/?mibextid=wwXIfr" },
   { icon: <FaInstagram size={18} />, url: "https://www.instagram.com/catalogueya.qa?igsh=b3k0MGY5Z21la3Bz" },
@@ -20,98 +19,121 @@ const SocialIcon = memo(({ icon, url }) => (
     href={url}
     target="_blank"
     rel="noopener noreferrer"
-    className="bg-white border border-gray-200 text-gray-700 p-3 rounded-full hover:bg-gray-50 hover:shadow transition-transform transform-gpu will-change-transform"
+    className="
+      w-16 h-16
+      flex items-center justify-center
+      rounded-2xl
+      bg-neutral-100
+      border-[3px] border-white
+      shadow-[6px_6px_16px_rgba(0,0,0,0.12),-6px_-6px_16px_rgba(255,255,255,0.9)]
+      hover:shadow-[3px_3px_10px_rgba(0,0,0,0.18),-3px_-3px_10px_rgba(255,255,255,1)]
+      transition-all
+    "
   >
-    {icon}
+    <div className="text-[#3d7bfd] text-[22px]">
+      {icon}
+    </div>
   </a>
-));
-
-const ContactForm = memo(() => (
-  <section className="p-10 flex flex-col space-y-5 bg-white">
-    <h2 className="text-2xl font-semibold text-gray-800">Send Us a Message</h2>
-
-    <input
-      type="text"
-      placeholder="Your Name"
-      className="p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-      required
-    />
-
-    <input
-      type="email"
-      placeholder="Your Email"
-      className="p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-      required
-    />
-
-    <textarea
-      rows={4}
-      placeholder="Your Message"
-      className="p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
-      required
-    />
-
-    <button
-      type="submit"
-      className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-medium transition text-sm"
-    >
-      Send Message
-    </button>
-  </section>
 ));
 
 export default function Contact() {
   return (
     <>
-      <section className="bg-white py-16 px-4 sm:px-6 lg:px-10">
+      <section className="bg-neutral-100 py-16 px-4 sm:px-6 lg:px-10">
         <div className="flex flex-col items-center justify-center">
-          {/* Page Title */}
-          <h1 className="text-4xl md:text-5xl font-light text-gray-900 mb-10 mt-8 text-center tracking-tight">
+
+          <h1 className="text-4xl md:text-5xl font-light text-gray-900 mb-10 mt-8 tracking-tight text-center">
             Talk to our team
           </h1>
 
-          {/* Contact Container */}
-          <div className="w-full max-w-5xl bg-white rounded-3xl shadow-lg border border-gray-100 grid grid-cols-1 md:grid-cols-2 overflow-hidden backdrop-blur-sm">
-            {/* Left: Contact Info */}
-            <div className="bg-neutral-100 text-gray-900 p-10 flex flex-col justify-center">
-              <h2 className="text-2xl font-semibold mb-6 tracking-tight">Get in Touch</h2>
-              <p className="mb-8 text-gray-600 text-base leading-relaxed">
-                We’d love to hear from you! Feel free to reach out using the details below.
-              </p>
+          {/* 🌟 OUTER BLURRED BORDER WRAPPER */}
+          <div
+            className="
+              w-full max-w-3xl
+              p-[7px]
+              rounded-[34px]
+              bg-white/5
+              backdrop-blur-3xl
+              border-[2px]
+            "
+          >
 
-              <div className="space-y-5">
-                {/* Phone */}
-                <div>
-                  <h3 className="font-medium text-lg text-gray-800">Phone</h3>
-                  <a href="tel:+97433000109" className="text-gray-600 hover:text-gray-900 transition text-sm">
-                    +974 33000109
-                  </a>
-                </div>
+            {/* 🌟 SINGLE NEUMORPHIC CARD */}
+            <div
+              className="
+                bg-white
+                rounded-[30px]
+                p-10
+                flex flex-col
+                space-y-10
+                shadow-[8px_8px_25px_rgba(0,0,0,0.12),-8px_-8px_25px_rgba(255,255,255,0.8)]
+              "
+            >
 
-                {/* Email */}
-                <div>
-                  <h3 className="font-medium text-lg text-gray-800">Email</h3>
-                  <a href="mailto:ux@catalogueya.com" className="text-gray-600 hover:text-gray-900 transition text-sm break-all">
-                    ux@catalogueya.com
-                  </a>
-                </div>
+              {/* Contact details */}
+              <div className="text-gray-900 flex flex-col items-center text-center">
+                {/* You can add your contact info here if needed */}
               </div>
 
-              {/* Social Media Icons */}
-              <div className="flex gap-4 mt-8">
-                {socialLinks.map((s, i) => (
-                  <SocialIcon key={i} icon={s.icon} url={s.url} />
-                ))}
+              {/* Form Section */}
+              <div className="flex flex-col space-y-6">
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <label className="text-gray-700 text-sm font-medium block">Name</label>
+                  <input
+                    type="text"
+                    placeholder="Your Name"
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <label className="text-gray-700 text-sm font-medium block">Email</label>
+                  <input
+                    type="email"
+                    placeholder="Your Email"
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+
+                {/* Message Field */}
+                <div className="space-y-2">
+                  <label className="text-gray-700 text-sm font-medium block">Message</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Your Message"
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                  />
+                </div>
+
+                {/* Gradient Submit Button */}
+                <button
+                  className="
+                    w-full
+                    py-4
+                    rounded-full
+                    text-white
+                    font-medium
+                    text-sm
+                    shadow-[0_8px_18px_rgba(0,0,0,0.15)]
+                    bg-blue-500
+                    border-4 border-white
+                    transition-all
+                    hover:shadow-[0_4px_10px_rgba(0,0,0,0.25)]
+                    hover:brightness-110
+                    mt-4
+                  "
+                >
+                  Submit
+                </button>
               </div>
+
             </div>
-
-            {/* Right: Contact Form */}
-            <ContactForm />
           </div>
         </div>
       </section>
 
-      {/* Lazy-loaded Heavy Components */}
       <Suspense fallback={null}>
         <Faq />
         <CallToAction />

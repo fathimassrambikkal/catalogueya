@@ -111,9 +111,7 @@ const Notifications = () => {
         {/* Header - Always flex row on all devices */}
         <div className="flex flex-row items-center justify-between gap-2 mb-8 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink min-w-0">
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <FaBell className="text-white text-xs sm:text-lg" />
-            </div>
+            
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">Notifications</h1>
               <p className="text-gray-600 text-xs sm:text-sm truncate">

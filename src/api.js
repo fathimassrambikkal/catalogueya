@@ -69,7 +69,7 @@ export const getProduct = (id) => api.get(`/showproduct/${id}`);
 export const getSalesProducts = () => api.get("/showProducts/sales");
 
 // GET /showProducts/arrivals
-export const getArrivalsProducts = () => api.get("/showProducts/arrivals");
+export const getArrivalsProducts = () => api.get("/showProducts/arrival");
 
 // ==================== QUESTIONS & SUBSCRIBE DETAILS ====================
 

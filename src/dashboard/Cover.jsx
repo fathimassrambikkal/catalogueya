@@ -100,7 +100,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
   const iconChunks = chunkIcons(activeSocialIcons, 3);
 
   return (
-    <div className="relative w-full overflow-hidden shadow-md mb-6">
+    <div className="relative w-full overflow-hidden shadow-md mb-6 overflow-x-hidden">
 
       {/* COVER PHOTO - Responsive height with dark overlay only on image */}
       <div className="w-full h-52 sm:h-48 md:h-56 lg:h-64 bg-gray-300 relative">
@@ -120,24 +120,24 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
           hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]
           hover:scale-105
           transition-all duration-300 ease-out
-          text-white text-sm sm:text-base
+          text-white text-sm sm:text-base flex-shrink-0
         `}
       >
-        <FiEdit className="text-xs sm:text-sm" /> 
-        <span className="hidden xs:inline">Edit</span>
+        <FiEdit className="text-xs sm:text-sm flex-shrink-0" /> 
+        <span className="hidden xs:inline flex-shrink-0">Edit</span>
       </button>
 
       {/* FLOATING SOCIAL ICONS DOCK - Glass effect only here */}
       {activeSocialIcons.length > 0 && (
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
-          <div className="rounded-2xl p-3 sm:p-4
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40 max-w-[calc(100%-24px)]">
+          <div className="rounded-2xl p-2 sm:p-3 md:p-4
          bg-white/20 backdrop-blur-md  border border-white/20
           shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-            ">
+            max-w-full">
             {/* Mobile: Vertical layout with 3 icons per row */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 md:gap-4 min-w-0">
               {iconChunks.map((chunk, chunkIndex) => (
-                <div key={chunkIndex} className="flex gap-3 justify-center sm:justify-start">
+                <div key={chunkIndex} className="flex gap-2 sm:gap-3 justify-center sm:justify-start min-w-0">
                   {chunk.map(([key, { icon, color, value }]) => (
                     <a
                       key={key}
@@ -145,12 +145,12 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`
-                        w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center 
-                        rounded-xl
+                        w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center 
+                        rounded-xl flex-shrink-0
                         bg-white/20 backdrop-blur-md  border-white/30
                         
                         transition-all duration-300 ease-out group relative
-                        text-base sm:text-lg
+                        text-sm sm:text-base md:text-lg
                         hover:bg-white/30
                         hover:shadow-[3px_3px_15px_rgba(255,255,255,0.4),-3px_-3px_15px_rgba(255,255,255,0.2)]
                         hover:scale-110 hover:-translate-y-1
@@ -163,8 +163,8 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
                       </div>
                       
                       {/* Tooltip - Glassmorphic style */}
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 
-                        bg-white/20 backdrop-blur-lg text-white text-xs px-3 py-1.5 rounded-lg
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+                        bg-white/20 backdrop-blur-lg text-white text-[10px] px-2 py-1 rounded
                         opacity-0 group-hover:opacity-100 transition-opacity duration-300
                         whitespace-nowrap pointer-events-none border border-white/30
                         shadow-[3px_3px_10px_rgba(0,0,0,0.2)]">
@@ -187,41 +187,40 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
       )}
 
       {/* COMPANY INFO - Keep original dark theme (no glass effect) */}
-      <div className="flex flex-row items-start p-3 sm:p-4 absolute bottom-0 left-0 w-full">
+      <div className="flex flex-row items-start p-3 sm:p-4 absolute bottom-0 left-0 w-full max-w-full overflow-hidden">
 
         {/* LOGO - Keep original dark theme */}
         <div className={`
-          w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center
+          w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0
            backdrop-blur-md border border-white/20
           shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-          ml-8 sm:ml-4 md:ml-8 lg:ml-20 mb-20 sm:mb-16
+          ml-4 sm:ml-4 md:ml-8 lg:ml-20 mb-16 sm:mb-16
         `}>
           <img src={logoSrc} alt="logo" className="w-full h-full object-contain p-1" />
         </div>
 
         {/* DETAILS - Keep original dark glass container */}
-        <div className="flex-1 ml-2 sm:ml-3 md:ml-4 max-w-full">
-          <div className="  
-            ">
+        <div className="flex-1 ml-2 sm:ml-3 md:ml-4 max-w-full min-w-0">
+          <div className="min-w-0">
             
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold leading-tight text-white drop-shadow-md">{companyName}</h1>
-            <p className="text-xs sm:text-sm opacity-90 max-w-2xl leading-relaxed mt-1 text-white drop-shadow-md">
+            <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-tight text-white drop-shadow-md truncate">{companyName}</h1>
+            <p className="text-xs sm:text-sm opacity-90 leading-relaxed mt-1 text-white drop-shadow-md line-clamp-2">
               {companyDescription}
             </p>
 
             {/* SPECIALTIES - Keep original dark badges */}
             {specialties.length > 0 && (
-              <div className="flex flex-wrap gap-1 sm:gap-2 mt-1 sm:mt-2">
+              <div className="flex flex-wrap gap-1 sm:gap-2 mt-1 sm:mt-2 min-w-0">
                 {specialties.map((spec) => (
                   <span 
                     key={spec} 
                     className={`
-                      px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm
+                      px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm flex-shrink-0
                       bg-gray-900/10 backdrop-blur-sm border border-white/20
                       shadow-[inset_1px_1px_2px_rgba(255,255,255,0.1),inset_-2px_-2px_4px_rgba(0,0,0,0.3)]
                       hover:bg-gray-300/20
                       transition-all duration-300
-                      break-words max-w-[120px] sm:max-w-none text-white drop-shadow-sm
+                      text-white drop-shadow-sm truncate max-w-[100px] xs:max-w-[120px] sm:max-w-none
                     `}
                   >
                     {spec}
@@ -231,13 +230,13 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
             )}
 
             {/* CONTACT INFO & ADDRESS - Keep original dark theme */}
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-1 sm:gap-2 mt-2 min-w-0">
               {contactMobile && (
                 <div className={`
-                  px-2 py-1 sm:px-3 sm:py-1 rounded-md sm:rounded-lg text-xs sm:text-sm
+                  px-2 py-1 sm:px-3 sm:py-1 rounded-md sm:rounded-lg text-xs sm:text-sm flex-shrink-0
                   bg-gray-900/10 backdrop-blur-sm border border-white/20
                   shadow-[inset_1px_1px_2px_rgba(255,255,255,0.1),inset_-2px_-2px_4px_rgba(0,0,0,0.3)]
-                  w-fit text-white drop-shadow-sm
+                  text-white drop-shadow-sm
                 `}>
                   {contactMobile}
                 </div>
@@ -245,15 +244,15 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
 
               {/* ADDRESS - Keep original theme */}
               {address && (
-                <div className="flex items-center gap-1 sm:gap-2 w-fit">
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink min-w-0 max-w-full">
                   <div className={`
                     px-2 py-1 sm:px-3 sm:py-1 rounded-md sm:rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm
                     bg-gray-900/10 backdrop-blur-sm border border-white/20
                     shadow-[inset_1px_1px_2px_rgba(255,255,255,0.1),inset_-2px_-2px_4px_rgba(0,0,0,0.3)]
-                    text-white drop-shadow-sm
+                    text-white drop-shadow-sm min-w-0 max-w-full
                   `}>
-                    <FaMapMarkerAlt className="text-white/80 text-xs sm:text-sm" />
-                    <span className="max-w-[150px] xs:max-w-[200px] sm:max-w-xs truncate">{address}</span>
+                    <FaMapMarkerAlt className="text-white/80 text-xs sm:text-sm flex-shrink-0" />
+                    <span className="truncate max-w-[120px] xs:max-w-[150px] sm:max-w-xs">{address}</span>
                   </div>
                 </div>
               )}

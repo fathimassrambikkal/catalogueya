@@ -2,12 +2,14 @@ import { MdArrowOutward } from "react-icons/md";
 import React, { memo, useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaStar, FaHeart, FaWhatsapp, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { unifiedData } from "../data/unifiedData";
 import { useFavourites } from "../context/FavouriteContext";
 import { getSalesProducts } from "../api";
-import { useTranslation } from "react-i18next"; 
+import { useTranslation } from "react-i18next";
 
 const whatsappNumber = "97400000000";
+
+// Use the same base URL as your API
+const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 // Pre-fetch data immediately when module loads
 let preloadedData = {
@@ -17,16 +19,32 @@ let preloadedData = {
 // Start fetching immediately
 (async () => {
   try {
+    console.log("🔄 Starting pre-fetch of sales products...");
     const res = await getSalesProducts();
     
     let arr = [];
-    if (Array.isArray(res)) arr = res;
-    else if (Array.isArray(res?.data)) arr = res.data;
-    else if (Array.isArray(res?.products)) arr = res.products;
+    const products = res?.data?.data?.products;
+    if (Array.isArray(products)) {
+      console.log("✅ API returned data.data.products array");
+      arr = products;
+      
+      // Transform the data to match your component's expected format
+      arr = arr.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        oldPrice: null,
+        img: product.image,
+        rating: parseFloat(product.rating) || 0,
+        description: product.description
+      }));
+    }
 
+    console.log("✅ Pre-fetch successful. Products found:", arr.length);
     preloadedData.salesProducts = arr;
   } catch (err) {
-    console.warn("Pre-fetch failed:", err);
+    console.warn("❌ Pre-fetch failed:", err);
+    preloadedData.salesProducts = [];
   }
 })();
 
@@ -34,11 +52,15 @@ let preloadedData = {
 const preloadImages = (products) => {
   if (!products || !Array.isArray(products)) return;
   
-  products.forEach(product => {
+  console.log("🖼️ Preloading images for", products.length, "products");
+  products.forEach((product) => {
     if (product?.img) {
       const img = new Image();
-      img.src = product.img;
+      // Convert relative path to absolute URL using the correct base URL
+      const imageUrl = product.img.startsWith('http') ? product.img : `${API_BASE_URL}/${product.img}`;
+      img.src = imageUrl;
       img.fetchPriority = 'high';
+      console.log(`🖼️ Preloading image: ${imageUrl}`);
     }
   });
 };
@@ -72,102 +94,141 @@ const useIsInViewport = (ref) => {
   return isIntersecting;
 };
 
-const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => (
-  <div
-    className="flex-none rounded-2xl overflow-hidden group cursor-pointer
+const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  // Convert relative image path to absolute URL
+  const getImageUrl = (imgPath) => {
+    if (!imgPath) return null;
+    if (imgPath.startsWith('http')) return imgPath;
+    // Use the correct base URL from your API
+    return `${API_BASE_URL}/${imgPath}`;
+  };
+
+  const imageUrl = getImageUrl(product?.img);
+
+  const handleImageLoad = () => {
+    console.log("✅ Image loaded successfully:", imageUrl);
+    setImageLoaded(true);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    console.warn('❌ Failed to load product image:', imageUrl);
+    setImageLoaded(true);
+    setImageError(true);
+  };
+
+  return (
+    <div
+      className="flex-none rounded-2xl overflow-hidden group cursor-pointer
                bg-white/10 border border-white/30 backdrop-blur-2xl 
                shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
                hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
                transition-all duration-700 transform-gpu"
-    onClick={() => onNavigate(product.id)}
-    style={{ 
-      willChange: 'transform',
-      contentVisibility: 'auto'
-    }}
-  >
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggleFavourite(product);
+      onClick={() => onNavigate(product.id)}
+      style={{ 
+        willChange: 'transform',
+        contentVisibility: 'auto'
       }}
-      className={`absolute top-2 right-2 sm:top-2 sm:right-2 z-20 p-1.5 rounded-full shadow-md transition backdrop-blur-md border transform-gpu
-        ${isFav ? "bg-red-100 text-red-600 border-red-200" : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"}`}
-      style={{ willChange: 'transform' }}
     >
-      <FaHeart className={`text-xs ${isFav ? "text-red-500" : "hover:text-red-400"}`} />
-    </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleFavourite(product);
+        }}
+        className={`absolute top-2 right-2 sm:top-2 sm:right-2 z-20 p-1.5 rounded-full shadow-md transition backdrop-blur-md border transform-gpu
+          ${isFav ? "bg-red-100 text-red-600 border-red-200" : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"}`}
+        style={{ willChange: 'transform' }}
+      >
+        <FaHeart className={`text-xs ${isFav ? "text-red-500" : "hover:text-red-400"}`} />
+      </button>
 
-    <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
-      <img
-        src={product.img}
-        alt={product.name}
-        loading="eager"
-        decoding="sync"
-        fetchPriority="high"
-        width={240}
-        height={200}
-        className="w-full h-full object-cover object-top rounded-t-2xl border-b border-white/20 
-                 transition-transform duration-500 ease-out group-hover:scale-105 transform-gpu"
-        style={{ 
-          contentVisibility: 'auto',
-          transform: 'translateZ(0)',
-          backfaceVisibility: 'hidden',
-          willChange: 'transform'
-        }}
-        onLoad={(e) => {
-          e.target.style.opacity = '1';
-        }}
-        onError={(e) => {
-          console.error('Failed to load product image:', product.img);
-          e.target.style.display = 'none';
-        }}
-      />
-      <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg transform-gpu">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <FaStar key={i} className={`w-2 h-2 transform-gpu ${i < Math.floor(product.rating ?? 0) ? "text-white" : "text-gray-400"}`} />
-        ))}
-        <span className="text-[9px] text-white/90 ml-1 transform-gpu">{(product.rating ?? 0).toFixed(1)}</span>
-      </div>
-    </div>
+      <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
+        {imageUrl && !imageError ? (
+          <img
+            src={imageUrl}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover object-top rounded-t-2xl border-b border-white/20 
+                       transition-all duration-300 ease-out group-hover:scale-105 transform-gpu
+                       ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            style={{ 
+              contentVisibility: 'auto',
+              transform: 'translateZ(0)',
+              backfaceVisibility: 'hidden',
+              willChange: 'transform'
+            }}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 rounded-t-2xl flex items-center justify-center">
+            <span className="text-gray-500 text-sm">
+              {imageError ? 'Failed to load image' : 'No Image'}
+            </span>
+          </div>
+        )}
+        
+        {/* Loading skeleton for image */}
+        {!imageLoaded && imageUrl && !imageError && (
+          <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-t-2xl flex items-center justify-center">
+            <span className="text-gray-400 text-xs">Loading...</span>
+          </div>
+        )}
 
-    <div
-      className="relative w-full rounded-b-2xl p-3 border-t border-white/20 
-                 bg-white/70 backdrop-blur-xl
-                 shadow-[0_4px_20px_rgba(255,255,255,0.15)] 
-                 flex items-center justify-between overflow-hidden transform-gpu"
-      style={{ willChange: 'transform' }}
-    >
-      <div className="flex flex-col w-[80%] z-10 transform-gpu">
-        <h3 className="font-semibold text-xs truncate text-gray-900 mb-1 transform-gpu">{product.name}</h3>
-        <div className="flex items-center gap-1 transform-gpu">
-          <span className="text-xs font-bold text-gray-900 transform-gpu">QAR {product.price}</span>
-          {product.oldPrice && (
-            <span className="text-[10px] line-through text-gray-500 transform-gpu">QAR {product.oldPrice}</span>
-          )}
+        <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg transform-gpu">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <FaStar key={i} className={`w-2 h-2 transform-gpu ${i < Math.floor(product.rating ?? 0) ? "text-white" : "text-gray-400"}`} />
+          ))}
+          <span className="text-[9px] text-white/90 ml-1 transform-gpu">{(product.rating ?? 0).toFixed(1)}</span>
         </div>
       </div>
 
-      <a
-        href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(product.name)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="p-1.5 bg-green-500/80 backdrop-blur-sm rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10 transform-gpu"
-        title="Chat on WhatsApp"
+      <div
+        className="relative w-full rounded-b-2xl p-3 border-t border-white/20 
+                   bg-white/70 backdrop-blur-xl
+                   shadow-[0_4px_20px_rgba(255,255,255,0.15)] 
+                   flex items-center justify-between overflow-hidden transform-gpu"
         style={{ willChange: 'transform' }}
       >
-        <FaWhatsapp className="text-sm transform-gpu" />
-      </a>
+        <div className="flex flex-col w-[80%] z-10 transform-gpu">
+          <h3 className="font-semibold text-xs truncate text-gray-900 mb-1 transform-gpu">{product.name}</h3>
+          <div className="flex items-center gap-1 transform-gpu">
+            <span className="text-xs font-bold text-gray-900 transform-gpu">QAR {product.price}</span>
+            {product.oldPrice && (
+              <span className="text-[10px] line-through text-gray-500 transform-gpu">QAR {product.oldPrice}</span>
+            )}
+          </div>
+        </div>
+
+        <a
+          href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(product.name)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="p-1.5 bg-green-500/80 backdrop-blur-sm rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10 transform-gpu"
+          title="Chat on WhatsApp"
+          style={{ willChange: 'transform' }}
+        >
+          <FaWhatsapp className="text-sm transform-gpu" />
+        </a>
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 function SalesComponent() {
   const navigate = useNavigate();
   const { favourites, toggleFavourite } = useFavourites();
   const { i18n } = useTranslation();
-  const [apiProducts, setApiProducts] = useState(preloadedData.salesProducts || []);
-  const [isLoading, setIsLoading] = useState(!preloadedData.salesProducts);
+  
+  // Initialize with preloaded data
+  const [apiProducts, setApiProducts] = useState(() => preloadedData.salesProducts || []);
+  const [isLoading, setIsLoading] = useState(() => preloadedData.salesProducts === null);
+  
   const scrollContainerRef = useRef(null);
   const sectionRef = useRef(null);
   const isInViewport = useIsInViewport(sectionRef);
@@ -179,7 +240,6 @@ function SalesComponent() {
     if (preloadedData.salesProducts !== null) {
       setApiProducts(preloadedData.salesProducts);
       setIsLoading(false);
-      preloadImages(preloadedData.salesProducts);
       return;
     }
 
@@ -190,16 +250,25 @@ function SalesComponent() {
         if (!mounted) return;
 
         let arr = [];
-        if (Array.isArray(res)) arr = res;
-        else if (Array.isArray(res?.data)) arr = res.data;
-        else if (Array.isArray(res?.products)) arr = res.products;
+        const products = res?.data?.data?.products;
+        if (Array.isArray(products)) {
+          arr = products.map(product => ({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            oldPrice: null,
+            img: product.image,
+            rating: parseFloat(product.rating) || 0,
+            description: product.description
+          }));
+        }
 
         setApiProducts(arr);
         setIsLoading(false);
         preloadedData.salesProducts = arr;
         preloadImages(arr);
       } catch (err) {
-        console.warn("Failed to fetch sales products:", err);
+        console.warn("❌ Failed to fetch sales products:", err);
         setIsLoading(false);
       }
     };
@@ -208,7 +277,7 @@ function SalesComponent() {
     return () => { mounted = false; };
   }, []);
 
-  // Optimized card width calculation with debouncing
+  // Optimized card width calculation
   useEffect(() => {
     const updateCardWidth = () => {
       const width = window.innerWidth;
@@ -239,17 +308,14 @@ function SalesComponent() {
     };
   }, []);
 
-  // SAFE MERGE (prevents crash)
   const combinedProducts = useMemo(() => {
-    const api = Array.isArray(apiProducts) ? apiProducts : [];
-    const local = Array.isArray(unifiedData.salesProducts) ? unifiedData.salesProducts : [];
-    return [...api, ...local];
+    return Array.isArray(apiProducts) ? apiProducts : [];
   }, [apiProducts]);
 
   const handleToggleFav = useCallback((product) => toggleFavourite(product), [toggleFavourite]);
   const handleNavigate = useCallback((id) => navigate(`/salesproduct/${id}`), [navigate]);
 
-  // Optimized horizontal scroll with wheel and throttling
+  // Horizontal scroll handlers
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
@@ -258,14 +324,9 @@ function SalesComponent() {
     const handleWheel = (e) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault();
-        
         if (wheelTimeout) return;
-        
         scrollContainer.scrollLeft += e.deltaY * 0.8;
-        
-        wheelTimeout = setTimeout(() => {
-          wheelTimeout = null;
-        }, 16); // 60fps throttle
+        wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 16);
       }
     };
 
@@ -276,40 +337,26 @@ function SalesComponent() {
     };
   }, []);
 
-  // Optimized scroll handlers with intersection check
   const handleScrollLeft = useCallback(() => {
     if (scrollContainerRef.current && isInViewport) {
-      const scrollAmount = window.innerWidth < 640 ? 
-        (window.innerWidth / 2) : 220;
-      scrollContainerRef.current.scrollBy({
-        left: -scrollAmount,
-        behavior: 'smooth'
-      });
+      const scrollAmount = window.innerWidth < 640 ? (window.innerWidth / 2) : 220;
+      scrollContainerRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     }
   }, [isInViewport]);
 
   const handleScrollRight = useCallback(() => {
     if (scrollContainerRef.current && isInViewport) {
-      const scrollAmount = window.innerWidth < 640 ? 
-        (window.innerWidth / 2) : 220;
-      scrollContainerRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth'
-      });
+      const scrollAmount = window.innerWidth < 640 ? (window.innerWidth / 2) : 220;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   }, [isInViewport]);
 
-  // Skeleton loader for initial load
   const skeletonLoader = useMemo(() => {
     return Array.from({ length: 4 }).map((_, index) => (
       <div
         key={`skeleton-${index}`}
         className="flex-none rounded-2xl overflow-hidden bg-gray-200 animate-pulse transform-gpu"
-        style={{
-          width: cardWidth,
-          minWidth: cardWidth,
-          willChange: 'transform'
-        }}
+        style={{ width: cardWidth, minWidth: cardWidth, willChange: 'transform' }}
       >
         <div className="w-full h-[140px] xs:h-[160px] sm:h-[180px] bg-gray-300 rounded-t-2xl transform-gpu" />
         <div className="p-3 bg-gray-200 rounded-b-2xl transform-gpu">
@@ -320,14 +367,23 @@ function SalesComponent() {
     ));
   }, [cardWidth]);
 
+  const emptyState = useMemo(() => (
+    <div className="flex flex-col items-center justify-center py-12 text-center w-full">
+      <div className="text-gray-400 text-6xl mb-4">🏷️</div>
+      <h3 className="text-xl font-semibold text-gray-600 mb-2">
+        No Sales Products Available
+      </h3>
+      <p className="text-gray-500 max-w-md">
+        Check back later for exciting sales and discounts!
+      </p>
+    </div>
+  ), []);
+
   return (
     <section 
       ref={sectionRef}
       className="py-6 sm:py-10 bg-amber-300 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden transform-gpu"
-      style={{ 
-        contentVisibility: 'auto',
-        willChange: 'transform'
-      }}
+      style={{ contentVisibility: 'auto', willChange: 'transform' }}
     >
       {/* Header */}
       <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4 transform-gpu">
@@ -342,13 +398,13 @@ function SalesComponent() {
           >
             <span className="flex items-center gap-1 sm:gap-1.5 transition-transform duration-300 group-hover:-translate-y-full md:text-lg tracking-tighter transform-gpu">
               View more
-              <span className="inline-block text-gray-500 transition-transform duration-300 group-hover:translate-x-1 transform-gpu">
+              <span className="inline-block text-gray-700 transition-transform duration-300 group-hover:translate-x-1 transform-gpu">
                 <MdArrowOutward className="text-lg transform-gpu" />
               </span>
             </span>
             <span className="absolute left-0 top-full flex items-center gap-1 sm:gap-1.5 transition-transform duration-300 group-hover:-translate-y-full text-sm md:text-lg tracking-tighter transform-gpu">
               View more
-              <span className="inline-block text-gray-500 transition-transform duration-300 group-hover:translate-x-1 transform-gpu">
+              <span className="inline-block text-gray-700 transition-transform duration-300 group-hover:translate-x-1 transform-gpu">
                 <MdArrowOutward className="text-lg transform-gpu" />
               </span>
             </span>
@@ -358,89 +414,63 @@ function SalesComponent() {
 
       {/* Horizontal Scroll Container */}
       <div className="relative transform-gpu">
-        {/* Scroll Container */}
         <div 
           ref={scrollContainerRef}
           className="flex overflow-x-auto pb-8 -mx-3 sm:-mx-6 md:-mx-10 lg:-mx-16 xl:-mx-24 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24
                      scrollbar-hide scroll-smooth transform-gpu
                      [scrollbar-width:none] [-ms-overflow-style:none]
                      [&::-webkit-scrollbar]:hidden"
-          style={{
-            scrollBehavior: 'smooth',
-            WebkitOverflowScrolling: 'touch',
-            willChange: 'transform'
-          }}
+          style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch', willChange: 'transform' }}
         >
           <div className="flex gap-3 sm:gap-4 transform-gpu">
-            {isLoading ? skeletonLoader : combinedProducts.map((product) => (
-              <div
-                key={product.id}
-                className="flex-none transform-gpu"
-                style={{
-                  width: cardWidth,
-                  minWidth: cardWidth,
-                  willChange: 'transform'
-                }}
-              >
-                <ProductCard
-                  product={product}
-                  isFav={favourites.some(item => item.id === product.id)}
-                  onToggleFavourite={handleToggleFav}
-                  onNavigate={handleNavigate}
-                />
-              </div>
-            ))}
+            {isLoading ? skeletonLoader : combinedProducts.length > 0 ? (
+              combinedProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex-none transform-gpu"
+                  style={{ width: cardWidth, minWidth: cardWidth, willChange: 'transform' }}
+                >
+                  <ProductCard
+                    product={product}
+                    isFav={favourites.some(item => item.id === product.id)}
+                    onToggleFavourite={handleToggleFav}
+                    onNavigate={handleNavigate}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="w-full flex justify-center">{emptyState}</div>
+            )}
           </div>
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-end mt-4 gap-3 transform-gpu">
-          <button
-            onClick={i18n.language === "ar" ? handleScrollRight : handleScrollLeft}
-            className="
-              bg-white/10 hover:bg-white 
-              rounded-full p-3
-              shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900
-              transition-all duration-300 ease-out
-              hover:scale-110 active:scale-95
-              backdrop-blur-sm
-              hover:shadow-2xl
-              group
-              transform-gpu
-            "
-            aria-label={i18n.language === "ar" ? "المنتجات التالية" : "Previous products"}
-            style={{ willChange: 'transform' }}
-          >
-            {i18n.language === "ar" ? (
-              <FaChevronRight className="text-sm transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
-            ) : (
-              <FaChevronLeft className="text-sm transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
-            )}
-          </button>
+        {!isLoading && combinedProducts.length > 0 && (
+          <div className="flex justify-end mt-4 gap-3 transform-gpu">
+            <button
+              onClick={i18n.language === "ar" ? handleScrollRight : handleScrollLeft}
+              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group transform-gpu"
+              aria-label={i18n.language === "ar" ? "المنتجات التالية" : "Previous products"}
+            >
+              {i18n.language === "ar" ? (
+                <FaChevronRight className="text-sm transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
+              ) : (
+                <FaChevronLeft className="text-sm transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
+              )}
+            </button>
 
-          <button
-            onClick={i18n.language === "ar" ? handleScrollLeft : handleScrollRight}
-            className="
-              bg-white/10 hover:bg-white 
-              rounded-full p-3
-              shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900
-              transition-all duration-300 ease-out
-              hover:scale-110 active:scale-95
-              backdrop-blur-sm
-              hover:shadow-2xl
-              group
-              transform-gpu
-            "
-            aria-label={i18n.language === "ar" ? "المنتجات السابقة" : "Next products"}
-            style={{ willChange: 'transform' }}
-          >
-            {i18n.language === "ar" ? (
-              <FaChevronLeft className="text-sm transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
-            ) : (
-              <FaChevronRight className="text-sm transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
-            )}
-          </button>
-        </div>
+            <button
+              onClick={i18n.language === "ar" ? handleScrollLeft : handleScrollRight}
+              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group transform-gpu"
+              aria-label={i18n.language === "ar" ? "المنتجات السابقة" : "Next products"}
+            >
+              {i18n.language === "ar" ? (
+                <FaChevronLeft className="text-sm transition-transform duration-300 group-hover:-translate-x-0.5 transform-gpu" />
+              ) : (
+                <FaChevronRight className="text-sm transition-transform duration-300 group-hover:translate-x-0.5 transform-gpu" />
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

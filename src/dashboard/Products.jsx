@@ -15,7 +15,6 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     hidden: false, 
   });
 
-  
   const availableCategories = [
     "Carpenter",
     "Lighting", 
@@ -27,7 +26,6 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     "Outdoor"
   ];
 
- 
   const availableTags = [
     "New Arrival",
     "Limited Edition",
@@ -53,7 +51,6 @@ export default function Products({ products, setProducts, editingProduct, setEdi
         hidden: editingProduct.hidden || false, 
       });
     } else {
-    
       setFormData({
         id: null,
         name: "",
@@ -69,14 +66,12 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     }
   }, [editingProduct]);
 
-
   const handleCategoryChange = (category) => {
     setFormData(prev => ({
       ...prev,
       category: category
     }));
   };
-
 
   const handleTagToggle = (tag) => {
     setFormData(prev => ({
@@ -87,7 +82,6 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     }));
   };
 
- 
   const toggleProductVisibility = (productId) => {
     setProducts(prev => 
       prev.map(p => 
@@ -115,12 +109,10 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     }
 
     if (cleaned.id) {
-      
       setProducts((prev) =>
         prev.map((p) => (p.id === cleaned.id ? { ...p, ...cleaned } : p))
       );
     } else {
-      
       const newProd = { ...cleaned, id: Date.now(), image: cleaned.image || "" };
       setProducts((prev) => [...prev, newProd]);
     }
@@ -179,27 +171,29 @@ export default function Products({ products, setProducts, editingProduct, setEdi
   };
 
   return (
-    <div className="w-full px-4 md:px-8 overflow-x-hidden">
+    <div className="w-full px-2 sm:px-4 md:px-8 overflow-x-hidden max-w-full">
       {/* Header with Top-right Add Button */}
-      <div className="flex items-center justify-between mb-6 mt-10">
-        <h2 className="text-lg font-semibold text-gray-900">Our Products</h2>
+      <div className="flex flex-row items-center justify-between gap-2 mb-4 mt-4 sm:mt-10 min-w-0 w-full">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex-1 min-w-0 truncate pr-2">Our Products</h2>
         <button
-          className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all"
+          className="flex items-center justify-center gap-1 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all text-sm min-w-0 flex-shrink-0 whitespace-nowrap"
           onClick={() => setEditingProduct({})} 
         >
-          <FaPlus /> Add Product
+          <FaPlus className="flex-shrink-0 text-sm" /> 
+          <span className="sm:inline hidden">Add Product</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 min-w-0 w-full">
         {products.map((p) => (
-          <div key={p.id} className="bg-white/80 backdrop-blur-lg shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-xl p-4 border border-gray-200/60 hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] transition-all duration-200 relative">
+          <div key={p.id} className="bg-white/80 backdrop-blur-lg shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-xl p-3 border border-gray-200/60 hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] transition-all duration-200 relative min-w-0 overflow-hidden w-full">
             
-            {/*  Hide Eye Icon - Bottom Right */}
+            {/* Hide Eye Icon - Bottom Right */}
             <button
               onClick={() => toggleProductVisibility(p.id)}
-              className={`absolute bottom-3 right-3 p-2 rounded-full backdrop-blur-md border transition-all duration-200 ${
+              className={`absolute bottom-2 right-2 p-2 rounded-full backdrop-blur-md border transition-all duration-200 flex-shrink-0 ${
                 p.hidden 
                   ? "bg-yellow-100 text-yellow-600 border-yellow-200 hover:bg-yellow-200" 
                   : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200"
@@ -211,47 +205,57 @@ export default function Products({ products, setProducts, editingProduct, setEdi
 
             {/* Hidden Badge */}
             {p.hidden && (
-              <div className="absolute top-3 right-3 px-2 py-1 text-xs font-semibold bg-yellow-500/10 text-yellow-600 rounded-md border border-yellow-200">
+              <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold bg-yellow-500/10 text-yellow-600 rounded border border-yellow-200 flex-shrink-0">
                 Hidden
               </div>
             )}
 
-            {/*  Display multiple tags */}
+            {/* Display multiple tags */}
             {p.tags && p.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="flex flex-wrap gap-1 mb-2 min-w-0">
                 {p.tags.map((tag, index) => (
-                  <div key={index} className="inline-block px-2 py-1 text-xs font-semibold bg-blue-500/10 text-blue-600 rounded-md border border-blue-200">
+                  <div key={index} className="inline-block px-2 py-1 text-xs font-semibold bg-blue-500/10 text-blue-600 rounded border border-blue-200 truncate max-w-[70px] sm:max-w-[80px]">
                     {tag}
                   </div>
                 ))}
               </div>
             )}
+            
             {p.image ? (
-              <img src={p.image} className="w-full h-32 object-cover rounded-lg mb-3 border border-gray-200/60" alt={p.name} />
+              <img src={p.image} className="w-full h-20 sm:h-32 object-cover rounded-lg mb-2 border border-gray-200/60 min-w-0" alt={p.name} />
             ) : (
-              <div className="w-full h-32 rounded-lg mb-3 bg-gray-50/60 border border-gray-200/60 flex items-center justify-center text-gray-400 backdrop-blur-sm">
+              <div className="w-full h-20 sm:h-32 rounded-lg mb-2 bg-gray-50/60 border border-gray-200/60 flex items-center justify-center text-gray-400 backdrop-blur-sm text-xs min-w-0">
                 No image
               </div>
             )}
-            <h3 className="font-semibold text-[17px] text-gray-900">{p.name}</h3>
-            <p className="text-sm text-gray-600">Price: QAR {p.price}</p>
-            <p className="text-sm text-gray-600">Stock: {p.stock}</p>
+            
+            <h3 className="font-semibold text-sm sm:text-[15px] text-gray-900 truncate min-w-0">{p.name}</h3>
+            <p className="text-xs sm:text-sm text-gray-600 truncate min-w-0">Price: QAR {p.price}</p>
+            <p className="text-xs sm:text-sm text-gray-600 truncate min-w-0">Stock: {p.stock}</p>
             
             {/* Display single category */}
             {p.category && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-600">
+              <div className="mt-1 min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600 truncate min-w-0">
                   Category: {p.category}
                 </p>
               </div>
             )}
 
-            <div className="mt-3 flex gap-3">
-              <button className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors" onClick={() => setEditingProduct(p)}>
-                <FaEdit /> Edit
+            <div className="mt-2 flex gap-2 min-w-0 w-full">
+              <button 
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors text-sm min-w-0 flex-1 justify-center" 
+                onClick={() => setEditingProduct(p)}
+              >
+                <FaEdit className="flex-shrink-0" /> 
+                <span className="truncate">Edit</span>
               </button>
-              <button className="flex items-center gap-2 text-red-600 hover:text-red-800 transition-colors" onClick={() => setProducts((prev) => prev.filter((prod) => prod.id !== p.id))}>
-                <FaTrash /> Delete
+              <button 
+                className="flex items-center gap-1 text-red-600 hover:text-red-800 transition-colors text-sm min-w-0 flex-1 justify-center" 
+                onClick={() => setProducts((prev) => prev.filter((prod) => prod.id !== p.id))}
+              >
+                <FaTrash className="flex-shrink-0" /> 
+                <span className="truncate">Delete</span>
               </button>
             </div>
           </div>
@@ -259,109 +263,144 @@ export default function Products({ products, setProducts, editingProduct, setEdi
 
         {/* Add Product Card */}
         <div
-          className="bg-white/80 backdrop-blur-lg shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-dashed border-gray-300/60 transition-all duration-200"
+          className="bg-white/80 backdrop-blur-lg shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-dashed border-gray-300/60 transition-all duration-200 min-w-0 w-full"
           onClick={() => setEditingProduct({})}
         >
-          <FaPlus className="text-3xl text-gray-400 mb-2" />
-          <span className="text-gray-600 font-medium">Add Product</span>
+          <FaPlus className="text-xl sm:text-2xl text-gray-400 mb-2 flex-shrink-0" />
+          <span className="text-gray-600 font-medium text-sm text-center min-w-0">Add Product</span>
         </div>
       </div>
 
       {/* Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start p-4 sm:p-6 md:py-10 overflow-auto z-50">
-          <div className="bg-white/90 backdrop-blur-lg w-full max-w-3xl rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-gray-200/60 max-h-[90vh] overflow-y-auto mx-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start p-1 sm:p-2 md:p-4 overflow-auto z-50">
+          <div className="bg-white/90 backdrop-blur-lg w-full max-w-[calc(100vw-8px)] sm:max-w-2xl md:max-w-3xl rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-gray-200/60 max-h-[90vh] overflow-y-auto mx-1 sm:mx-2 min-w-0">
             {/* Header */}
-            <div className="bg-blue-500 text-white px-4 sm:px-6 py-4 flex justify-between items-center">
-              <h2 className="text-lg font-semibold">{formData.id ? "Edit Product" : "Add Product"}</h2>
-              <button className="text-white text-xl hover:text-gray-200 transition-colors flex-shrink-0" onClick={() => setEditingProduct(null)}>×</button>
+            <div className="bg-blue-500 text-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10 min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold truncate min-w-0 flex-1 pr-2">
+                {formData.id ? "Edit Product" : "Add Product"}
+              </h2>
+              <button 
+                className="text-white text-xl hover:text-gray-200 transition-colors flex-shrink-0 w-6 h-6 flex items-center justify-center min-w-0" 
+                onClick={() => setEditingProduct(null)}
+              >
+                ×
+              </button>
             </div>
 
-            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-6 min-w-0">
               {/* Upload Area */}
-              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Images / Videos</h3>
-                <label className="border-2 border-dashed border-gray-300/60 rounded-xl p-4 sm:p-6 flex flex-col items-center text-gray-500 cursor-pointer hover:bg-gray-50/60 transition-all duration-200 backdrop-blur-sm text-center">
-                  <FaUpload className="text-2xl mb-2" />
-                  <span>Upload from Files</span>
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 sm:p-4 md:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] min-w-0">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-4 min-w-0">Upload Images / Videos</h3>
+                <label className="border-2 border-dashed border-gray-300/60 rounded-xl p-3 sm:p-4 md:p-6 flex flex-col items-center text-gray-500 cursor-pointer hover:bg-gray-50/60 transition-all duration-200 backdrop-blur-sm text-center min-w-0">
+                  <FaUpload className="text-lg sm:text-2xl mb-1 sm:mb-2 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm min-w-0">Upload from Files</span>
                   <input type="file" className="hidden" onChange={(e) => handleMediaFiles(e.target.files)} multiple accept="image/*,video/*" />
                 </label>
 
-                <div className="mt-4 space-y-3">
+                <div className="mt-2 sm:mt-4 space-y-2 min-w-0">
                   {formData.media.map((m) => (
-                    <div key={m.id} className={`flex justify-between items-center p-3 rounded-lg border backdrop-blur-sm ${
+                    <div key={m.id} className={`flex justify-between items-center p-2 sm:p-3 rounded-lg border backdrop-blur-sm min-w-0 ${
                       m.status === "error" 
                         ? "bg-red-100/60 border-red-300/60" 
                         : "bg-blue-100/60 border-blue-300/60"
                     }`}>
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
                         {m.type === "image" ? (
-                          <img src={m.url} alt={m.title} className="w-10 h-8 sm:w-12 sm:h-8 object-cover rounded-lg border border-gray-200/60 flex-shrink-0" />
+                          <img src={m.url} alt={m.title} className="w-8 h-6 sm:w-10 sm:h-8 md:w-12 md:h-8 object-cover rounded-lg border border-gray-200/60 flex-shrink-0" />
                         ) : (
-                          <div className="w-10 h-8 sm:w-12 sm:h-8 flex items-center justify-center bg-gray-100/60 rounded-lg text-xs backdrop-blur-sm flex-shrink-0">VIDEO</div>
+                          <div className="w-8 h-6 sm:w-10 sm:h-8 md:w-12 md:h-8 flex items-center justify-center bg-gray-100/60 rounded-lg text-xs backdrop-blur-sm flex-shrink-0 min-w-0">VIDEO</div>
                         )}
-                        <span className="truncate text-gray-700 flex-1 text-sm sm:text-base">{m.title}</span>
+                        <span className="truncate text-gray-700 flex-1 text-xs sm:text-sm min-w-0">{m.title}</span>
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                        {m.status === "ok" ? <FaCheck className="text-green-600 text-sm sm:text-base" /> : <FaTimes className="text-red-600 text-sm sm:text-base" />}
-                        <button className="text-gray-700 hover:text-red-600 transition-colors" onClick={() => handleRemoveMedia(m.id)}><FaTrash className="text-sm sm:text-base" /></button>
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                        {m.status === "ok" ? <FaCheck className="text-green-600 text-sm flex-shrink-0" /> : <FaTimes className="text-red-600 text-sm flex-shrink-0" />}
+                        <button className="text-gray-700 hover:text-red-600 transition-colors flex-shrink-0" onClick={() => handleRemoveMedia(m.id)}>
+                          <FaTrash className="text-sm" />
+                        </button>
                       </div>
                     </div>
                   ))}
-                  <div className="flex gap-3 mt-2">
+                  <div className="flex gap-2 mt-2 min-w-0">
                     <button 
                       type="button" 
-                      className="px-3 py-1 rounded-lg bg-gray-100/60 border border-gray-200/60 text-xs sm:text-sm backdrop-blur-sm hover:bg-gray-200/60 transition-all disabled:opacity-50 whitespace-nowrap" 
+                      className="px-3 py-2 rounded-lg bg-gray-100/60 border border-gray-200/60 text-sm backdrop-blur-sm hover:bg-gray-200/60 transition-all disabled:opacity-50 whitespace-nowrap flex-1 sm:flex-none text-center min-w-0" 
                       onClick={pickFirstMediaAsImage} 
                       disabled={formData.media.length === 0}
                     >
-                      Use first media as product image
+                      Use first as product image
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Product Info */}
-              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-                <h3 className="text-lg font-semibold text-gray-900">Product Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4">
-                  <div>
-                    <label className="font-medium mb-1 block text-gray-700">Product Title <span className="text-red-500">*</span></label>
-                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} />
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 sm:p-4 md:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] min-w-0">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900 min-w-0">Product Information</h3>
+                <div className="grid grid-cols-1 gap-2 sm:gap-4 md:gap-6 mt-2 sm:mt-4 min-w-0">
+                  <div className="min-w-0">
+                    <label className="font-medium mb-1 block text-gray-700 text-sm sm:text-base min-w-0">
+                      Product Title <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm min-w-0" 
+                      value={formData.name} 
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} 
+                    />
                   </div>
-                  <div>
-                    <label className="font-medium mb-1 block text-gray-700">Product Price (QAR)</label>
-                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" type="number" value={formData.price} onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 min-w-0">
+                    <div className="min-w-0">
+                      <label className="font-medium mb-1 block text-gray-700 text-sm sm:text-base min-w-0">Product Price (QAR)</label>
+                      <input 
+                        className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm min-w-0" 
+                        type="number" 
+                        value={formData.price} 
+                        onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <label className="font-medium mb-1 block text-gray-700 text-sm sm:text-base min-w-0">Stock Quantity</label>
+                      <input 
+                        className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm min-w-0" 
+                        type="number" 
+                        value={formData.stock} 
+                        onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))} 
+                      />
+                    </div>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="font-medium mb-1 block text-gray-700">Product Description</label>
-                    <textarea className="border border-gray-300/60 p-2 rounded-lg w-full h-24 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" value={formData.description} onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))} />
+                  <div className="min-w-0">
+                    <label className="font-medium mb-1 block text-gray-700 text-sm sm:text-base min-w-0">Product Description</label>
+                    <textarea 
+                      className="border border-gray-300/60 p-2 rounded-lg w-full h-20 sm:h-24 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm min-w-0" 
+                      value={formData.description} 
+                      onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))} 
+                    />
                   </div>
                 </div>
               </div>
 
               {/* Product Category Section */}
-              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Category</h3>
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 sm:p-4 md:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] min-w-0">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-4 min-w-0">Product Category</h3>
                 
-                <div className="rounded-xl border border-gray-300/60">
-                  <div className="relative h-40 sm:h-48 overflow-hidden rounded-xl">
-                    <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white/90 to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white/90 to-transparent z-10 pointer-events-none"></div>
+                <div className="rounded-xl border border-gray-300/60 min-w-0">
+                  <div className="relative h-28 sm:h-36 md:h-44 overflow-hidden rounded-xl min-w-0">
+                    <div className="absolute top-0 left-0 right-0 h-3 sm:h-4 bg-gradient-to-b from-white/90 to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 right-0 h-3 sm:h-4 bg-gradient-to-t from-white/90 to-transparent z-10 pointer-events-none"></div>
                     
-                    <div className="h-full overflow-y-auto">
-                      <div className="space-y-1 p-1">
-                        {availableCategories.map((category, index) => (
+                    <div className="h-full overflow-y-auto min-w-0">
+                      <div className="space-y-1 p-1 min-w-0">
+                        {availableCategories.map((category) => (
                           <div
                             key={category}
-                            className={`text-gray-700 hover:bg-gray-100/60 bg-gray-50/60 flex h-9 sm:h-10 w-full items-center gap-2 rounded-lg px-3 sm:px-4 cursor-pointer transition-all duration-200 ${
+                            className={`text-gray-700 hover:bg-gray-100/60 bg-gray-50/60 flex h-7 sm:h-8 md:h-9 w-full items-center gap-2 rounded-lg px-2 sm:px-3 md:px-4 cursor-pointer transition-all duration-200 min-w-0 ${
                               formData.category === category ? "bg-blue-500/10 text-blue-600 border border-blue-200" : ""
                             }`}
                             onClick={() => handleCategoryChange(category)}
                           >
-                            <span className="text-sm font-medium flex-1">{category}</span>
+                            <span className="text-xs sm:text-sm font-medium flex-1 truncate min-w-0">{category}</span>
                             {formData.category === category && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                             )}
                           </div>
                         ))}
@@ -371,8 +410,8 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                 </div>
 
                 {formData.category && (
-                  <div className="mt-3 p-3 bg-blue-500/10 rounded-lg border border-blue-200/60">
-                    <p className="text-sm text-blue-600">
+                  <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-500/10 rounded-lg border border-blue-200/60 min-w-0">
+                    <p className="text-xs sm:text-sm text-blue-600 truncate min-w-0">
                       Selected: <span className="font-semibold">{formData.category}</span>
                     </p>
                   </div>
@@ -380,59 +419,55 @@ export default function Products({ products, setProducts, editingProduct, setEdi
               </div>
 
               {/* Tags & Stock */}
-              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-                <h3 className="text-lg font-semibold text-gray-900">Product Tags & Stock</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4">
-                  <div>
-                    <label className="font-medium mb-1 block text-gray-700">Special Mark</label>
-                    <div className="space-y-2">
+              <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 sm:p-4 md:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] min-w-0">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900 min-w-0">Product Tags & Stock</h3>
+                <div className="grid grid-cols-1 gap-2 sm:gap-4 md:gap-6 mt-2 sm:mt-4 min-w-0">
+                  <div className="min-w-0">
+                    <label className="font-medium mb-1 block text-gray-700 text-sm sm:text-base min-w-0">Special Mark</label>
+                    <div className="space-y-1 sm:space-y-2 min-w-0">
                       {availableTags.map((tag) => (
-                        <label key={tag} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50/60 transition-all backdrop-blur-sm">
+                        <label key={tag} className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50/60 transition-all backdrop-blur-sm min-w-0">
                           <input
                             type="checkbox"
                             checked={formData.tags.includes(tag)}
                             onChange={() => handleTagToggle(tag)}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500/20"
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500/20 flex-shrink-0"
                           />
-                          <span className="text-gray-700 text-sm sm:text-base">{tag}</span>
+                          <span className="text-gray-700 text-sm truncate min-w-0">{tag}</span>
                         </label>
                       ))}
                     </div>
                     {formData.tags.length > 0 && (
-                      <div className="mt-3 p-3 bg-blue-500/10 rounded-lg border border-blue-200/60">
-                        <p className="text-sm text-blue-600">
+                      <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-500/10 rounded-lg border border-blue-200/60 min-w-0">
+                        <p className="text-xs sm:text-sm text-blue-600 truncate min-w-0">
                           Selected: {formData.tags.join(", ")}
                         </p>
                       </div>
                     )}
-                  </div>
-                  <div>
-                    <label className="font-medium mb-1 block text-gray-700">Number of Current Stock</label>
-                    <input className="border border-gray-300/60 p-2 rounded-lg w-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm sm:text-base" type="number" value={formData.stock} onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))} />
                   </div>
                 </div>
               </div>
 
               {/* Visibility Toggle in Modal */}
               {formData.id && (
-                <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Visibility</h3>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 sm:p-4 md:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] min-w-0">
+                  <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-4 min-w-0">Product Visibility</h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0">
                     <button
                       onClick={() => setFormData(prev => ({ ...prev, hidden: !prev.hidden }))}
-                      className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm sm:text-base ${
+                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all whitespace-nowrap text-sm min-w-0 ${
                         formData.hidden 
                           ? "bg-yellow-500 text-white shadow-lg shadow-yellow-500/30" 
                           : "bg-green-500 text-white shadow-lg shadow-green-500/30"
                       }`}
                     >
-                      {formData.hidden ? <FaEyeSlash /> : <FaEye />}
-                      {formData.hidden ? "Hidden from Users" : "Visible to Users"}
+                      {formData.hidden ? <FaEyeSlash className="flex-shrink-0" /> : <FaEye className="flex-shrink-0" />}
+                      {formData.hidden ? "Hidden" : "Visible"}
                     </button>
-                    <span className="text-sm text-gray-600 text-center sm:text-left">
+                    <span className="text-xs sm:text-sm text-gray-600 text-center sm:text-left min-w-0">
                       {formData.hidden 
-                        ? "This product is hidden from customer view" 
-                        : "This product is visible to customers"}
+                        ? "Hidden from customer view" 
+                        : "Visible to customers"}
                     </span>
                   </div>
                 </div>
@@ -440,21 +475,30 @@ export default function Products({ products, setProducts, editingProduct, setEdi
             </div>
 
             {/* Footer buttons */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 sm:px-6 py-4 bg-gray-50/60 backdrop-blur-sm border-t border-gray-200/60">
-              <div className="text-sm text-gray-700 font-medium text-center sm:text-left mb-2 sm:mb-0">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-6 py-3 sm:py-4 bg-gray-50/60 backdrop-blur-sm border-t border-gray-200/60 min-w-0">
+              <div className="text-sm text-gray-700 font-medium text-center sm:text-left mb-2 sm:mb-0 flex-1 min-w-0">
                 Do you want to add this product on sale?
               </div>
               
-              <div className="flex gap-2 sm:gap-4 flex-wrap justify-center sm:justify-end">
+              <div className="flex gap-2 sm:gap-2 md:gap-3 flex-wrap justify-center sm:justify-end w-full sm:w-auto min-w-0">
                 {formData.id && (
-                  <button className="px-4 sm:px-6 py-2 rounded-lg bg-red-500 text-white shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transition-all text-sm sm:text-base whitespace-nowrap" onClick={handleDeleteProduct}>
+                  <button 
+                    className="px-4 py-2 rounded-lg bg-red-500 text-white shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transition-all text-sm whitespace-nowrap min-w-[70px] text-center flex-1 sm:flex-none"
+                    onClick={handleDeleteProduct}
+                  >
                     Delete
                   </button>
                 )}
-                <button className="px-4 sm:px-6 py-2 rounded-lg bg-gray-300/60 backdrop-blur-sm border border-gray-300/60 hover:bg-gray-400/60 transition-all text-sm sm:text-base whitespace-nowrap" onClick={() => setEditingProduct(null)}>
+                <button 
+                  className="px-4 py-2 rounded-lg bg-gray-300/60 backdrop-blur-sm border border-gray-300/60 hover:bg-gray-400/60 transition-all text-sm whitespace-nowrap min-w-[70px] text-center flex-1 sm:flex-none"
+                  onClick={() => setEditingProduct(null)}
+                >
                   Cancel
                 </button>
-                <button className="px-4 sm:px-6 py-2 rounded-lg bg-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all text-sm sm:text-base whitespace-nowrap" onClick={handleSave}>
+                <button 
+                  className="px-4 py-2 rounded-lg bg-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all text-sm whitespace-nowrap min-w-[70px] text-center flex-1 sm:flex-none"
+                  onClick={handleSave}
+                >
                   {formData.id ? "Update" : "Add"}
                 </button>
               </div>

@@ -499,12 +499,12 @@ export default function CompanyPage() {
           </h2>
 
           {products.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 px-6 sm:px-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 px-6 sm:px-12">
               {products.map((product) => (
                 <div
                   key={product.id}
                   className="relative overflow-hidden cursor-pointer aspect-square group 
-                              bg-white rounded-lg border border-gray-200 
+                              bg-white  border border-gray-200 
                               shadow-md hover:shadow-2xl hover:scale-[1.02] transition-all duration-400"
                   onClick={() => navigate(`${basePath}/product/${product.id}`)}
                 >
