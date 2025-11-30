@@ -268,11 +268,11 @@ export default function CompanyPage() {
     : "absolute top-2 right-2 z-10";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white overflow-x-hidden">
       {/* ============ Banner Section ============ */}
       {showContent ? (
         <div
-          className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-hidden"
+          className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-x-hidden"
           style={{
             background: `linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${
               banner || logo || "/api/placeholder/1200/400"
@@ -324,7 +324,7 @@ export default function CompanyPage() {
               }}
             />
             <div className="flex flex-col justify-center text-white flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight break-words text-start rtl:text-right">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight break-words text-start rtl:text-right">
                 {name}
               </h1>
               {title && (
@@ -499,13 +499,13 @@ export default function CompanyPage() {
           </h2>
 
           {products.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 px-6 sm:px-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 px-4 sm:px-8 overflow-x-hidden">
               {products.map((product) => (
                 <div
                   key={product.id}
                   className="relative overflow-hidden cursor-pointer aspect-square group 
                               bg-white  border border-gray-200 
-                              shadow-md hover:shadow-2xl hover:scale-[1.02] transition-all duration-400"
+                              shadow-md hover:shadow-2xl  hover:scale-102 md:hover:scale-[1.02] transition-all duration-400"
                   onClick={() => navigate(`${basePath}/product/${product.id}`)}
                 >
                   {/* Lazy-load images for speed */}

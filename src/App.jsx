@@ -94,7 +94,7 @@ function AppContent() {
             path="/company/:companyId/product/:id"
             element={<ProductProfile />}
           />
-
+            <Route path="/product/:id" element={<ProductProfile />} />
           {/* Reviews */}
           <Route
             path="/category/:categoryId/company/:companyId/reviews"

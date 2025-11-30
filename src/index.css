@@ -57,3 +57,43 @@ html, body {
   max-width: 100%;
   overflow-x: hidden;
 }
+
+/* Apple Style Alert In */
+@keyframes appleAlertIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    filter: blur(6px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(6px) scale(1.02);
+    filter: blur(0px);
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+}
+
+/* Apple Style Alert Out */
+@keyframes appleAlertOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.94);
+    filter: blur(4px);
+  }
+}
+
+/* Premium smooth progress bar */
+@keyframes appleProgress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}

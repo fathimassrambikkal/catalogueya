@@ -28,16 +28,22 @@ let preloadedData = {
       console.log("✅ API returned data.data.products array");
       arr = products;
       
-      // Transform the data to match your component's expected format
-      arr = arr.map(product => ({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        oldPrice: null,
-        img: product.image,
-        rating: parseFloat(product.rating) || 0,
-        description: product.description
-      }));
+    // In the data transformation part, update to this:
+arr = products.map(product => ({
+  id: product.id,
+  name: product.name,
+  price: product.price,
+  oldPrice: null,
+  img: product.image,
+  rating: parseFloat(product.rating) || 0,
+  description: product.description,
+  isOnSale: true, // ✅ ADD THIS
+  // ✅ ENSURE COMPANY DATA IS INCLUDED
+  company_id: product.company_id,
+  company_name: product.company_name || "Company",
+  category_id: product.category_id,
+  category_name: product.category_name || "Product"
+}));
     }
 
     console.log("✅ Pre-fetch successful. Products found:", arr.length);
@@ -252,6 +258,7 @@ function SalesComponent() {
         let arr = [];
         const products = res?.data?.data?.products;
         if (Array.isArray(products)) {
+          // In the data transformation part, update to this:
           arr = products.map(product => ({
             id: product.id,
             name: product.name,
@@ -259,7 +266,12 @@ function SalesComponent() {
             oldPrice: null,
             img: product.image,
             rating: parseFloat(product.rating) || 0,
-            description: product.description
+            description: product.description,
+            // ✅ COMPANY DATA - Ensure these fields are included
+            company_id: product.company_id,
+            company_name: product.company_name || "Company",
+            category_id: product.category_id,
+            category_name: product.category_name || "Product"
           }));
         }
 

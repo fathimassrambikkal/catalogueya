@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useFavourites } from "../context/FavouriteContext";
 import { useAuth } from "../context/AuthContext.jsx";
-import { getCompany, getSettings, getFixedWords } from "../api"; 
+import { getProduct, getSettings, getFixedWords } from "../api"; 
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { Lens } from "../components/Lens";
@@ -52,13 +52,29 @@ export default function ProductProfile() {
   const [error, setError] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
 
+  // API base URL for images
+  const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+
+  // ✅ Convert relative image path to absolute URL
+  const getImageUrl = useCallback((imgPath) => {
+    if (!imgPath) return '/api/placeholder/400/400';
+    if (imgPath.startsWith('http')) return imgPath;
+    const cleanPath = imgPath.startsWith('/') ? imgPath.slice(1) : imgPath;
+    return `${API_BASE_URL}/${cleanPath}`;
+  }, [API_BASE_URL]);
+
   // Memoized values for better performance
-  const productImages = useMemo(() => [
-    product?.image,
-    product?.image2,
-    product?.image3,
-    product?.image4
-  ].filter(Boolean), [product]);
+  const productImages = useMemo(() => {
+    if (!product) return [];
+    const images = [
+      product?.image,
+      product?.image2,
+      product?.image3,
+      product?.image4,
+      ...(product.albums || [])
+    ].filter(Boolean).map(getImageUrl);
+    return images.length > 0 ? images : [getImageUrl('/api/placeholder/400/400')];
+  }, [product, getImageUrl]);
 
   const averageRating = useMemo(() => {
     const getSafeRating = (rating) => {
@@ -74,10 +90,10 @@ export default function ProductProfile() {
   }, [reviews, product]);
 
   const basePath = useMemo(() => {
-    if (product?.categoryId && product?.companyId) {
-      return `/category/${product.categoryId}/company/${product.companyId}`;
-    } else if (product?.companyId) {
-      return `/company/${product.companyId}`;
+    if (product?.category_id && product?.company_id) {
+      return `/category/${product.category_id}/company/${product.company_id}`;
+    } else if (product?.company_id) {
+      return `/company/${product.company_id}`;
     }
     return "/";
   }, [product]);
@@ -95,13 +111,13 @@ export default function ProductProfile() {
       navigate("/register");
       return;
     }
-    alert(`Starting chat about ${product.name} with ${product.companyName}`);
+    alert(`Starting chat about ${product.name} with ${product.company_name}`);
   }, [isAuthenticated, navigate, product]);
 
   const handleShare = useCallback((p) => {
     const shareData = {
       title: p.name,
-      text: `Check out ${p.name} from ${p.companyName} on Catalogueya!`,
+      text: `Check out ${p.name} from ${p.company_name} on Catalogueya!`,
       url: window.location.href,
     };
     if (navigator.share) {
@@ -146,108 +162,94 @@ export default function ProductProfile() {
     toggleFavourite(product);
   }, [toggleFavourite]);
 
-  // Optimized calculateSimilarProducts
-  const calculateSimilarProducts = useCallback((companyData, currentProduct) => {
-    if (!companyData || !currentProduct || !companyData.products) {
-      setSimilarProducts([]);
-      return;
+  const handleCompanyClick = useCallback((e) => {
+    e.stopPropagation();
+    if (product?.company_id) {
+      navigate(`/company/${product.company_id}`);
     }
+  }, [navigate, product]);
 
-    const similar = companyData.products
-      .filter(p => {
-        const isSameProduct = String(p.id) === String(currentProduct.id);
-        const hasValidImage = p.image || p.img;
-        return !isSameProduct && hasValidImage;
-      })
-      .slice(0, 4)
-      .map(p => ({
-        ...p,
-        id: p.id,
-        name: p.name || "Unnamed Product",
-        price: p.price || 0,
-        oldPrice: p.oldPrice,
-        image: p.image || p.img || "/api/placeholder/300/300",
-        categoryId: currentProduct.categoryId,
-        companyId: currentProduct.companyId,
-        companyName: currentProduct.companyName,
-        categoryName: currentProduct.categoryName
-      }));
-
-    setSimilarProducts(similar);
-  }, []);
-
-  // Optimized data fetching
+  // ✅ UPDATED: Fetch product data using getProduct API
   useEffect(() => {
     let mounted = true;
     setLoading(true);
     setError(null);
 
-    if (!companyId) {
-      setError("Company ID is required");
-      setLoading(false);
-      return;
-    }
-
-    getCompany(companyId)
-      .then((res) => {
-        if (!mounted) return;
-
-        const companyData = res?.data?.data?.company || res?.data?.company || res?.data;
-
-        if (companyData && companyData.products) {
-          const foundProduct = companyData.products.find(
-            p => String(p.id) === String(resolvedProductId)
-          );
-
-          if (foundProduct) {
-            const productWithImages = {
-              ...foundProduct,
-              image: foundProduct.image || foundProduct.img || "/api/placeholder/400/400",
-              image2: foundProduct.image2 || foundProduct.images?.[1],
-              image3: foundProduct.image3 || foundProduct.images?.[2],
-              image4: foundProduct.image4 || foundProduct.images?.[3],
-              categoryId: companyData.category_id || companyData.categoryId,
-              companyId: companyId,
-              companyName: companyData.name || companyData.title || "Company",
-              categoryName: companyData.category_name || "Product"
-            };
-            
-            setProduct(productWithImages);
-            setCompanyData(companyData);
-            setSelectedImage(productWithImages.image);
-            calculateSimilarProducts(companyData, productWithImages);
-          } else {
-            setError(`Product with ID ${resolvedProductId} not found in company ${companyId}`);
-          }
-        } else {
-          setError("No products available for this company");
+    const fetchProductData = async () => {
+      try {
+        console.log('🔄 Fetching product with ID:', resolvedProductId);
+        
+        // Use getProduct API to fetch product data
+        const productResponse = await getProduct(resolvedProductId);
+        console.log('📦 API Response:', productResponse);
+        
+        // Extract product data from API response
+        const productData = productResponse?.data?.data?.product || productResponse?.data?.product;
+        
+        console.log('🔍 Product data found:', productData);
+        
+        if (productData && mounted) {
+          // Transform product data to match your component structure
+          const transformedProduct = {
+            id: productData.id,
+            name: productData.name,
+            price: productData.price,
+            oldPrice: productData.old_price || null,
+            image: getImageUrl(productData.image),
+            image2: getImageUrl(productData.albums?.[0] || productData.image),
+            image3: getImageUrl(productData.albums?.[1] || productData.image),
+            image4: getImageUrl(productData.albums?.[2] || productData.image),
+            rating: parseFloat(productData.rating) || 0,
+            description: productData.description,
+            // ✅ COMPANY DATA FROM API
+            company_id: productData.company_id,
+            company_name: productData.company_name || "Company",
+            category_id: productData.category_id,
+            category_name: productData.category_name || "Product",
+            discount_percent: productData.discount_percent || null,
+            albums: productData.albums || [],
+            // Additional fields for compatibility
+            companyName: productData.company_name || "Company",
+            categoryName: productData.category_name || "Product",
+            companyId: productData.company_id
+          };
+          
+          console.log('✨ Transformed product:', transformedProduct);
+          setProduct(transformedProduct);
+          setSelectedImage(transformedProduct.image);
+          
+          // Load reviews from localStorage
+          const storageKey = `reviews_${transformedProduct.id}`;
+          const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
+          setReviews(savedReviews);
+          
+          // Set similar products to empty (you can fetch similar products if needed)
+          setSimilarProducts([]);
+        } else if (mounted) {
+          console.error('❌ No product data found in response');
+          setError("Product not found in API response");
         }
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        setError("Failed to load product data");
-      })
-      .finally(() => {
+      } catch (err) {
+        console.error("❌ Error loading product:", err);
+        if (mounted) {
+          setError(`Failed to load product: ${err.message}`);
+        }
+      } finally {
         if (mounted) {
           setLoading(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
-      });
+      }
+    };
+
+    fetchProductData();
 
     return () => {
       mounted = false;
     };
-  }, [resolvedProductId, companyId, calculateSimilarProducts]);
+  }, [resolvedProductId, getImageUrl]);
 
   // Separate effects for independent data
-  useEffect(() => {
-    if (product) {
-      const storageKey = `reviews_${product.id}`;
-      const savedReviews = JSON.parse(localStorage.getItem(storageKey)) || [];
-      setReviews(savedReviews);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [product]);
-
   useEffect(() => {
     getSettings().then((res) => setSettings(res.data || {})).catch(() => {});
     getFixedWords().then((res) => setFixedWords(res.data || {})).catch(() => {});
@@ -394,20 +396,21 @@ export default function ProductProfile() {
         {/* Right: Product Details */}
         <div className="flex flex-col space-y-6">
           <p className="text-gray-500 text-sm uppercase tracking-wide">
-            {product.categoryName || "Product"}
+            {product.category_name || "Product"}
           </p>
 
           <h1 className="text-4xl font-semibold text-gray-900 tracking-tight">
             {product.name}
           </h1>
 
-          {product.companyName && (
+          {/* ✅ UPDATED: Company name as clickable link */}
+          {product.company_name && (
             <button
-              onClick={() => navigate(basePath)}
-              className="text-base text-blue-600 font-medium hover:underline w-fit"
+              onClick={handleCompanyClick}
+              className="text-base text-blue-600 font-medium hover:underline w-fit text-left"
             >
               <span className="text-gray-500">by </span>
-              {product.companyName}
+              {product.company_name}
             </button>
           )}
 
@@ -500,11 +503,11 @@ export default function ProductProfile() {
         </div>
       </motion.section>
 
-      {/* Similar Products Section - FIXED */}
+      {/* Similar Products Section */}
       {similarProducts.length > 0 ? (
         <section className="max-w-6xl mx-auto px-6 py-20">
           <h2 className="text-3xl font-light text-gray-900 text-start mb-12">
-            Similar Products from {product.companyName}
+            Similar Products from {product.company_name}
           </h2>
           <motion.div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {similarProducts.map((sp) => {
@@ -514,7 +517,7 @@ export default function ProductProfile() {
                   key={sp.id}
                   whileHover={{ scale: 1.03 }}
                   className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer"
-                  onClick={() => navigate(`${basePath}/product/${sp.id}`)}
+                  onClick={() => navigate(`/product/${sp.id}`)}
                 >
                   <button
                     onClick={(e) => {

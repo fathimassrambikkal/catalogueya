@@ -25,7 +25,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { label: "Analytics", icon: <FaChartLine className="text-sm" /> },
     { label: "Contacts", icon: <FaUsers className="text-sm" /> },
     { label: "Followers", icon: <FaUserFriends className="text-sm" /> },
-    { label: "Notifications", icon: <FaBell className="text-sm" /> }, // NEW
+    { label: "Notifications", icon: <FaBell className="text-sm" /> },
     { label: "Settings", icon: <FaCog className="text-sm" /> },
   ];
 
@@ -52,104 +52,109 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     "bg-gray-100 text-gray-600 shadow-[inset_2px_2px_4px rgba(0,0,0,0.05),inset_-2px_-2px_4px rgba(255,255,255,0.8)] group-hover:bg-blue-50 group-hover:text-blue-500";
 
   return (
-    <div className="bg-white/80 backdrop-blur-lg text-gray-900 h-full p-3 flex flex-col border-r border-gray-200/60 w-48">
-      
+    <div
+      className="
+        bg-white/80 backdrop-blur-lg text-gray-900 h-full p-3 flex flex-col 
+        border-r border-gray-200/60 
+        w-auto shrink-0 
+        overflow-y-auto overflow-x-hidden min-w-0
+      "
+    >
+
       {/* USER PROFILE */}
-      <div className="p-3 border-b border-gray-200/60 mb-4 mt-6">
-        <div className="flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+      <div className="p-3 border-b border-gray-200/60 mb-4 mt-6 min-w-0 overflow-x-hidden">
+        <div className="flex items-center min-w-0">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
             <span className="text-white font-medium text-sm">C</span>
           </div>
-          <div className="flex-1 ml-3">
-            <h2 className="text-base font-semibold text-gray-900">Company</h2>
-            <p className="text-xs text-gray-600">Business Account</p>
+          <div className="flex-1 ml-3 min-w-0 overflow-x-hidden">
+            <h2 className="text-base font-semibold text-gray-900 truncate break-words">Company</h2>
+            <p className="text-xs text-gray-600 truncate break-words">Business Account</p>
           </div>
         </div>
       </div>
 
       {/* MENU */}
-      <nav className="flex-1 flex flex-col gap-1">
+      <nav className="flex-1 flex flex-col gap-1 min-w-0 overflow-x-hidden">
         {tabs.map((t) => {
           const isActive = activeTab === t.label;
           const showBadge = t.label === "Followers" && getFollowersCount() > 0;
-          const showNotificationBadge = t.label === "Notifications" && getUnreadNotificationsCount() > 0;
-          
+          const showNotificationBadge =
+            t.label === "Notifications" && getUnreadNotificationsCount() > 0;
+
           return (
             <button
               key={t.label}
               onClick={() => setActiveTab(t.label)}
-              className={`group flex items-center p-2.5 rounded-xl transition-all duration-200 ${
+              className={`group flex items-center p-2.5 rounded-xl transition-all duration-200 w-full min-w-0 overflow-x-hidden ${
                 isActive ? activeTabStyles : inactiveTabStyles
               }`}
             >
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
                   isActive ? activeIconStyles : inactiveIconStyles
                 }`}
               >
                 {t.icon}
               </div>
 
-              <span className="ml-3 text-sm font-medium flex-1">{t.label}</span>
+              <span className="ml-3 text-sm font-medium flex-1 truncate break-words min-w-0">{t.label}</span>
 
-              {/* Followers Badge */}
               {showBadge && (
-                <span className="bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                <span className="bg-green-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center flex-shrink-0">
                   {getFollowersCount()}
                 </span>
               )}
 
-              {/* Notifications Badge */}
               {showNotificationBadge && (
-                <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center flex-shrink-0">
                   {getUnreadNotificationsCount()}
                 </span>
               )}
 
-              {isActive && <FaChevronRight className="text-blue-500 text-xs" />}
+              {isActive && <FaChevronRight className="text-blue-500 text-xs flex-shrink-0" />}
             </button>
           );
         })}
 
         {/* BARCODE BUTTON */}
-        <div className="relative">
+        <div className="relative min-w-0 overflow-x-hidden">
           <button
             onClick={() => setShowBarcode(!showBarcode)}
-            className={`group flex items-center p-2.5 rounded-xl transition-all duration-200 w-full ${
+            className={`group flex items-center p-2.5 rounded-xl transition-all duration-200 w-full min-w-0 ${
               showBarcode ? activeTabStyles : inactiveTabStyles
             }`}
           >
             <div
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 ${
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
                 showBarcode ? activeIconStyles : inactiveIconStyles
               }`}
             >
               <FaDownload className="text-sm" />
             </div>
 
-            <span className="ml-3 text-sm font-medium flex-1">Barcode</span>
+            <span className="ml-3 text-sm font-medium flex-1 truncate break-words min-w-0">Barcode</span>
 
             <FaChevronDown
-              className={`text-xs transition-transform duration-300 ${
+              className={`text-xs transition-transform duration-300 flex-shrink-0 ${
                 showBarcode ? "rotate-180" : ""
               }`}
             />
           </button>
 
-          {/* Barcode DropDown Content */}
           {showBarcode && (
-            <div className="mt-2 p-4 bg-white/80 backdrop-blur-lg rounded-xl border border-gray-200/60 shadow-md">
+            <div className="mt-2 p-4 bg-white/80 backdrop-blur-lg rounded-xl border border-gray-200/60 shadow-md max-w-full min-w-0">
               <img
                 src={barImage}
                 alt="Barcode"
-                className="w-full rounded-lg mb-3 border border-gray-200/60"
+                className="w-full rounded-lg mb-3 border border-gray-200/60 min-w-0"
               />
 
               <button
                 onClick={handleDownloadBarcode}
-                className="w-full px-3 py-2 bg-blue-500 text-white rounded-lg font-medium shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all flex items-center justify-center gap-2 text-sm"
+                className="w-full px-3 py-2 bg-blue-500 text-white rounded-lg font-medium shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all flex items-center justify-center gap-2 text-sm min-w-0 break-words"
               >
-                <FaDownload className="text-sm" />
+                <FaDownload className="text-sm flex-shrink-0" />
                 Download Barcode
               </button>
             </div>
@@ -161,36 +166,33 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       <button
         onClick={handleSignOut}
         className="group mb-3 md:mt-4 flex items-center p-2.5 rounded-xl bg-white/60 text-gray-700 border border-gray-200/50 
-          shadow-[inset_1px_1px_2px rgba(255,255,255,0.8),inset_-1px_-1px_2px rgba(0,0,0,0.05)]
-          hover:shadow-[3px_3px_10px rgba(220,38,38,0.1),-3px_-3px_10px rgba(255,255,255,0.8)]
-          hover:text-red-500 hover:border-red-200 transition-all duration-200"
+        shadow-[inset_1px_1px_2px rgba(255,255,255,0.8),inset_-1px_-1px_2px rgba(0,0,0,0.05)]
+        hover:shadow-[3px_3px_10px rgba(220,38,38,0.1),-3px_-3px_10px rgba(255,255,255,0.8)]
+        hover:text-red-500 hover:border-red-200 transition-all duration-200 w-full min-w-0 overflow-x-hidden"
       >
         <div
           className="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-100 text-gray-600 
-            shadow-[inset_2px_2px_4px rgba(0,0,0,0.05),inset_-2px_-2px_4px rgba(255,255,255,0.8)]
-            group-hover:bg-red-50 group-hover:text-red-500 transition-all duration-200"
+          shadow-[inset_2px_2px_4px rgba(0,0,0,0.05),inset_-2px_-2px_4px rgba(255,255,255,0.8)]
+          group-hover:bg-red-50 group-hover:text-red-500 transition-all duration-200 flex-shrink-0"
         >
           <FaSignOutAlt className="text-xs" />
         </div>
 
-        <span className="ml-3 text-sm font-medium">Sign Out</span>
+        <span className="ml-3 text-sm font-medium truncate break-words min-w-0">Sign Out</span>
       </button>
 
-      {/* Status */}
-      <div className="mt-4 pt-3 border-t border-gray-200/60">
-        <div className="flex items-center justify-between text-xs text-gray-600">
-          <span>Online</span>
-          <div className="w-2 h-2 bg-green-500 rounded-full shadow-md"></div>
+      {/* STATUS */}
+      <div className="mt-4 pt-3 border-t border-gray-200/60 min-w-0 overflow-x-hidden">
+        <div className="flex items-center justify-between text-xs text-gray-600 min-w-0">
+          <span className="break-words">Online</span>
+          <div className="w-2 h-2 bg-green-500 rounded-full shadow-md flex-shrink-0"></div>
         </div>
       </div>
     </div>
   );
 };
 
-// Helper function for notification count (you can replace this with actual logic)
 const getUnreadNotificationsCount = () => {
-  // This would typically come from a context or state
-  // For now, returning a mock number
   return 3;
 };
 

@@ -50,23 +50,23 @@ function Contacts({ companyInfo, products }) {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-3 sm:p-4 lg:p-6 overflow-x-hidden">
         {/* Our Customers Card */}
         <div className="bg-white/80 backdrop-blur-lg p-3 sm:p-4 lg:p-6
-          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] rounded-xl max-w-full">
+          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] rounded-xl max-w-full overflow-x-hidden">
           
           {/* Header Section with Title and customer count */}
-          <div className="flex flex-row justify-between items-center gap-3 mb-4 sm:mb-6 min-w-0 w-full">
+          <div className="flex flex-row justify-between items-center gap-3 mb-4 sm:mb-6 min-w-0 w-full overflow-x-hidden">
             {/* Left side - Title and customer count */}
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">Contacts</span>
+            <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-hidden">
+              <div className="flex items-center gap-2 min-w-0 overflow-x-hidden">
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate break-words">Contacts</span>
               </div>
             </div>
 
             {/* Right side - Send Notification Button */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 overflow-x-hidden">
               <button 
                 onClick={() => setShowNotificationModal(true)}
                 className="flex items-center justify-center gap-2 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all duration-200
-                  shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)] text-sm font-medium whitespace-nowrap flex-shrink-0"
+                  shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)] text-sm font-medium whitespace-nowrap flex-shrink-0 min-w-0"
               >
                 <FaBell className="text-sm flex-shrink-0" />
                 <span>Notify</span>

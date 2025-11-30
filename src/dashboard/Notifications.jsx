@@ -88,7 +88,7 @@ const Notifications = () => {
   };
 
   const getNotificationStyle = (type, read) => {
-    const baseStyles = "p-4 rounded-xl border-l-4 transition-all duration-200";
+    const baseStyles = "p-4 rounded-xl border-l-4 transition-all duration-200 min-w-0";
     const readStyles = read ? "bg-gray-50/50" : "bg-white shadow-lg";
     
     switch (type) {
@@ -107,14 +107,14 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-6 overflow-x-hidden">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto min-w-0">
         {/* Header - Always flex row on all devices */}
-        <div className="flex flex-row items-center justify-between gap-2 mb-8 overflow-hidden">
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink min-w-0">
+        <div className="flex flex-row items-center justify-between gap-2 mb-8 overflow-hidden min-w-0">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink min-w-0 overflow-x-hidden">
             
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">Notifications</h1>
-              <p className="text-gray-600 text-xs sm:text-sm truncate">
+            <div className="min-w-0 overflow-x-hidden">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 truncate break-words min-w-0">Notifications</h1>
+              <p className="text-gray-600 text-xs sm:text-sm truncate break-words min-w-0">
                 {unreadCount > 0 
                   ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
                   : 'All caught up!'
@@ -124,41 +124,41 @@ const Notifications = () => {
           </div>
 
           {/* Buttons Container - Always in row with smaller buttons on mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 min-w-0 overflow-x-hidden">
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
                 className="flex items-center justify-center gap-1 bg-blue-500 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl font-medium 
                   hover:bg-blue-600 transition-all duration-200 shadow-lg shadow-blue-500/30 
-                  hover:shadow-blue-500/50 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                  hover:shadow-blue-500/50 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-0"
               >
-                <FaCheck className="text-xs" />
-                <span className="hidden xs:inline">Read All</span>
-                <span className="xs:hidden">Read all</span>
+                <FaCheck className="text-xs flex-shrink-0" />
+                <span className="hidden xs:inline break-words">Read All</span>
+                <span className="xs:hidden break-words">Read all</span>
               </button>
             )}
             <button
               onClick={clearAll}
               className="flex items-center justify-center gap-1 bg-red-500 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl font-medium 
                 hover:bg-red-600 transition-all duration-200 shadow-lg shadow-red-500/30 
-                hover:shadow-red-500/50 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                hover:shadow-red-500/50 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-0"
             >
-              <FaTrash className="text-xs" />
-              <span className="hidden xs:inline">Clear All</span>
-              <span className="xs:hidden">Clear</span>
+              <FaTrash className="text-xs flex-shrink-0" />
+              <span className="hidden xs:inline break-words">Clear All</span>
+              <span className="xs:hidden break-words">Clear</span>
             </button>
           </div>
         </div>
 
         {/* Notifications List */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-12 min-w-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 min-w-0">
                 <FaBell className="text-gray-400 text-xl sm:text-2xl" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
-              <p className="text-gray-600 text-sm sm:text-base">You're all caught up! Check back later for updates.</p>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 break-words">No notifications</h3>
+              <p className="text-gray-600 text-sm sm:text-base break-words">You're all caught up! Check back later for updates.</p>
             </div>
           ) : (
             notifications.map((notification) => (
@@ -166,29 +166,29 @@ const Notifications = () => {
                 key={notification.id}
                 className={getNotificationStyle(notification.type, notification.read)}
               >
-                <div className="flex items-start gap-3 sm:gap-4">
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0">
                   <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-row items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className={`font-semibold text-sm sm:text-base ${notification.read ? 'text-gray-700' : 'text-gray-900'} truncate`}>
+                  <div className="flex-1 min-w-0 overflow-x-hidden">
+                    <div className="flex flex-row items-start justify-between gap-2 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-x-hidden">
+                        <h3 className={`font-semibold text-sm sm:text-base ${notification.read ? 'text-gray-700' : 'text-gray-900'} truncate break-words min-w-0`}>
                           {notification.title}
                         </h3>
-                        <p className={`text-xs sm:text-sm mt-1 ${notification.read ? 'text-gray-600' : 'text-gray-700'} break-words`}>
+                        <p className={`text-xs sm:text-sm mt-1 ${notification.read ? 'text-gray-600' : 'text-gray-700'} break-words min-w-0`}>
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                        <p className="text-xs text-gray-500 mt-2 break-words min-w-0">{notification.time}</p>
                       </div>
                       
-                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 min-w-0">
                         {!notification.read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
                             className="p-1 sm:p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 
-                              rounded-lg transition-all duration-200 flex-shrink-0"
+                              rounded-lg transition-all duration-200 flex-shrink-0 min-w-0"
                             title="Mark as read"
                           >
                             <FaCheck className="text-xs sm:text-sm" />
@@ -197,7 +197,7 @@ const Notifications = () => {
                         <button
                           onClick={() => deleteNotification(notification.id)}
                           className="p-1 sm:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 
-                            rounded-lg transition-all duration-200 flex-shrink-0"
+                            rounded-lg transition-all duration-200 flex-shrink-0 min-w-0"
                           title="Delete notification"
                         >
                           <FaTrash className="text-xs sm:text-sm" />
@@ -218,11 +218,11 @@ const Notifications = () => {
 
         {/* Clear All Button at Bottom */}
         {notifications.length > 0 && (
-          <div className="text-center mt-8">
+          <div className="text-center mt-8 min-w-0">
             <button
               onClick={clearAll}
               className="text-gray-500 hover:text-red-500 text-xs sm:text-sm font-medium 
-                hover:bg-red-50 px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200"
+                hover:bg-red-50 px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200 break-words min-w-0"
             >
               Clear all notifications
             </button>

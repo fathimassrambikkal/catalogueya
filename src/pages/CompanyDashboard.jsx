@@ -104,10 +104,10 @@ export default function CompanyDashboard() {
 
   return (
     <FollowersProvider>
-      <div className="flex bg-gray-100 min-h-screen overflow-x-hidden">
+      <div className="flex bg-gray-100 min-h-screen overflow-x-hidden min-w-0">
         {/* Sidebar - Fixed and hidden by default on desktop */}
         <div
-          className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 lg:w-48
+          className={`fixed z-50 top-0 left-0 h-screen transition-all duration-300 w-60 lg:w-48 min-w-0
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
             lg:translate-x-0 lg:static lg:z-auto`}
         >
@@ -117,17 +117,17 @@ export default function CompanyDashboard() {
         {/* Sidebar Overlay - Only show on mobile when sidebar is open */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden min-w-0"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Main Content - Fixed spacing issues */}
-        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto min-w-0 lg:ml-0">
+        <div className="flex-1 flex flex-col min-h-screen overflow-y-auto min-w-0 overflow-x-hidden lg:ml-0">
           {/* Sidebar Toggle Button */}
           <button
             onClick={() => setSidebarOpen((s) => !s)}
-            className="fixed top-4 left-4 z-50 p-2 rounded-xl bg-white text-gray-500 shadow-md hover:bg-gray-100 lg:hidden"
+            className="fixed top-4 left-4 z-50 p-2 rounded-xl bg-white text-gray-500 shadow-md hover:bg-gray-100 lg:hidden flex-shrink-0 min-w-0"
           >
             <TbLayoutSidebarRightFilled size={18} />
           </button>
@@ -138,7 +138,7 @@ export default function CompanyDashboard() {
           )}
 
           {/* Main content area - removed extra margins and reduced padding */}
-          <div className="flex-1 mt-0">
+          <div className="flex-1 mt-0 min-w-0">
             {renderContent()}
           </div>
         </div>

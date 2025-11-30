@@ -125,7 +125,7 @@ const StatsCard = React.memo(({ icon: Icon, value, label, trend, className = "" 
           >
             {displayValue.toLocaleString()}
           </motion.div>
-          <div className="text-[10px] sm:text-xs text-gray-600 leading-tight">{label}</div>
+          <div className="text-[10px] sm:text-xs text-gray-600 leading-tight break-words">{label}</div>
           
           {trend !== undefined && (
             <motion.div 
@@ -283,22 +283,22 @@ export default function AnalyticsAppleFull({ products = [] }) {
       <div className="p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
         {/* Header */}
         <motion.header 
-          className="flex flex-row items-center justify-between mb-4 sm:mb-6 gap-2 min-w-0 w-full"
+          className="flex flex-row items-center justify-between mb-4 sm:mb-6 gap-2 min-w-0 w-full overflow-x-hidden"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <motion.h1 
-            className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 whitespace-nowrap flex-shrink-0 ml-14 md:0"
+            className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 break-words flex-shrink-0 ml-0 md:ml-0 min-w-0"
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             Analytics
           </motion.h1>
           
-          <div className="flex items-center gap-1 min-w-0 flex-1 justify-end">
+          <div className="flex items-center gap-1 min-w-0 flex-1 justify-end overflow-x-hidden">
             {/* Range Selector - Fixed for 300px */}
-            <div className="relative flex items-center gap-0.5 rounded-lg border border-gray-300/50 px-0.5 py-0.5 bg-white/90 backdrop-blur-xl shadow-sm flex-shrink-0">
+            <div className="relative flex items-center gap-0.5 rounded-lg border border-gray-300/50 px-0.5 py-0.5 bg-white/90 backdrop-blur-xl shadow-sm flex-shrink-0 min-w-0">
               <motion.div 
                 className={`absolute top-0.5 bottom-0.5 w-[calc(33.333%-4px)] rounded-md bg-blue-500`}
                 initial={false}
@@ -315,7 +315,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
                 <motion.button
                   key={r}
                   onClick={() => handleRangeChange(r)}
-                  className={`relative px-1.5 py-1 text-[8px] xs:text-[9px] sm:text-xs rounded-md transition-all duration-300 z-10 whitespace-nowrap ${
+                  className={`relative px-1.5 py-1 text-[8px] xs:text-[9px] sm:text-xs rounded-md transition-all duration-300 z-10 break-words min-w-0 ${
                     range === r ? "text-white" : "text-gray-600 hover:text-blue-600"
                   }`}
                   whileHover={{ scale: 1.05 }}
@@ -331,7 +331,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
         <div className="space-y-3 sm:space-y-4">
           {/* TOP ROW: 4 cards - Fixed grid for 300px */}
           <motion.div 
-            className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4"
+            className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 overflow-x-hidden"
             initial="initial"
             animate="enter"
             variants={{
@@ -348,7 +348,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="col-span-1"
+                className="col-span-1 min-w-0"
               >
                 <StatsCard {...stat} />
               </motion.div>
@@ -359,18 +359,18 @@ export default function AnalyticsAppleFull({ products = [] }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="col-span-1"
+              className="col-span-1 min-w-0"
             >
               <AnalyticsCard className="h-full">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] text-gray-600 truncate">Top product</div>
-                    <div className="text-sm font-semibold text-gray-900 truncate">
+                <div className="flex items-start justify-between mb-2 min-w-0">
+                  <div className="flex-1 min-w-0 overflow-x-hidden">
+                    <div className="text-[10px] text-gray-600 truncate break-words">Top product</div>
+                    <div className="text-sm font-semibold text-gray-900 truncate break-words min-w-0">
                       {topProduct.name || "—"}
                     </div>
                   </div>
                   <motion.div 
-                    className="text-[10px] text-gray-500 flex items-center gap-0.5 flex-shrink-0 ml-1"
+                    className="text-[10px] text-gray-500 flex items-center gap-0.5 flex-shrink-0 ml-1 min-w-0"
                     animate={{ opacity: [0.6, 1, 0.6] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
@@ -379,7 +379,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   </motion.div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <motion.div 
                     className="relative flex-shrink-0"
                     whileHover={{ scale: 1.05 }}
@@ -399,15 +399,15 @@ export default function AnalyticsAppleFull({ products = [] }) {
                     />
                   </motion.div>
                   
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] text-gray-600">Views</div>
+                  <div className="flex-1 min-w-0 overflow-x-hidden">
+                    <div className="text-[10px] text-gray-600 break-words">Views</div>
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={viewsAnimated}
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 1.1, opacity: 0 }}
-                        className="text-base font-semibold text-gray-900 truncate"
+                        className="text-base font-semibold text-gray-900 truncate break-words min-w-0"
                       >
                         {viewsAnimated.toLocaleString()}
                       </motion.div>
@@ -425,13 +425,13 @@ export default function AnalyticsAppleFull({ products = [] }) {
             transition={{ delay: 0.2 }}
           >
             <AnalyticsCard>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-xs text-gray-600">Views Trend</div>
-                  <div className="text-base sm:text-lg font-semibold text-gray-900">Recent Views</div>
+              <div className="flex items-center justify-between mb-3 min-w-0">
+                <div className="min-w-0 overflow-x-hidden">
+                  <div className="text-xs text-gray-600 break-words">Views Trend</div>
+                  <div className="text-base sm:text-lg font-semibold text-gray-900 break-words">Recent Views</div>
                 </div>
                 <motion.div 
-                  className="text-xs text-gray-500 flex items-center gap-1"
+                  className="text-xs text-gray-500 flex items-center gap-1 flex-shrink-0 min-w-0"
                   animate={{ opacity: [0.6, 1, 0.6] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -488,15 +488,15 @@ export default function AnalyticsAppleFull({ products = [] }) {
 
           {/* PRODUCT GRID */}
           <motion.div 
-            className="mt-4 sm:mt-6"
+            className="mt-4 sm:mt-6 overflow-x-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Products Performance</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2 min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 break-words min-w-0">Products Performance</h2>
               <motion.div 
-                className="text-xs text-gray-600 flex items-center gap-1"
+                className="text-xs text-gray-600 flex items-center gap-1 flex-shrink-0 min-w-0"
                 animate={{ opacity: [0.6, 1, 0.6] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
@@ -505,16 +505,16 @@ export default function AnalyticsAppleFull({ products = [] }) {
               </motion.div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 overflow-x-hidden">
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <AnalyticsCard key={i} hoverable={false}>
                     <Skeleton className="w-full h-32 sm:h-36 rounded-lg" shimmer />
-                    <div className="mt-2 sm:mt-3 flex items-center justify-between">
+                    <div className="mt-2 sm:mt-3 flex items-center justify-between min-w-0">
                       <Skeleton className="h-3 sm:h-4 w-2/3" />
                       <Skeleton className="h-3 sm:h-4 w-1/6" />
                     </div>
-                    <div className="mt-2 sm:mt-3 h-10 sm:h-12">
+                    <div className="mt-2 sm:mt-3 h-10 sm:h-12 min-w-0">
                       <Skeleton className="w-full h-full rounded" shimmer />
                     </div>
                   </AnalyticsCard>
@@ -527,30 +527,31 @@ export default function AnalyticsAppleFull({ products = [] }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     whileHover={{ y: -2 }}
+                    className="min-w-0"
                   >
                     <AnalyticsCard>
                       <motion.img
                         src={p.image || p.img || "/placeholder.png"}
                         alt=""
-                        className="w-full h-32 sm:h-36 object-cover rounded-lg border border-gray-200/60"
+                        className="w-full h-32 sm:h-36 object-cover rounded-lg border border-gray-200/60 min-w-0"
                         loading="lazy"
                         whileHover={{ scale: 1.02 }}
                         transition={{ type: "spring", stiffness: 400, damping: 10 }}
                       />
 
-                      <div className="mt-2 sm:mt-3 flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-gray-900 truncate text-sm sm:text-base">{p.name}</div>
-                          <div className="text-xs text-gray-600">
+                      <div className="mt-2 sm:mt-3 flex items-center justify-between min-w-0">
+                        <div className="flex-1 min-w-0 overflow-x-hidden">
+                          <div className="font-semibold text-gray-900 truncate text-sm sm:text-base break-words">{p.name}</div>
+                          <div className="text-xs text-gray-600 break-words">
                             {p.reviews || 0} reviews • {p.rating || 0}★
                           </div>
                         </div>
 
-                        <div className="text-right flex-shrink-0 ml-2">
-                          <div className="font-medium text-gray-900 text-sm sm:text-base">
+                        <div className="text-right flex-shrink-0 ml-2 min-w-0">
+                          <div className="font-medium text-gray-900 text-sm sm:text-base break-words">
                             {(p.views || 0).toLocaleString()}
                           </div>
-                          <div className="text-xs text-gray-600">views</div>
+                          <div className="text-xs text-gray-600 break-words">views</div>
                         </div>
                       </div>
 

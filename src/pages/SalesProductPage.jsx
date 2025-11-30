@@ -1,9 +1,8 @@
 import React, { useState, useEffect, Suspense, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFavourites } from "../context/FavouriteContext";
-import { salesProducts as localSales } from "../data/salesData";
 import CallToAction from "../components/CallToAction";
-import { getProducts } from "../api"; 
+import { getSalesProducts } from "../api"; 
 
 // ✅ Lazy-loaded icons
 const FaStar = React.lazy(() =>
@@ -19,51 +18,89 @@ const FaArrowLeft = React.lazy(() =>
   import("react-icons/fa").then((mod) => ({ default: mod.FaArrowLeft }))
 );
 
+// Use the same base URL as your API
+const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+
 function SalesProductPageComponent() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState("Relevance");
   const { favourites, toggleFavourite } = useFavourites();
   const whatsappNumber = "97400000000";
 
-  const [products, setProducts] = useState(localSales);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // ✅ Fetch products from backend
+  // ✅ Fetch products from backend using same API as sales component
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await getProducts();
+        setLoading(true);
+        setError(null);
+        
+        const res = await getSalesProducts();
+        
+        let arr = [];
+        const productsData = res?.data?.data?.products;
+        
+        if (Array.isArray(productsData)) {
+          console.log("✅ API returned data.data.products array");
+          
+          // Transform the data to match your component's expected format
+          
+      // In the data transformation part, update to this:
+        arr = productsData.map(product => ({
+          id: product.id,
+          name: product.name,
+          name_en: product.name,
+          price: product.price,
+          old_price: null,
+          img: product.image,
+          image: product.image,
+          rating: parseFloat(product.rating) || 0,
+          description: product.description,
+          isOnSale: true,
+          discount_price: null,
+          // ✅ ENSURE COMPANY DATA IS INCLUDED
+          company_id: product.company_id,
+          company_name: product.company_name || "Company",
+          category_id: product.category_id,
+          category_name: product.category_name || "Sale"
+        }));
+        }
 
-        // ✅ Safer null-check for backend data
-        const backendData = data?.data ?? data ?? [];
-
-        // ✅ Prevents crashes if backendData is not an array
-        const saleItems = Array.isArray(backendData)
-          ? backendData.filter(
-              (p) =>
-                p?.isOnSale ||
-                p?.discount_price ||
-                (p?.old_price && p?.old_price > p?.price)
-            )
-          : [];
-
-        if (saleItems.length > 0) setProducts(saleItems);
+        if (arr.length > 0) {
+          setProducts(arr);
+          console.log("✅ Sales products loaded:", arr.length);
+        } else {
+          setError("No sales products found");
+          console.warn("⚠️ No sales products found in API response");
+        }
       } catch (err) {
         console.error("❌ Error loading sales products:", err);
+        setError("Failed to load sales products");
       } finally {
         setLoading(false);
       }
     };
+    
     fetchProducts();
   }, []);
+
+  // ✅ Convert relative image path to absolute URL (same as sales component)
+  const getImageUrl = (imgPath) => {
+    if (!imgPath) return '/placeholder-image.jpg';
+    if (imgPath.startsWith('http')) return imgPath;
+    return `${API_BASE_URL}/${imgPath}`;
+  };
 
   // ✅ Sorting logic
   const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
       case "Price: Low to High":
-        return a.price - b.price;
+        return (a.price || 0) - (b.price || 0);
       case "Price: High to Low":
-        return b.price - a.price;
+        return (b.price || 0) - (a.price || 0);
       case "Rating":
         return (b.rating || 0) - (a.rating || 0);
       default:
@@ -91,10 +128,20 @@ function SalesProductPageComponent() {
           Sales Products
         </h1>
 
+        {/* Error Message */}
+        {error && (
+          <div className="max-w-2xl mx-auto mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Sort Dropdown */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 text-gray-600">
           <p className="text-sm sm:text-base md:text-lg">
-            {loading ? "Loading..." : `${sortedProducts.length} Products Found`}
+            {loading 
+              ? "Loading..." 
+              : `${sortedProducts.length} ${sortedProducts.length === 1 ? 'Product' : 'Products'} Found`
+            }
           </p>
           <div className="flex items-center gap-3 text-sm sm:text-base">
             <span className="font-medium text-gray-700">Sort by:</span>
@@ -113,13 +160,19 @@ function SalesProductPageComponent() {
 
         {/* Product Grid */}
         {loading ? (
-          <p className="text-center text-gray-500 mt-10">
-            Fetching sales products...
-          </p>
+          <div className="text-center text-gray-500 mt-10">
+            <p>Fetching sales products...</p>
+          </div>
+        ) : sortedProducts.length === 0 ? (
+          <div className="text-center text-gray-500 mt-10">
+            <p>No sales products found.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center">
             {sortedProducts.map((product) => {
               const isFav = favourites.some((item) => item.id === product.id);
+              const imageUrl = getImageUrl(product.image || product.img);
+              
               return (
                 <div
                   key={product.id}
@@ -155,10 +208,13 @@ function SalesProductPageComponent() {
                   {/* 🖼️ Product Image */}
                   <div className="relative w-full h-[180px] sm:h-[220px] overflow-hidden rounded-t-3xl">
                     <img
-                      src={product.image || product.img}
+                      src={imageUrl}
                       alt={product.name_en || product.name}
                       loading="lazy"
                       className="w-full h-full object-cover object-top rounded-t-3xl transition-transform duration-500 group-hover:scale-105 border-b border-white/20"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
                     />
 
                     {/* ⭐ Rating */}
@@ -168,7 +224,7 @@ function SalesProductPageComponent() {
                           <FaStar
                             key={i}
                             className={`w-3 h-3 ${
-                              i < Math.floor(product.rating || 4.5)
+                              i < Math.floor(product.rating || 0)
                                 ? "text-yellow-400"
                                 : "text-gray-400"
                             }`}
@@ -176,7 +232,7 @@ function SalesProductPageComponent() {
                         ))}
                       </Suspense>
                       <span className="text-[10px] text-white/90 ml-1">
-                        ({(product.rating || 4.5).toFixed(1)})
+                        ({(product.rating || 0).toFixed(1)})
                       </span>
                     </div>
                   </div>

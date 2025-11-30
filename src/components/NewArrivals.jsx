@@ -29,14 +29,20 @@ let preloadedData = {
       arr = products;
       
       // Transform the data to match your component's expected format
-      arr = arr.map(product => ({
+      arr = products.map(product => ({
         id: product.id,
         name: product.name,
         price: product.price,
         oldPrice: null,
-        img: product.image, // API uses "image" field
+        img: product.image,
         rating: parseFloat(product.rating) || 0,
-        description: product.description
+        description: product.description,
+        isNewArrival: true, // ✅ ADD THIS FLAG
+        // ✅ ENSURE COMPANY DATA IS INCLUDED
+        company_id: product.company_id,
+        company_name: product.company_name || "Company",
+        category_id: product.category_id,
+        category_name: product.category_name || "Product"
       }));
     }
 
@@ -259,7 +265,13 @@ function NewArrivalsComponent() {
             oldPrice: null,
             img: product.image,
             rating: parseFloat(product.rating) || 0,
-            description: product.description
+            description: product.description,
+            isNewArrival: true, // ✅ ADD THIS FLAG
+            // ✅ ENSURE COMPANY DATA IS INCLUDED
+            company_id: product.company_id,
+            company_name: product.company_name || "Company",
+            category_id: product.category_id,
+            category_name: product.category_name || "Product"
           }));
         }
 
