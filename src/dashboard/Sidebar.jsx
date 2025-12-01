@@ -74,7 +74,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       </div>
 
       {/* MENU */}
-      <nav className="flex-1 flex flex-col gap-2 overflow-visible">
+      <nav className="flex-1 flex flex-col gap-1 overflow-visible">
         {tabs.map((t) => {
           const isActive = activeTab === t.label;
 
@@ -82,7 +82,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             <button
               key={t.label}
               onClick={() => setActiveTab(t.label)}
-              className={`group flex items-center gap-1 md:gap-2 px-2 py-2 md:py-2.5 rounded-lg transition-all w-full ${
+              className={`group flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-all w-full ${
                 isActive ? activeTabStyles : inactiveTabStyles
               }`}
             >
@@ -96,7 +96,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
               </div>
 
               {/* TEXT FIXED */}
-              <span className="text-xs md:text-base font-medium truncate flex-1 min-w-0">
+              <span className="text-[12px] font-medium truncate flex-1 min-w-0">
                 {t.label}
               </span>
 
@@ -136,7 +136,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
               <FaDownload className="text-[9px]" />
             </div>
 
-            <span className="text-xs md:text-base font-medium truncate flex-1 min-w-0">
+            <span className="text-[12px] font-medium truncate flex-1 min-w-0">
               Barcode
             </span>
 
@@ -165,7 +165,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                 onClick={handleDownloadBarcode}
                 className="w-full px-3 py-2 bg-blue-500 text-white rounded-lg font-medium shadow hover:scale-[1.03] transition text-sm"
               >
-                <FaDownload className="text-xs md:text-base inline-block mr-2" />
+                <FaDownload className="text-[9px] inline-block mr-2" />
                 Download
               </button>
             </div>
@@ -182,7 +182,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
           <FaSignOutAlt className="text-[9px]" />
         </div>
 
-        <span className="text-xs md:text-base font-medium truncate flex-1 min-w-0">
+        <span className="text-[12px] font-medium truncate flex-1 min-w-0">
           Sign Out
         </span>
       </button>
