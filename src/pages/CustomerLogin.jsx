@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../customer/Sidebar.jsx";
-import Messages from "../customer/Messages.jsx";
-import Notifications from "../customer/Notifications.jsx";
-import Reviews from "../customer/Reviews.jsx";
-import Fav from "../customer/Fav.jsx";
-import Following from "../customer/Following.jsx";
-import Settings from "../customer/Settings.jsx";
-import Help from "../customer/Help.jsx";
+import Sidebar from "../Customer/Sidebar.jsx";
+import Messages from "../Customer/Messages.jsx";
+import Notifications from "../Customer/Notifications.jsx";
+import Reviews from "../Customer/Reviews.jsx";
+import Fav from "../Customer/Fav.jsx";
+import Following from "../Customer/Following.jsx";
+import Settings from "../Customer/Settings.jsx";
+import Help from "../Customer/Help.jsx";
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
 
 function CustomerLogin() {
