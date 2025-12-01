@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   FaBell,
   FaCheck,
@@ -6,10 +6,10 @@ import {
   FaExclamationCircle,
   FaInfoCircle,
   FaCheckCircle,
-  FaTimes
+  FaTimes,
 } from "react-icons/fa";
 
-const Notifications = () => {
+export default function Notifications() {
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -17,7 +17,7 @@ const Notifications = () => {
       message: "John Doe started following your company",
       type: "info",
       time: "2 min ago",
-      read: false
+      read: false,
     },
     {
       id: 2,
@@ -25,7 +25,7 @@ const Notifications = () => {
       message: "Your product 'Office Chair' has been updated successfully",
       type: "success",
       time: "1 hour ago",
-      read: false
+      read: false,
     },
     {
       id: 3,
@@ -33,7 +33,7 @@ const Notifications = () => {
       message: "Product 'Desk Lamp' is running low on stock",
       type: "warning",
       time: "3 hours ago",
-      read: true
+      read: true,
     },
     {
       id: 4,
@@ -41,7 +41,7 @@ const Notifications = () => {
       message: "You have a new message from Sarah Johnson",
       type: "info",
       time: "5 hours ago",
-      read: true
+      read: true,
     },
     {
       id: 5,
@@ -49,32 +49,43 @@ const Notifications = () => {
       message: "Scheduled maintenance tonight at 2:00 AM",
       type: "warning",
       time: "1 day ago",
-      read: true
-    }
+      read: true,
+    },
   ]);
 
+  /* -----------------------------------------------------
+      Derived value (memoized)
+  -------------------------------------------------------*/
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
+
+  /* -----------------------------------------------------
+      Handlers
+  -------------------------------------------------------*/
   const markAsRead = (id) => {
-    setNotifications(notifications.map(notification =>
-      notification.id === id ? { ...notification, read: true } : notification
-    ));
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
   };
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map(notification => ({
-      ...notification,
-      read: true
-    })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   const deleteNotification = (id) => {
-    setNotifications(notifications.filter(notification => notification.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   const clearAll = () => {
     setNotifications([]);
   };
 
-  const getNotificationIcon = (type) => {
+  /* -----------------------------------------------------
+      Helpers
+  -------------------------------------------------------*/
+  const getIcon = (type) => {
     switch (type) {
       case "success":
         return <FaCheckCircle className="text-green-500" />;
@@ -87,118 +98,137 @@ const Notifications = () => {
     }
   };
 
-  const getNotificationStyle = (type, read) => {
-    const baseStyles = "p-4 rounded-xl border-l-4 transition-all duration-200 min-w-0";
-    const readStyles = read ? "bg-gray-50/50" : "bg-white shadow-lg";
-    
+  const getStyle = (type, read) => {
+    const base = "p-4 rounded-xl border-l-4 transition-all duration-200 min-w-0";
+    const readStyle = read ? "bg-gray-50/50" : "bg-white shadow-lg";
+
     switch (type) {
       case "success":
-        return `${baseStyles} ${readStyles} border-l-green-500`;
+        return `${base} ${readStyle} border-l-green-500`;
       case "warning":
-        return `${baseStyles} ${readStyles} border-l-yellow-500`;
+        return `${base} ${readStyle} border-l-yellow-500`;
       case "error":
-        return `${baseStyles} ${readStyles} border-l-red-500`;
+        return `${base} ${readStyle} border-l-red-500`;
       default:
-        return `${baseStyles} ${readStyles} border-l-blue-500`;
+        return `${base} ${readStyle} border-l-blue-500`;
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
+  /* -----------------------------------------------------
+      JSX
+  -------------------------------------------------------*/
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-6 overflow-x-hidden">
       <div className="max-w-4xl mx-auto min-w-0">
-        {/* Header - Always flex row on all devices */}
-        <div className="flex flex-row items-center justify-between gap-2 mb-8 overflow-hidden min-w-0">
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink min-w-0 overflow-x-hidden">
-            
-            <div className="min-w-0 overflow-x-hidden">
-              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 truncate break-words min-w-0">Notifications</h1>
-              <p className="text-gray-600 text-xs sm:text-sm truncate break-words min-w-0">
-                {unreadCount > 0 
-                  ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-                  : 'All caught up!'
-                }
+        
+        {/* HEADER */}
+        <div className="flex flex-row items-center justify-between gap-2 mb-8 min-w-0">
+          <div className="flex gap-2 sm:gap-4 items-center min-w-0 overflow-hidden">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+                Notifications
+              </h1>
+              <p className="text-gray-600 text-xs sm:text-sm truncate">
+                {unreadCount > 0
+                  ? `${unreadCount} unread notification${
+                      unreadCount > 1 ? "s" : ""
+                    }`
+                  : "All caught up!"}
               </p>
             </div>
           </div>
 
-          {/* Buttons Container - Always in row with smaller buttons on mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 min-w-0 overflow-x-hidden">
+          {/* ACTION BUTTONS */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="flex items-center justify-center gap-1 bg-blue-500 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl font-medium 
-                  hover:bg-blue-600 transition-all duration-200 shadow-lg shadow-blue-500/30 
-                  hover:shadow-blue-500/50 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-0"
+                className="
+                  bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-2 
+                  rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium shadow-lg 
+                  shadow-blue-400/30 whitespace-nowrap
+                "
               >
-                <FaCheck className="text-xs flex-shrink-0" />
-                <span className="hidden xs:inline break-words">Read All</span>
-                <span className="xs:hidden break-words">Read all</span>
+                <div className="flex items-center gap-1">
+                  <FaCheck className="text-xs" /> Read All
+                </div>
               </button>
             )}
+
             <button
               onClick={clearAll}
-              className="flex items-center justify-center gap-1 bg-red-500 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl font-medium 
-                hover:bg-red-600 transition-all duration-200 shadow-lg shadow-red-500/30 
-                hover:shadow-red-500/50 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-0"
+              className="
+                bg-red-500 hover:bg-red-600 text-white px-2 py-1 sm:px-3 sm:py-2 
+                rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium shadow-lg 
+                shadow-red-400/30 whitespace-nowrap
+              "
             >
-              <FaTrash className="text-xs flex-shrink-0" />
-              <span className="hidden xs:inline break-words">Clear All</span>
-              <span className="xs:hidden break-words">Clear</span>
+              <div className="flex items-center gap-1">
+                <FaTrash className="text-xs" /> Clear
+              </div>
             </button>
           </div>
         </div>
 
-        {/* Notifications List */}
+        {/* NOTIFICATION LIST */}
         <div className="space-y-4 min-w-0">
           {notifications.length === 0 ? (
-            <div className="text-center py-12 min-w-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 min-w-0">
+            <div className="text-center py-12">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
                 <FaBell className="text-gray-400 text-xl sm:text-2xl" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 break-words">No notifications</h3>
-              <p className="text-gray-600 text-sm sm:text-base break-words">You're all caught up! Check back later for updates.</p>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                No notifications
+              </h3>
+              <p className="text-gray-600 text-sm sm:text-base">
+                You're all caught up! Check back later.
+              </p>
             </div>
           ) : (
-            notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={getNotificationStyle(notification.type, notification.read)}
-              >
-                <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-                  <div className="flex-shrink-0 mt-1">
-                    {getNotificationIcon(notification.type)}
-                  </div>
+            notifications.map((n) => (
+              <div key={n.id} className={getStyle(n.type, n.read)}>
+                <div className="flex gap-3 sm:gap-4 items-start min-w-0">
                   
-                  <div className="flex-1 min-w-0 overflow-x-hidden">
-                    <div className="flex flex-row items-start justify-between gap-2 min-w-0">
-                      <div className="flex-1 min-w-0 overflow-x-hidden">
-                        <h3 className={`font-semibold text-sm sm:text-base ${notification.read ? 'text-gray-700' : 'text-gray-900'} truncate break-words min-w-0`}>
-                          {notification.title}
+                  {/* ICON */}
+                  <div className="flex-shrink-0 mt-1">{getIcon(n.type)}</div>
+
+                  {/* TEXT */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between gap-2 min-w-0">
+                      <div className="min-w-0">
+                        <h3
+                          className={`font-semibold text-sm sm:text-base truncate ${
+                            n.read ? "text-gray-700" : "text-gray-900"
+                          }`}
+                        >
+                          {n.title}
                         </h3>
-                        <p className={`text-xs sm:text-sm mt-1 ${notification.read ? 'text-gray-600' : 'text-gray-700'} break-words min-w-0`}>
-                          {notification.message}
+                        <p
+                          className={`text-xs sm:text-sm mt-1 break-words ${
+                            n.read ? "text-gray-600" : "text-gray-700"
+                          }`}
+                        >
+                          {n.message}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2 break-words min-w-0">{notification.time}</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {n.time}
+                        </p>
                       </div>
-                      
-                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 min-w-0">
-                        {!notification.read && (
+
+                      {/* ACTION ICONS */}
+                      <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                        {!n.read && (
                           <button
-                            onClick={() => markAsRead(notification.id)}
-                            className="p-1 sm:p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 
-                              rounded-lg transition-all duration-200 flex-shrink-0 min-w-0"
-                            title="Mark as read"
+                            onClick={() => markAsRead(n.id)}
+                            className="p-1 sm:p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg"
                           >
                             <FaCheck className="text-xs sm:text-sm" />
                           </button>
                         )}
+
                         <button
-                          onClick={() => deleteNotification(notification.id)}
-                          className="p-1 sm:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 
-                            rounded-lg transition-all duration-200 flex-shrink-0 min-w-0"
-                          title="Delete notification"
+                          onClick={() => deleteNotification(n.id)}
+                          className="p-1 sm:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
                         >
                           <FaTrash className="text-xs sm:text-sm" />
                         </button>
@@ -207,22 +237,19 @@ const Notifications = () => {
                   </div>
                 </div>
 
-                {/* Unread indicator */}
-                {!notification.read && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-3"></div>
-                )}
+                {/* UNREAD DOT */}
+                {!n.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-3" />}
               </div>
             ))
           )}
         </div>
 
-        {/* Clear All Button at Bottom */}
+        {/* CLEAR ALL BOTTOM */}
         {notifications.length > 0 && (
-          <div className="text-center mt-8 min-w-0">
+          <div className="text-center mt-8">
             <button
               onClick={clearAll}
-              className="text-gray-500 hover:text-red-500 text-xs sm:text-sm font-medium 
-                hover:bg-red-50 px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200 break-words min-w-0"
+              className="text-gray-500 hover:text-red-500 text-xs sm:text-sm px-4 py-2 rounded-lg hover:bg-red-50 transition"
             >
               Clear all notifications
             </button>
@@ -231,6 +258,4 @@ const Notifications = () => {
       </div>
     </div>
   );
-};
-
-export default Notifications;
+}

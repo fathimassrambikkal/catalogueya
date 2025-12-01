@@ -494,12 +494,12 @@ export default function CompanyPage() {
       {/* ============ Products Section ============ */}
       {showContent ? (
         <section className="py-12">
-          <h2 className="text-2xl md:text-3xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12 break-words text-start rtl:text-right">
+          <h2 className="text-xl md:text-2xl lg font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12 break-words text-start rtl:text-right">
             Our Products
           </h2>
 
           {products.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 px-4 sm:px-8 overflow-x-hidden">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-1 px-4 sm:px-8 overflow-x-hidden">
               {products.map((product) => (
                 <div
                   key={product.id}

@@ -367,22 +367,106 @@ export default function NewArrivalProductProfile() {
         </div>
       </motion.section>
 
-      {/* Rest of the component remains the same */}
-      <AnimatePresence>
-        {showReviewModal && (
-          <motion.div
-            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 overflow-auto px-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {/* Review Modal Content - Same as before */}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <Faq />
       <CallToAction />
+       {/* Review Modal */}
+            <AnimatePresence>
+              {showReviewModal && (
+                <motion.div
+                  className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 overflow-auto px-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6"
+                  >
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">
+                      Customer Reviews
+                    </h3>
+      
+                    <div className="max-h-[50vh] overflow-y-auto mb-4 space-y-3">
+                      {reviews.length > 0 ? (
+                        reviews.map((rev) => (
+                          <div key={rev.id} className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+                            <div className="flex justify-between mb-1">
+                              <span className="font-semibold text-gray-800">{rev.name}</span>
+                              <span className="text-gray-500 text-sm">{rev.date}</span>
+                            </div>
+                            <div className="flex items-center gap-1 mb-1">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <FaStar
+                                  key={i}
+                                  className={`w-4 h-4 ${i < getSafeRating(rev.rating) ? "text-gray-950" : "text-gray-300"}`}
+                                />
+                              ))}
+                            </div>
+                            <p className="text-gray-700 text-sm">{rev.comment}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center text-sm">
+                          No reviews yet – be the first to review!
+                        </p>
+                      )}
+                    </div>
+      
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">Write a Review</h3>
+      
+                    <input
+                      type="text"
+                      placeholder="Your Name"
+                      value={reviewName}
+                      onChange={(e) => setReviewName(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                    />
+      
+                    <div className="flex justify-center mb-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <FaStar
+                          key={i}
+                          onClick={() => setReviewRating(i + 1)}
+                          className={`w-7 h-7 cursor-pointer transition ${
+                            i < reviewRating ? "text-gray-950" : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+      
+                    <textarea
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                      placeholder="Share your thoughts about this product..."
+                      className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                      rows="4"
+                    ></textarea>
+      
+                    <div className="flex justify-end gap-3 mt-5">
+                      <button
+                        onClick={() => setShowReviewModal(false)}
+                        className="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleReviewSubmit}
+                        disabled={!reviewText || !reviewName || reviewRating === 0}
+                        className={`px-4 py-2 text-sm rounded-lg text-white ${
+                          reviewText && reviewName && reviewRating
+                            ? "bg-gray-900 hover:bg-gray-800"
+                            : "bg-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
     </>
   );
 }

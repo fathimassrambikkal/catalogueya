@@ -469,7 +469,7 @@ export default function Settings({ companyInfo, setCompanyInfo }) {
               <div className="min-w-0">
                 <label className="font-semibold text-gray-900 block mb-2 sm:mb-3 text-sm sm:text-base min-w-0 break-words">Social Media</label>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 min-w-0 overflow-x-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 min-w-0 overflow-x-hidden w-full">
                   {[
                     { key: "youtube", icon: FaYoutube, color: "text-red-600" },
                     { key: "instagram", icon: FaInstagram, color: "text-pink-500" },

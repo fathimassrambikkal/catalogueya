@@ -1,7 +1,31 @@
-import React, { useEffect, useState } from "react";
-import { FaPlus, FaTrash, FaEdit, FaCheck, FaTimes, FaUpload, FaEye, FaEyeSlash } from "react-icons/fa";
+// Products.jsx (Optimized - Deep)
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FaPlus,
+  FaTrash,
+  FaEdit,
+  FaCheck,
+  FaTimes,
+  FaUpload,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 
-export default function Products({ products, setProducts, editingProduct, setEditingProduct }) {
+/**
+ * Products component - Deep optimized version
+ * - Prevents horizontal scroll (uses min-w-0 and overflow-hidden consistently)
+ * - Media handling uses object URLs + cleanup to avoid memory leaks
+ * - Modal is constrained with max-h and scroll inside modal only
+ * - Keeps UI similar to original but improves performance & safety
+ */
+
+export default function Products({
+  products = [],
+  setProducts = () => {},
+  editingProduct,
+  setEditingProduct,
+}) {
+  // local copy of form data used by modal
   const [formData, setFormData] = useState({
     id: null,
     name: "",
@@ -15,42 +39,39 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     hidden: false,
   });
 
-  const availableCategories = [
-    "Carpenter",
-    "Lighting",
-    "Carpet",
-    "Furniture",
-    "Decoration",
-    "Kitchen",
-    "Bathroom",
-    "Outdoor"
-  ];
+  // Keep refs to created objectURLs so we can revoke them
+  const objectUrlRefs = useRef(new Map());
 
-  const availableTags = [
-    "New Arrival",
-    "Limited Edition",
-    "Best Seller",
-    "Low in Stock",
-    "Out of Stock"
-  ];
+  // Some fixed lists (memoized)
+  const availableCategories = useMemo(
+    () => [
+      "Carpenter",
+      "Lighting",
+      "Carpet",
+      "Furniture",
+      "Decoration",
+      "Kitchen",
+      "Bathroom",
+      "Outdoor",
+    ],
+    []
+  );
 
+  const availableTags = useMemo(
+    () => [
+      "New Arrival",
+      "Limited Edition",
+      "Best Seller",
+      "Low in Stock",
+      "Out of Stock",
+    ],
+    []
+  );
+
+  // Initialize formData when editingProduct changes (supports create & edit)
   useEffect(() => {
-    if (!editingProduct) return;
-
-    if (editingProduct.id) {
-      setFormData({
-        id: editingProduct.id,
-        name: editingProduct.name || "",
-        price: editingProduct.price || "",
-        stock: editingProduct.stock || "",
-        description: editingProduct.description || "",
-        tags: editingProduct.tags ? [...editingProduct.tags] : [],
-        image: editingProduct.image || "",
-        media: editingProduct.media ? [...editingProduct.media] : [],
-        category: editingProduct.category || "",
-        hidden: editingProduct.hidden || false,
-      });
-    } else {
+    if (!editingProduct) {
+      // reset
       setFormData({
         id: null,
         name: "",
@@ -63,35 +84,70 @@ export default function Products({ products, setProducts, editingProduct, setEdi
         category: "",
         hidden: false,
       });
+      return;
     }
+
+    // If editingProduct is an object with fields, copy safely
+    setFormData({
+      id: editingProduct.id ?? null,
+      name: editingProduct.name ?? "",
+      price: editingProduct.price ?? "",
+      stock: editingProduct.stock ?? "",
+      description: editingProduct.description ?? "",
+      tags: Array.isArray(editingProduct.tags)
+        ? [...editingProduct.tags]
+        : [],
+      image: editingProduct.image ?? "",
+      media: Array.isArray(editingProduct.media)
+        ? // ensure media items have id + url
+          editingProduct.media.map((m, idx) => ({
+            id: m.id ?? `m-${Date.now()}-${idx}`,
+            title: m.title ?? m.name ?? `Media ${idx + 1}`,
+            type: m.type ?? "image",
+            status: "ok",
+            file: m.file ?? null,
+            url: m.url ?? m.preview ?? m, // permissive
+          }))
+        : [],
+      category: editingProduct.category ?? "",
+      hidden: !!editingProduct.hidden,
+    });
   }, [editingProduct]);
 
-  const handleCategoryChange = (category) => {
-    setFormData(prev => ({
-      ...prev,
-      category: category
-    }));
-  };
+  // Cleanup object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      for (const url of objectUrlRefs.current.values()) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          // ignore
+        }
+      }
+      objectUrlRefs.current.clear();
+    };
+  }, []);
 
-  const handleTagToggle = (tag) => {
-    setFormData(prev => ({
+  // Utility: toggle category
+  const handleCategoryChange = (category) =>
+    setFormData((prev) => ({ ...prev, category }));
+
+  // Utility: toggle tag
+  const handleTagToggle = (tag) =>
+    setFormData((prev) => ({
       ...prev,
       tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag],
     }));
-  };
 
-  const toggleProductVisibility = (productId) => {
-    setProducts(prev =>
-      prev.map(p =>
-        p.id === productId
-          ? { ...p, hidden: !p.hidden }
-          : p
-      )
+  // Toggle product visibility in main list
+  const toggleProductVisibility = (productId) =>
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, hidden: !p.hidden } : p))
     );
-  };
 
+  // Save product: create or update
   const handleSave = () => {
     if (!formData.name.trim()) {
       alert("Product Name is required!");
@@ -109,17 +165,21 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     }
 
     if (cleaned.id) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === cleaned.id ? { ...p, ...cleaned } : p))
-      );
+      setProducts((prev) => prev.map((p) => (p.id === cleaned.id ? { ...p, ...cleaned } : p)));
     } else {
-      const newProd = { ...cleaned, id: Date.now(), image: cleaned.image || "" };
-      setProducts((prev) => [...prev, newProd]);
+      const newProd = {
+        ...cleaned,
+        id: Date.now(),
+        image: cleaned.image || "",
+      };
+      setProducts((prev) => [newProd, ...prev]);
     }
 
+    // close modal
     setEditingProduct(null);
   };
 
+  // Delete product from store when editing
   const handleDeleteProduct = () => {
     if (formData.id) {
       setProducts((prev) => prev.filter((p) => p.id !== formData.id));
@@ -127,61 +187,94 @@ export default function Products({ products, setProducts, editingProduct, setEdi
     setEditingProduct(null);
   };
 
-  const fileToBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
+  // Convert file to object URL for preview (faster than base64 and easier to revoke)
+  const createPreviewUrl = (file) => {
+    if (!file) return null;
+    try {
+      const url = URL.createObjectURL(file);
+      objectUrlRefs.current.set(file, url);
+      return url;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // handle files dropped or selected
+  const handleMediaFiles = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+
+    const files = Array.from(fileList);
+    const items = files.map((file, idx) => {
+      const type = file.type && file.type.startsWith("video") ? "video" : "image";
+      const url = createPreviewUrl(file) || "";
+      return {
+        id: `${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 8)}`,
+        title: file.name || `Upload-${idx + 1}`,
+        type,
+        status: "ok",
+        file,
+        url,
+      };
     });
 
-  const handleMediaFiles = async (files) => {
-    if (!files || files.length === 0) return;
-
-    const newItems = await Promise.all(
-      Array.from(files).map(async (file, idx) => {
-        const type = file.type.startsWith("video") ? "video" : "image";
-        const url = await fileToBase64(file);
-        return {
-          id: Date.now() + Math.random() + idx,
-          title: file.name || `Upload ${idx + 1}`,
-          type,
-          status: "ok",
-          file,
-          url,
-        };
-      })
-    );
-
-    setFormData((prev) => ({ ...prev, media: [...prev.media, ...newItems] }));
+    setFormData((prev) => ({ ...prev, media: [...prev.media, ...items] }));
   };
 
+  // Remove media item (and revoke object URL if created)
   const handleRemoveMedia = (id) => {
-    setFormData((prev) => ({
-      ...prev,
-      media: prev.media.filter((m) => m.id !== id),
-    }));
+    setFormData((prev) => {
+      const next = prev.media.filter((m) => {
+        if (m.id === id && m.file) {
+          // revoke object url if exists for that file
+          const url = objectUrlRefs.current.get(m.file);
+          if (url) {
+            try {
+              URL.revokeObjectURL(url);
+            } catch (e) {}
+            objectUrlRefs.current.delete(m.file);
+          }
+        }
+        return m.id !== id;
+      });
+      return { ...prev, media: next };
+    });
   };
 
-  const pickFirstMediaAsImage = () => {
-    setFormData((prev) => ({
-      ...prev,
-      image: prev.media.length ? prev.media[0].url || "" : "",
-    }));
+  // Pick first media as image
+  const pickFirstMediaAsImage = () =>
+    setFormData((prev) => ({ ...prev, image: prev.media.length ? prev.media[0].url || "" : "" }));
+
+  // Close modal and cleanup object URLs that belong to modal-only files
+  const closeModal = () => {
+    // Revoke any object URLs that belong to media files in the formData (the files are ephemeral)
+    formData.media.forEach((m) => {
+      if (m.file) {
+        const url = objectUrlRefs.current.get(m.file);
+        if (url) {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (e) {}
+          objectUrlRefs.current.delete(m.file);
+        }
+      }
+    });
+
+    setEditingProduct(null);
   };
 
+  // Render
   return (
-    <div className="w-full px-2 sm:px-4 md:px-8 overflow-x-hidden max-w-full">
-
+    <div className="w-full px-2 sm:px-4 md:px-8 overflow-hidden max-w-full min-w-0">
       {/* Header */}
-      <div className="flex flex-row items-center justify-between gap-2 mb-4 mt-4 sm:mt-10 min-w-0 w-full max-w-full overflow-x-hidden">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex-1 min-w-0 truncate pr-2 break-words">
+      <div className="flex flex-row items-center justify-between gap-2 mb-4 mt-4 sm:mt-10 min-w-0 w-full max-w-full">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex-1 min-w-0 truncate pr-2">
           Our Products
         </h2>
 
         <button
-          className="flex items-center justify-center gap-1 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all text-sm flex-shrink-0 min-w-0"
+          className="flex items-center justify-center gap-1 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all text-sm flex-shrink-0 min-w-0"
           onClick={() => setEditingProduct({})}
+          aria-label="Add product"
         >
           <FaPlus className="text-sm" />
           <span className="hidden sm:inline">Add Product</span>
@@ -190,14 +283,13 @@ export default function Products({ products, setProducts, editingProduct, setEdi
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full max-w-full overflow-x-hidden">
-
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full max-w-full overflow-hidden min-w-0">
         {products.map((p) => (
-          <div
+          <article
             key={p.id}
             className="bg-white/80 backdrop-blur-lg shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-xl p-3 border border-gray-200/60 hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] transition-all duration-200 relative min-w-0"
+            aria-labelledby={`product-${p.id}`}
           >
-
             {/* Toggle visibility */}
             <button
               onClick={() => toggleProductVisibility(p.id)}
@@ -206,22 +298,24 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                   ? "bg-yellow-100 text-yellow-600 border-yellow-200"
                   : "bg-gray-100 text-gray-600 border-gray-200"
               }`}
+              aria-pressed={!!p.hidden}
+              aria-label={p.hidden ? "Make visible" : "Hide product"}
             >
               {p.hidden ? <FaEyeSlash /> : <FaEye />}
             </button>
 
             {p.hidden && (
-              <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold bg-yellow-500/10 text-yellow-600 rounded border border-yellow-200 break-words">
+              <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold bg-yellow-500/10 text-yellow-600 rounded border border-yellow-200">
                 Hidden
               </div>
             )}
 
-            {p.tags?.length > 0 && (
+            {Array.isArray(p.tags) && p.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2 min-w-0">
                 {p.tags.map((tag, i) => (
                   <div
                     key={i}
-                    className="px-2 py-1 text-xs font-semibold bg-blue-500/10 text-blue-600 rounded border border-blue-200 truncate max-w-[80px] break-words"
+                    className="px-2 py-1 text-xs font-semibold bg-blue-500/10 text-blue-600 rounded border border-blue-200 truncate max-w-[80px]"
                   >
                     {tag}
                   </div>
@@ -234,195 +328,219 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                 src={p.image}
                 className="w-full h-20 sm:h-32 object-cover rounded-lg mb-2 border border-gray-200/60 min-w-0"
                 alt={p.name}
+                loading="lazy"
               />
             ) : (
-              <div className="w-full h-20 sm:h-32 rounded-lg mb-2 bg-gray-50 flex items-center justify-center text-gray-400 text-xs break-words">
+              <div className="w-full h-20 sm:h-32 rounded-lg mb-2 bg-gray-50 flex items-center justify-center text-gray-400 text-xs">
                 No image
               </div>
             )}
 
-            <h3 className="font-semibold text-sm text-gray-900 truncate break-words min-w-0">{p.name}</h3>
-            <p className="text-xs text-gray-600 truncate break-words">Price: QAR {p.price}</p>
-            <p className="text-xs text-gray-600 truncate break-words">Stock: {p.stock}</p>
-
-            {p.category && (
-              <p className="text-xs text-gray-600 mt-1 truncate break-words">Category: {p.category}</p>
-            )}
+            <h3 id={`product-${p.id}`} className="font-semibold text-sm text-gray-900 truncate min-w-0">
+              {p.name}
+            </h3>
+            <p className="text-xs text-gray-600 truncate min-w-0">Price: QAR {p.price}</p>
+            <p className="text-xs text-gray-600 truncate min-w-0">Stock: {p.stock}</p>
+            {p.category && <p className="text-xs text-gray-600 mt-1 truncate">Category: {p.category}</p>}
 
             <div className="mt-2 flex gap-2 min-w-0">
               <button
                 className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm flex-1 justify-center min-w-0"
                 onClick={() => setEditingProduct(p)}
+                aria-label={`Edit ${p.name}`}
               >
-                <FaEdit /> Edit
+                <FaEdit /> <span className="hidden xs:inline">Edit</span>
               </button>
 
               <button
                 className="flex items-center gap-1 text-red-600 hover:text-red-800 text-sm flex-1 justify-center min-w-0"
-                onClick={() => setProducts(prev => prev.filter(prod => prod.id !== p.id))}
+                onClick={() => setProducts((prev) => prev.filter((prod) => prod.id !== p.id))}
+                aria-label={`Delete ${p.name}`}
               >
-                <FaTrash /> Delete
+                <FaTrash /> <span className="hidden xs:inline">Delete</span>
               </button>
             </div>
-          </div>
+          </article>
         ))}
 
         {/* Add Card */}
         <div
           onClick={() => setEditingProduct({})}
           className="bg-white/80 backdrop-blur-lg shadow rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:shadow-lg border border-dashed border-gray-300 transition-all min-w-0"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setEditingProduct({});
+          }}
         >
           <FaPlus className="text-2xl text-gray-400 mb-2" />
-          <span className="text-gray-600 font-medium text-sm break-words">Add Product</span>
+          <span className="text-gray-600 font-medium text-sm">Add Product</span>
         </div>
-
       </div>
 
-      {/* MODAL — SCROLL FIXED */}
+      {/* Modal (editingProduct) */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start p-2 md:p-4 overflow-y-auto overflow-x-hidden z-50">
-
-          <div className="
-            bg-white/90 backdrop-blur-lg w-full 
-            max-w-[calc(100vw-16px)] sm:max-w-2xl md:max-w-3xl 
-            rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] 
-            border border-gray-200/60 
-            max-h-[90vh] overflow-y-auto mx-1 sm:mx-2 min-w-0
-          ">
-
-            {/* HEADER */}
-            <div className="bg-blue-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-10 min-w-0">
-              <h2 className="text-base sm:text-lg font-semibold truncate flex-1 break-words min-w-0">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-start p-2 md:p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-label={formData.id ? "Edit product" : "Add product"}
+        >
+          <div
+            className="bg-white/95 backdrop-blur-lg w-full max-w-full mx-2 sm:max-w-2xl md:max-w-3xl rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-gray-200/60 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-blue-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-10">
+              <h2 className="text-base sm:text-lg font-semibold truncate">
                 {formData.id ? "Edit Product" : "Add Product"}
               </h2>
-              <button
-                className="text-white text-xl w-6 h-6 flex items-center justify-center flex-shrink-0 min-w-0"
-                onClick={() => setEditingProduct(null)}
-              >
-                ×
-              </button>
+
+              <div className="flex items-center gap-2">
+                {formData.id && (
+                  <button
+                    className="text-white bg-red-500/80 px-2 py-1 rounded-md text-sm"
+                    onClick={handleDeleteProduct}
+                  >
+                    Delete
+                  </button>
+                )}
+                <button
+                  className="text-white text-xl w-8 h-8 flex items-center justify-center rounded-md bg-blue-600/80"
+                  onClick={closeModal}
+                  aria-label="Close"
+                >
+                  <FaTimes />
+                </button>
+              </div>
             </div>
 
-            {/* CONTENT */}
-            <div className="p-4 sm:p-6 space-y-6 min-w-0">
-
+            {/* Content */}
+            <div className="p-4 sm:p-6 space-y-6">
               {/* Upload */}
-              <div className="bg-white/60 rounded-xl p-4 border min-w-0">
-                <h3 className="text-sm sm:text-lg font-semibold break-words">Upload Images / Videos</h3>
+              <section className="bg-white/60 rounded-xl p-4 border">
+                <h3 className="text-sm sm:text-lg font-semibold">Upload Images / Videos</h3>
 
-                <label className="border-2 border-dashed p-4 rounded-xl flex flex-col items-center text-gray-500 cursor-pointer min-w-0">
+                <label className="border-2 border-dashed p-4 rounded-xl flex flex-col items-center text-gray-500 cursor-pointer mt-3">
                   <FaUpload className="text-2xl mb-2" />
                   Upload from Files
                   <input
                     type="file"
                     className="hidden"
-                    onChange={e => handleMediaFiles(e.target.files)}
+                    onChange={(e) => handleMediaFiles(e.target.files)}
                     multiple
                     accept="image/*,video/*"
                   />
                 </label>
 
-                <div className="mt-4 space-y-2 min-w-0">
+                <div className="mt-4 space-y-2">
                   {formData.media.map((m) => (
                     <div
                       key={m.id}
-                      className={`flex justify-between items-center p-3 rounded-lg border min-w-0 ${
-                        m.status === "error"
-                          ? "bg-red-100/60 border-red-300"
-                          : "bg-blue-100/60 border-blue-300"
+                      className={`flex justify-between items-center p-3 rounded-lg border ${
+                        m.status === "error" ? "bg-red-100/60 border-red-300" : "bg-blue-100/60 border-blue-300"
                       }`}
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {m.type === "image" ? (
-                          <img src={m.url} className="w-12 h-10 object-cover rounded-lg border flex-shrink-0" />
+                          <img src={m.url} className="w-12 h-10 object-cover rounded-lg" alt={m.title} />
                         ) : (
-                          <div className="w-12 h-10 flex items-center justify-center bg-gray-100 rounded-lg flex-shrink-0">VIDEO</div>
+                          <div className="w-12 h-10 flex items-center justify-center bg-gray-100 rounded-lg">VIDEO</div>
                         )}
-                        <span className="truncate text-sm break-words min-w-0">{m.title}</span>
+                        <span className="truncate text-sm">{m.title}</span>
                       </div>
 
-                      <button
-                        className="text-gray-700 hover:text-red-600 flex-shrink-0 min-w-0"
-                        onClick={() => handleRemoveMedia(m.id)}
-                      >
-                        <FaTrash />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          className="text-gray-700 hover:text-blue-600 px-2 py-1 rounded"
+                          onClick={() => setFormData((prev) => ({ ...prev, image: m.url }))}
+                          title="Use as product image"
+                        >
+                          <FaCheck />
+                        </button>
+
+                        <button
+                          className="text-gray-700 hover:text-red-600 px-2 py-1 rounded"
+                          onClick={() => handleRemoveMedia(m.id)}
+                          title="Remove media"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
                   ))}
 
-                  <button
-                    className="px-3 py-2 rounded-lg bg-gray-100 border hover:bg-gray-200 transition-all w-full sm:w-auto min-w-0 break-words"
-                    onClick={pickFirstMediaAsImage}
-                    disabled={formData.media.length === 0}
-                  >
-                    Use first as product image
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      className="px-3 py-2 rounded-lg bg-gray-100 border hover:bg-gray-200 transition-all"
+                      onClick={pickFirstMediaAsImage}
+                      disabled={formData.media.length === 0}
+                    >
+                      Use first as product image
+                    </button>
+                    <span className="text-xs text-gray-500 self-center">or click the upload area above</span>
+                  </div>
                 </div>
-              </div>
+              </section>
 
-              {/* PRODUCT INFO */}
-              <div className="bg-white/60 rounded-xl p-4 border min-w-0">
-                <h3 className="text-sm sm:text-lg font-semibold break-words">Product Information</h3>
+              {/* Product Info */}
+              <section className="bg-white/60 rounded-xl p-4 border">
+                <h3 className="text-sm sm:text-lg font-semibold">Product Information</h3>
 
-                <div className="space-y-4 mt-4 min-w-0">
-                  <div className="min-w-0">
-                    <label className="text-sm font-medium block mb-1 break-words">
-                      Product Title <span className="text-red-500">*</span>
-                    </label>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <label className="text-sm font-medium block mb-1">Product Title <span className="text-red-500">*</span></label>
                     <input
-                      className="border p-2 rounded-lg w-full min-w-0"
+                      className="border p-2 rounded-lg w-full"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                      aria-required
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
-                    <div className="min-w-0">
-                      <label className="text-sm font-medium block mb-1 break-words">Product Price</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Product Price</label>
                       <input
-                        className="border p-2 rounded-lg w-full min-w-0"
+                        className="border p-2 rounded-lg w-full"
                         type="number"
                         value={formData.price}
-                        onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
                       />
                     </div>
 
-                    <div className="min-w-0">
-                      <label className="text-sm font-medium block mb-1 break-words">Stock Quantity</label>
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Stock Quantity</label>
                       <input
-                        className="border p-2 rounded-lg w-full min-w-0"
+                        className="border p-2 rounded-lg w-full"
                         type="number"
                         value={formData.stock}
-                        onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))}
                       />
                     </div>
                   </div>
 
-                  <div className="min-w-0">
-                    <label className="text-sm font-medium block mb-1 break-words">Description</label>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">Description</label>
                     <textarea
-                      className="border p-2 rounded-lg w-full h-24 min-w-0"
+                      className="border p-2 rounded-lg w-full h-24"
                       value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                     />
                   </div>
                 </div>
-              </div>
+              </section>
 
-              {/* CATEGORY */}
-              <div className="bg-white/60 rounded-xl p-4 border min-w-0">
-                <h3 className="text-sm sm:text-lg font-semibold mb-3 break-words">Product Category</h3>
+              {/* Category */}
+              <section className="bg-white/60 rounded-xl p-4 border">
+                <h3 className="text-sm sm:text-lg font-semibold mb-3">Product Category</h3>
 
-                <div className="border rounded-xl h-36 overflow-y-auto min-w-0">
-                  <div className="p-2 space-y-1 min-w-0">
+                <div className="border rounded-xl h-36 overflow-y-auto">
+                  <div className="p-2 space-y-1">
                     {availableCategories.map((category) => (
                       <div
                         key={category}
-                        className={`p-2 rounded-lg cursor-pointer break-words min-w-0 ${
-                          formData.category === category
-                            ? "bg-blue-500/10 text-blue-600 border border-blue-200"
-                            : "bg-gray-50 hover:bg-gray-100"
-                        }`}
+                        className={`p-2 rounded-lg cursor-pointer ${formData.category === category ? "bg-blue-500/10 text-blue-600 border border-blue-200" : "bg-gray-50 hover:bg-gray-100"} break-words`}
                         onClick={() => handleCategoryChange(category)}
                       >
                         {category}
@@ -432,95 +550,66 @@ export default function Products({ products, setProducts, editingProduct, setEdi
                 </div>
 
                 {formData.category && (
-                  <div className="mt-3 p-2 bg-blue-500/10 border border-blue-200 rounded-lg break-words min-w-0">
+                  <div className="mt-3 p-2 bg-blue-500/10 border border-blue-200 rounded-lg">
                     Selected: <strong>{formData.category}</strong>
                   </div>
                 )}
-              </div>
+              </section>
 
-              {/* TAGS */}
-              <div className="bg-white/60 rounded-xl p-4 border min-w-0">
-                <h3 className="text-sm sm:text-lg font-semibold break-words">Tags</h3>
+              {/* Tags */}
+              <section className="bg-white/60 rounded-xl p-4 border">
+                <h3 className="text-sm sm:text-lg font-semibold">Tags</h3>
 
-                <div className="mt-3 space-y-2 min-w-0">
+                <div className="mt-3 space-y-2">
                   {availableTags.map((tag) => (
-                    <label key={tag} className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 min-w-0">
+                    <label key={tag} className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                       <input
                         type="checkbox"
                         checked={formData.tags.includes(tag)}
                         onChange={() => handleTagToggle(tag)}
-                        className="flex-shrink-0"
                       />
-                      <span className="break-words min-w-0">{tag}</span>
+                      <span>{tag}</span>
                     </label>
                   ))}
                 </div>
 
                 {formData.tags.length > 0 && (
-                  <div className="mt-3 p-2 bg-blue-500/10 border border-blue-200 rounded-lg break-words min-w-0">
+                  <div className="mt-3 p-2 bg-blue-500/10 border border-blue-200 rounded-lg">
                     Selected: {formData.tags.join(", ")}
                   </div>
                 )}
-              </div>
+              </section>
 
-              {/* VISIBILITY */}
+              {/* Visibility */}
               {formData.id && (
-                <div className="bg-white/60 rounded-xl p-4 border min-w-0">
-                  <h3 className="text-sm sm:text-lg font-semibold mb-3 break-words">Visibility</h3>
+                <section className="bg-white/60 rounded-xl p-4 border">
+                  <h3 className="text-sm sm:text-lg font-semibold mb-3">Visibility</h3>
 
                   <button
-                    onClick={() => setFormData(prev => ({ ...prev, hidden: !prev.hidden }))}
-                    className={`px-3 py-2 rounded-lg text-white min-w-0 break-words ${
-                      formData.hidden ? "bg-yellow-500" : "bg-green-500"
-                    }`}
+                    onClick={() => setFormData((prev) => ({ ...prev, hidden: !prev.hidden }))}
+                    className={`px-3 py-2 rounded-lg text-white ${formData.hidden ? "bg-yellow-500" : "bg-green-500"}`}
                   >
-                    {formData.hidden ? <FaEyeSlash /> : <FaEye />}
+                    {formData.hidden ? <FaEyeSlash className="inline mr-2" /> : <FaEye className="inline mr-2" />}
                     {formData.hidden ? " Hidden" : " Visible"}
                   </button>
-                </div>
+                </section>
               )}
-
             </div>
 
-            {/* FOOTER BUTTONS */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-t bg-gray-50 min-w-0">
-              <span className="text-sm flex-1 text-center sm:text-left break-words min-w-0">
-                Do you want to add this product on sale?
-              </span>
+            {/* Footer */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-t bg-gray-50">
+              <span className="text-sm flex-1 text-center sm:text-left">Do you want to add this product on sale?</span>
 
-              <div className="flex gap-2 flex-wrap justify-center sm:justify-end min-w-0">
-
-                {formData.id && (
-                  <button
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg min-w-0 break-words"
-                    onClick={handleDeleteProduct}
-                  >
-                    Delete
-                  </button>
-                )}
-
-                <button
-                  className="px-4 py-2 bg-gray-300 rounded-lg min-w-0 break-words"
-                  onClick={() => setEditingProduct(null)}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg min-w-0 break-words"
-                  onClick={handleSave}
-                >
+              <div className="flex gap-2 flex-wrap justify-center sm:justify-end">
+                <button className="px-4 py-2 bg-gray-300 rounded-lg" onClick={closeModal}>Cancel</button>
+                <button className="px-4 py-2 bg-blue-500 text-white rounded-lg" onClick={handleSave}>
                   {formData.id ? "Update" : "Add"}
                 </button>
-
               </div>
             </div>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

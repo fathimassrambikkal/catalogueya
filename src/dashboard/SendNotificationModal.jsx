@@ -2,40 +2,31 @@ import React, { useState } from 'react';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { FaTag, FaRocket, FaCrown, FaExclamationTriangle } from 'react-icons/fa';
 
-const SendNotificationModal = ({ 
-  showNotificationModal, 
+const SendNotificationModal = ({
+  showNotificationModal,
   setShowNotificationModal,
   products,
-  loyalCustomers 
+  loyalCustomers
 }) => {
   const [notificationStep, setNotificationStep] = useState(1);
   const [selectedNotificationType, setSelectedNotificationType] = useState('');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedCustomers, setSelectedCustomers] = useState([]);
 
-  // Filter products based on notification type - WITH NULL CHECK
   const getFilteredProducts = () => {
     if (!products) return [];
-    if (!selectedNotificationType) return products;
+    if (!selectedNotificationType) return products || [];
 
     switch (selectedNotificationType) {
       case 'Product Sale':
-        return products.filter(product => 
-          product.tags?.includes('Sale') || 
-          product.discountPrice
-        );
+        return products.filter(p => p.tags?.includes('Sale') || p.discountPrice);
       case 'New Arrivals':
-        return products.filter(product => 
-          product.tags?.includes('New Arrival')
-        );
+        return products.filter(p => p.tags?.includes('New Arrival'));
       case 'Limited Editions':
-        return products.filter(product => 
-          product.tags?.includes('Limited Edition')
-        );
+        return products.filter(p => p.tags?.includes('Limited Edition'));
       case 'Low in Stock':
-        return products.filter(product => 
-          product.tags?.includes('Low in Stock') || 
-          (product.stock && product.stock < 10)
+        return products.filter(
+          p => p.tags?.includes('Low in Stock') || (p.stock && p.stock < 10)
         );
       default:
         return products;
@@ -43,18 +34,6 @@ const SendNotificationModal = ({
   };
 
   const filteredProducts = getFilteredProducts();
-
-  const handleNotificationNext = () => {
-    if (notificationStep < 3) {
-      setNotificationStep(notificationStep + 1);
-    }
-  };
-
-  const handleNotificationBack = () => {
-    if (notificationStep > 1) {
-      setNotificationStep(notificationStep - 1);
-    }
-  };
 
   const handleCloseNotification = () => {
     setShowNotificationModal(false);
@@ -65,8 +44,7 @@ const SendNotificationModal = ({
   };
 
   const handleSendNotification = () => {
-    // Handle sending notification logic here
-    console.log('Sending notification:', {
+    console.log({
       customers: selectedCustomers,
       type: selectedNotificationType,
       products: selectedProducts
@@ -74,459 +52,348 @@ const SendNotificationModal = ({
     handleCloseNotification();
   };
 
-  const handleNotificationTypeSelect = (type) => {
-    setSelectedNotificationType(type);
-  };
-
   const handleCustomerSelect = (customer) => {
-    setSelectedCustomers(prev => {
-      const isSelected = prev.some(c => c.id === customer.id);
-      if (isSelected) {
-        return prev.filter(c => c.id !== customer.id);
-      } else {
-        return [...prev, customer];
-      }
-    });
+    setSelectedCustomers(prev =>
+      prev.some(c => c.id === customer.id)
+        ? prev.filter(c => c.id !== customer.id)
+        : [...prev, customer]
+    );
   };
 
   const handleProductSelect = (product) => {
-    setSelectedProducts(prev => {
-      const isSelected = prev.some(p => p.id === product.id);
-      if (isSelected) {
-        return prev.filter(p => p.id !== product.id);
-      } else {
-        return [...prev, product];
-      }
-    });
+    setSelectedProducts(prev =>
+      prev.some(p => p.id === product.id)
+        ? prev.filter(p => p.id !== product.id)
+        : [...prev, product]
+    );
   };
 
-  const handleSelectAllProducts = () => {
-    if (selectedProducts.length === filteredProducts.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts([...filteredProducts]);
-    }
-  };
+  const handleSelectAllProducts = () =>
+    setSelectedProducts(
+      selectedProducts.length === filteredProducts.length ? [] : [...filteredProducts]
+    );
 
-  const handleSelectAllCustomers = () => {
-    if (selectedCustomers.length === loyalCustomers.length) {
-      setSelectedCustomers([]);
-    } else {
-      setSelectedCustomers([...loyalCustomers]);
-    }
-  };
+  const handleSelectAllCustomers = () =>
+    setSelectedCustomers(
+      selectedCustomers.length === loyalCustomers.length ? [] : [...loyalCustomers]
+    );
 
-  const isCustomerSelected = (customer) => {
-    return selectedCustomers.some(c => c.id === customer.id);
-  };
+  const isCustomerSelected = (c) => selectedCustomers.some(x => x.id === c.id);
+  const isProductSelected = (p) => selectedProducts.some(x => x.id === p.id);
 
-  const isProductSelected = (product) => {
-    return selectedProducts.some(p => p.id === product.id);
-  };
-
-  // Get step 3 title based on selected notification type
   const getStep3Title = () => {
     switch (selectedNotificationType) {
-      case 'Product Sale':
-        return 'Select products on Sale';
-      case 'New Arrivals':
-        return 'Select New Arrival products';
-      case 'Limited Editions':
-        return 'Select Limited Edition products';
-      case 'Low in Stock':
-        return 'Select Low in Stock products';
-      default:
-        return `Select products for ${selectedNotificationType}`;
+      case 'Product Sale': return 'Select products on Sale';
+      case 'New Arrivals': return 'Select New Arrival products';
+      case 'Limited Editions': return 'Select Limited Edition products';
+      case 'Low in Stock': return 'Select Low in Stock products';
+      default: return `Select products for ${selectedNotificationType}`;
     }
   };
 
-  // Get empty state message based on selected notification type
   const getEmptyStateMessage = () => {
     switch (selectedNotificationType) {
-      case 'Product Sale':
-        return 'No products on sale available. Add products with sale tags.';
-      case 'New Arrivals':
-        return 'No new arrival products available. Add products with "New Arrival" tags.';
-      case 'Limited Editions':
-        return 'No limited edition products available. Add products with "Limited Edition" tags.';
-      case 'Low in Stock':
-        return 'No low stock products available. Add products with "Low in Stock" tags or low stock quantities.';
-      default:
-        return `No products available for ${selectedNotificationType}.`;
+      case 'Product Sale': return 'No products on sale available.';
+      case 'New Arrivals': return 'No new arrival products available.';
+      case 'Limited Editions': return 'No limited edition products available.';
+      case 'Low in Stock': return 'No low stock products available.';
+      default: return `No products available for ${selectedNotificationType}.`;
     }
   };
 
+  if (!showNotificationModal) return null;
+
   return (
-    <>
-      {showNotificationModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl w-full max-w-6xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-200/60
-            shadow-[0_20px_60px_rgba(0,0,0,0.2)] mx-2 sm:mx-4">
-            
-            {/* Modal Header */}
-            <div className="p-4 sm:p-6 border-b border-gray-200/60 relative">
-              <button
-                onClick={handleCloseNotification}
-                className="absolute right-3 top-3 sm:right-6 sm:top-6 text-gray-500 hover:text-red-500 transition-colors p-2 rounded-lg sm:rounded-xl
-                  bg-white/80 backdrop-blur-lg border border-gray-200/60
-                  shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-                  hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)]"
-              >
-                <FaTimes size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </button>
-              
-              {/* Stepper */}
-              <div className="flex justify-center items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-                {[1, 2, 3].map((step) => (
-                  <div key={step} className="flex items-center">
-                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-300 text-sm sm:text-base ${
-                      step <= notificationStep ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-300 text-gray-600'
-                    }`}>
-                      {step}
-                    </div>
-                    {step < 3 && (
-                      <div className={`w-6 sm:w-12 h-1 mx-1 sm:mx-2 transition-all duration-300 ${
-                        step < notificationStep ? 'bg-blue-500' : 'bg-gray-300'
-                      }`} />
-                    )}
-                  </div>
-                ))}
-              </div>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-x-hidden">
 
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4 text-center">Send Notification</h2>
-            </div>
+      <div
+        className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl w-full 
+        max-w-6xl max-h-[85vh] sm:max-h-[85vh]
+        overflow-y-auto border border-gray-200/60 shadow-[0_20px_60px_rgba(0,0,0,0.2)] 
+        mx-2 sm:mx-4 overflow-x-hidden min-w-0"
+      >
 
-            {/* Step 1: Select Customers */}
-            {notificationStep === 1 && (
-              <div className="p-4 sm:p-6">
-                {/* Select All Button */}
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
-                  <span className="text-gray-600 text-sm sm:text-base">
-                    {selectedCustomers.length} customer(s) selected
-                  </span>
-                  <button
-                    onClick={handleSelectAllCustomers}
-                    className="text-blue-500 hover:text-blue-600 font-medium text-sm transition-colors text-right sm:text-left"
-                  >
-                    {selectedCustomers.length === loyalCustomers.length ? 'Deselect All' : 'Select All'}
-                  </button>
+        {/* HEADER */}
+        <div className="p-3 sm:p-4 border-b border-gray-200/60 relative min-w-0">
+          <button
+            onClick={handleCloseNotification}
+            className="absolute right-3 top-3 sm:right-6 sm:top-6 text-gray-500 hover:text-red-500 
+            transition-colors p-2 rounded-lg sm:rounded-xl bg-white/80 backdrop-blur-lg 
+            border border-gray-200/60 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]"
+          >
+            <FaTimes size={16} className="sm:w-[18px] sm:h-[18px]" />
+          </button>
+
+          {/* STEPPER */}
+          <div className="flex justify-center items-center gap-2 sm:gap-4 mb-3 sm:mb-5 min-w-0 overflow-x-hidden">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center min-w-0">
+                <div className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center 
+                transition-all duration-300 text-xs sm:text-sm ${
+                  step <= notificationStep
+                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                    : 'bg-gray-300 text-gray-600'
+                }`}>
+                  {step}
                 </div>
 
-                <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 max-h-[50vh] sm:max-h-[40vh] overflow-y-auto">
-                  {loyalCustomers.map((customer) => (
+                {step < 3 && (
+                  <div className={`w-6 sm:w-10 h-1 mx-1 sm:mx-2 transition-all duration-300 ${
+                    step < notificationStep ? 'bg-blue-500' : 'bg-gray-300'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 text-center">
+            Send Notification
+          </h2>
+        </div>
+
+        {/* ================= STEP 1 ================= */}
+        {notificationStep === 1 && (
+          <div className="p-4 sm:p-6 min-w-0 overflow-x-hidden">
+
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+              <span className="text-gray-600 text-sm sm:text-base">
+                {selectedCustomers.length} selected
+              </span>
+
+              <button
+                onClick={handleSelectAllCustomers}
+                className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+              >
+                {selectedCustomers.length === loyalCustomers.length ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-[45vh] overflow-y-auto">
+              {loyalCustomers.map(customer => (
+                <div
+                  key={customer.id}
+                  onClick={() => handleCustomerSelect(customer)}
+                  className={`flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    isCustomerSelected(customer)
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-gray-200/60 bg-white/80 hover:border-gray-300/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div
-                      key={customer.id}
-                      onClick={() => handleCustomerSelect(customer)}
-                      className={`flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center ${
                         isCustomerSelected(customer)
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : 'border-gray-200/60 bg-white/80 backdrop-blur-lg hover:border-gray-300/60'
-                      } shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
+                          ? 'bg-blue-500 border-blue-500'
+                          : 'border-gray-300'
+                      }`}
                     >
-                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                        {/* Selection Checkbox */}
-                        <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                          isCustomerSelected(customer)
-                            ? 'bg-blue-500 border-blue-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {isCustomerSelected(customer) && (
+                      {isCustomerSelected(customer) && <FaCheck className="text-white text-xs" />}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                        {customer.name}
+                      </p>
+                      <p className="text-gray-600 text-xs truncate">{customer.phone}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 mt-4">
+              <button
+                onClick={handleCloseNotification}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => setNotificationStep(2)}
+                disabled={selectedCustomers.length === 0}
+                className={`flex-1 py-2 rounded-lg text-white ${
+                  selectedCustomers.length
+                    ? 'bg-blue-500 hover:bg-blue-600'
+                    : 'bg-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================= STEP 2 ================= */}
+        {notificationStep === 2 && (
+          <div className="p-4 sm:p-6 min-w-0 overflow-x-hidden">
+
+            <p className="text-gray-600 text-center text-sm mb-4">
+              Select what you want to notify your customers with
+            </p>
+
+            <div className="space-y-3 max-h-[45vh] overflow-y-auto">
+              {[
+                { type: 'Product Sale', icon: <FaTag className="text-blue-500" /> },
+                { type: 'New Arrivals', icon: <FaRocket className="text-blue-500" /> },
+                { type: 'Limited Editions', icon: <FaCrown className="text-blue-500" /> },
+                { type: 'Low in Stock', icon: <FaExclamationTriangle className="text-blue-500" /> }
+              ].map(notification => (
+
+                <div
+                  key={notification.type}
+                  onClick={() => setSelectedNotificationType(notification.type)}
+                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                    selectedNotificationType === notification.type
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-gray-200/60 bg-white/80 hover:border-gray-300/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {notification.icon}
+                    <p className="font-semibold truncate">{notification.type}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 mt-4">
+              <button
+                onClick={handleCloseNotification}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => setNotificationStep(1)}
+                className="flex-1 bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500"
+              >
+                Back
+              </button>
+
+              <button
+                onClick={() => setNotificationStep(3)}
+                disabled={!selectedNotificationType}
+                className={`flex-1 py-2 rounded-lg text-white ${
+                  selectedNotificationType
+                    ? 'bg-blue-500 hover:bg-blue-600'
+                    : 'bg-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================= STEP 3 ================= */}
+        {notificationStep === 3 && (
+          <div className="p-4 sm:p-6 min-w-0 overflow-x-hidden">
+
+            <h3 className="text-xl font-bold text-center mb-4">{getStep3Title()}</h3>
+
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-gray-600 text-sm">
+                {selectedProducts.length} selected
+              </span>
+
+              <button
+                onClick={handleSelectAllProducts}
+                className="text-blue-500 hover:text-blue-600 text-sm"
+              >
+                {selectedProducts.length === filteredProducts.length ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
+
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-6 text-gray-500 bg-white/60 border rounded-xl">
+                {getEmptyStateMessage()}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[45vh] overflow-y-auto">
+                  {filteredProducts.map(product => (
+                    <div
+                      key={product.id}
+                      onClick={() => handleProductSelect(product)}
+                      className={`p-4 rounded-2xl bg-white/80 border cursor-pointer transition-all ${
+                        isProductSelected(product)
+                          ? 'ring-2 ring-blue-500 bg-blue-500/10'
+                          : 'border-gray-200/60 hover:shadow'
+                      }`}
+                    >
+
+                      {/* Checkbox */}
+                      <div className="flex justify-end mb-2">
+                        <div
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            isProductSelected(product)
+                              ? 'bg-blue-500 border-blue-500'
+                              : 'border-gray-300'
+                          }`}
+                        >
+                          {isProductSelected(product) && (
                             <FaCheck className="text-white text-xs" />
                           )}
                         </div>
-                        
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-gray-900 text-sm sm:text-base truncate">{customer.name}</div>
-                          <div className="text-gray-600 text-xs sm:text-sm truncate">{customer.phone}</div>
-                          {customer.orders > 0 && (
-                            <div className="text-green-600 text-xs font-medium">
-                              {customer.orders} orders
-                            </div>
-                          )}
+                      </div>
+
+                      {/* Image */}
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          className="w-full h-24 object-cover rounded-lg mb-3"
+                        />
+                      ) : (
+                        <div className="w-full h-24 bg-gray-100 border rounded-lg flex items-center justify-center text-gray-500">
+                          No image
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-2">
-                        {customer.orders > 0 && (
-                          <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded text-xs sm:text-sm font-semibold border border-green-200/60 whitespace-nowrap">
-                            {customer.orders}
-                          </span>
-                        )}
-                      </div>
+                      )}
+
+                      <p className="font-semibold text-gray-900 truncate mb-1">
+                        {product.name}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {product.description}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-2">
+                        QAR {product.price}
+                      </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                {/* Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2 mt-6">
                   <button
-                    onClick={handleCloseNotification}
-                    className="flex-1 bg-gray-500 text-white py-2 sm:py-3 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200
-                      shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)] text-sm sm:text-base"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleNotificationNext}
-                    disabled={selectedCustomers.length === 0}
-                    className={`flex-1 py-2 sm:py-3 px-4 rounded-lg transition-all duration-200 text-sm sm:text-base ${
-                      selectedCustomers.length > 0
-                        ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]'
-                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    }`}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Select Notification Type */}
-            {notificationStep === 2 && (
-              <div className="p-4 sm:p-6">
-                <p className="text-gray-600 mb-4 sm:mb-6 text-center text-sm sm:text-base">Select what you want to notify your customers with</p>
-                
-                <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 max-h-[50vh] sm:max-h-[40vh] overflow-y-auto">
-                  {[
-                    { 
-                      type: 'Product Sale', 
-                      description: 'Notify customers about discounted products',
-                      icon: <FaTag className="text-blue-500 text-lg sm:text-xl" />
-                    },
-                    { 
-                      type: 'New Arrivals', 
-                      description: 'Alert customers about new product arrivals',
-                      icon: <FaRocket className="text-blue-500 text-lg sm:text-xl" />
-                    },
-                    { 
-                      type: 'Limited Editions', 
-                      description: 'Notify about limited edition products',
-                      icon: <FaCrown className="text-blue-500 text-lg sm:text-xl" />
-                    },
-                    { 
-                      type: 'Low in Stock', 
-                      description: 'Alert customers about low stock items',
-                      icon: <FaExclamationTriangle className="text-blue-500 text-lg sm:text-xl" />
-                    }
-                  ].map((notification) => (
-                    <div
-                      key={notification.type}
-                      className={`relative border-2 rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-200 ${
-                        selectedNotificationType === notification.type
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : 'border-gray-200/60 bg-white/80 backdrop-blur-lg hover:border-gray-300/60'
-                      } shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]`}
-                      onClick={() => handleNotificationTypeSelect(notification.type)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                          {/* Blue Icon */}
-                          <div className="flex-shrink-0">
-                            {notification.icon}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 text-base sm:text-lg truncate">
-                              {notification.type}
-                            </h3>
-                            <p className="text-gray-600 text-xs sm:text-sm mt-1 line-clamp-2">
-                              {notification.description}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Selection Indicator - Simple Radio Button */}
-                        <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ml-2 ${
-                          selectedNotificationType === notification.type
-                            ? 'bg-blue-500 border-blue-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {selectedNotificationType === notification.type && (
-                            <div className="w-2 h-2 rounded-full bg-white" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <button
-                    onClick={handleCloseNotification}
-                    className="flex-1 bg-gray-500 text-white py-2 sm:py-3 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200
-                      shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)] text-sm sm:text-base"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleNotificationBack}
-                    className="flex-1 bg-gray-400/60 text-gray-700 py-2 sm:py-3 px-4 rounded-lg hover:bg-gray-500/60 transition-all duration-200
-                      shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)] text-sm sm:text-base"
+                    onClick={() => setNotificationStep(2)}
+                    className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600"
                   >
                     Back
                   </button>
+
                   <button
-                    onClick={handleNotificationNext}
-                    disabled={!selectedNotificationType}
-                    className={`flex-1 py-2 sm:py-3 px-4 rounded-lg transition-all duration-200 text-sm sm:text-base ${
-                      selectedNotificationType
-                        ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]'
-                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    onClick={handleSendNotification}
+                    disabled={selectedProducts.length === 0}
+                    className={`flex-1 py-2 rounded-lg text-white ${
+                      selectedProducts.length
+                        ? 'bg-blue-500 hover:bg-blue-600'
+                        : 'bg-gray-400 cursor-not-allowed'
                     }`}
                   >
-                    Continue
+                    Send ({selectedProducts.length})
                   </button>
                 </div>
-
-                {/* Sign Out Link */}
-                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200/60 text-center">
-                  <button className="text-gray-600 hover:text-gray-800 text-xs sm:text-sm transition-colors">
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Select Products - RESPONSIVE */}
-            {notificationStep === 3 && (
-              <div className="p-4 sm:p-6">
-                <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 text-center">
-                  {getStep3Title()}
-                </h3>
-                
-                {/* Select All Products Button */}
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
-                  <span className="text-gray-600 text-sm sm:text-base">
-                    {selectedProducts.length} product(s) selected
-                  </span>
-                  <button
-                    onClick={handleSelectAllProducts}
-                    disabled={filteredProducts.length === 0}
-                    className={`text-sm font-medium transition-colors text-right sm:text-left ${
-                      filteredProducts.length === 0 
-                        ? 'text-gray-400 cursor-not-allowed' 
-                        : 'text-blue-500 hover:text-blue-600'
-                    }`}
-                  >
-                    {selectedProducts.length === filteredProducts.length ? 'Deselect All' : 'Select All'}
-                  </button>
-                </div>
-                
-                <p className="text-center text-gray-600 text-sm sm:text-base mb-4 sm:mb-6">
-                  Showing {filteredProducts.length} product(s) for {selectedNotificationType}
-                </p>
-                
-                {filteredProducts.length === 0 ? (
-                  <div className="text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base rounded-lg sm:rounded-xl bg-white/60 backdrop-blur-sm border border-gray-200/60">
-                    {getEmptyStateMessage()}
-                  </div>
-                ) : (
-                  <>
-                    {/* Responsive Product Grid */}
-                    <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 max-h-[50vh] sm:max-h-[40vh] overflow-y-auto">
-                      {filteredProducts.map((product) => (
-                        <div
-                          key={product.id}
-                          className={`bg-white/80 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-200/60 hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)] transition-all duration-700 cursor-pointer ${
-                            isProductSelected(product) ? 'ring-2 ring-blue-500 bg-blue-500/10' : ''
-                          } shadow-[0_8px_30px_rgba(0,0,0,0.08)]`}
-                          onClick={() => handleProductSelect(product)}
-                        >
-                          {/* Selection Checkbox */}
-                          <div className="flex justify-end mb-2">
-                            <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all ${
-                              isProductSelected(product)
-                                ? 'bg-blue-500 border-blue-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {isProductSelected(product) && (
-                                <FaCheck className="text-white text-xs" />
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Product Tags */}
-                          {product.tags && product.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              {product.tags.slice(0, 2).map((tag, index) => (
-                                <div key={index} className="inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-semibold bg-blue-500/10 text-blue-600 rounded border border-blue-200 truncate max-w-[80px] sm:max-w-none">
-                                  {tag}
-                                </div>
-                              ))}
-                              {product.tags.length > 2 && (
-                                <div className="inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-semibold bg-gray-500/10 text-gray-600 rounded border border-gray-200">
-                                  +{product.tags.length - 2}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          {/* Product Image */}
-                          {product.image ? (
-                            <img 
-                              src={product.image} 
-                              className="w-full h-20 sm:h-24 md:h-32 object-cover rounded-lg mb-2 sm:mb-3 border border-gray-200/60" 
-                              alt={product.name} 
-                            />
-                          ) : (
-                            <div className="w-full h-20 sm:h-24 md:h-32 rounded-lg mb-2 sm:mb-3 bg-gray-50/60 border border-gray-200/60 flex items-center justify-center text-gray-400 backdrop-blur-sm text-xs sm:text-sm">
-                              No image
-                            </div>
-                          )}
-                          
-                          {/* Product Name */}
-                          <h3 className="font-semibold text-gray-900 text-sm sm:text-[17px] mb-1 line-clamp-2">{product.name}</h3>
-                          
-                          {/* Product Description */}
-                          {product.description && (
-                            <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">{product.description}</p>
-                          )}
-                          
-                          {/* Price and Stock */}
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2">
-                            <p className="text-xs sm:text-sm text-gray-600">QAR {product.price}</p>
-                            <p className="text-xs sm:text-sm text-gray-600">Stock: {product.stock}</p>
-                          </div>
-                          
-                          {/* Category */}
-                          {product.category && (
-                            <div className="mt-1 sm:mt-2">
-                              <p className="text-xs sm:text-sm text-gray-600 truncate">
-                                {product.category}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                      <button
-                        onClick={handleNotificationBack}
-                        className="flex-1 bg-gray-500 text-white py-2 sm:py-3 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200
-                          shadow-[3px_3px_10px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_15px_rgba(0,0,0,0.15)] text-sm sm:text-base"
-                      >
-                        Back
-                      </button>
-                      <button
-                        onClick={handleSendNotification}
-                        disabled={selectedProducts.length === 0}
-                        className={`flex-1 py-2 sm:py-3 px-4 rounded-lg transition-all duration-200 text-sm sm:text-base ${
-                          selectedProducts.length > 0
-                            ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)]'
-                            : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                        }`}
-                      >
-                        Send ({selectedProducts.length})
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+              </>
             )}
           </div>
-        </div>
-      )}
-    </>
+        )}
+
+      </div>
+    </div>
   );
 };
 
