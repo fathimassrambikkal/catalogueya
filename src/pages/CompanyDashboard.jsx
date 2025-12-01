@@ -9,7 +9,7 @@ import Contacts from "../dashboard/Contacts.jsx";
 import Followers from "../dashboard/Followers.jsx";
 import Notifications from "../dashboard/Notifications.jsx";
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
-import { FollowersProvider } from "../context/FollowersContext";  
+import { FollowersProvider } from "../context/FollowersContext";
 
 export default function CompanyDashboard() {
   const [activeTab, setActiveTab] = useState("Products");
@@ -32,7 +32,7 @@ export default function CompanyDashboard() {
     localStorage.setItem("products", JSON.stringify(products));
   }, [products]);
 
-  /* Company info state */
+  /* Company info */
   const [companyInfo, setCompanyInfo] = useState(() => {
     const saved = localStorage.getItem("companyInfo");
     return saved
@@ -62,32 +62,34 @@ export default function CompanyDashboard() {
 
   return (
     <FollowersProvider>
-      <div className="flex bg-gray-100 min-h-screen min-w-0 overflow-hidden">
 
-        {/* Sidebar */}
+      {/* MAIN WRAPPER - fixed horizontal scroll here */}
+      <div className="flex bg-gray-100 min-h-screen w-full overflow-x-hidden min-w-0">
+
+        {/* SIDEBAR */}
         <div
           className={`
-          fixed top-0 left-0 z-50 h-screen w-60 lg:w-48 
-          transition-all duration-300 overflow-y-auto overflow-x-hidden
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:static lg:translate-x-0 lg:z-auto
-        `}
+            fixed top-0 left-0 z-50 h-screen w-60 lg:w-48
+            transition-transform duration-300 overflow-y-auto overflow-x-hidden
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+            lg:static lg:translate-x-0 lg:z-auto
+          `}
         >
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
 
-        {/* Overlay for mobile */}
+        {/* MOBILE OVERLAY */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* MAIN CONTENT */}
-        <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-hidden max-w-full">
 
-          {/* Mobile sidebar toggle */}
+          {/* Mobile Toggle Button */}
           <button
             onClick={() => setSidebarOpen((s) => !s)}
             className="fixed top-4 left-4 z-50 p-2 rounded-xl bg-white text-gray-500 shadow-md hover:bg-gray-100 lg:hidden"
@@ -95,15 +97,15 @@ export default function CompanyDashboard() {
             <TbLayoutSidebarRightFilled size={18} />
           </button>
 
-          {/* Cover only for Products */}
+          {/* COVER SECTION (products only) */}
           {activeTab === "Products" && (
-            <div className="min-w-0 overflow-hidden">
+            <div className="min-w-0 max-w-full overflow-hidden">
               <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
             </div>
           )}
 
-          {/* PAGE CONTENT */}
-          <div className="flex-1 w-full mt-0 min-w-0 overflow-x-hidden">
+          {/* PAGE CONTENT WRAPPER - MOST IMPORTANT FIX */}
+          <div className="flex-1 w-full min-w-0 max-w-full overflow-x-hidden">
 
             {/* PRODUCTS */}
             <div className={activeTab === "Products" ? "block" : "hidden"}>

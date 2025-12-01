@@ -59,13 +59,14 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         bg-white/80 backdrop-blur-lg text-gray-900
         h-full p-3 flex flex-col
         border-r border-gray-200/60
-        w-52 max-w-52 shrink-0
+        w-52 shrink-0
         overflow-x-hidden
+        min-w-0
       "
     >
 
       {/* USER PROFILE */}
-      <div className="p-2 border-b border-gray-200/60 mb-3 mt-5">
+      <div className="p-2 border-b border-gray-200/60 mb-3 mt-5 min-w-0">
         <div className="flex items-center gap-2 justify-start min-w-0">
           <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow">
             <span className="text-white font-medium text-xs">C</span>
@@ -126,7 +127,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
           );
         })}
 
-        {/* BARCODE SECTION — COMPLETELY FIXED (NO SCROLL) */}
+        {/* BARCODE SECTION */}
         <div className="relative w-full overflow-x-hidden min-w-0">
           <button
             onClick={() => setShowBarcode(!showBarcode)}
@@ -160,7 +161,6 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
           >
             <div className="p-3 bg-white/80 backdrop-blur-lg rounded-xl border border-gray-200 shadow w-full max-w-full overflow-x-hidden min-w-0">
 
-              {/* SAFE SMALL IMAGE */}
               <img
                 src={barImage}
                 alt="Barcode"
@@ -193,6 +193,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         </span>
       </button>
 
+      {/* STATUS */}
       <div className="mt-3 pt-3 border-t border-gray-200 min-w-0">
         <div className="flex items-center justify-between text-[11px] text-gray-600 min-w-0">
           <span className="truncate flex-1 min-w-0">Online</span>
