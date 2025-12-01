@@ -86,14 +86,11 @@ const WelcomePage = ({ user, userType, onGoToDashboard, onSignOut }) => {
 
         {/* Welcome Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-3">
-            Welcome back, {userName}!
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 mb-3">
+            Welcome
           </h1>
           
-          <p className="text-gray-600 text-lg">
-            You're signed in as{" "}
-            <span className="font-semibold text-blue-600 capitalize">{userType}</span>
-          </p>
+        
         </div>
 
         {/* User Info Card */}
@@ -525,7 +522,7 @@ export default function Sign() {
                   to={loginType === "customer" ? "/register" : "/company-register"} 
                   className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200"
                 >
-                  Register as {loginType === "customer" ? "Customer" : "Company"}
+                  Register
                 </Link>
               </p>
             </div>
