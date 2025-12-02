@@ -482,21 +482,7 @@ export default function ProductProfile() {
             </p>
           </div>
 
-          {/* Chat prompt for unauthenticated users */}
-          {!isAuthenticated && (
-            <div className="mt-2 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-              <p className="text-blue-800 text-sm mb-2">
-                💬 Want to chat with the seller about this product?
-              </p>
-              <button
-                onClick={handleRegisterClick}
-                className="text-blue-600 hover:text-blue-800 font-medium text-sm underline"
-              >
-                Register now to enable chat
-              </button>
-            </div>
-          )}
-
+         
           {/* Write Review Button */}
           <button
             onClick={() => setShowReviewModal(true)}

@@ -336,9 +336,6 @@ export default function SalesProductProfile() {
                 <FaShareAlt className="text-[16px] text-[rgba(18,18,18,0.88)]" />
               </PremiumIconButton>
 
-              <PremiumIconButton title="WhatsApp" onClick={handleWhatsAppClick}>
-                <FaWhatsapp className="text-[17px] text-[#25D366]" />
-              </PremiumIconButton>
 
               <PremiumIconButton title="Chat">
                 <LuMessageSquareMore className="text-[17px] text-[rgba(18,18,18,0.88)]" />
