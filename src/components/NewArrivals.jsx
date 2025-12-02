@@ -1,7 +1,8 @@
 import { MdArrowOutward } from "react-icons/md";
 import React, { memo, useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaStar, FaHeart, FaWhatsapp, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaStar, FaHeart, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { LuMessageSquareMore } from "react-icons/lu";
 import { useFavourites } from "../context/FavouriteContext";
 import { getArrivalsProducts } from "../api";
 import { useTranslation } from "react-i18next";
@@ -37,8 +38,7 @@ let preloadedData = {
         img: product.image,
         rating: parseFloat(product.rating) || 0,
         description: product.description,
-        isNewArrival: true, // ✅ ADD THIS FLAG
-        // ✅ ENSURE COMPANY DATA IS INCLUDED
+        isNewArrival: true,
         company_id: product.company_id,
         company_name: product.company_name || "Company",
         category_id: product.category_id,
@@ -62,7 +62,6 @@ const preloadImages = (products) => {
   products.forEach((product) => {
     if (product?.img) {
       const img = new Image();
-      // Convert relative path to absolute URL using the correct base URL
       const imageUrl = product.img.startsWith('http') ? product.img : `${API_BASE_URL}/${product.img}`;
       img.src = imageUrl;
       img.fetchPriority = 'high';
@@ -104,11 +103,9 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Convert relative image path to absolute URL
   const getImageUrl = (imgPath) => {
     if (!imgPath) return null;
     if (imgPath.startsWith('http')) return imgPath;
-    // Use the correct base URL from your API
     return `${API_BASE_URL}/${imgPath}`;
   };
 
@@ -139,6 +136,7 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
         contentVisibility: 'auto'
       }}
     >
+      {/* FAV BUTTON */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -178,7 +176,6 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
           </div>
         )}
         
-        {/* Loading skeleton for image */}
         {!imageLoaded && imageUrl && !imageError && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-t-2xl flex items-center justify-center">
             <span className="text-gray-400 text-xs">Loading...</span>
@@ -210,17 +207,66 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
           </div>
         </div>
 
-        <a
-          href={`https://wa.me/${whatsappNumber}?text=Hello,%20I'm%20interested%20in%20${encodeURIComponent(product.name)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="p-1.5 bg-green-500/80 backdrop-blur-sm rounded-full text-white shadow-md hover:bg-green-600/90 transition z-10 transform-gpu"
-          title="Chat on WhatsApp"
-          style={{ willChange: 'transform' }}
-        >
-          <FaWhatsapp className="text-sm transform-gpu" />
-        </a>
+        {/* ✅ MODERN CHAT BUTTON  */}
+<button
+  onClick={(e) => e.stopPropagation()}
+  title="Chat"
+  className="
+    relative
+    px-2 py-1.5
+    rounded-[16px]
+
+    /* Base glass layer */
+    bg-white/40
+    backdrop-blur-2xl
+    
+    /* Titanium  */
+    border border-[rgba(255,255,255,0.28)]
+
+    /* VisionOS floating  */
+    shadow-[0_8px_24px_rgba(0,0,0,0.18)]
+
+    /* Smooth hover */
+    hover:bg-white/55
+    transition-all duration-300
+  "
+>
+  {/* Chrome liquid highlight */}
+  <span className="
+    absolute inset-0 rounded-[16px]
+    bg-gradient-to-br from-white/70 via-white/10 to-transparent
+    opacity-40
+    pointer-events-none
+  " />
+
+  {/* Glass ribbon streak */}
+  <span className="
+    absolute inset-0 rounded-[16px]
+    bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)]
+    opacity-35
+    pointer-events-none
+  " />
+
+  {/* Titanium black bottom depth */}
+  <span className="
+    absolute inset-0 rounded-[16px]
+    bg-gradient-to-t from-black/20 to-transparent
+    opacity-20
+    pointer-events-none
+  " />
+  <LuMessageSquareMore 
+    className="
+      text-[17px]
+      text-[rgba(18,18,18,0.88)]
+      drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
+      relative z-10
+    "
+  />
+</button>
+
+
+
+
       </div>
     </div>
   );
@@ -231,7 +277,6 @@ function NewArrivalsComponent() {
   const { favourites, toggleFavourite } = useFavourites();
   const { i18n } = useTranslation();
   
-  // Initialize with preloaded data
   const [apiProducts, setApiProducts] = useState(() => preloadedData.arrivalsProducts || []);
   const [isLoading, setIsLoading] = useState(() => preloadedData.arrivalsProducts === null);
   
@@ -241,7 +286,6 @@ function NewArrivalsComponent() {
   const [cardWidth, setCardWidth] = useState('220px');
   const resizeTimeoutRef = useRef(null);
 
-  // Ultra-fast data loading with preloaded data
   useEffect(() => {
     if (preloadedData.arrivalsProducts !== null) {
       setApiProducts(preloadedData.arrivalsProducts);
@@ -266,8 +310,7 @@ function NewArrivalsComponent() {
             img: product.image,
             rating: parseFloat(product.rating) || 0,
             description: product.description,
-            isNewArrival: true, // ✅ ADD THIS FLAG
-            // ✅ ENSURE COMPANY DATA IS INCLUDED
+            isNewArrival: true,
             company_id: product.company_id,
             company_name: product.company_name || "Company",
             category_id: product.category_id,
@@ -289,7 +332,6 @@ function NewArrivalsComponent() {
     return () => { mounted = false; };
   }, []);
 
-  // Optimized card width calculation
   useEffect(() => {
     const updateCardWidth = () => {
       const width = window.innerWidth;
@@ -327,7 +369,6 @@ function NewArrivalsComponent() {
   const handleToggleFav = useCallback((product) => toggleFavourite(product), [toggleFavourite]);
   const handleNavigate = useCallback((id) => navigate(`/newarrivalprofile/${id}`), [navigate]);
 
-  // Horizontal scroll handlers
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
@@ -393,7 +434,6 @@ function NewArrivalsComponent() {
       className="py-6 sm:py-10 bg-neutral-100 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden transform-gpu"
       style={{ contentVisibility: 'auto', willChange: 'transform' }}
     >
-      {/* Header */}
       <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4 transform-gpu">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black transform-gpu">
           Products
@@ -420,7 +460,6 @@ function NewArrivalsComponent() {
         </div>
       </div>
 
-      {/* Horizontal Scroll Container */}
       <div className="relative transform-gpu">
         <div 
           ref={scrollContainerRef}
