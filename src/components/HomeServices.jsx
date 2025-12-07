@@ -1,55 +1,59 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { getCategories, getFixedWords } from "../api";
+import { getCategories } from "../api";
+import { useSettings } from "../hooks/useSettings";
 
-// Pre-fetch data immediately when module loads
-let preloadedData = {
-  categories: null,
-  fixedWords: null
-};
+const ChevronLeft = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 320 512"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="M34.9 239L228.9 45c9.4-9.4 24.6-9.4 33.9 0l22.6 22.6c9.4 9.4 9.4 24.6 0 33.9L131.5 256l153.9 153.5c9.4 9.4 9.4 24.6 0 33.9l-22.6 22.6c-9.4 9.4-24.6 9.4-33.9 0L34.9 273c-9.4-9.4-9.4-24.6 0-34z"/>
+  </svg>
+);
 
-// Start fetching immediately
-(async () => {
-  try {
-    const [catRes, wordsRes] = await Promise.allSettled([
-      getCategories(),
-      getFixedWords()
-    ]);
-    
-    preloadedData.categories = catRes.status === 'fulfilled' ? (catRes.value?.data?.data || []) : [];
-    preloadedData.fixedWords = wordsRes.status === 'fulfilled' ? (wordsRes.value?.data?.data || {}) : {};
-  } catch (err) {
-    console.warn("Pre-fetch failed:", err);
-  }
-})();
+const ChevronRight = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 320 512"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="M285.1 273L91.1 467c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9L188.5 256 34.6 102.5c-9.4-9.4-9.4-24.6 0-33.9l22.6-22.6c9.4-9.4 24.6-9.4 33.9 0l194 194c9.4 9.4 9.4 24.6 0 34z"/>
+  </svg>
+);
 
-// Preload images immediately
-const preloadImages = (categories) => {
-  if (!categories || !Array.isArray(categories)) return;
-  
-  categories.forEach(category => {
-    if (category?.image) {
-      const img = new Image();
-      img.src = category.image;
-      img.fetchPriority = 'high';
+// ==================== PERFORMANCE UTILITIES ====================
+
+// Apple-like throttle (120fps max)
+const throttle = (func, limit = 8) => {
+  let inThrottle;
+  return function(...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
     }
-  });
+  };
 };
 
-// Preload images if categories are available
-if (preloadedData.categories) {
-  preloadImages(preloadedData.categories);
-}
-
-// Intersection Observer Hook for pausing animations when not visible
+// Optimized Intersection Observer
 const useIsInViewport = (ref) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry.isIntersecting);
-    }, { threshold: 0.1 });
+      requestAnimationFrame(() => {
+        setIsIntersecting(entry.isIntersecting);
+      });
+    }, { 
+      threshold: 0.1,
+      rootMargin: '50px' // Early detection
+    });
 
     const currentRef = ref.current;
     if (currentRef) {
@@ -66,80 +70,139 @@ const useIsInViewport = (ref) => {
   return isIntersecting;
 };
 
+// Optimized image loader
+const useImageLoader = (src, priority = false) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!src) return;
+
+    const img = new Image();
+    img.src = src;
+    
+    if (priority) {
+      img.fetchPriority = 'high';
+      img.loading = 'eager';
+    } else {
+      img.loading = 'lazy';
+    }
+    
+    img.onload = () => setLoaded(true);
+    img.onerror = () => setError(true);
+
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [src, priority]);
+
+  return { loaded, error };
+};
+
+// ==================== DATA MANAGEMENT ====================
+
+let preloadedData = {
+  categories: null,
+  loading: false
+};
+
+// Non-blocking prefetch
+if (typeof window !== 'undefined' && !preloadedData.loading) {
+  preloadedData.loading = true;
+  
+  // Use microtask for immediate but non-blocking load
+  Promise.resolve().then(async () => {
+    try {
+      const [catRes] = await Promise.allSettled([getCategories()]);
+      preloadedData.categories = catRes.status === 'fulfilled' 
+        ? (catRes.value?.data?.data || []) 
+        : [];
+    } catch (err) {
+      console.warn("Pre-fetch failed:", err);
+      preloadedData.categories = [];
+    }
+  });
+}
+
+// Optimized image preloader
+const preloadImages = (categories, limit = 6) => {
+  if (!categories || !Array.isArray(categories)) return;
+  
+  // Only preload first N images (critical above-the-fold)
+  categories.slice(0, limit).forEach(category => {
+    if (category?.image) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = category.image;
+      link.fetchPriority = 'high';
+      document.head.appendChild(link);
+    }
+  });
+};
+
+// ==================== MAIN COMPONENT ====================
+
 export default function HomeServices() {
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const containerRef = useRef(null);
   const sectionRef = useRef(null);
   const isInViewport = useIsInViewport(sectionRef);
 
   const [categories, setCategories] = useState(preloadedData.categories || []);
-  const [fixedWords, setFixedWords] = useState(preloadedData.fixedWords || {});
-  const [isLoading, setIsLoading] = useState(!preloadedData.categories);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(preloadedData.categories === null);
   const [cardsPerView, setCardsPerView] = useState(6);
 
-  // Ultra-fast data loading with preloaded data
+  // 1. OPTIMIZED DATA LOADING WITH ABORT CONTROLLER
   useEffect(() => {
-    // If preloaded data exists, use it immediately
     if (preloadedData.categories !== null) {
       setCategories(preloadedData.categories);
-      setFixedWords(preloadedData.fixedWords);
       setIsLoading(false);
-      // Preload images
-      preloadImages(preloadedData.categories);
-      setImagesLoaded(true);
+      preloadImages(preloadedData.categories, 6);
       return;
     }
 
-    // Fallback: fetch if preload didn't complete
     let mounted = true;
+    const controller = new AbortController();
+
     const fetchData = async () => {
       try {
-        const [catRes, wordsRes] = await Promise.allSettled([
+        const [catRes] = await Promise.allSettled([
           getCategories(),
-          getFixedWords()
         ]);
 
-        if (mounted) {
-          const categoriesArray = catRes.status === 'fulfilled' ? (catRes.value?.data?.data || []) : [];
-          const fixedWordsObj = wordsRes.status === 'fulfilled' ? (wordsRes.value?.data?.data || {}) : {};
+        if (!mounted) return;
 
+        const categoriesArray = catRes.status === 'fulfilled' 
+          ? (catRes.value?.data?.data || []) 
+          : [];
+
+        if (mounted) {
           setCategories(categoriesArray);
-          setFixedWords(fixedWordsObj);
           setIsLoading(false);
-          
-          // Update preloaded data for future renders
           preloadedData.categories = categoriesArray;
-          preloadedData.fixedWords = fixedWordsObj;
-          
-          // Preload images
-          preloadImages(categoriesArray);
-          setImagesLoaded(true);
+          preloadImages(categoriesArray, 6);
         }
       } catch (err) {
-        console.warn("Failed to fetch home services data:", err);
-        setIsLoading(false);
+        if (mounted && err.name !== 'AbortError') {
+          console.warn("Failed to fetch home services data:", err);
+          setIsLoading(false);
+        }
       }
     };
 
     fetchData();
+    
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, []);
 
-  // Force immediate image display
+  // 2. OPTIMIZED RESIZE HANDLER WITH THROTTLE
   useEffect(() => {
-    if (categories.length > 0 && !imagesLoaded) {
-      setImagesLoaded(true);
-    }
-  }, [categories, imagesLoaded]);
-
-  // Optimized resize handler with debouncing
-  useEffect(() => {
-    let resizeTimeout;
-    
     const updateCardsPerView = () => {
       const width = window.innerWidth;
       if (width >= 1600) setCardsPerView(6);
@@ -147,29 +210,31 @@ export default function HomeServices() {
       else setCardsPerView(4);
     };
 
-    const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(updateCardsPerView, 16); 
-    };
-
-    // Use ResizeObserver for better performance
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(document.body);
+    const throttledResize = throttle(updateCardsPerView, 16);
+    
+    // Initial calculation
     updateCardsPerView();
-
+    
+    // Passive event listener
+    window.addEventListener('resize', throttledResize, { passive: true });
+    
     return () => {
-      clearTimeout(resizeTimeout);
-      resizeObserver.disconnect();
+      window.removeEventListener('resize', throttledResize);
     };
   }, []);
 
-  // Performance optimized duplication
+  // 3. PERFORMANCE OPTIMIZED DUPLICATION
   const duplicatedCategories = useMemo(() => {
     if (!Array.isArray(categories) || categories.length === 0) return [];
-    return [...categories, ...categories];
-  }, [categories]);
+    
+    // Calculate minimum needed for seamless loop
+    const totalNeeded = Math.max(12, cardsPerView * 3);
+    const repeats = Math.ceil(totalNeeded / categories.length);
+    
+    return Array.from({ length: repeats }, () => categories).flat();
+  }, [categories, cardsPerView]);
 
-  // Ultra-smooth continuous scroll with optimized RAF
+  // 4. OPTIMIZED RAF ANIMATION WITH VISIBILITY & PAGE VISIBILITY
   const scrollRef = useRef(0);
   const requestRef = useRef(null);
   const isPaused = useRef(!isInViewport);
@@ -181,64 +246,87 @@ export default function HomeServices() {
 
     const animate = (time) => {
       if (!lastTimeRef.current) lastTimeRef.current = time;
-      const deltaTime = Math.min(time - lastTimeRef.current, 32); // Cap at 30fps min
+      const deltaTime = Math.min(time - lastTimeRef.current, 32);
       lastTimeRef.current = time;
 
-      if (!isPaused.current && containerRef.current) {
-        const containerWidth = containerRef.current.scrollWidth / 2 || 0;
-        scrollRef.current += SCROLL_SPEED * (deltaTime / 16);
-
-        if (scrollRef.current >= containerWidth) scrollRef.current = 0;
-
-        // GPU accelerated transform with will-change
-        containerRef.current.style.transform = `translate3d(-${scrollRef.current}px, 0, 0)`;
+      // Check visibility and page visibility
+      if (!isInViewport || isPaused.current || document.hidden) {
+        requestRef.current = requestAnimationFrame(animate);
+        return;
       }
+
+      const containerWidth = containerRef.current.scrollWidth / 2 || 0;
+      scrollRef.current += SCROLL_SPEED * (deltaTime / 16);
+
+      if (scrollRef.current >= containerWidth) scrollRef.current = 0;
+
+      // ✅ ONLY container animation gets will-change
+      containerRef.current.style.transform = `translate3d(-${scrollRef.current}px, 0, 0)`;
 
       requestRef.current = requestAnimationFrame(animate);
     };
 
     requestRef.current = requestAnimationFrame(animate);
+    
+    // Handle page visibility
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (requestRef.current) {
+          cancelAnimationFrame(requestRef.current);
+          requestRef.current = null;
+        }
+      } else if (isInViewport && !isPaused.current) {
+        requestRef.current = requestAnimationFrame(animate);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
+    
     return () => {
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [duplicatedCategories]);
+  }, [duplicatedCategories, isInViewport]);
 
-  // Pause animation when not in viewport
+  // 5. PAUSE LOGIC OPTIMIZATION
   useEffect(() => {
     isPaused.current = !isInViewport;
+    
+    if (isInViewport && lastTimeRef.current === 0) {
+      lastTimeRef.current = performance.now();
+    }
   }, [isInViewport]);
 
-  // Optimized smooth scroll for arrows
+  // 6. OPTIMIZED SMOOTH SCROLL (Apple's easing)
   const smoothScroll = useCallback((distance) => {
     if (!containerRef.current) return;
     
     const start = scrollRef.current;
     const end = scrollRef.current + distance;
-    let startTime = null;
+    const startTime = performance.now();
     const duration = 300;
 
-    const animateScroll = (currentTime) => {
-      if (!startTime) startTime = currentTime;
+    const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Apple-like easing function
-      const easeOut = 1 - Math.pow(1 - progress, 3);
+      // Apple's easing function (cubic-bezier(0.25, 0.46, 0.45, 0.94))
+      const ease = 1 - Math.pow(1 - progress, 3);
       
-      scrollRef.current = start + (end - start) * easeOut;
+      scrollRef.current = start + (end - start) * ease;
       
       if (containerRef.current) {
         containerRef.current.style.transform = `translate3d(-${scrollRef.current}px, 0, 0)`;
       }
 
       if (progress < 1) {
-        requestAnimationFrame(animateScroll);
+        requestAnimationFrame(animate);
       }
     };
 
-    requestAnimationFrame(animateScroll);
+    requestAnimationFrame(animate);
   }, []);
 
   const handlePrev = useCallback(() => {
@@ -251,18 +339,22 @@ export default function HomeServices() {
     smoothScroll(containerRef.current.offsetWidth / cardsPerView);
   }, [smoothScroll, cardsPerView]);
 
-  // Optimized touch/swipe support
+  // 7. OPTIMIZED TOUCH HANDLERS WITH PASSIVE LISTENERS
   const touchStartX = useRef(0);
   const scrollStartX = useRef(0);
+  const isDragging = useRef(false);
 
   const handleTouchStart = useCallback((e) => {
     touchStartX.current = e.touches[0].clientX;
     scrollStartX.current = scrollRef.current;
     isPaused.current = true;
+    isDragging.current = true;
   }, []);
 
   const handleTouchMove = useCallback((e) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !isDragging.current) return;
+    e.preventDefault();
+    
     const touchX = e.touches[0].clientX;
     const diff = touchStartX.current - touchX;
 
@@ -271,120 +363,139 @@ export default function HomeServices() {
   }, []);
 
   const handleTouchEnd = useCallback(() => {
+    isDragging.current = false;
     isPaused.current = !isInViewport;
   }, [isInViewport]);
 
-  // Memoized circle size calculation
+  // 8. MEMOIZED VALUES
   const circleSize = useMemo(() => 
     "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full",
     []
   );
 
-  // Skeleton loader for initial load
+  // 9. OPTIMIZED SKELETON LOADER
   const skeletonLoader = useMemo(() => {
-    return Array.from({ length: 12 }).map((_, index) => (
+    const count = Math.min(12, cardsPerView * 2);
+    return Array.from({ length: count }).map((_, index) => (
       <div
         key={`skeleton-${index}`}
-        className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center transform-gpu"
-        style={{ 
-          flexBasis: `${100 / cardsPerView}%`,
-          willChange: 'transform'
-        }}
+        className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center"
       >
         <div
-          className={`relative aspect-square ${circleSize} p-[2px] bg-gray-200 animate-pulse transform-gpu`}
-          style={{ willChange: 'transform' }}
+          className={`relative aspect-square ${circleSize} p-[2px] bg-gray-200 animate-pulse`}
         >
-          <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-300 transform-gpu">
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-400/50 via-gray-300/30 to-transparent flex items-center justify-center transform-gpu">
-              <div className="h-4 bg-gray-400 rounded w-16 transform-gpu"></div>
+          <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-300">
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-400/50 via-gray-300/30 to-transparent flex items-center justify-center">
+              <div className="h-4 bg-gray-400 rounded w-16"></div>
             </div>
           </div>
         </div>
-        <div className="h-4 bg-gray-300 rounded w-20 mt-3 transform-gpu"></div>
+        <div className="h-4 bg-gray-300 rounded w-20 mt-3"></div>
       </div>
     ));
   }, [cardsPerView, circleSize]);
 
-  // Memoized category cards rendering 
+  // 10. OPTIMIZED CATEGORY CARD COMPONENT
+  const CategoryCard = useCallback(({ service, index, cardsPerView }) => {
+    const { loaded, error } = useImageLoader(service?.image, index < 6);
+    
+    return (
+      <div
+        key={`${service?.id}-${index}`}
+        className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center"
+        style={{ 
+          flexBasis: `${100 / cardsPerView}%`
+        }}
+      >
+        <button
+          onClick={() => navigate(`/category/${service?.id}`)}
+          className={`relative group aspect-square ${circleSize} p-[2px]
+                      bg-gradient-to-br from-white/40 via-white/10 to-transparent
+                      shadow-lg border border-white/30 hover:scale-105 transition-transform duration-300
+                      cursor-pointer`}
+          aria-label={`Browse ${service?.title_en || service?.title}`}
+        >
+          <div className="relative w-full h-full rounded-full overflow-hidden">
+            {error ? (
+              <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                <span className="text-xs text-gray-500">Image</span>
+              </div>
+            ) : (
+              <img
+                src={service?.image}
+                alt={service?.title_en || service?.title}
+                loading={index < 12 ? "eager" : "lazy"}
+                fetchpriority={index < 6 ? "high" : "low"}
+                decoding={index < 12 ? "sync" : "async"}
+                width={160}
+                height={160}
+                className={`w-full h-full object-cover rounded-full transition-opacity duration-300 ${
+                  loaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                style={{ 
+                  contentVisibility: 'auto'
+                }}
+                onLoad={(e) => {
+                  e.target.classList.add('opacity-100');
+                  e.target.classList.remove('opacity-0');
+                }}
+                onError={(e) => {
+                  console.warn('Failed to load image:', service?.image);
+                  e.target.style.display = 'none';
+                }}
+              />
+            )}
+            {!loaded && !error && (
+              <div className="absolute inset-0 bg-gray-200 rounded-full animate-pulse" />
+            )}
+          </div>
+        </button>
+        <h3 className="text-gray-900 text-[13px] sm:text-base md:text-[15px] font-medium text-center mt-5 px-2 leading-tight max-w-full truncate">
+          {service?.title_en || service?.title}
+        </h3>
+      </div>
+    );
+  }, [circleSize, navigate]);
+
+  // 11. OPTIMIZED RENDER CATEGORY CARDS
   const renderCategoryCards = useMemo(() => {
     if (isLoading || duplicatedCategories.length === 0) {
       return skeletonLoader;
     }
 
     return duplicatedCategories.map((service, index) => (
-      <div
+      <CategoryCard
         key={`${service?.id}-${index}`}
-        className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center transform-gpu"
-        style={{ 
-          flexBasis: `${100 / cardsPerView}%`,
-          willChange: 'transform'
-        }}
-      >
-        <div
-          className={`relative group aspect-square ${circleSize} p-[2px]
-                      bg-gradient-to-br from-white/40 via-white/10 to-transparent
-                      shadow-lg border border-white/30 hover:scale-105 transition-transform duration-300
-                      cursor-pointer transform-gpu`}
-          onClick={() => navigate(`/category/${service?.id}`)}
-          style={{ willChange: 'transform' }}
-        >
-          <div className="relative w-full h-full rounded-full overflow-hidden transform-gpu">
-            {/* ULTRA FAST IMAGE - No lazy loading, eager loading, immediate display */}
-            <img
-              src={service?.image}
-              alt={service?.title_en || service?.title}
-              loading="eager"
-              decoding="sync"
-              width={160}
-              height={160}
-              className="w-full h-full object-cover rounded-full opacity-100 group-hover:opacity-100 transition duration-300 transform-gpu"
-              style={{ 
-                contentVisibility: 'auto',
-                transform: 'translateZ(0)',
-                backfaceVisibility: 'hidden'
-              }}
-              onLoad={(e) => {
-                e.target.style.opacity = '1';
-              }}
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
-        </div>
-        {/* Increased text size and spacing */}
-        <h3 className="text-gray-900 text-[13px] sm:text-base md:text-[15px] font-medium text-center mt-5 px-2 leading-tight max-w-full truncate transform-gpu">
-          {service?.title_en || service?.title}
-        </h3>
-      </div>
+        service={service}
+        index={index}
+        cardsPerView={cardsPerView}
+      />
     ));
-  }, [duplicatedCategories, cardsPerView, circleSize, navigate, isLoading, skeletonLoader, imagesLoaded]);
+  }, [duplicatedCategories, cardsPerView, isLoading, skeletonLoader, CategoryCard]);
 
   return (
     <section
       ref={sectionRef}
       dir="ltr"
-      className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-visible bg-neutral-100 transform-gpu"
+      className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-visible bg-neutral-100"
       style={{ 
         contain: 'layout style paint',
         contentVisibility: 'auto'
       }}
     >
-      <div className="text-center mb-8 sm:mb-12 transform-gpu">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight transform-gpu">
-          {fixedWords?.homeServicesTitle || "Home Services"}
+      <div className="text-center mb-8 sm:mb-12">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
+          {settings?.service_title || "Home Services"}
         </h2>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base transform-gpu">
-          {fixedWords?.homeServicesSubtitle ||
-            "Explore trusted service categories for your home and garden"}
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">
+          {settings?.service_sub_title ||
+  "Explore trusted service categories for your home and garden"}
         </p>
       </div>
 
-      {/* Carousel */}
-      <div className="relative px-4 sm:px-8 md:px-12 lg:px-16 transform-gpu">
+      <div className="relative px-4 sm:px-8 md:px-12 lg:px-16">
 
-        {/* Navigation buttons */}
+        {/* ✅ Navigation button - Only element that animates on hover */}
         <button
           onClick={handlePrev}
           className="
@@ -394,35 +505,36 @@ export default function HomeServices() {
             shadow-[0_1px_4px_rgba(0,0,0,0.15)]
             transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]
             hover:scale-[1.06] active:scale-[0.95]
-            transform-gpu
           "
           aria-label="Previous categories"
-          style={{ willChange: 'transform' }}
+          style={{ willChange: "transform" }}
         >
-          <FaChevronLeft size={16} />
+          <ChevronLeft size={16} />
         </button>
 
+        {/* ✅ Container wrapper - Only this area animates */}
         <div
-          className="overflow-visible w-full transform-gpu"
+          className="overflow-visible w-full"
           onMouseEnter={() => (isPaused.current = true)}
           onMouseLeave={() => (isPaused.current = !isInViewport)}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ willChange: 'transform' }}
+          style={{ touchAction: 'pan-y pinch-zoom' }}
         >
+          {/* ✅ Scroll container - Only this element gets continuous animation */}
           <div 
-            className="flex flex-nowrap transform-gpu" 
+            className="flex flex-nowrap" 
             ref={containerRef}
             style={{ 
-              willChange: 'transform',
-              backfaceVisibility: 'hidden'
+              willChange: 'transform' // ✅ Correct: This is continuously animated
             }}
           >
             {renderCategoryCards}
           </div>
         </div>
 
+        {/* ✅ Navigation button - Only element that animates on hover */}
         <button
           onClick={handleNext}
           className="
@@ -432,14 +544,12 @@ export default function HomeServices() {
             shadow-[0_1px_4px_rgba(0,0,0,0.15)]
             transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]
             hover:scale-[1.06] active:scale-[0.95]
-            transform-gpu
           "
           aria-label="Next categories"
-          style={{ willChange: 'transform' }}
+          style={{ willChange: "transform" }} // ✅ Correct: This animates on hover
         >
-          <FaChevronRight size={16} />
+          <ChevronRight size={16} />
         </button>
-
       </div>
     </section>
   );

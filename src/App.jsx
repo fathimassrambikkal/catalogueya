@@ -1,43 +1,40 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import "./i18n";
 import { useTranslation } from "react-i18next";
-import CustomerLogin from "./pages/CustomerLogin";
-// Components
+
+
+
+/* Critical components */
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Scroll from "./components/Scroll";
-
-// Pages
 import Home from "./pages/Home";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Sign from "./pages/Sign";
-import Favourite from "./pages/Favourite";
-import ForgotPassword from "./pages/ForgotPassword";
-import Register from "./pages/Register";
-import CompanyForgotPassword from "./pages/CompanyForgotPassword";
-import CompanyDashboard from "./pages/CompanyDashboard";
 
-// Category + Product + Company
-import CategoryPage from "./pages/CategoryPage";
-import CompanyPage from "./pages/CompanyPage";
-import ProductProfile from "./pages/ProductProfile";
-import CompanyReviewsPage from "./pages/CompanyReviewsPage";
-
-// Sales
-import SalesProductPage from "./pages/SalesProductPage";
-import SalesProductProfile from "./pages/SalesProductProfile";
-
-// New Arrival
-import NewArrivalProductPage from "./pages/NewArrivalProductPage";
-import NewArrivalProductProfile from "./pages/NewArrivalProductProfile";
+/* Lazy pages */
+const About = React.lazy(() => import("./pages/About"));
+const Contact = React.lazy(() => import("./pages/Contact"));
+const Sign = React.lazy(() => import("./pages/Sign"));
+const Favourite = React.lazy(() => import("./pages/Favourite"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const Register = React.lazy(() => import("./pages/Register"));
+const CustomerLogin = React.lazy(() => import("./pages/CustomerLogin"));
+const CompanyForgotPassword = React.lazy(() => import("./pages/CompanyForgotPassword"));
+const CompanyDashboard = React.lazy(() => import("./pages/CompanyDashboard"));
+const CategoryPage = React.lazy(() => import("./pages/CategoryPage"));
+const CompanyPage = React.lazy(() => import("./pages/CompanyPage"));
+const ProductProfile = React.lazy(() => import("./pages/ProductProfile"));
+const CompanyReviewsPage = React.lazy(() => import("./pages/CompanyReviewsPage"));
+const SalesProductPage = React.lazy(() => import("./pages/SalesProductPage"));
+const SalesProductProfile = React.lazy(() => import("./pages/SalesProductProfile"));
+const NewArrivalProductPage = React.lazy(() => import("./pages/NewArrivalProductPage"));
+const NewArrivalProductProfile = React.lazy(() => import("./pages/NewArrivalProductProfile"));
+const Terms = React.lazy(() => import("./pages/Terms"));
 
 function AppContent() {
   const location = useLocation();
   const { i18n } = useTranslation();
 
-  // Set direction (RTL/LTR)
   useEffect(() => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = i18n.language;
@@ -49,79 +46,64 @@ function AppContent() {
     "/register",
     "/company-forgot-password",
     "/company-dashboard",
-    "/customer-login", 
+    "/customer-login",
   ];
 
   const hideLayout = hideLayoutPaths.includes(location.pathname);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-black">
+    <div className="flex flex-col min-h-screen bg-white">
+
       {!hideLayout && <Navbar />}
       <Scroll />
+
       <main className="flex-grow">
-        <Routes>
-          {/* Main */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/sign" element={<Sign />} />
-          <Route path="/favourite" element={<Favourite />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/register" element={<Register />} />
-         
-          <Route path="/company-dashboard" element={<CompanyDashboard />} />
-          <Route path="/customer-login" element={<CustomerLogin />} />
-          <Route
-            path="/company-forgot-password"
-            element={<CompanyForgotPassword />}
-          />
-        
 
-          {/* Category + Company + Product */}
-          <Route path="/category/:categoryId" element={<CategoryPage />} />
-          <Route
-            path="/category/:categoryId/company/:companyId"
-            element={<CompanyPage />}
-          />
-          {/* ADDED: Direct company route */}
-          <Route path="/company/:companyId" element={<CompanyPage />} />
-          <Route
-            path="/category/:categoryId/company/:companyId/product/:id"
-            element={<ProductProfile />}
-          />
-          {/* ADDED: Direct company product route */}
-          <Route
-            path="/company/:companyId/product/:id"
-            element={<ProductProfile />}
-          />
+        {/* ⭐ FIXED — No more footer flash, no white gap */}
+        <Suspense fallback={
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="loader" />
+          </div>
+        }>
+          <Routes>
+
+            <Route path="/" element={<Home />} />
+
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/sign" element={<Sign />} />
+            <Route path="/favourite" element={<Favourite />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/company-dashboard" element={<CompanyDashboard />} />
+            <Route path="/customer-login" element={<CustomerLogin />} />
+            <Route path="/company-forgot-password" element={<CompanyForgotPassword />} />
+            <Route path="/terms" element={<Terms />} />
+
+
+            <Route path="/category/:categoryId" element={<CategoryPage />} />
+            <Route path="/category/:categoryId/company/:companyId" element={<CompanyPage />} />
+            <Route path="/company/:companyId" element={<CompanyPage />} />
+
+            <Route path="/category/:categoryId/company/:companyId/product/:id" element={<ProductProfile />} />
+            <Route path="/company/:companyId/product/:id" element={<ProductProfile />} />
             <Route path="/product/:id" element={<ProductProfile />} />
-          {/* Reviews */}
-          <Route
-            path="/category/:categoryId/company/:companyId/reviews"
-            element={<CompanyReviewsPage />}
-          />
-          {/* ADDED: Direct company reviews route */}
-          <Route
-            path="/company/:companyId/reviews"
-            element={<CompanyReviewsPage />}
-          />
 
-          {/* Sales */}
-          <Route path="/salesproducts" element={<SalesProductPage />} />
-          <Route path="/salesproduct/:id" element={<SalesProductProfile />} />
+            <Route path="/company/:companyId/reviews" element={<CompanyReviewsPage />} />
 
-          {/* New Arrival */}
-          <Route
-            path="/newarrivalproducts"
-            element={<NewArrivalProductPage />}
-          />
-          <Route
-            path="/newarrivalprofile/:id"
-            element={<NewArrivalProductProfile />}
-          />
-        </Routes>
+            <Route path="/salesproducts" element={<SalesProductPage />} />
+            <Route path="/salesproduct/:id" element={<SalesProductProfile />} />
+
+            <Route path="/newarrivalproducts" element={<NewArrivalProductPage />} />
+            <Route path="/newarrivalprofile/:id" element={<NewArrivalProductProfile />} />
+
+          </Routes>
+        </Suspense>
+
       </main>
+
       {!hideLayout && <Footer />}
+
     </div>
   );
 }

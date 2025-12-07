@@ -6,14 +6,11 @@ import { BrowserRouter } from "react-router-dom";
 import { FavouriteProvider } from "./context/FavouriteContext";
 import { FollowingProvider } from "./context/FollowingContext";
 import { FollowersProvider } from "./context/FollowersContext";
-import { AuthProvider } from "./context/AuthContext.jsx"; // FIXED PATH
-import ErrorBoundary from "./components/ErrorBoundary"; 
+import ErrorBoundary from "./components/ErrorBoundary";
 import { getGoogleMap } from "./api";
+import Lenis from "lenis";
 
-// Import Lenis directly
-import Lenis from 'lenis';
-
-// Function to dynamically load Google Maps script
+/* Load Google Maps Script */
 const loadGoogleMaps = (apiKey) => {
   if (!document.getElementById("google-maps")) {
     const script = document.createElement("script");
@@ -25,14 +22,14 @@ const loadGoogleMaps = (apiKey) => {
   }
 };
 
-// Lenis initialization component
+/* Lenis Smooth Scroll */
 const LenisProvider = ({ children }) => {
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
+      orientation: "vertical",
+      gestureOrientation: "vertical",
       smoothWheel: true,
       wheelMultiplier: 1,
       touchMultiplier: 2,
@@ -40,44 +37,27 @@ const LenisProvider = ({ children }) => {
       infinite: false,
     });
 
-    function raf(time) {
+    const raf = (time) => {
       lenis.raf(time);
       requestAnimationFrame(raf);
-    }
+    };
 
     requestAnimationFrame(raf);
-
-    return () => {
-      lenis.destroy();
-    };
+    return () => lenis.destroy();
   }, []);
 
   return children;
 };
 
+/* Main App Wrapper */
 const Main = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log('🚀 Starting application...');
-        
-        try {
-          const res = await getGoogleMap();
-          const apiKey = res.data.apiKey; 
-          if (apiKey) {
-            loadGoogleMaps(apiKey);
-            console.log('✅ Google Maps loaded successfully');
-          } else {
-            console.warn('⚠️ No Google Maps API key found');
-          }
-        } catch (mapError) {
-          console.warn('⚠️ Failed to load Google Maps:', mapError);
-        }
-        
-        console.log('🎉 Application started successfully!');
-      } catch (error) {
-        console.error('❌ Failed to initialize app:', error);
-      }
+        const res = await getGoogleMap();
+        const apiKey = res?.data?.apiKey;
+        if (apiKey) loadGoogleMaps(apiKey);
+      } catch {}
     };
 
     initializeApp();
@@ -86,17 +66,15 @@ const Main = () => {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <AuthProvider>
-          <FavouriteProvider>
-            <FollowingProvider>
-              <FollowersProvider>
-                <LenisProvider>
-                  <App />
-                </LenisProvider>
-              </FollowersProvider>
-            </FollowingProvider>
-          </FavouriteProvider>
-        </AuthProvider>
+        <FavouriteProvider>
+          <FollowingProvider>
+            <FollowersProvider>
+              <LenisProvider>
+                <App />
+              </LenisProvider>
+            </FollowersProvider>
+          </FollowingProvider>
+        </FavouriteProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

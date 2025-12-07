@@ -1,7 +1,7 @@
 // src/pages/Sign.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+
 import { loginCustomer, logoutCustomer, loginCompany, logoutCompany } from "../api";
 import logo from "../assets/logo.png";
 
@@ -89,8 +89,6 @@ const WelcomePage = ({ user, userType, onGoToDashboard, onSignOut }) => {
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 mb-3">
             Welcome
           </h1>
-          
-        
         </div>
 
         {/* User Info Card */}
@@ -137,7 +135,7 @@ const WelcomePage = ({ user, userType, onGoToDashboard, onSignOut }) => {
 
 export default function Sign() {
   const navigate = useNavigate();
-  const { isRegistered } = useAuth();
+  const [isRegistered, setIsRegistered] = useState(false);
   const [loginType, setLoginType] = useState("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -155,6 +153,35 @@ export default function Sign() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userType, setUserType] = useState("");
+
+  // Check for registration status and existing sessions on component mount
+  useEffect(() => {
+    // Check if user just registered (from localStorage)
+    const justRegistered = localStorage.getItem("justRegistered") === "true";
+    
+    // Check URL parameters for registration success
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromRegistration = urlParams.get('registered') === 'true';
+    
+    if (justRegistered || fromRegistration) {
+      setIsRegistered(true);
+      // Clear the flag after displaying
+      localStorage.removeItem("justRegistered");
+    }
+    
+    // Check if user is already logged in
+    const user = localStorage.getItem("user");
+    const company = localStorage.getItem("company");
+    
+    if (user || company) {
+      const existingUser = user ? JSON.parse(user) : JSON.parse(company);
+      const existingUserType = user ? "customer" : "company";
+      
+      setCurrentUser(existingUser);
+      setUserType(existingUserType);
+      setShowWelcome(true);
+    }
+  }, []);
 
   const showModernAlert = (message, type = "success") => {
     setAlertMessage(message);
@@ -294,6 +321,7 @@ export default function Sign() {
     localStorage.removeItem("companyToken");
     localStorage.removeItem("company");
     localStorage.removeItem("isRegistered");
+    localStorage.removeItem("justRegistered");
     
     setShowWelcome(false);
     setCurrentUser(null);

@@ -1,25 +1,25 @@
-import React from 'react'
-import Banner from '../components/Banner'
-import HomeServices from '../components/HomeServices'
+import React from "react";
 
-import Faq from '../components/Faq'
-import Sales from '../components/Sales'
-import NewArrivals from '../components/NewArrivals'
-import Pricing from '../components/Pricing'
-import CallToAction from '../components/CallToAction'
+/* Load ALL components immediately */
+import Banner from "../components/Banner";
+import HomeServices from "../components/HomeServices";
+import NewArrivals from "../components/NewArrivals";
+import Sales from "../components/Sales";
+import Pricing from "../components/Pricing";
+import Faq from "../components/Faq";
+import CallToAction from "../components/CallToAction";
 
-function Home() {
+export default function Home() {
   return (
-    <>
-    <Banner/>
-    <HomeServices/>
-    <NewArrivals/>
-   <Sales/>
-   <Pricing/>
-   <Faq/>
-   <CallToAction/>
-    </>
-  )
+    <div>
+      {/* Everything loads instantly */}
+      <Banner />
+      <HomeServices />
+      <NewArrivals />
+      <Sales />
+      <Pricing />
+      <Faq />
+      <CallToAction />
+    </div>
+  );
 }
-
-export default Home

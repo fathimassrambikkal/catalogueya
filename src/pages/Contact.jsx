@@ -107,26 +107,23 @@ export default function Contact() {
                   />
                 </div>
 
-                {/* Gradient Submit Button */}
-                <button
-                  className="
-                    w-full
-                    py-4
-                    rounded-full
-                    text-white
-                    font-medium
-                    text-sm
-                    shadow-[0_8px_18px_rgba(0,0,0,0.15)]
-                    bg-blue-500
-                    border-4 border-white
-                    transition-all
-                    hover:shadow-[0_4px_10px_rgba(0,0,0,0.25)]
-                    hover:brightness-110
-                    mt-4
-                  "
-                >
-                  Submit
-                </button>
+               <button
+                className="
+                  w-full
+                  py-3
+                  rounded-full
+                  bg-blue-500
+                  text-white
+                  text-sm
+                  font-medium
+                  hover:bg-blue-600
+                  transition-colors
+                  mt-4
+                "
+              >
+                Submit
+              </button>
+
               </div>
 
             </div>

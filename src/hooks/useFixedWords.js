@@ -1,56 +1,37 @@
-import { useState, useEffect } from 'react';
-import { getFixedWords } from '../api';
-
-// Cache for fixed words data
-let fixedWordsCache = null;
-let fixedWordsPromise = null;
+import { useState, useEffect } from "react";
+import { getFixedWords } from "../api";
+import Cookies from "js-cookie";
 
 export const useFixedWords = () => {
-  const [fixedWords, setFixedWords] = useState(fixedWordsCache || {});
-  const [loading, setLoading] = useState(!fixedWordsCache);
+  const [fixedWords, setFixedWords] = useState({});
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const lang = Cookies.get("lang") || "en";
+
   useEffect(() => {
-    // If already cached, use it immediately
-    if (fixedWordsCache) {
-      setFixedWords(fixedWordsCache);
-      setLoading(false);
-      return;
-    }
+    let mounted = true;
 
-    // If request is already in progress, wait for it
-    if (fixedWordsPromise) {
-      fixedWordsPromise.then(data => {
-        setFixedWords(data);
-        setLoading(false);
-      }).catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
-      return;
-    }
-
-    // Make new request
-    setLoading(true);
-    fixedWordsPromise = getFixedWords()
-      .then(response => {
-        const fixedWordsData = response?.data?.data || {};
-        fixedWordsCache = fixedWordsData; // Cache the data
-        setFixedWords(fixedWordsData);
-        setLoading(false);
-        return fixedWordsData;
-      })
-      .catch(err => {
-        console.error('Failed to fetch fixed words:', err);
-        setError('Failed to load content');
-        setLoading(false);
-        return {};
-      });
-
-    return () => {
-      // Cleanup if component unmounts
+    const fetchData = async () => {
+      try {
+        const res = await getFixedWords();
+        if (mounted) {
+          setFixedWords(res?.data?.data || {});
+        }
+      } catch (err) {
+        setError(err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
-  }, []);
+
+    fetchData();
+
+    // cleanup
+    return () => {
+      mounted = false;
+    };
+  }, [lang]); // refetch when language changes
 
   return { fixedWords, loading, error };
 };

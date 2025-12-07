@@ -1,10 +1,42 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { AiOutlineSearch, AiOutlineClose } from "react-icons/ai";
 import { getCategories } from "../api";
 import { useTranslation } from "react-i18next"; 
 import qatarflag from "../assets/Qatarflag.jpg";
+
+// SVG Icons - EXACT SAME SIZE AND VISUAL STYLE AS AiOutlineSearch/AiOutlineClose
+const SearchIcon = ({ className = "" }) => (
+  <svg 
+    className={`${className} transform-gpu`}
+    width="20" // Smaller for desktop
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.35-4.35" />
+  </svg>
+);
+
+const CloseIcon = ({ className = "" }) => (
+  <svg 
+    className={`${className} transform-gpu`}
+    width="16" // Smaller
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
 
 // Pre-fetch categories immediately when module loads
 let preloadedCategories = null;
@@ -26,6 +58,7 @@ export default function SearchBar() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categories, setCategories] = useState(preloadedCategories || []);
   const [isLoading, setIsLoading] = useState(!preloadedCategories);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
   const { i18n } = useTranslation();
@@ -78,7 +111,6 @@ export default function SearchBar() {
   useEffect(() => {
     if (searchTerm || categoryTitles.length === 0) return;
     
-    let animationFrame;
     let intervalId;
 
     const animatePlaceholder = () => {
@@ -87,23 +119,28 @@ export default function SearchBar() {
         setTimeout(() => {
           setCurrentWordIndex((prev) => (prev + 1) % categoryTitles.length);
           setShowPlaceholder(true);
-        }, 300); // Increased from 150ms to 300ms for slower fade out
-      }, 3000); // Increased from 2000ms to 3000ms for slower transitions
+        }, 300);
+      }, 3000);
     };
 
-    animationFrame = requestAnimationFrame(animatePlaceholder);
+    animatePlaceholder();
 
     return () => {
       if (intervalId) clearInterval(intervalId);
-      if (animationFrame) cancelAnimationFrame(animationFrame);
     };
   }, [searchTerm, categoryTitles.length]);
+
+  // Show/hide dropdown based on search term
+  useEffect(() => {
+    setIsDropdownVisible(searchTerm.length > 0);
+  }, [searchTerm]);
 
   // Optimized click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setSearchTerm("");
+        setIsDropdownVisible(false);
       }
     };
     
@@ -111,7 +148,7 @@ export default function SearchBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Memoized search handler
+  // Memoized search handler (for search button click)
   const handleSearch = useCallback(() => {
     if (!searchTerm || !Array.isArray(categories)) return;
     
@@ -124,6 +161,8 @@ export default function SearchBar() {
     
     if (category) {
       navigate(`/category/${category.id}`);
+      setSearchTerm("");
+      setIsDropdownVisible(false);
     } else {
       alert("Category not found!");
     }
@@ -162,21 +201,18 @@ export default function SearchBar() {
     setSearchTerm(e.target.value);
   }, []);
 
-  // Optimized clear handler
+  // Clear handler (used by close icon in dropdown)
   const handleClear = useCallback(() => {
     setSearchTerm("");
+    setIsDropdownVisible(false);
   }, []);
 
-  // Optimized category selection
+  // Optimized category selection (when clicking a category item)
   const handleCategorySelect = useCallback((category) => {
     const displayTitle = category.title_en || category.title || category.name;
     setSearchTerm(displayTitle);
-    
-    // Auto-navigate after selection
-    setTimeout(() => {
-      navigate(`/category/${category.id}`);
-    }, 10);
-  }, [navigate]);
+    // Show the category name in search bar but don't navigate yet
+  }, []);
 
   // Loading skeleton for placeholder
   const placeholderContent = useMemo(() => {
@@ -185,6 +221,13 @@ export default function SearchBar() {
     }
     return categoryTitles[currentWordIndex];
   }, [isLoading, categoryTitles, currentWordIndex]);
+
+  // Handle Enter key press
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  }, [handleSearch]);
 
   return (
     <div ref={searchRef} className="w-full min-w-[280px] relative transform-gpu" style={{ willChange: 'transform' }}>
@@ -195,10 +238,10 @@ export default function SearchBar() {
         `}
         style={{ willChange: 'transform' }}
       >
-        {/* Search Icon - Bigger size */}
-        <AiOutlineSearch
+        {/* Search Icon - Smaller size for desktop */}
+        <SearchIcon
           className={`text-white transform-gpu
-            text-xl xs:text-2xl sm:text-2xl md:text-2xl /* Increased sizes */
+            text-lg xs:text-xl sm:text-xl md:text-xl /* Smaller for desktop */
             ${i18n.language === "ar" ? "ml-2 xs:ml-3" : "mr-2 xs:mr-2"}
           `}
           style={{ willChange: 'transform' }}
@@ -208,53 +251,28 @@ export default function SearchBar() {
           type="text"
           value={searchTerm}
           onChange={handleInputChange}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          onKeyPress={handleKeyPress}
           className="flex-1 outline-none bg-transparent text-white text-sm xs:text-base transform-gpu placeholder-transparent"
           style={{ willChange: 'transform' }}
           placeholder={isLoading ? "Loading..." : "Search categories..."}
         />
 
-        <AnimatePresence mode="wait">
-          {!searchTerm && showPlaceholder && (
-            <motion.span
-              key={placeholderContent}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ 
-                opacity: { duration: 0.4 },
-                y: { duration: 0.6 }, 
-                willChange: "opacity, transform"
-              }}
-              className={`absolute top-3 xs:top-4 pointer-events-none select-none text-gray-400 text-sm xs:text-base transform-gpu ${
-                i18n.language === "ar"
-                  ? "right-12 xs:right-14 text-right"
-                  : "left-12 xs:left-14 text-left"
-              }`}
-              style={{ willChange: 'transform, opacity' }}
-            >
-              {placeholderContent}
-            </motion.span>
-          )}
-        </AnimatePresence>
-
-        {searchTerm && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
-            className="transform-gpu"
-            style={{ willChange: 'transform' }}
+        {/* Placeholder with CSS animation */}
+        {!searchTerm && showPlaceholder && (
+          <span
+            key={placeholderContent}
+            className={`absolute top-3 xs:top-4 pointer-events-none select-none text-gray-400 text-sm xs:text-base transform-gpu animate-placeholder-slide ${
+              i18n.language === "ar"
+                ? "right-12 xs:right-14 text-right"
+                : "left-12 xs:left-14 text-left"
+            }`}
+            style={{ willChange: 'transform, opacity' }}
           >
-            <AiOutlineClose
-              onClick={handleClear}
-              className="text-gray-300 hover:text-white text-lg xs:text-xl cursor-pointer ml-2 transform-gpu"
-              style={{ willChange: 'transform' }}
-            />
-          </motion.div>
+            {placeholderContent}
+          </span>
         )}
 
+        {/* Qatar Flag */}
         <img
           src={qatarflag}
           alt="Qatar Flag"
@@ -273,84 +291,148 @@ export default function SearchBar() {
         />
       </div>
 
-      {/* Dropdown Container - Highest z-index */}
-      <AnimatePresence>
-        {searchTerm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.2, 
-              ease: "easeOut",
-              willChange: "transform, opacity"
-            }}
-            className="absolute top-full left-0 w-full mt-2 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl z-[9999] transform-gpu"
-            style={{ 
-              willChange: 'transform, opacity',
-              // Force above everything including banner text
-              isolation: 'isolate'
-            }}
-          >
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-5 pt-4 pb-5 transform-gpu">
-              {isLoading ? (
-                // Loading skeleton
-                Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={`skeleton-${index}`}
-                    className="p-2 rounded-lg bg-white/10 animate-pulse transform-gpu"
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="h-4 bg-white/20 rounded transform-gpu"></div>
-                  </div>
-                ))
-              ) : filteredCategories.length > 0 ? (
-                filteredCategories.map((cat) => (
-                  <motion.div
-                    key={cat.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.15 }}
-                    onClick={() => handleCategorySelect(cat)}
-                    className={`p-2 rounded-lg cursor-pointer text-center transition transform-gpu ${
-                      cat.displayTitle?.toLowerCase() === searchTerm.toLowerCase()
-                        ? "bg-white/20 text-white font-semibold"
-                        : "text-gray-200 hover:bg-white/10"
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    {cat.displayTitle}
-                  </motion.div>
-                ))
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="col-span-full text-center text-gray-400 transform-gpu"
+      {/* Dropdown Container - Pure CSS animation */}
+      {isDropdownVisible && (
+        <div
+          className="absolute top-full left-0 w-full mt-2 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl z-[9999] transform-gpu animate-dropdown-slide"
+          style={{ 
+            willChange: 'transform, opacity',
+            isolation: 'isolate'
+          }}
+        >
+          {/* Dropdown Header with Close Icon INSIDE */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/10">
+            <h3 className="text-white text-sm font-medium">
+              {filteredCategories.length} {filteredCategories.length === 1 ? 'result' : 'results'} found
+            </h3>
+            <button
+              onClick={handleClear}
+              className="text-gray-300 hover:text-white p-1 rounded-full hover:bg-white/10 transition transform-gpu active:scale-95"
+              aria-label="Close search"
+            >
+              <CloseIcon className="transform-gpu" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-5 pt-4 pb-3 transform-gpu">
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="p-2 rounded-lg bg-white/10 animate-pulse transform-gpu"
                   style={{ willChange: 'transform' }}
                 >
-                  No categories found
-                </motion.div>
-              )}
-            </div>
-            
-            {!isLoading && filteredCategories.length > 0 && (
-              <div className="px-5 pb-5 transform-gpu">
-                <motion.button
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  onClick={handleSearch}
-                  className="w-full bg-white/20 text-white py-2 rounded-xl hover:bg-white/30 transition font-medium transform-gpu"
-                  style={{ willChange: 'transform' }}
+                  <div className="h-4 bg-white/20 rounded transform-gpu"></div>
+                </div>
+              ))
+            ) : filteredCategories.length > 0 ? (
+              filteredCategories.map((cat, index) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategorySelect(cat)}
+                  className={`p-2 rounded-lg cursor-pointer text-center transition transform-gpu animate-item-fade-in ${
+                    cat.displayTitle?.toLowerCase() === searchTerm.toLowerCase()
+                      ? "bg-white/20 text-white font-semibold"
+                      : "text-gray-200 hover:bg-white/10"
+                  } active:scale-95`}
+                  style={{ 
+                    willChange: 'transform',
+                    animationDelay: `${index * 0.05}s`
+                  }}
                 >
-                  Search
-                </motion.button>
+                  {cat.displayTitle}
+                </button>
+              ))
+            ) : (
+              <div 
+                className="col-span-full text-center text-gray-400 py-4 transform-gpu animate-fade-in"
+                style={{ willChange: 'transform' }}
+              >
+                No categories found
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+          
+          {/* Search Button - Only navigates when clicked */}
+          {!isLoading && filteredCategories.length > 0 && (
+            <div className="px-5 pb-5 pt-2 border-t border-white/10 transform-gpu">
+              <button
+                onClick={handleSearch}
+                className="w-full bg-white/20 text-white py-2.5 rounded-xl hover:bg-white/30 transition font-medium transform-gpu animate-fade-in active:scale-95"
+                style={{ 
+                  willChange: 'transform',
+                  animationDelay: '0.2s'
+                }}
+              >
+                Search for "{searchTerm}"
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes placeholder-slide {
+          0% {
+            opacity: 0;
+            transform: translateY(5px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes dropdown-slide {
+          0% {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        
+        @keyframes item-fade-in {
+          0% {
+            opacity: 0;
+            transform: translateY(5px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fade-in {
+          0% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+        
+        .animate-placeholder-slide {
+          animation: placeholder-slide 0.6s ease-out;
+        }
+        
+        .animate-dropdown-slide {
+          animation: dropdown-slide 0.2s ease-out;
+        }
+        
+        .animate-item-fade-in {
+          animation: item-fade-in 0.3s ease-out forwards;
+          opacity: 0;
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
