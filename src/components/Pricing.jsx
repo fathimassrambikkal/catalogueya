@@ -73,16 +73,16 @@ const Pricing = () => {
   const { fixed_words: fw = {} } = fixedWords || {};
 
 
-  // Auto-switch tabs with optimized timing
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTab(prev => {
-        const currentIndex = TABS.indexOf(prev);
-        return TABS[(currentIndex + 1) % TABS.length];
-      });
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // REMOVED: Auto-switch tabs with optimized timing
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setActiveTab(prev => {
+  //       const currentIndex = TABS.indexOf(prev);
+  //       return TABS[(currentIndex + 1) % TABS.length];
+  //     });
+  //   }, 5000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // Fetch subscription details from API with preload
   useEffect(() => {
