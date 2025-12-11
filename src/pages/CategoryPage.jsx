@@ -502,7 +502,7 @@ const CategoryPage = memo(() => {
     toggleFavourite(product);
   }, [toggleFavourite]);
 
-  // =================== FETCH DATA (OPTIMIZED) ===================
+  // =================== FETCH DATA (OPTIMIZED) - UPDATED ===================
   useEffect(() => {
     let mounted = true;
     const abortController = new AbortController();
@@ -510,24 +510,40 @@ const CategoryPage = memo(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [catRes, companiesRes, productsRes] = await Promise.all([
-          getCategory(categoryId),
-          getCompanies(),
-          getProducts(),
-        ]);
+        // Only fetch category data - it contains companies and their products
+        const catRes = await getCategory(categoryId);
 
         if (!mounted || abortController.signal.aborted) return;
 
-        const categoryData = catRes?.data?.data?.category || null;
-        const companiesData = companiesRes?.data?.data?.companies || [];
-        const productsData = productsRes?.data?.data?.products || [];
+        // CORRECTED: Extract data based on your actual API response structure
+        // Your API response: {data: {id, title, image, companies}, message}
+        const categoryData = catRes?.data?.data || null;
+        
+        // Extract companies from the category response
+        const companiesData = categoryData?.companies || [];
+        
+        // Extract and flatten products from all companies
+        const allProducts = [];
+        companiesData.forEach(company => {
+          if (company.products && Array.isArray(company.products)) {
+            // Add company info to each product
+            company.products.forEach(product => {
+              allProducts.push({
+                ...product,
+                company_id: company.id,
+                company_name: company.name,
+                company_logo: company.logo
+              });
+            });
+          }
+        });
 
         if (!categoryData) {
           setError("Category not found.");
         } else {
           setCategory(categoryData);
           setCompanies(companiesData);
-          setProducts(productsData);
+          setProducts(allProducts);
         }
       } catch (e) {
         if (!mounted || abortController.signal.aborted) return;
@@ -606,9 +622,9 @@ const CategoryPage = memo(() => {
     return formatImageUrl(imgPath);
   }, []);
 
-  // Memoize category data
+  // Memoize category data - UPDATED: Use title from API
   const categoryData = useMemo(() => ({
-    name: category?.name || category?.title || "Category",
+    name: category?.title || category?.name || "Category",
     image: getCategoryImageUrl(category?.image)
   }), [category, getCategoryImageUrl]);
 
@@ -639,12 +655,12 @@ const CategoryPage = memo(() => {
           company_id: product.company_id || null,
           isOnSale: product.isOnSale || false,
           isNewArrival: product.isNewArrival || false,
-          category_name: product.category_name || ''
+          category_name: category?.title || ''
         };
         
         return (
           <ProductCard
-            key={product.id}
+            key={`${product.id}-${product.company_id}`}
             product={enhancedProduct}
             isFav={isFavourite(product.id)}
             toggleFavourite={handleToggleFavourite}
@@ -653,7 +669,7 @@ const CategoryPage = memo(() => {
         );
       })}
     </div>
-  ), [sortedProducts, isFavourite, handleToggleFavourite, navigate]);
+  ), [sortedProducts, isFavourite, handleToggleFavourite, navigate, category]);
 
   // Memoize skeleton loaders
   const skeletonLoaders = useMemo(() => (
@@ -716,27 +732,41 @@ const CategoryPage = memo(() => {
         backgroundSize: "18px 18px",
       }}
     >
-      <button
-        onClick={handleBackClick}
-        className="absolute top-20 sm:top-8 left-6 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition transform-gpu"
-      >
-        <ArrowLeftIcon className="text-gray-700 text-lg transform-gpu" />
-      </button>
+     <button
+    onClick={handleBackClick}
+    className="
+      fixed
+      top-16 sm:top-6 md:top-24
+      left-4 sm:left-6 md:left-10
+      z-[9999]
+      p-2
+      bg-white/80
+      backdrop-blur-md
+      rounded-full
+      border
+      shadow-lg
+      hover:bg-white
+      transition
+    "
+  >
+    <ArrowLeftIcon className="text-gray-700 text-lg" />
+  </button>
+
 
       <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-20 transform-gpu">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10 transform-gpu">
-          <div className="flex items-center gap-4 ml-10 md:ml-0 transform-gpu">
-            {categoryData.image && (
-              <OptimizedImage
-                src={categoryData.image}
-                alt={categoryData.name}
-                className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover transform-gpu"
-                priority={true}
+     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
+          <div className="flex items-center gap-4 ml-10 md:ml-0">
+            {category.image && (
+              <img
+                src={category.image}
+                alt={category.title}
+                className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover"
+                loading="lazy"
               />
             )}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900 break-words text-start rtl:text-right transform-gpu">
-              {categoryData.name}
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900">
+               {categoryData.name}
             </h2>
           </div>
 

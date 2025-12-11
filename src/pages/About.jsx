@@ -209,9 +209,9 @@ export default function About() {
 
   return (
     <>
-      <div className="w-full bg-neutral-100">
+      <div className="w-full bg-white">
         {/* Hero Section with Split Layout - Reduced space on mobile */}
-        <section className="bg-neutral-100 flex flex-col items-center py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-16 lg:px-20">
+        <section className="bg-white flex flex-col items-center py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-16 lg:px-20">
           <span className="inline-block font-medium text-gray-800 px-4 py-2 text-xs sm:text-sm md:text-base bg-white/10 backdrop-blur-2xl border border-white/30 shadow-[0_8px_40px_rgba(0,0,0,0.1)] rounded-full hover:bg-gray-100 transition mt-8 sm:mb-8 text-center">
             About Us
           </span>
@@ -235,17 +235,17 @@ export default function About() {
         </section>
 
         {/* Reduced space below paragraph */}
-        <div className="h-12 sm:h-20 bg-neutral-100"></div>
+        <div className="h-12 sm:h-20 bg-white"></div>
 
         {/* Parallax Gallery */}
         <ParallaxGallery images={sliderImages} />
 
         {/* End Space */}
-        <div className="relative flex h-20 sm:h-40 items-center justify-center bg-neutral-100">
+        <div className="relative flex h-20 sm:h-40 items-center justify-center bg-white">
         </div>
 
         {/* Client Logos Section */}
-        <section className="flex flex-col items-center justify-center px-4 sm:px-6 md:px-16 lg:px-20 bg-neutral-100 py-8 sm:py-12 md:py-20">
+        <section className="flex flex-col items-center justify-center px-4 sm:px-6 md:px-16 lg:px-20 bg-white py-8 sm:py-12 md:py-20">
           <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-4 sm:gap-6 lg:gap-12 mb-6 sm:mb-8 md:mb-12">
             <div className="flex-1 flex flex-col items-center lg:items-start gap-1">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 text-center lg:text-left leading-snug tracking-tighter">

@@ -477,19 +477,19 @@ export default function HomeServices() {
     <section
       ref={sectionRef}
       dir="ltr"
-      className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-visible bg-neutral-100"
+      className="relative mx-auto py-8 sm:py-12 lg:py-10 overflow-visible bg-white"
       style={{ 
         contain: 'layout style paint',
         contentVisibility: 'auto'
       }}
     >
       <div className="text-center mb-8 sm:mb-12">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
-          {settings?.service_title || "Home Services"}
+        <h2 className="text-2xl sm:text-3xl md:text-4xl text-gray-900 tracking-tight">
+          {settings?.service_title}
         </h2>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">
-          {settings?.service_sub_title ||
-  "Explore trusted service categories for your home and garden"}
+
+        <p className="text-gray-600 mt-2 text-sm sm:text-base tracking-normal">
+          {settings?.service_sub_title}
         </p>
       </div>
 
@@ -527,7 +527,7 @@ export default function HomeServices() {
             className="flex flex-nowrap" 
             ref={containerRef}
             style={{ 
-              willChange: 'transform' // ✅ Correct: This is continuously animated
+              willChange: 'transform'
             }}
           >
             {renderCategoryCards}

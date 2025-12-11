@@ -260,9 +260,17 @@ export default function Sign() {
       // REAL API LOGIN for company
       const res = await loginCompany(companyEmail, companyPassword);
 
-      const companyData = res.data.company;
-      localStorage.setItem("companyToken", res.data.token);
+      console.log("✅ REAL Login Response:", res.data);
+      
+      // Get company data properly
+      const companyData = res.data.company || res.data;
+      
+      // Store in localStorage
       localStorage.setItem("company", JSON.stringify(companyData));
+      localStorage.setItem("companyId", companyData.id.toString()); // ✅ STORE ID SEPARATELY
+      localStorage.setItem("companyToken", res.data.token || res.data.access_token);
+      
+      console.log("💾 Saved Company ID:", companyData.id);
 
       setCurrentUser(companyData);
       setUserType("company");
@@ -277,18 +285,19 @@ export default function Sign() {
 
       // TEMPORARY LOGIN FALLBACK for company
       const tempCompany = {
-        id: "temp-" + Date.now(),
+        id: 23, // ⬅️ CHANGED FROM temp-... to 23
         name: companyEmail.split('@')[0] || "Demo Company",
         email: companyEmail
       };
 
       localStorage.setItem("companyToken", "temporary_token");
       localStorage.setItem("company", JSON.stringify(tempCompany));
+      localStorage.setItem("companyId", "23"); // ⬅️ ADDED THIS LINE
 
       setCurrentUser(tempCompany);
       setUserType("company");
       
-      showModernAlert("Successfully signed in!", "success");
+      showModernAlert("Temporary login active!", "info");
       
       setTimeout(() => {
         setShowWelcome(true);
@@ -320,6 +329,7 @@ export default function Sign() {
     localStorage.removeItem("user");
     localStorage.removeItem("companyToken");
     localStorage.removeItem("company");
+    localStorage.removeItem("companyId"); // ⬅️ ADDED THIS LINE
     localStorage.removeItem("isRegistered");
     localStorage.removeItem("justRegistered");
     

@@ -46,6 +46,89 @@ function Fav() {
     setDeleteModal({ isOpen: true, list });
   };
 
+const handleShare = async (list) => {
+  const text = `Check out my list: ${list.name}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: list.name,
+        text,
+      });
+    } catch {
+      // user cancelled → ignore
+    }
+  } else {
+    await navigator.clipboard.writeText(text);
+    console.log("Copied to clipboard");
+  }
+};
+
+const ShareIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
+    <path
+      d="M12 3v12"
+      strokeLinecap="round"
+    />
+    <path
+      d="M8 7l4-4 4 4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213 3 21l1.787-4.5L16.862 3.487z"
+    />
+  </svg>
+);
+const DeleteIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M3 6h18" strokeLinecap="round" />
+    <path
+      d="M8 6V4h8v2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M6 6l1 14a2 2 0 002 2h6a2 2 0 002-2l1-14"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M10 11v6M14 11v6" strokeLinecap="round" />
+  </svg>
+);
+
+
+
+
   const renderListCard = (list) => (
     <div
       key={list.id}
@@ -56,7 +139,7 @@ function Fav() {
       hover:border-blue-200/60 hover:scale-[1.02] w-full overflow-hidden max-w-full"
     >
       {/* Content area */}
-      <div className="flex-1 min-w-0 mr-3 overflow-hidden">
+      <div className="flex-1 min-w-0 mr-10 overflow-hidden">
         <h3 className="font-semibold text-gray-900 text-sm sm:text-lg mb-1 break-words leading-tight">
           {list.name}
         </h3>
@@ -67,66 +150,59 @@ function Fav() {
         )}
       </div>
 
-      {/* Buttons */}
-      <div className="flex items-center gap-2 flex-shrink-0 max-w-full">
-        <button className="p-2 rounded-xl text-gray-600 hover:text-blue-500 transition-all duration-200
-          bg-white/80 backdrop-blur-lg border border-gray-200/60 w-10 h-10
-          shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-          hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08)] flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0
-              2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 
-              0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 
-              9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-            />
-          </svg>
-        </button>
+{/* button */}
+<div className="flex items-center gap-3 flex-shrink-0">
+  {/* Share */}
+  <button
+    onClick={() => handleShare(list)}
+    title="Share"
+    className="w-10 h-10 rounded-xl
+    bg-white/80 border border-gray-200
+    text-gray-500 hover:text-blue-500
+    hover:bg-blue-50
+    flex items-center justify-center transition"
+  >
+    <ShareIcon />
+  </button>
 
-        {/* Edit */}
-        <button
-          onClick={() => openEditModal(list)}
-          disabled={list.name === 'My Favourites'}
-          className={`p-2 rounded-xl transition-all duration-200 w-10 h-10
-          bg-white/80 backdrop-blur-lg border border-gray-200/60 flex items-center justify-center flex-shrink-0
-          ${
-            list.name === 'My Favourites'
-              ? 'text-gray-400 cursor-not-allowed'
-              : 'text-gray-600 hover:text-green-500 hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08)]'
-          }`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 
-              0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 
-              2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
-        </button>
+  {/* Edit */}
+  <button
+    onClick={() => openEditModal(list)}
+    disabled={list.name === 'My Favourites'}
+    title="Edit"
+    className={`w-10 h-10 rounded-xl
+    bg-white/80 border border-gray-200
+    flex items-center justify-center transition
+    ${
+      list.name === 'My Favourites'
+        ? 'text-gray-300 cursor-not-allowed'
+        : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
+    }`}
+  >
+    <EditIcon />
+  </button>
 
-        {/* Delete */}
-        <button
-          onClick={() => openDeleteModal(list)}
-          disabled={list.name === 'My Favourites'}
-          className={`p-2 rounded-xl transition-all duration-200 w-10 h-10
-          bg-white/80 backdrop-blur-lg border border-gray-200/60 flex items-center justify-center flex-shrink-0
-          ${
-            list.name === 'My Favourites'
-              ? 'text-gray-400 cursor-not-allowed'
-              : 'text-gray-600 hover:text-red-500 hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08)]'
-          }`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 
-              21H7.862a2 2 0 01-1.995-1.858L5 
-              7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 
-              1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
+  {/* Delete */}
+  <button
+    onClick={() => openDeleteModal(list)}
+    disabled={list.name === 'My Favourites'}
+    title="Delete"
+    className={`w-10 h-10 rounded-xl
+    bg-white/80 border border-gray-200
+    flex items-center justify-center transition
+    ${
+      list.name === 'My Favourites'
+        ? 'text-gray-300 cursor-not-allowed'
+        : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
+    }`}
+  >
+    <DeleteIcon />
+  </button>
+
+</div>
+
+
+</div>
   );
 
   const renderCreateListForm = () => (

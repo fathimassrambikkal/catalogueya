@@ -39,7 +39,7 @@ const SocialIcon = memo(({ icon, url }) => (
 export default function Contact() {
   return (
     <>
-      <section className="bg-neutral-100 py-16 px-4 sm:px-6 lg:px-10">
+      <section className="bg-white py-16 px-4 sm:px-6 lg:px-10">
         <div className="flex flex-col items-center justify-center">
 
           <h1 className="text-4xl md:text-5xl font-light text-gray-900 mb-10 mt-8 tracking-tight text-center">

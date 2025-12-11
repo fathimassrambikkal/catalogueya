@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { HiDotsHorizontal } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
 import Cookies from "js-cookie";
-import logo from "../assets/logo.png";
 import { useFavourites } from "../context/FavouriteContext";
 import { AiOutlineHeart } from "react-icons/ai";
 import { changeLanguage as apiChangeLanguage } from "../api";
@@ -21,13 +20,17 @@ const DropdownMenu = memo(function DropdownMenu({
   closeMenu,
 }) {
   if (!isOpen) return null;
+const fw = fixedWords?.fixed_words || {};
 
-  const links = [
-    { path: "/", label: fixedWords?.home || t("home") },
-    { path: "/about", label: fixedWords?.about || t("about") },
-    { path: "/salesproducts", label: fixedWords?.offers || t("offers") },
-    { path: "/contact", label: fixedWords?.contact || t("contact") },
-  ];
+const links = [
+  { path: "/", label: fw.home },
+  { path: "/about", label: fw.aboute },       
+  { path: "/salesproducts", label: fw.ofer }, 
+  { path: "/contact", label: fw.contact_us }, 
+];
+
+
+
 
   return (
     <div
@@ -56,7 +59,10 @@ const DropdownMenu = memo(function DropdownMenu({
             onClick={closeMenu}
             className="block bg-blue-500 text-white px-3 py-1.5 rounded-full hover:bg-blue-600 transition text-sm"
           >
-            {fixedWords?.signup || t("signup")}
+          {fw.singup}
+
+
+
           </Link>
         </li>
       </ul>
@@ -142,6 +148,8 @@ export default function Navbar() {
   const { settings } = useSettings();
   const { fixedWords } = useFixedWords();
 
+const fw = fixedWords?.fixed_words || {};
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -214,11 +222,13 @@ export default function Navbar() {
       {/* Logo */}
       <div className="flex-shrink-0">
         <Link to="/">
-          <img
-            src={settings.logo || logo}
-            alt="Catalogueya Logo"
-            className="h-12 sm:h-14 object-contain ml-2 lg:ml-16"
-          />
+        <img
+  src={`${import.meta.env.VITE_ASSET_BASE_URL}/${settings?.logo}`}
+  alt="Catalogueya Logo"
+  className="h-12 sm:h-14 object-contain ml-2 lg:ml-16"
+/>
+
+
         </Link>
       </div>
 
@@ -233,7 +243,9 @@ export default function Navbar() {
           transition text-xs sm:text-sm flex items-center justify-center
           bg-white/30 hover:bg-white/50"
         >
-          {fixedWords?.login || t("login")}
+        {fw.login}
+
+
         </Link>
 
         <LanguageToggle

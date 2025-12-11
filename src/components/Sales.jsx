@@ -495,7 +495,11 @@ function SalesComponent() {
       <h3 className="text-xl font-semibold text-gray-600 mb-2">No Sales Products Available</h3>
       <p className="text-gray-500 max-w-md">Check back later for exciting sales and discounts!</p>
     </div>
-  ), []);
+  ), []);  
+
+  // for fixed word
+  const fw = fixedWords?.fixed_words || {};
+
 
   return (
     <section 
@@ -503,17 +507,23 @@ function SalesComponent() {
       className="py-6 sm:py-10 bg-amber-300 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden"
     >
       <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black">
-          {fixedWords?.sales || "Sales"}
-        </h1>
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tight leading-tight text-gray-900">
+        {fw.sales}
+      </h2>
         <div className="flex justify-end">
          <Link
           to="/salesproducts"
-          className="font-medium text-black flex items-center text-xs sm:text-base mt-1"
+          className="text-sm font-medium text-gray-600 hover:text-gray-900 
+               tracking-wide transition-all duration-300 
+               flex items-center gap-1.5 group"
           aria-label="View all sales products"
         >
-          {fixedWords?.view_more || "View more"}
-          <ArrowOutwardIcon className="text-lg ml-1 text-gray-500" />
+          {fw.view_more}
+
+          <ArrowOutwardIcon className="w-3.5 h-3.5 text-gray-400 
+                                 group-hover:text-gray-900 
+                                 group-hover:translate-x-0.5 
+                                 transition-all duration-300" />
         </Link>
         </div>
       </div>

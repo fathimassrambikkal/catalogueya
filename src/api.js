@@ -8,6 +8,8 @@ import Cookies from "js-cookie";
 const getLang = () => Cookies.get("lang") || "en";
 
 // Base API URL generator
+// https://catalogueyanew.com.awu.zxu.temporary.site/en/api/add_product/{companyId}
+
 const API_BASE = () =>
   `https://catalogueyanew.com.awu.zxu.temporary.site/${getLang()}/api`;
 
@@ -119,65 +121,220 @@ export const logoutCompany = () => api.post("/company/logout");
 
 // ==================== COMPANY DASHBOARD - EDIT ====================
 
+
 // PUT /edit_company_post/{companyId}
 export const editCompanyPost = (companyId, data) => {
   const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== null && value !== undefined) {
-      formData.append(key, value);
+  
+  // Append all fields as per backend documentation
+  const fields = [
+    'logo', 'cover_photo', 'name', 'address', 'phone', 'description',
+    'whatsapp', 'snapchat', 'pinterest', 'instagram', 'tweeter',
+    'facebook', 'youtube', 'google', 'linkedin'
+  ];
+  
+  fields.forEach(field => {
+    if (data[field] !== null && data[field] !== undefined) {
+      formData.append(field, data[field]);
     }
   });
+
+  // Log for debugging
+  console.log('📤 Sending company update for ID:', companyId);
+  console.log('Fields being sent:', fields.filter(f => data[f]));
+  
+  // Debug: Show what's in formData
+  for (let [key, value] of formData.entries()) {
+    console.log(`  ${key}:`, value instanceof File ? `File (${value.name}, ${value.type})` : value);
+  }
   
   return api.put(`/edit_company_post/${companyId}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    withCredentials: false,
+  }).catch(async (error) => {
+    console.warn('FormData PUT failed:', error.message);
+    
+    // Check if it's a 404 (route doesn't exist)
+    if (error.response?.status === 404) {
+      console.error('❌ ENDPOINT NOT FOUND!');
+      console.error('The route /edit_company_post does not exist on server.');
+      console.error('Ask backend developer to create this route.');
+      throw new Error('Endpoint not found. Contact backend developer.');
+    }
+    
+    // FALLBACK 1: Try JSON without files
+    const jsonData = {};
+    fields.forEach(field => {
+      if (data[field] !== null && data[field] !== undefined && !(data[field] instanceof File)) {
+        jsonData[field] = data[field];
+      }
+    });
+    
+    console.log('🔄 Trying JSON fallback (no files):', jsonData);
+    
+    try {
+      return await api.put(`/edit_company_post/${companyId}`, jsonData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (jsonError) {
+      console.warn('JSON PUT failed:', jsonError.message);
+      
+      // FALLBACK 2: Try POST instead of PUT
+      try {
+        console.log('🔄 Trying POST method instead of PUT...');
+        return await api.post(`/edit_company_post/${companyId}`, jsonData, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (postError) {
+        console.warn('POST also failed:', postError.message);
+        
+        // FALLBACK 3: Try with fetch API
+        try {
+          console.log('🔄 Trying fetch API...');
+          const response = await fetch(`https://catalogueyanew.com.awu.zxu.temporary.site/en/api/edit_company_post/${companyId}`, {
+            method: 'PUT',
+            body: JSON.stringify(jsonData), // ✅ FIXED: Added JSON.stringify
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            mode: 'cors',
+            credentials: 'omit',
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const responseData = await response.json();
+          return { data: responseData };
+        } catch (fetchError) {
+          console.error('All methods failed. The endpoint likely does not exist.');
+          console.error('Contact backend developer to create:');
+          console.error(`PUT /en/api/edit_company_post/{companyId}`);
+          
+          // Throw a helpful error
+          throw new Error(
+            `Cannot update company settings. The endpoint /edit_company_post does not exist.\n\n` +
+            `Please ask backend developer to:\n` +
+            `1. Create route: Route::put('/edit_company_post/{companyId}', [CompanyController::class, 'update'])\n` +
+            `2. Or check if endpoint name is different`
+          );
+        }
+      }
+    }
   });
 };
+
+
+
+
+
 
 // ==================== PRODUCT MANAGEMENT ====================
 
-// PUT /edit_product/{companyId}/{productId}
-export const editProduct = (companyId, productId, data) => {
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== null && value !== undefined) {
-      if (Array.isArray(value)) {
-        // Handle arrays (like albums[], special_mark[])
-        value.forEach(item => formData.append(`${key}[]`, item));
-      } else {
-        formData.append(key, value);
-      }
-    }
-  });
+// POST /company/add_product/{companyId}
+export const addProduct = (companyId, formData) => {
+  console.log("📤 Add Product API - Company ID:", companyId);
   
-  return api.put(`/edit_product/${companyId}/${productId}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  // Debug FormData
+  console.log("📤 FormData contents:");
+  for (let [key, value] of formData.entries()) {
+    console.log(`  ${key}:`, value instanceof File ? `File (${value.name})` : value);
+  }
+
+  return api.post(
+    `/company/add_product/${companyId}`,  // ✅ CORRECT ENDPOINT (not yadd_product)
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Accept": "application/json",
+      },
+    }
+  ).catch(error => {
+    console.error("❌ Add Product API Error:", error);
+    console.error("URL attempted:", error.config?.url);
+    console.error("Response:", error.response?.data);
+    throw error;
   });
 };
 
-// POST /add_product/{companyId}
-export const addProduct = (companyId, data) => {
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== null && value !== undefined) {
-      if (Array.isArray(value)) {
-        // Handle arrays (like albums[], special_mark[])
-        value.forEach(item => formData.append(`${key}[]`, item));
-      } else {
-        formData.append(key, value);
-      }
+// PUT /company/edit_product/{companyId}/{productId}
+export const editProduct = (companyId, productId, formData) => {
+  console.log("📤 Edit Product API - Company ID:", companyId, "Product ID:", productId);
+
+  // Debug FormData
+  console.log("📤 FormData contents:");
+  for (let [key, value] of formData.entries()) {
+    console.log(`  ${key}:`, value instanceof File ? `File (${value.name})` : value);
+  }
+
+  return api.put(
+    `/company/edit_product/${companyId}/${productId}`,  // ✅ CORRECT ENDPOINT
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Accept": "application/json",
+      },
     }
-  });
-  
-  return api.post(`/add_product/${companyId}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  ).catch(error => {
+    console.error("❌ Edit Product API Error:", error);
+    console.error("URL attempted:", error.config?.url);
+    console.error("Response:", error.response?.data);
+    throw error;
   });
 };
+
+// ✅ ADD THIS FUNCTION: DELETE /company/delete_product/{companyId}/{productId}
+export const deleteProduct = (companyId, productId) => {
+  console.log("🗑️ Delete Product API - Company ID:", companyId, "Product ID:", productId);
+
+  return api.delete(
+    `/company/delete_product/${companyId}/${productId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+    }
+  ).catch(error => {
+    console.error("❌ Delete Product API Error:", error);
+    console.error("URL attempted:", error.config?.url);
+    console.error("Response:", error.response?.data);
+    
+    // If endpoint doesn't exist, try alternative
+    if (error.response?.status === 404) {
+      console.log("⚠️ Delete endpoint not found, trying alternative...");
+      
+      // Try alternative endpoint: DELETE /company/product/{companyId}/{productId}
+      return api.delete(
+        `/company/product/${companyId}/${productId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+        }
+      ).catch(altError => {
+        console.error("❌ Alternative delete also failed:", altError);
+        throw error; // Throw original error
+      });
+    }
+    
+    throw error;
+  });
+};
+
+
+
 
 // POST /add_sales_product/{productId}
 export const addSalesProduct = (productId, data) =>
@@ -314,6 +471,7 @@ export default {
   editCompanyPost,
   editProduct,
   addProduct,
+  deleteProduct, 
   addSalesProduct,
   getBarcode,
   getAnalytics,

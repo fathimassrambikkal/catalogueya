@@ -1,6 +1,4 @@
-"use client";
-
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useFavourites } from "../context/FavouriteContext";
 import { useFollowing } from "../context/FollowingContext";
@@ -187,8 +185,89 @@ export default function CompanyPage() {
   const [settings, setSettings] = useState(preloadedData.settings);
   const [fixedWords, setFixedWords] = useState(preloadedData.fixedWords);
   const [isRTL, setIsRTL] = useState(false);
+  const [products, setProducts] = useState(
+    preloadedData.company?.products || []
+  );
 
-  // Check for RTL language on component mount and when language changes
+  // =================== Helper Functions ===================
+  const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+
+  // Helper function to get proper image URLs
+  const getImageUrl = useCallback((imgPath) => {
+    if (!imgPath) return "/api/placeholder/300/300";
+    if (imgPath.startsWith("http")) return imgPath;
+    if (imgPath.startsWith("blob:")) return imgPath;
+    if (imgPath.startsWith("data:")) return imgPath;
+    
+    // Handle relative paths from API
+    const cleanPath = imgPath.startsWith("/") ? imgPath.slice(1) : imgPath;
+    return `${API_BASE_URL}/${cleanPath}`;
+  }, []);
+
+  // Helper function to process company products
+  const processCompanyProducts = useCallback((products) => {
+    if (!Array.isArray(products)) return [];
+    
+    return products.map(product => ({
+      ...product,
+      id: product.id || `product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      image: getImageUrl(product.image || product.img),
+      name: product.name || product.title || product.product_name || "Unnamed Product",
+      price: product.price || 0,
+      stock: product.stock || product.quantity || 0,
+      company_id: product.company_id || companyId,
+      company_name: product.company_name || company?.name || "Company",
+      category_name: product.category_name || "",
+      isOnSale: product.isOnSale || product.category_name === "SALE" || product.category_name === "Sale",
+      isNewArrival: product.isNewArrival || product.category_name === "NEW ARRIVAL" || product.category_name === "New Arrival",
+      tags: product.tags || product.special_mark || []
+    }));
+  }, [companyId, company?.name, getImageUrl]);
+
+  // Function to refresh company data
+  const refreshCompanyData = useCallback(async () => {
+    if (!companyId) return;
+    
+    try {
+      console.log("🔄 Refreshing company data in CompanyPage...");
+      const companyRes = await getCompany(companyId);
+      
+      const companyData = 
+        companyRes?.data?.data?.company ||
+        companyRes?.data?.company ||
+        companyRes?.data;
+      
+      if (companyData) {
+        // Process company data to ensure proper URLs
+        const processedCompany = {
+          ...companyData,
+          logo: getImageUrl(companyData.logo),
+          banner: getImageUrl(companyData.banner || companyData.logo),
+        };
+        
+        setCompany(processedCompany);
+        
+        if (companyData.products) {
+          const processedProducts = processCompanyProducts(companyData.products);
+          setProducts(processedProducts);
+          console.log("✅ CompanyPage products refreshed:", processedProducts.length);
+          
+          // Dispatch event for other components that might be listening
+          window.dispatchEvent(new CustomEvent('companyProductsUpdated', {
+            detail: { 
+              companyId, 
+              products: processedProducts,
+              timestamp: Date.now()
+            }
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("❌ Failed to refresh company data in CompanyPage:", error);
+    }
+  }, [companyId, getImageUrl, processCompanyProducts]);
+
+  // =================== Check for RTL ===================
   useEffect(() => {
     const checkRTL = () => {
       const htmlDir = document.documentElement.getAttribute('dir');
@@ -208,13 +287,70 @@ export default function CompanyPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Helper to check favourites
+  // =================== Listen for Product Updates ===================
+  useEffect(() => {
+    console.log("🎯 CompanyPage mounted, setting up event listeners for companyId:", companyId);
+
+    // Handle individual product updates
+    const handleProductUpdated = (event) => {
+      console.log("🔄 CompanyPage received productUpdated event:", event.detail);
+      
+      if (event.detail.companyId === companyId) {
+        console.log("🔄 Updating specific product in CompanyPage:", event.detail.product);
+        
+        // Update the specific product in the products array
+        setProducts(prevProducts => {
+          const updatedProduct = event.detail.product;
+          
+          if (event.detail.action === 'created') {
+            // Add new product to the beginning of the list
+            return [updatedProduct, ...prevProducts];
+          } else if (event.detail.action === 'updated') {
+            // Update existing product
+            return prevProducts.map(p => 
+              p.id === updatedProduct.id ? {
+                ...p,
+                ...updatedProduct,
+                image: getImageUrl(updatedProduct.image || p.image)
+              } : p
+            );
+          } else if (event.detail.action === 'deleted') {
+            // Remove deleted product
+            return prevProducts.filter(p => p.id !== updatedProduct.id);
+          }
+          return prevProducts;
+        });
+      }
+    };
+
+    // Handle bulk products updates
+    const handleProductsUpdated = (event) => {
+      console.log("🔄 CompanyPage received productsUpdated event:", event.detail);
+      
+      if (event.detail.companyId === companyId) {
+        console.log("🔄 Refreshing all products in CompanyPage for company:", companyId);
+        
+        // Refresh the entire company data
+        refreshCompanyData();
+      }
+    };
+
+    // Listen for events
+    window.addEventListener('productUpdated', handleProductUpdated);
+    window.addEventListener('productsUpdated', handleProductsUpdated);
+    
+    return () => {
+      console.log("🧹 CompanyPage cleaning up event listeners");
+      window.removeEventListener('productUpdated', handleProductUpdated);
+      window.removeEventListener('productsUpdated', handleProductsUpdated);
+    };
+  }, [companyId, refreshCompanyData, getImageUrl]);
+
+  // =================== Helper Functions ===================
   const isFavourite = (id) => favourites.some((fav) => fav.id === id);
 
-  // Check if current company is being followed
   const isFollowing = company ? checkFollowing(company.id) : false;
 
-  // Handle follow toggle with followers integration
   const handleFollowToggle = () => {
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     
@@ -232,7 +368,6 @@ export default function CompanyPage() {
     toggleFollow(company);
   };
 
-  // Determine base path for navigation based on available params
   const getBasePath = () => {
     if (categoryId && companyId) {
       return `/category/${categoryId}/company/${companyId}`;
@@ -242,7 +377,14 @@ export default function CompanyPage() {
     return "/";
   };
 
-  // ===== Background Data Refresh (No UI Blocking) =====
+  // =================== Background Data Refresh ===================
+  useEffect(() => {
+    if (company?.products) {
+      const processedProducts = processCompanyProducts(company.products);
+      setProducts(processedProducts);
+    }
+  }, [company, processCompanyProducts]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -258,9 +400,24 @@ export default function CompanyPage() {
 
         // Update state silently in background
         if (companyRes.status === 'fulfilled') {
-          const companyData = companyRes.value?.data?.data?.company || companyRes.value?.data?.company || companyRes.value?.data;
+          const companyData = companyRes.value?.data?.data?.company || 
+                             companyRes.value?.data?.company || 
+                             companyRes.value?.data;
+          
           if (companyData) {
-            setCompany(companyData);
+            // Process company data to ensure proper URLs
+            const processedCompany = {
+              ...companyData,
+              logo: getImageUrl(companyData.logo),
+              banner: getImageUrl(companyData.banner || companyData.logo),
+            };
+            
+            setCompany(processedCompany);
+            
+            if (companyData.products) {
+              const processedProducts = processCompanyProducts(companyData.products);
+              setProducts(processedProducts);
+            }
           }
         }
         
@@ -292,9 +449,9 @@ export default function CompanyPage() {
     return () => {
       mounted = false;
     };
-  }, [categoryId, companyId]);
+  }, [categoryId, companyId, processCompanyProducts, getImageUrl]);
 
-  // Show content immediately with preloaded data
+  // =================== UI Functions ===================
   const showContent = company;
 
   if (!showContent && loading) {
@@ -332,7 +489,6 @@ export default function CompanyPage() {
     phone,
     location,
     address,
-    products = [],
     description
   } = company;
 
@@ -383,7 +539,7 @@ export default function CompanyPage() {
           className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-x-hidden animate-fade-in transform-gpu"
           style={{
             background: `linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${
-              banner || logo || "/api/placeholder/1200/400"
+              getImageUrl(banner) || getImageUrl(logo) || "/api/placeholder/1200/400"
             }) center/cover no-repeat`,
             willChange: "transform, opacity",
           }}
@@ -407,7 +563,7 @@ export default function CompanyPage() {
           {/* ===== Company Info ===== */}
           <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-10 w-full transform-gpu">
             <img
-              src={logo || "/api/placeholder/200/200"}
+              src={getImageUrl(logo) || "/api/placeholder/200/200"}
               alt={name}
               loading="eager"
               decoding="async"
@@ -507,7 +663,7 @@ export default function CompanyPage() {
                     <div className="absolute -top-8 left-1/2  -translate-x-1/2 
                       bg-black/80 text-white text-xs px-2 py-1  
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                      whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_curren-gpu">
+                      whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
                       WhatsApp
                     </div>
                   </a>
@@ -569,7 +725,7 @@ export default function CompanyPage() {
                   </div>
                   
                   {/* Tooltip */}
-                  <div className="absolute -top-8 left-1/2-translate-x-1/2 
+                  <div className="absolute -top-8 left-1/2  -translate-x-1/2 
                     bg-black/80 text-white text-xs px-2 py-1  
                     opacity-0 group-hover:opacity-100 transition-opacity duration-300
                     whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
@@ -588,7 +744,7 @@ export default function CompanyPage() {
       {showContent ? (
         <section className="py-12 animate-fade-in transform-gpu">
           <h2 className="text-xl md:text-2xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12 text-start rtl:text-right transform-gpu">
-            Our Products
+            Our Products ({products.length})
           </h2>
 
           {products.length > 0 ? (
@@ -608,7 +764,7 @@ export default function CompanyPage() {
                 >
                   {/* IMAGE — Only it zooms */}
                   <img
-                    src={product.image || product.img || '/api/placeholder/300/300'}
+                    src={product.image || '/api/placeholder/300/300'}
                     alt={product.name}
                     loading="lazy"
                     decoding="async"
@@ -640,7 +796,7 @@ export default function CompanyPage() {
                           product.isNewArrival ||
                           product.category_name === "NEW ARRIVAL" ||
                           product.category_name === "New Arrival",
-                        image: product.image || product.img || "/api/placeholder/300/300",
+                        image: product.image || "/api/placeholder/300/300",
                       });
                     }}
                     className={`${favouriteButtonClass} z-20 transform-gpu active:scale-95`}

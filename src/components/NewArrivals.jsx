@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useFavourites } from "../context/FavouriteContext";
 import { getArrivalsProducts } from "../api";
 import { useTranslation } from "react-i18next";
-
+import { useFixedWords } from "../hooks/useFixedWords";
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 // SVG Icons
@@ -355,6 +355,7 @@ function NewArrivalsComponent() {
   const navigate = useNavigate();
   const { favourites, toggleFavourite } = useFavourites();
   const { i18n } = useTranslation();
+  const { fixedWords } = useFixedWords();
   
   const [apiProducts, setApiProducts] = useState(() => preloadedData.arrivalsProducts || []);
   const [isLoading, setIsLoading] = useState(() => preloadedData.arrivalsProducts === null);
@@ -505,23 +506,42 @@ function NewArrivalsComponent() {
       <p className="text-gray-500 max-w-md">Check back later for new products!</p>
     </div>
   ), []);
+ 
+    // for fixed word
+  const fw = fixedWords?.fixed_words || {};
+
+useEffect(() => {
+  console.log("✅ NewArrivals FixedWords:", {
+    new_arrivals: fw.new_arrivals,
+    view_more: fw.view_more,
+    full_fixedWords: fixedWords,
+  });
+}, [fw, fixedWords]);
+
+
+
 
   return (
     <section 
       ref={sectionRef}
-      className="py-6 sm:py-10 bg-neutral-100 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden"
+      className="py-6 sm:py-10 bg-white px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden"
     >
       <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal md:font-light tracking-tighter text-black">
-          Products
-        </h1>
+       <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tight leading-tight text-gray-900">
+        {fw.new_arrivals}
+      </h2>
         <div className="flex justify-end">
-         <Link
+       <Link
           to="/newarrivalproducts"
-          className="font-medium text-black flex items-center text-xs sm:text-base mt-1"
-        >
-          View more
-          <ArrowOutwardIcon className="text-lg ml-1 text-gray-500" />
+          className="text-sm font-medium text-gray-600 hover:text-gray-900 
+                    tracking-wide transition-all duration-300 
+                    flex items-center gap-1.5 group"
+            >
+          {fw.view_more}
+          <ArrowOutwardIcon className="w-3.5 h-3.5 text-gray-400 
+                                      group-hover:text-gray-900 
+                                      group-hover:translate-x-0.5 
+                                      transition-all duration-300" />
         </Link>
         </div>
       </div>

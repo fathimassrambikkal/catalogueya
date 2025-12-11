@@ -6,19 +6,9 @@ import React, {
   useCallback
 } from "react";
 
-import banner1 from "../assets/banner1.webp";
-import banner2 from "../assets/banner2.webp";
-import banner3 from "../assets/banner3.webp";
 import SearchBar from "../components/SearchBar";
 import { useSettings } from "../hooks/useSettings";
 import { useFixedWords } from "../hooks/useFixedWords";
-
-/* fallback images */
-const fallbackResponsiveImages = [
-  { src: banner1, alt: "Modern living room banner 1", id: "b0" },
-  { src: banner2, alt: "Elegant kitchen interior banner 2", id: "b1" },
-  { src: banner3, alt: "Cozy bedroom design banner 3", id: "b2" }
-];
 
 /* Intersection observer */
 const useIsInViewport = (ref) => {
@@ -48,32 +38,39 @@ export default function Banner() {
   const lastTimestamp = useRef(0);
   const isInView = useIsInViewport(sectionRef);
 
-  /* Parse images once */
+  /* -------------------------------------------
+      HERO IMAGES (API ONLY)
+  ------------------------------------------- */
   const responsiveImages = useMemo(() => {
-    if (!settings.hero_images) return fallbackResponsiveImages;
+    const apiRaw = settings?.hero_backgrounds; // ✅ FIXED
+    if (!apiRaw) return [];
+
     try {
       const imgs =
-        typeof settings.hero_images === "string"
-          ? JSON.parse(settings.hero_images)
-          : settings.hero_images;
+        typeof apiRaw === "string" ? JSON.parse(apiRaw) : apiRaw;
+
+      if (!Array.isArray(imgs) || imgs.length === 0) return [];
+
+      const ASSET_BASE =
+        import.meta.env.VITE_ASSET_BASE_URL?.replace(/\/$/, "");
 
       return imgs.map((src, i) => ({
-        src,
-        alt: settings[`hero_image_alt_${i + 1}`] || `Banner image ${i + 1}`,
-        id: `banner-${i}`
+        src: src.startsWith("http")
+          ? src
+          : `${ASSET_BASE}/${src.replace(/^\/+/, "")}`,
+        alt: `Hero image ${i + 1}`,
+        id: `api-banner-${i}`,
       }));
     } catch {
-      return fallbackResponsiveImages;
+      return [];
     }
-  }, [settings.hero_images]);
+  }, [settings?.hero_backgrounds]);
 
-  const headingText =
-    settings.hero_title || fixedWords.hero_title || "Welcome to Catalogueya";
-
-  const subtitleText =
-    settings.hero_sub_title ||
-    fixedWords.hero_sub_title ||
-    "Enhance Everyday Living";
+  /* -------------------------------------------
+      HERO TEXT (TITLE + SUBTITLE)
+  ------------------------------------------- */
+  const headingText = settings?.hero_title ?? "";        // ✅ FIXED
+  const subtitleText = settings?.hero_sub_title ?? "";   // ✅ FIXED
 
   /* Preload first image */
   useEffect(() => {
@@ -86,8 +83,10 @@ export default function Banner() {
       setLoadedImages((p) => ({ ...p, [first.id]: true }));
   }, [responsiveImages]);
 
-  /* Auto-slide */
+  /* Auto-slide animation */
   useEffect(() => {
+    if (responsiveImages.length === 0) return;
+
     const SLIDE_TIME = 5000;
 
     const tick = (now) => {
@@ -117,12 +116,12 @@ export default function Banner() {
       ref={sectionRef}
       className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center`}
     >
-      {/* PRELOAD FIRST IMAGE */}
+      {/* Preload first image */}
       {responsiveImages[0]?.src && (
         <link rel="preload" as="image" href={responsiveImages[0].src} />
       )}
 
-      {/* IMAGES – PURE CSS FADE */}
+      {/* Background images */}
       {responsiveImages.map((img, i) => (
         <img
           key={img.id}
@@ -138,28 +137,28 @@ export default function Banner() {
           className={`
             absolute inset-0 w-full h-full object-cover
             transition-opacity duration-[800ms] ease-out
-            will-change-opacity
             ${i === currentIndex ? "opacity-100" : "opacity-0"}
           `}
         />
       ))}
 
-      {/* Skeleton while first image loads */}
-      {!loadedImages[responsiveImages[0]?.id] && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
-      )}
+      {/* Skeleton loading */}
+      {!loadedImages[responsiveImages[0]?.id] &&
+        responsiveImages.length > 0 && (
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+        )}
 
-      {/* Content */}
+      {/* Banner content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4 z-10">
         <div className="w-full max-w-2xl z-30">
           <SearchBar />
         </div>
 
-        <h2 className="font-extrabold text-center text-white drop-shadow-lg text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight px-4">
+        <h1 className="font-semibold text-center text-white drop-shadow-lg text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight px-4">
           {headingText}
-        </h2>
+        </h1>
 
-        <p className="text-white/90 text-md md:text-xl lg:text-2xl font-semibold text-center max-w-2xl -mt-4">
+        <p className="text-white/90 text-md md:text-xl lg:text-2xl font-normal text-center max-w-2xl -mt-4 tracking-normal">
           {subtitleText}
         </p>
       </div>

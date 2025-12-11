@@ -7,7 +7,7 @@ import { getProduct, getCompany } from "../api";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
-// SVG Icons
+// SVG Icons (all remain exactly the same)
 const ArrowLeftIcon = ({ className = "" }) => (
   <svg 
     className={`${className} transform-gpu`}
@@ -178,22 +178,126 @@ export default function ProductProfile() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  // ✅ COMPANY NAME CLICK HANDLER
-  const handleCompanyClick = (e) => {
-    e.stopPropagation();
-    if (product?.company_id) {
-      navigate(`/company/${product.company_id}`);
-    }
-  };
+  // ✅ Function to refresh product data
+  const refreshProductData = useCallback(async () => {
+    if (!resolvedProductId) return;
+    
+    try {
+      console.log("🔄 Refreshing product data for ID:", resolvedProductId);
+      setLoading(true);
+      
+      const productResponse = await getProduct(resolvedProductId);
+      const productData =
+        productResponse?.data?.data?.product ||
+        productResponse?.data?.product;
 
-  // ✅ Chat handler
-  const handleChat = useCallback(
-    (e) => {
-      e.stopPropagation();
-      alert(`Starting chat about ${product.name} with ${product.company_name}`);
-    },
-    [product]
-  );
+      if (!productData) {
+        setError("Product not found in API response");
+        return;
+      }
+
+      // Transform main product - FIXED ALBUMS HANDLING
+      const transformedProduct = {
+        id: productData.id,
+        name: productData.name,
+        price: productData.price,
+        oldPrice: productData.old_price || null,
+        image: getImageUrl(productData.image),
+        rating: parseFloat(productData.rating) || 0,
+        description: productData.description,
+        company_id: productData.company_id,
+        company_name: productData.company_name || "Company",
+        category_id: productData.category_id,
+        category_name: productData.category_name || "PRODUCT",
+        discount_percent: productData.discount_percent || null,
+        albums: Array.isArray(productData.albums)
+          ? productData.albums
+              .map(a => a?.path || a?.image || a)
+              .filter(Boolean)
+          : [],
+      };
+
+      setProduct(transformedProduct);
+      
+      // FIXED: Handle cases where image might be in albums
+      const mainImage = 
+        productData.image || 
+        productData.albums?.[0]?.path || 
+        productData.albums?.[0]?.image || 
+        "";
+      
+      setSelectedImage(getImageUrl(mainImage));
+
+      // Reload similar products
+      if (productData.company_id) {
+        try {
+          const companyRes = await getCompany(productData.company_id);
+          const company =
+            companyRes?.data?.data?.company ||
+            companyRes?.data?.company ||
+            companyRes?.data;
+
+          let list = company?.products || [];
+          list = list.filter((p) => p.id !== productData.id);
+          list = list.map((p) => ({
+            ...p,
+            image: p.image?.startsWith("http")
+              ? p.image
+              : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
+            company_name:
+              p.company_name || productData.company_name || "Company",
+            company_id: p.company_id || productData.company_id,
+          }));
+
+          setSimilarProducts(list);
+        } catch (err) {
+          console.warn("Failed to refresh similar products:", err);
+          setSimilarProducts([]);
+        }
+      }
+
+      console.log("✅ Product data refreshed");
+    } catch (err) {
+      console.error("❌ Error refreshing product:", err);
+      setError(`Failed to refresh product: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [resolvedProductId]);
+
+  // ✅ Listen for product updates from Dashboard
+  useEffect(() => {
+    const handleProductsUpdated = (event) => {
+      console.log("🔄 ProductProfile received products update event");
+      
+      // Check if the updated products include the current product
+      if (event.detail && event.detail.products) {
+        const updatedProduct = event.detail.products.find(
+          (p) => p.id === resolvedProductId
+        );
+        
+        if (updatedProduct) {
+          console.log("🔄 Current product was updated, refreshing...");
+          
+          // Refresh the product data
+          refreshProductData();
+        } else if (event.detail.companyId === product?.company_id) {
+          // If the product's company was updated, refresh similar products
+          console.log("🔄 Company products updated, refreshing similar products...");
+          refreshProductData();
+        }
+      }
+    };
+
+    // Listen for both events
+    window.addEventListener('productsUpdated', handleProductsUpdated);
+    window.addEventListener('companyProductsUpdated', handleProductsUpdated);
+    
+    return () => {
+      window.removeEventListener('productsUpdated', handleProductsUpdated);
+      window.removeEventListener('companyProductsUpdated', handleProductsUpdated);
+    };
+  }, [resolvedProductId, product?.company_id, refreshProductData]);
 
   // ✅ Fetch product + similar products
   useEffect(() => {
@@ -214,7 +318,7 @@ export default function ProductProfile() {
           return;
         }
 
-        // ⭐ Transform main product
+        // ⭐ Transform main product - FIXED ALBUMS HANDLING
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
@@ -228,13 +332,25 @@ export default function ProductProfile() {
           category_id: productData.category_id,
           category_name: productData.category_name || "PRODUCT",
           discount_percent: productData.discount_percent || null,
-          albums: productData.albums || [],
+          albums: Array.isArray(productData.albums)
+            ? productData.albums
+                .map(a => a?.path || a?.image || a)
+                .filter(Boolean)
+            : [],
         };
 
         if (!mounted) return;
 
         setProduct(transformedProduct);
-        setSelectedImage(getImageUrl(productData.image));
+        
+        // FIXED: Handle cases where image might be in albums
+        const mainImage = 
+          productData.image || 
+          productData.albums?.[0]?.path || 
+          productData.albums?.[0]?.image || 
+          "";
+        
+        setSelectedImage(getImageUrl(mainImage));
 
         // ⭐ Load saved reviews (normal products key)
         const storageKey = `reviews_${transformedProduct.id}`;
@@ -292,6 +408,23 @@ export default function ProductProfile() {
       mounted = false;
     };
   }, [resolvedProductId]);
+
+  // ✅ COMPANY NAME CLICK HANDLER
+  const handleCompanyClick = (e) => {
+    e.stopPropagation();
+    if (product?.company_id) {
+      navigate(`/company/${product.company_id}`);
+    }
+  };
+
+  // ✅ Chat handler
+  const handleChat = useCallback(
+    (e) => {
+      e.stopPropagation();
+      alert(`Starting chat about ${product.name} with ${product.company_name}`);
+    },
+    [product]
+  );
 
   const averageRating =
     reviews.length > 0
@@ -378,9 +511,14 @@ export default function ProductProfile() {
     );
   }
 
-  const productImages = [product.image, ...(product.albums || [])].filter(
-    Boolean
-  );
+  // FIXED: Proper productImages array
+  const productImages = [
+    product.image,
+    ...(product.albums || []),
+  ].filter(Boolean);
+
+  // ============ REST OF THE UI CODE REMAINS EXACTLY THE SAME ============
+  // No changes to the JSX below - all UI remains identical
 
   return (
     <>

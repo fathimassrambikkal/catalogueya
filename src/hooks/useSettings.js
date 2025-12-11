@@ -8,18 +8,31 @@ export const useSettings = () => {
   const [error, setError] = useState(null);
 
   const lang = Cookies.get("lang") || "en";
+  const CACHE_KEY = `settings_${lang}`;
 
   useEffect(() => {
     let mounted = true;
 
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      setSettings(JSON.parse(cached));
+      setLoading(false);
+      return;
+    }
+
     const fetchSettings = async () => {
       try {
         const res = await getSettings();
+
+        // ✅ CORRECT PATH
+        const data = res?.data?.data?.settings || {};
+
         if (mounted) {
-          setSettings(res?.data?.data || {});
+          setSettings(data);
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
         }
       } catch (err) {
-        setError(err);
+        if (mounted) setError(err);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -27,11 +40,8 @@ export const useSettings = () => {
 
     fetchSettings();
 
-    // cleanup
-    return () => {
-      mounted = false;
-    };
-  }, [lang]);  // refetch when language changes
+    return () => { mounted = false };
+  }, [lang]);
 
   return { settings, loading, error };
 };

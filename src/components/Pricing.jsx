@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getSubscribeDetails } from "../api";
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
+const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 // SVG Icons to replace IoChevronForward
 const ChevronIcon = ({ isRTL = false }) => (
@@ -69,6 +70,8 @@ const Pricing = () => {
   const [currentFeatures, setCurrentFeatures] = useState([]);
   const { i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
+  const { fixed_words: fw = {} } = fixedWords || {};
+
 
   // Auto-switch tabs with optimized timing
   useEffect(() => {
@@ -156,69 +159,96 @@ const Pricing = () => {
   const getTabPosition = () => {
     return TABS.indexOf(activeTab);
   };
+  
 
+
+
+
+
+
+  useEffect(() => {
+  console.log("✅ Pricing FixedWords:", {
+    simple_pricing: fw.simple_pricing,
+    monthly: fw.monthly,
+    yearly: fw.yearly,
+    qar: fw.qar,
+    per_month: fw.per_month,
+    per_year: fw.per_year,
+    benefits_of_subscription: fw.benefits_of_subscription,
+    full_fixedWords: fixedWords,
+  });
+}, [fw, fixedWords]);
+
+ 
   return (
-    <section 
-      dir={isRTL ? "rtl" : "ltr"} 
-      className="bg-neutral-100 py-20 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden"
-    >
-      <div className="flex flex-col items-center justify-center mb-8 w-full max-w-3xl">
-        <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4 text-center">
-          {fixedWords?.simple_pricing || "Simple Pricing"}
-        </h1>
+ <section 
+  dir={isRTL ? "rtl" : "ltr"} 
+  className="bg-white py-20 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden"
+>
+  <div className="flex flex-col items-center justify-center mb-8 w-full max-w-3xl">
+    <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4 text-center">
+      {fw.simple_pricing}
+    </h1>
 
-        {/* Toggle Switch with Apple-style design */}
-        <div className="flex items-center gap-4 mb-6 p-3 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
-          <span className={`text-sm font-medium transition-colors duration-300 ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}>
-            {fixedWords?.monthly || "Monthly"}
-          </span>
-          <button
-            onClick={handleBillingToggle}
-            className={`relative w-16 h-8 rounded-full transition-all duration-300 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] ${billingCycle === "yearly" ? "bg-blue-500" : "bg-gray-300"}`}
-            aria-label={`Switch to ${billingCycle === "monthly" ? "yearly" : "monthly"} billing`}
-          >
-            <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-[2px_2px_4px_rgba(0,0,0,0.1)] toggle-handle ${billingCycle === "yearly" ? (isRTL ? "left-1" : "right-1") : (isRTL ? "right-1" : "left-1")}`} />
-          </button>
-          <span className={`text-sm font-medium transition-colors duration-300 ${billingCycle === "yearly" ? "text-blue-600" : "text-gray-500"}`}>
-            {fixedWords?.yearly || "Yearly"}
-          </span>
-        </div>
+    {/* Toggle Switch */}
+    <div className="flex items-center gap-4 mb-6 p-3 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60">
+      <span className={`text-sm font-medium ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}>
+        {fw.monthly}
+      </span>
 
-        {/* Price Display */}
-        {isLoading ? (
-          <div className="text-center mb-4 flex flex-col items-center">
-            <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-          </div>
+      <button
+        onClick={handleBillingToggle}
+        className={`relative w-16 h-8 rounded-full ${billingCycle === "yearly" ? "bg-blue-500" : "bg-gray-300"}`}
+      >
+        <div
+          className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${
+            billingCycle === "yearly"
+              ? isRTL ? "left-1" : "right-1"
+              : isRTL ? "right-1" : "left-1"
+          }`}
+        />
+      </button>
+
+      <span className={`text-sm font-medium ${billingCycle === "yearly" ? "text-blue-600" : "text-gray-500"}`}>
+        {fw.yearly}
+      </span>
+    </div>
+
+    {/* Price Display */}
+    {isLoading ? (
+      <div className="text-center mb-4">
+        <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse" />
+        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+      </div>
+    ) : (
+      <div className="text-center mb-4">
+        {billingCycle === "monthly" ? (
+          <>
+            <h2 className="text-2xl font-bold text-blue-500">
+              {monthlyPrice} {fw.qar}
+            </h2>
+            <p className="text-sm text-gray-500">{fw.per_month}</p>
+          </>
         ) : (
-          <div className="text-center mb-4 flex flex-col items-center">
-            {billingCycle === "monthly" ? (
-              <>
-                <h2 className="text-2xl font-bold text-blue-500">
-                  {monthlyPrice} {fixedWords?.qar || "QAR"}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">{fixedWords?.per_month || "per month"}</p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-2xl font-bold text-blue-600 flex items-center justify-center gap-2 flex-wrap">
-                  <span className="line-through text-gray-400 text-xl">
-                    {monthlyPrice * 12} {fixedWords?.qar || "QAR"}
-                  </span>
-                  {yearlyPrice} {fixedWords?.qar || "QAR"}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {fixedWords?.per_year || "per year"} (Save {yearlySavings} {fixedWords?.qar || "QAR"}!)
-                </p>
-              </>
-            )}
-          </div>
+          <>
+            <h2 className="text-2xl font-bold text-blue-600">
+              <span className="line-through text-gray-400 mr-2">
+                {monthlyPrice * 12} {fw.qar}
+              </span>
+              {yearlyPrice} {fw.qar}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {fw.per_year} ({yearlySavings} {fw.qar})
+            </p>
+          </>
         )}
       </div>
+    )}
+  </div>
 
-      <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 text-center">
-        {fixedWords?.benefits_of_subscription || "Benefits of Subscription"}
-      </h2>
+  <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center">
+    {fw.benefits_of_subscription}
+  </h2>
 
       {/* Tabs with Sliding Animation */}
       {isLoading ? (

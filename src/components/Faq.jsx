@@ -187,18 +187,18 @@ export default function Faq() {
   return (
     <section
       dir={isRTL ? "rtl" : "ltr"}
-      className="bg-neutral-100 px-6 md:px-16 flex justify-center items-center py-16"
+      className="bg-white px-6 md:px-16 flex justify-center items-center py-16"
       id="faq"
     >
       <div className="w-full max-w-4xl p-10 md:p-16 flex flex-col items-center gap-12">
-        <div className="text-center">
-          <h2 className="text-5xl md:text-6xl font-light text-gray-900 tracking-tighter mb-4">
-            FAQs
-          </h2>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Everything you need to know before getting started.
-          </p>
-        </div>
+       <div className="text-center mb-16 px-4">
+  <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight leading-tight text-gray-900">
+    FAQs
+  </h2>
+  <p className="text-base sm:text-lg md:text-xl font-normal tracking-normal leading-relaxed text-gray-600 mt-1 max-w-xl mx-auto">
+    Everything you need to know before getting started.
+  </p>
+</div>
 
         <div className="w-full max-w-3xl space-y-4">
           {faqList}

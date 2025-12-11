@@ -32,8 +32,17 @@ export default function CompanyLogin() {
       // REAL API LOGIN
       const res = await loginCompany(formData.email, formData.password);
 
+      console.log("✅ REAL Login Response:", res.data);
+      
+      // Get company data
+      const companyData = res.data.company || res.data;
+      
+      // Store in localStorage
+      localStorage.setItem("company", JSON.stringify(companyData));
+      localStorage.setItem("companyId", companyData.id.toString()); // ✅ ADDED THIS LINE
       localStorage.setItem("companyToken", res.data.token);
-      localStorage.setItem("company", JSON.stringify(res.data.company));
+      
+      console.log("💾 Saved Company ID:", companyData.id);
 
       navigate("/company-dashboard");
     } catch (err) {
@@ -41,13 +50,14 @@ export default function CompanyLogin() {
 
       // TEMPORARY LOGIN FALLBACK
       const tempCompany = {
-        id: "temp-" + Date.now(),
+        id: 23, // ⬅️ CHANGED FROM temp-... to 23
         name: "Temporary Demo Company",
         email: formData.email,
       };
 
       localStorage.setItem("companyToken", "temporary_token");
       localStorage.setItem("company", JSON.stringify(tempCompany));
+      localStorage.setItem("companyId", "23"); // ⬅️ ADDED THIS LINE
 
       alert("API offline → temporary login active!");
 
@@ -70,6 +80,7 @@ export default function CompanyLogin() {
     // ALWAYS clear local storage
     localStorage.removeItem("companyToken");
     localStorage.removeItem("company");
+    localStorage.removeItem("companyId"); // ⬅️ ADDED THIS LINE
 
     setIsLoggedIn(false);
     alert("Logged out successfully!");
