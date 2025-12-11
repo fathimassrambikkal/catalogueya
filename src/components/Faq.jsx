@@ -83,7 +83,7 @@ export default function Faq() {
 
   return (
     <section
-      className="bg-neutral-100 px-6 md:px-16 flex justify-center items-center"
+      className="bg-white px-6 md:px-16 flex justify-center items-center"
       id="faq"
     >
       <div className="w-full max-w-6xl backdrop-blur-lg p-10 md:p-16 flex flex-col lg:flex-row justify-between gap-16 relative overflow-hidden">
