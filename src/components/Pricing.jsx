@@ -276,15 +276,7 @@ const Pricing = () => {
       {/* Main Container with Blurred Border Effect */}
       <div className="w-full max-w-6xl">
         {/* 🌟 OUTER BLURRED BORDER WRAPPER (Similar to Contact page) */}
-        <div
-          className="
-            p-[7px]
-            rounded-[34px]
-            bg-white/5
-            backdrop-blur-3xl
-            border-[2px]
-          "
-        >
+        <div>
           {/* 🌟 MAIN CARD WITH NEUMORPHIC EFFECT */}
           <div
             className="
