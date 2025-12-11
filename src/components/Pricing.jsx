@@ -160,95 +160,88 @@ const Pricing = () => {
     return TABS.indexOf(activeTab);
   };
   
-
-
-
-
-
-
   useEffect(() => {
-  console.log("✅ Pricing FixedWords:", {
-    simple_pricing: fw.simple_pricing,
-    monthly: fw.monthly,
-    yearly: fw.yearly,
-    qar: fw.qar,
-    per_month: fw.per_month,
-    per_year: fw.per_year,
-    benefits_of_subscription: fw.benefits_of_subscription,
-    full_fixedWords: fixedWords,
-  });
-}, [fw, fixedWords]);
+    console.log("✅ Pricing FixedWords:", {
+      simple_pricing: fw.simple_pricing,
+      monthly: fw.monthly,
+      yearly: fw.yearly,
+      qar: fw.qar,
+      per_month: fw.per_month,
+      per_year: fw.per_year,
+      benefits_of_subscription: fw.benefits_of_subscription,
+      full_fixedWords: fixedWords,
+    });
+  }, [fw, fixedWords]);
 
- 
   return (
- <section 
-  dir={isRTL ? "rtl" : "ltr"} 
-  className="bg-white py-20 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden"
->
-  <div className="flex flex-col items-center justify-center mb-8 w-full max-w-3xl">
-    <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4 text-center">
-      {fw.simple_pricing}
-    </h1>
+    <section 
+      dir={isRTL ? "rtl" : "ltr"} 
+      className="bg-white py-20 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden"
+    >
+      <div className="flex flex-col items-center justify-center mb-8 w-full max-w-3xl">
+        <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4 text-center">
+          {fw.simple_pricing}
+        </h1>
 
-    {/* Toggle Switch */}
-    <div className="flex items-center gap-4 mb-6 p-3 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60">
-      <span className={`text-sm font-medium ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}>
-        {fw.monthly}
-      </span>
+        {/* Toggle Switch */}
+        <div className="flex items-center gap-4 mb-6 p-3 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60">
+          <span className={`text-sm font-medium ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}>
+            {fw.monthly}
+          </span>
 
-      <button
-        onClick={handleBillingToggle}
-        className={`relative w-16 h-8 rounded-full ${billingCycle === "yearly" ? "bg-blue-500" : "bg-gray-300"}`}
-      >
-        <div
-          className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${
-            billingCycle === "yearly"
-              ? isRTL ? "left-1" : "right-1"
-              : isRTL ? "right-1" : "left-1"
-          }`}
-        />
-      </button>
+          <button
+            onClick={handleBillingToggle}
+            className={`relative w-16 h-8 rounded-full ${billingCycle === "yearly" ? "bg-blue-500" : "bg-gray-300"}`}
+          >
+            <div
+              className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${
+                billingCycle === "yearly"
+                  ? isRTL ? "left-1" : "right-1"
+                  : isRTL ? "right-1" : "left-1"
+              }`}
+            />
+          </button>
 
-      <span className={`text-sm font-medium ${billingCycle === "yearly" ? "text-blue-600" : "text-gray-500"}`}>
-        {fw.yearly}
-      </span>
-    </div>
+          <span className={`text-sm font-medium ${billingCycle === "yearly" ? "text-blue-600" : "text-gray-500"}`}>
+            {fw.yearly}
+          </span>
+        </div>
 
-    {/* Price Display */}
-    {isLoading ? (
-      <div className="text-center mb-4">
-        <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse" />
-        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
-      </div>
-    ) : (
-      <div className="text-center mb-4">
-        {billingCycle === "monthly" ? (
-          <>
-            <h2 className="text-2xl font-bold text-blue-500">
-              {monthlyPrice} {fw.qar}
-            </h2>
-            <p className="text-sm text-gray-500">{fw.per_month}</p>
-          </>
+        {/* Price Display */}
+        {isLoading ? (
+          <div className="text-center mb-4">
+            <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+          </div>
         ) : (
-          <>
-            <h2 className="text-2xl font-bold text-blue-600">
-              <span className="line-through text-gray-400 mr-2">
-                {monthlyPrice * 12} {fw.qar}
-              </span>
-              {yearlyPrice} {fw.qar}
-            </h2>
-            <p className="text-sm text-gray-500">
-              {fw.per_year} ({yearlySavings} {fw.qar})
-            </p>
-          </>
+          <div className="text-center mb-4">
+            {billingCycle === "monthly" ? (
+              <>
+                <h2 className="text-2xl font-bold text-blue-500">
+                  {monthlyPrice} {fw.qar}
+                </h2>
+                <p className="text-sm text-gray-500">{fw.per_month}</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold text-blue-600">
+                  <span className="line-through text-gray-400 mr-2">
+                    {monthlyPrice * 12} {fw.qar}
+                  </span>
+                  {yearlyPrice} {fw.qar}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {fw.per_year} ({yearlySavings} {fw.qar})
+                </p>
+              </>
+            )}
+          </div>
         )}
       </div>
-    )}
-  </div>
 
-  <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center">
-    {fw.benefits_of_subscription}
-  </h2>
+      <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center">
+        {fw.benefits_of_subscription}
+      </h2>
 
       {/* Tabs with Sliding Animation */}
       {isLoading ? (
@@ -280,56 +273,77 @@ const Pricing = () => {
         </div>
       )}
 
-      {/* Main Container */}
+      {/* Main Container with Blurred Border Effect */}
       <div className="w-full max-w-6xl">
-        <div className="bg-white border border-gray-100 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-2xl">
-          {/* Left Content */}
-          <div className={`w-full md:w-1/2 text-center md:text-left ${isRTL ? 'md:text-right' : ''}`}>
-            <span className="inline-block bg-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-              {activeTab.toUpperCase()}
-            </span>
-            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 leading-tight">
-              {TAB_TITLES[activeTab]}
-            </h3>
-            <p className="text-gray-700 text-sm md:text-base leading-relaxed">
-              {TAB_DESCRIPTIONS[activeTab]}
-            </p>
-          </div>
+        {/* 🌟 OUTER BLURRED BORDER WRAPPER (Similar to Contact page) */}
+        <div
+          className="
+            p-[7px]
+            rounded-[34px]
+            bg-white/5
+            backdrop-blur-3xl
+            border-[2px]
+          "
+        >
+          {/* 🌟 MAIN CARD WITH NEUMORPHIC EFFECT */}
+          <div
+            className="
+              bg-white
+              rounded-[30px]
+              p-8 md:p-12
+              flex flex-col md:flex-row
+              gap-8
+              shadow-[8px_8px_25px_rgba(0,0,0,0.12),-8px_-8px_25px_rgba(255,255,255,0.8)]
+            "
+          >
+            {/* Left Content */}
+            <div className={`w-full md:w-1/2 text-center md:text-left ${isRTL ? 'md:text-right' : ''}`}>
+              <span className="inline-block bg-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                {activeTab.toUpperCase()}
+              </span>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 leading-tight">
+                {TAB_TITLES[activeTab]}
+              </h3>
+              <p className="text-gray-700 text-sm md:text-base leading-relaxed">
+                {TAB_DESCRIPTIONS[activeTab]}
+              </p>
+            </div>
 
-          {/* Right Content - Feature Card with Centered Content */}
-          <div className="w-full md:w-1/2">
-            <div className="bg-white/80 backdrop-blur-md text-gray-900 rounded-3xl p-8 border border-white/50 feature-card min-h-[300px] flex flex-col justify-center">
-              {currentFeatures.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  No features available for this category
-                </div>
-              ) : (
-                <ul className="space-y-5">
-                  {currentFeatures.map((item, index) => {
-                    const feature = item.feature || item.title || item.name || "Feature";
-                    const benefit = item.benefit || item.description || item.detail || "Benefit description";
-                    
-                    return (
-                      <li
-                        key={index}
-                        className={`flex gap-3 items-start ${isRTL ? 'flex-row-reverse text-right' : ''}`}
-                      >
-                        <div className={`flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center ${isRTL ? 'order-2 ml-2' : 'mr-2'}`}>
-                          <ChevronIcon isRTL={isRTL} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm md:text-base mb-1 leading-tight">
-                            {feature}
-                          </p>
-                          <p className="text-gray-600 text-xs md:text-sm leading-relaxed">
-                            {benefit}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+            {/* Right Content - Feature Card with Centered Content */}
+            <div className="w-full md:w-1/2">
+              <div className="bg-white/80 backdrop-blur-md text-gray-900 rounded-3xl p-8 border border-white/50 feature-card min-h-[300px] flex flex-col justify-center">
+                {currentFeatures.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    No features available for this category
+                  </div>
+                ) : (
+                  <ul className="space-y-5">
+                    {currentFeatures.map((item, index) => {
+                      const feature = item.feature || item.title || item.name || "Feature";
+                      const benefit = item.benefit || item.description || item.detail || "Benefit description";
+                      
+                      return (
+                        <li
+                          key={index}
+                          className={`flex gap-3 items-start ${isRTL ? 'flex-row-reverse text-right' : ''}`}
+                        >
+                          <div className={`flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center ${isRTL ? 'order-2 ml-2' : 'mr-2'}`}>
+                            <ChevronIcon isRTL={isRTL} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-800 text-sm md:text-base mb-1 leading-tight">
+                              {feature}
+                            </p>
+                            <p className="text-gray-600 text-xs md:text-sm leading-relaxed">
+                              {benefit}
+                            </p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>
