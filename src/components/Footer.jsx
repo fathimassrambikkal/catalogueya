@@ -55,19 +55,6 @@ const Footer = React.memo(() => {
       label: fw.snapchat, 
       url: settings?.snapchat_url
     },
-    // Additional social media from settings
-    { 
-      label: fw.twitter, 
-      url: settings?.twitter_url
-    },
-    { 
-      label: fw.linkedIn, 
-      url: settings?.linkedIn_url // Note: capital "I" in settings
-    },
-    { 
-      label: "YouTube", // Not in fixed_words from your data
-      url: settings?.youtube_url
-    }
   ].filter(item => item.label && item.url); // Only show if we have both label and URL
 
   return (
