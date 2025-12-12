@@ -77,11 +77,11 @@ const ArrowOutwardIcon = ({ className = "" }) => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="2.5"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M7 17L17 7M17 7H7M17 7V17" />
+    <path d="M9 18l6-6-6-6" />
   </svg>
 );
 
@@ -527,7 +527,7 @@ useEffect(() => {
       className="py-6 sm:py-10 bg-white px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden"
     >
       <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4">
-       <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tight leading-tight text-gray-900">
+       <h2 className="text-4xl sm:text-5xl md:text-5xl font-light tracking-tight leading-tight text-gray-900">
         {fw.new_arrivals}
       </h2>
         <div className="flex justify-end">
@@ -538,7 +538,7 @@ useEffect(() => {
                     flex items-center gap-1.5 group"
             >
           {fw.view_more}
-          <ArrowOutwardIcon className="w-3.5 h-3.5 text-gray-400 
+          <ArrowOutwardIcon className="w-4 h-4 text-gray-400 
                                       group-hover:text-gray-900 
                                       group-hover:translate-x-0.5 
                                       transition-all duration-300" />
@@ -581,7 +581,7 @@ useEffect(() => {
           <div className="flex justify-end mt-4 gap-3">
             <button
               onClick={i18n.language === "ar" ? handleScrollRight : handleScrollLeft}
-              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
+              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-600 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
               aria-label={i18n.language === "ar" ? "المنتجات التالية" : "Previous products"}
             >
               {i18n.language === "ar" ? (
@@ -593,7 +593,7 @@ useEffect(() => {
 
             <button
               onClick={i18n.language === "ar" ? handleScrollLeft : handleScrollRight}
-              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
+              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-600 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
               aria-label={i18n.language === "ar" ? "المنتجات السابقة" : "Next products"}
             >
               {i18n.language === "ar" ? (

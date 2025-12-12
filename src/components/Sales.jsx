@@ -78,11 +78,11 @@ const ArrowOutwardIcon = ({ className = "" }) => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="2.5"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M7 17L17 7M17 7H7M17 7V17" />
+    <path d="M9 18l6-6-6-6" />
   </svg>
 );
 
@@ -563,7 +563,7 @@ function SalesComponent() {
           <div className="flex justify-end mt-4 gap-3">
             <button
               onClick={i18n.language === "ar" ? handleScrollRight : handleScrollLeft}
-              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
+              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-600 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
               aria-label={i18n.language === "ar" ? "المنتجات التالية" : "Previous products"}
             >
               {i18n.language === "ar" ? (
@@ -575,7 +575,7 @@ function SalesComponent() {
 
             <button
               onClick={i18n.language === "ar" ? handleScrollLeft : handleScrollRight}
-              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-900 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
+              className="bg-white/10 hover:bg-white rounded-full p-3 shadow-xl border border-gray-300/80 hover:bg-white/20 text-gray-600 transition-all duration-300 ease-out hover:scale-110 active:scale-95 backdrop-blur-sm hover:shadow-2xl group"
               aria-label={i18n.language === "ar" ? "المنتجات السابقة" : "Next products"}
             >
               {i18n.language === "ar" ? (
