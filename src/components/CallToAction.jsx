@@ -43,25 +43,25 @@ const CallToAction = React.memo(() => {
           </h3>
 
           {/* Email Input */}
-<div className="relative mb-5">
-  <input
-    type="email"
-    placeholder={fw?.your_email}
-    className="
-      w-full
-      px-4 sm:px-5
-      py-2.5 sm:py-3
-      rounded-full
-      border border-gray-300
-      bg-white/70
-      placeholder-gray-500
-      text-sm sm:text-base
-      focus:outline-none
-      focus:ring-2 focus:ring-blue-500
+        <div className="relative mb-5">
+          <input
+            type="email"
+            placeholder={fw?.your_email}
+            className="
+              w-full
+              px-4 sm:px-5
+              py-2.5 sm:py-3
+              rounded-full
+              border border-gray-300
+              bg-white/70
+              placeholder-gray-500
+              text-sm sm:text-base
+              focus:outline-none
+              focus:ring-2 focus:ring-blue-500
 
-      pr-4 sm:pr-32
-    "
-  />
+              pr-4 sm:pr-32
+            "
+          />
 
             <button
               className="absolute top-1/2 right-1 -translate-y-1/2 px-6 py-2 rounded-full 
