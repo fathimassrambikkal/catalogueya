@@ -24,10 +24,23 @@ export let api = axios.create({
   },
 });
 
-// ==================== GENERAL API FUNCTIONS ====================
+// ==================== LANGUAGE TRANSLATIONS API ====================
 
-// Change language dynamically
+// Get translations for a specific language from backend
+export const getLanguages = async (lang = "en") => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/languages/${lang}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching ${lang} translations:`, error);
+    throw error;
+  }
+};
+
+// Change language on server (already exists, adding note)
 export const changeLanguage = () => api.get("/change_lang");
+
+// ==================== GENERAL API FUNCTIONS ====================
 
 // GET /settings
 export const getSettings = () => api.get("/settings");
@@ -232,11 +245,6 @@ export const editCompanyPost = (companyId, data) => {
   });
 };
 
-
-
-
-
-
 // ==================== PRODUCT MANAGEMENT ====================
 
 // POST /company/add_product/{companyId}
@@ -332,9 +340,6 @@ export const deleteProduct = (companyId, productId) => {
     throw error;
   });
 };
-
-
-
 
 // POST /add_sales_product/{productId}
 export const addSalesProduct = (productId, data) =>
@@ -433,8 +438,11 @@ export const fetchCsrfToken = async () => {
 
 // ==================== EXPORT ALL FUNCTIONS ====================
 export default {
-  // General
+  // Language Translations
+  getLanguages,
   changeLanguage,
+  
+  // General
   getSettings,
   getFixedWords,
   getGoogleMap,

@@ -176,15 +176,16 @@ const Pricing = () => {
   return (
     <section 
       dir={isRTL ? "rtl" : "ltr"} 
-      className="bg-white py-20 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden"
+      className="bg-white py-24 px-4 sm:px-8 md:px-16 font-inter flex flex-col items-center relative overflow-hidden"
     >
-      <div className="flex flex-col items-center justify-center mb-8 w-full max-w-3xl">
-        <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4 text-center">
+      {/* Top Section with Breathing Space */}
+      <div className="flex flex-col items-center justify-center mb-12 w-full max-w-3xl">
+        <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-6 text-center">
           {fw.simple_pricing}
         </h1>
 
         {/* Toggle Switch */}
-        <div className="flex items-center gap-4 mb-6 p-3 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60">
+        <div className="flex items-center gap-4 mb-8 p-3 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60">
           <span className={`text-sm font-medium ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}>
             {fw.monthly}
           </span>
@@ -209,12 +210,12 @@ const Pricing = () => {
 
         {/* Price Display */}
         {isLoading ? (
-          <div className="text-center mb-4">
-            <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse" />
-            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+          <div className="text-center mb-6">
+            <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse mx-auto" />
+            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse mx-auto" />
           </div>
         ) : (
-          <div className="text-center mb-4">
+          <div className="text-center mb-6 space-y-2">
             {billingCycle === "monthly" ? (
               <>
                 <h2 className="text-2xl font-bold text-blue-500">
@@ -239,13 +240,14 @@ const Pricing = () => {
         )}
       </div>
 
-      <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center">
+      {/* Benefits Section */}
+      <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center mb-12">
         {fw.benefits_of_subscription}
       </h2>
 
-      {/* Tabs with Sliding Animation */}
+      {/* Tabs Section */}
       {isLoading ? (
-        <div className="flex items-center justify-center gap-3 mb-8 bg-white/70 rounded-3xl p-3 backdrop-blur">
+        <div className="flex items-center justify-center gap-3 mb-12 bg-white/70 rounded-3xl p-3 backdrop-blur">
           {TABS.map((tab) => (
             <div key={tab} className="flex-1 max-w-[140px] sm:max-w-[160px] md:max-w-[180px] text-center px-4 sm:px-5 py-3 rounded-2xl bg-gray-200 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
               <div className="h-4 bg-gray-300 rounded-xl animate-pulse"></div>
@@ -253,7 +255,7 @@ const Pricing = () => {
           ))}
         </div>
       ) : (
-        <div className="relative flex items-center justify-center gap-1 mb-8 bg-white/70 rounded-2xl p-2 backdrop-blur shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] tabs-container">
+        <div className="relative flex items-center justify-center gap-1 mb-12 bg-white/70 rounded-2xl p-2 backdrop-blur shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] tabs-container">
           {/* Sliding Background */}
           <div 
             className={`absolute top-2 bottom-2 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 tab-slider tab-${getTabPosition()}`}
@@ -273,69 +275,96 @@ const Pricing = () => {
         </div>
       )}
 
-      {/* Main Container with Blurred Border Effect */}
-      <div className="w-full max-w-6xl">
-        {/* 🌟 OUTER BLURRED BORDER WRAPPER (Similar to Contact page) */}
-        <div>
-          {/* 🌟 MAIN CARD WITH NEUMORPHIC EFFECT */}
-          <div
-            className="
-              bg-white
-              rounded-[30px]
-              p-8 md:p-12
-              flex flex-col md:flex-row
-              gap-8
-              shadow-[8px_8px_25px_rgba(0,0,0,0.12),-8px_-8px_25px_rgba(255,255,255,0.8)]
-            "
-          >
-            {/* Left Content */}
-            <div className={`w-full md:w-1/2 text-center md:text-left ${isRTL ? 'md:text-right' : ''}`}>
-              <span className="inline-block bg-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-                {activeTab.toUpperCase()}
-              </span>
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 leading-tight">
-                {TAB_TITLES[activeTab]}
-              </h3>
-              <p className="text-gray-700 text-sm md:text-base leading-relaxed">
-                {TAB_DESCRIPTIONS[activeTab]}
-              </p>
-            </div>
+      {/* Main Card Section with Minimal Glass Effect */}
+      <div className="w-full max-w-6xl mb-16">
+        <div
+          className="
+            bg-white/90
+            backdrop-blur-xl
+            rounded-3xl
+            p-8 md:p-12
+            flex flex-col md:flex-row
+            gap-10
+            border border-white/40
+            shadow-[0_8px_32px_rgba(0,0,0,0.04)]
+          "
+        >
+          {/* Left Content with Minimal Styling */}
+          <div className={`w-full md:w-1/2 text-center md:text-left ${isRTL ? 'md:text-right' : ''} space-y-6`}>
+            <span className="inline-block bg-blue-50 text-blue-600 text-xs font-medium px-3 py-1.5 rounded-full">
+              {activeTab.toUpperCase()}
+            </span>
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
+              {TAB_TITLES[activeTab]}
+            </h3>
+            <p className="text-gray-700 text-sm md:text-base leading-relaxed max-w-md">
+              {TAB_DESCRIPTIONS[activeTab]}
+            </p>
+          </div>
 
-            {/* Right Content - Feature Card with Centered Content */}
-            <div className="w-full md:w-1/2">
-              <div className="bg-white/80 backdrop-blur-md text-gray-900 rounded-3xl p-8 border border-white/50 feature-card min-h-[300px] flex flex-col justify-center">
-                {currentFeatures.length === 0 ? (
-                  <div className="text-center text-gray-500 py-8">
-                    No features available for this category
-                  </div>
-                ) : (
-                  <ul className="space-y-5">
-                    {currentFeatures.map((item, index) => {
-                      const feature = item.feature || item.title || item.name || "Feature";
-                      const benefit = item.benefit || item.description || item.detail || "Benefit description";
-                      
-                      return (
-                        <li
-                          key={index}
-                          className={`flex gap-3 items-start ${isRTL ? 'flex-row-reverse text-right' : ''}`}
-                        >
-                          <div className={`flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center ${isRTL ? 'order-2 ml-2' : 'mr-2'}`}>
-                            <ChevronIcon isRTL={isRTL} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-800 text-sm md:text-base mb-1 leading-tight">
-                              {feature}
-                            </p>
-                            <p className="text-gray-600 text-xs md:text-sm leading-relaxed">
-                              {benefit}
-                            </p>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+          {/* Right Content - Feature Card with Glass Border and Neomorphic Effect */}
+          <div className="w-full md:w-1/2">
+            <div className="
+              bg-white/90 
+              backdrop-blur-xl
+              text-gray-900 
+              rounded-3xl 
+              p-8 
+              border border-white/60
+              min-h-[300px] 
+              flex flex-col justify-center
+              shadow-[8px_8px_25px_rgba(0,0,0,0.08),-8px_-8px_25px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
+              relative
+              before:content-['']
+              before:absolute
+              before:inset-0
+              before:rounded-3xl
+              before:bg-gradient-to-br
+              before:from-white/20
+              before:to-transparent
+              before:border
+              before:border-white/40
+              before:-z-10
+            ">
+              {currentFeatures.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  No features available for this category
+                </div>
+              ) : (
+                <ul className="space-y-6 relative z-10">
+                  {currentFeatures.map((item, index) => {
+                    const feature = item.feature || item.title || item.name || "Feature";
+                    const benefit = item.benefit || item.description || item.detail || "Benefit description";
+                    
+                    return (
+                      <li
+                        key={index}
+                        className={`flex gap-3 items-start ${isRTL ? 'flex-row-reverse text-right' : ''}`}
+                      >
+                        <div className={`
+                          flex-shrink-0 
+                          w-6 h-6 
+                          rounded-full 
+                          bg-gradient-to-br from-blue-500 to-blue-600
+                          flex items-center justify-center 
+                          ${isRTL ? 'order-2 ml-2' : 'mr-2'}
+                          shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_2px_rgba(255,255,255,0.8)]
+                        `}>
+                          <ChevronIcon isRTL={isRTL} />
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <p className="font-semibold text-gray-800 text-sm md:text-base leading-tight">
+                            {feature}
+                          </p>
+                          <p className="text-gray-600 text-xs md:text-sm leading-relaxed">
+                            {benefit}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           </div>
         </div>
@@ -366,17 +395,25 @@ const Pricing = () => {
           left: ${isRTL ? '4px' : 'calc(100% - calc(33.333% - 12px) - 4px)'};
         }
         
-        /* Feature card shadow and transitions */
-        .feature-card {
-          box-shadow: 
-            8px 8px 16px #d1d1d1,
-            -8px -8px 16px #ffffff,
-            inset 2px 2px 5px #f0f0f0,
-            inset -2px -2px 5px #ffffff;
-          transition: all 0.3s ease;
+        /* Feature card glass effect enhancement */
+        .feature-card-glass {
+          position: relative;
+          overflow: hidden;
         }
         
-        /* Media queries for responsive tab positioning */
+        .feature-card-glass::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+          border-radius: 1.5rem;
+          pointer-events: none;
+        }
+        
+        /* Minimal media queries */
         @media (min-width: 768px) {
           .tab-slider.tab-0 {
             left: ${isRTL ? 'calc(100% - calc(33.333% - 12px) - 4px)' : '4px'};
@@ -391,7 +428,7 @@ const Pricing = () => {
           }
         }
         
-        /* Button hover effects */
+        /* Minimal hover effects */
         .tabs-container button:hover {
           transform: scale(1.05);
           transition: transform 0.2s ease;
