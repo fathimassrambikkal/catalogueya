@@ -8,7 +8,6 @@ import { AiOutlineHeart } from "react-icons/ai";
 import { changeLanguage as apiChangeLanguage } from "../api";
 import { useSettings } from "../hooks/useSettings";
 import { useFixedWords } from "../hooks/useFixedWords";
-import logo from "../assets/logo.png";
 
 /* =============================
    DROPDOWN MENU (PURE CSS)
@@ -79,10 +78,10 @@ const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
     <button
       onClick={toggleMenu}
       className="border border-gray-300 text-xs sm:text-sm flex items-center
-      bg-gray-100/30 text-gray-400 px-2 py-1 sm:px-2 sm:py-2
+      bg-white/30 text-gray-900 px-2 py-1 sm:px-2 sm:py-2
       rounded-lg md:rounded-xl hover:bg-white/50 transition backdrop-blur-md"
     >
-      <HiDotsHorizontal className="text-gray-900 text-xl" />
+      <HiDotsHorizontal className="text-gray-700 text-xl" />
     </button>
   );
 });
@@ -220,14 +219,14 @@ const fw = fixedWords?.fixed_words || {};
       }
       w-full flex justify-between items-center px-6 sm:px-10 py-3 sm:py-2`}
     >
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <Link to="/">
-              <img
-        src={logo}
-        alt="Catalogueya Logo"
-        className="h-12 sm:h-14 object-contain ml-2 lg:ml-16"
-      />
+      {/* Logo */}
+      <div className="flex-shrink-0">
+        <Link to="/">
+        <img
+  src={`${import.meta.env.VITE_ASSET_BASE_URL}/${settings?.logo}`}
+  alt="Catalogueya Logo"
+  className="h-12 sm:h-14 object-contain ml-2 lg:ml-16"
+/>
 
 
         </Link>
@@ -236,8 +235,8 @@ const fw = fixedWords?.fixed_words || {};
       {/* Right Section */}
       <div className="flex items-center space-x-3 sm:space-x-5 md:mr-20">
         <FavouritesCounter />
-
-        {/* <Link
+{/* 
+        <Link
           to="/sign"
           className="border border-gray-300 text-gray-900 hover:text-blue-500
           px-2 sm:px-3 py-1 sm:py-2 rounded-lg md:rounded-xl

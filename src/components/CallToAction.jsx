@@ -25,8 +25,6 @@ const CallToAction = React.memo(() => {
           
           <h2 className="text-3xl md:text-4xl font-light text-gray-900 leading-tight tracking-tight mb-6">
             {settings?.subscribe_title}
-            <br />
-            {settings?.subscribe_sub_title}
           </h2>
 
           <p className="text-lg text-gray-700 leading-relaxed">
