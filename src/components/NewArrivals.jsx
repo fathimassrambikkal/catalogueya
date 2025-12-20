@@ -285,7 +285,7 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
                    flex items-center justify-between overflow-hidden"
       >
         <div className="flex flex-col w-[80%] z-10">
-              <h3
+                <h3
         className="
           font-semibold
           text-xs
@@ -316,7 +316,7 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
         </div>
 
         {/* MODERN CHAT BUTTON */}
-        <button
+        {/* <button
           onClick={(e) => e.stopPropagation()}
           title="Chat"
           className="
@@ -330,46 +330,46 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
             hover:bg-white/55
             transition-all duration-300
           "
-        >
+        > */}
           {/* Chrome liquid highlight */}
-          <span
+          {/* <span
             className="
               absolute inset-0 rounded-[16px]
               bg-gradient-to-br from-white/70 via-white/10 to-transparent
               opacity-40
               pointer-events-none
             "
-          />
+          /> */}
 
           {/* Glass ribbon streak */}
-          <span
+          {/* <span
             className="
               absolute inset-0 rounded-[16px]
               bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)]
               opacity-35
               pointer-events-none
             "
-          />
+          /> */}
 
           {/* Titanium black bottom depth */}
-          <span
+          {/* <span
             className="
               absolute inset-0 rounded-[16px]
               bg-gradient-to-t from-black/20 to-transparent
               opacity-20
               pointer-events-none
             "
-          />
+          /> */}
 
           {/* Chat Icon */}
-          <ChatIcon
+          {/* <ChatIcon
             className="
               text-[rgba(18,18,18,0.88)]
               drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
               relative z-10
             "
-          />
-        </button>
+          /> */}
+        {/* </button> */}
       </div>
     </div>
   );
