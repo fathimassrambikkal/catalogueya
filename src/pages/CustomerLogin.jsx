@@ -7,6 +7,7 @@ import Fav from "../Customer/Fav.jsx";
 import Following from "../Customer/Following.jsx";
 import Settings from "../Customer/Settings.jsx";
 import Help from "../Customer/Help.jsx";
+import Fatora from "../Customer/Fatora.jsx"; 
 import { TbLayoutSidebarRightFilled } from "react-icons/tb";
 
 function CustomerLogin() {
@@ -29,6 +30,8 @@ function CustomerLogin() {
         return <Fav />;
       case "following":
         return <Following />;
+      case "fatora":
+        return <Fatora />; // Add Fatora case
       case "settings":
         return <Settings />;
       case "help":

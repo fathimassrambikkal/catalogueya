@@ -22,21 +22,22 @@ const StarIcon = ({ filled, className = "" }) => (
   </svg>
 );
 
-const HeartIcon = ({ filled, className = "" }) => (
-  <svg 
-    className={`${className}`}
-    width="12" 
-    height="12" 
+const HeartIcon = ({ filled = false, className = "" }) => (
+  <svg
     viewBox="0 0 24 24"
+    className={className}
     fill={filled ? "currentColor" : "none"}
-    stroke="currentColor"
+    stroke={filled ? "none" : "currentColor"}
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
   >
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    <path d="M12 21s-6.716-4.734-9.428-7.446C.86 11.84.5 9.273 1.793 7.5A5.38 5.38 0 0 1 12 6.343 5.38 5.38 0 0 1 22.207 7.5c1.293 1.773.933 4.34-.779 6.054C18.716 16.266 12 21 12 21z" />
   </svg>
 );
+
 
 const ChevronLeftIcon = ({ className = "" }) => (
   <svg 
@@ -175,10 +176,11 @@ const useIsInViewport = (ref) => {
   return isIntersecting;
 };
 
-// CARD COMPONENT
-const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => {
+// CARD COMPONENT - UPDATED: Added useTranslation and proper RTL currency formatting
+const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, currency }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const { i18n } = useTranslation(); // Added useTranslation hook
 
   const getImageUrl = (imgPath) => {
     if (!imgPath) return null;
@@ -274,9 +276,14 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
         <div className="flex flex-col w-[80%] z-10">
           <h3 className="font-semibold text-xs truncate text-gray-900 mb-1">{product.name}</h3>
           <div className="flex items-center gap-1">
-            <span className="text-xs font-bold text-gray-900">QAR {product.price}</span>
+            {/* UPDATED: Same currency formatting as NewArrivals */}
+            <span className="text-xs font-bold text-gray-900">
+              {i18n.language === "ar" ? `${currency} ${product.price}` : `${product.price} ${currency}`}
+            </span>
             {product.oldPrice && (
-              <span className="text-[10px] line-through text-gray-500">QAR {product.oldPrice}</span>
+              <span className="text-[10px] line-through text-gray-500">
+                {i18n.language === "ar" ? `${currency} ${product.oldPrice}` : `${product.oldPrice} ${currency}`}
+              </span>
             )}
           </div>
         </div>
@@ -500,7 +507,6 @@ function SalesComponent() {
   // for fixed word
   const fw = fixedWords?.fixed_words || {};
 
-
   return (
     <section 
       ref={sectionRef}
@@ -508,23 +514,26 @@ function SalesComponent() {
     >
       <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4">
         <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tight leading-tight text-gray-900">
-        {fw.sales}
-      </h2>
+          {fw.sales}
+        </h2>
         <div className="flex justify-end">
-         <Link
-          to="/salesproducts"
-          className="text-sm font-medium text-gray-600 hover:text-gray-900 
+          <Link
+            to="/salesproducts"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 
                tracking-wide transition-all duration-300 
                flex items-center gap-1.5 group"
-          aria-label="View all sales products"
-        >
-          {fw.view_more}
-
-          <ArrowOutwardIcon className="w-3.5 h-3.5 text-gray-400 
-                                 group-hover:text-gray-900 
-                                 group-hover:translate-x-0.5 
-                                 transition-all duration-300" />
-        </Link>
+            aria-label="View all sales products"
+          >
+            {fw.view_more}
+            <ArrowOutwardIcon 
+              className={`w-4 h-4 text-gray-400 
+                        group-hover:text-gray-900 
+                        transition-all duration-300
+                        ${i18n.language === "ar" 
+                          ? "group-hover:-translate-x-0.5 rotate-180" 
+                          : "group-hover:translate-x-0.5"}`} 
+            />
+          </Link>
         </div>
       </div>
 
@@ -550,6 +559,7 @@ function SalesComponent() {
                     isFav={favourites.some(item => item.id === product.id)}
                     onToggleFavourite={handleToggleFav}
                     onNavigate={handleNavigate}
+                    currency={fw.qar} 
                   />
                 </div>
               ))

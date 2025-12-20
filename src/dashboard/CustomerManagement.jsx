@@ -1,8 +1,5 @@
-// Cleaned, responsive, no-scroll, optimized CustomerManagement.jsx
-// Added safety fixes to prevent crashes when selectedCustomer is null
-// ZERO UI CHANGES — ONLY PREVENTING HORIZONTAL SCROLL
-
 import React, { useState } from 'react';
+
 import {
   FaChevronRight,
   FaTimes,
@@ -14,6 +11,7 @@ import {
   FaUserPlus,
 } from 'react-icons/fa';
 import AddCustomerModal from './AddCustomerModal';
+import fatoraLogo from "../assets/fatora.webp";; 
 
 const CustomerManagement = ({
   loyalCustomers = [],
@@ -129,8 +127,17 @@ const CustomerManagement = ({
         {/* Buttons */}
         <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
           {[{
-            label: 'Request Payment',
-            icon: <FaMoneyBillWave className="text-blue-500" />,
+            label: 'Create Fatora',
+            icon: (
+              <div className="flex items-center gap-2">
+                <img 
+                  src={fatoraLogo} 
+                  alt="Fatora" 
+                  className="w-4 h-4 object-contain"
+                />
+                
+              </div>
+            ),
             action: () => setCurrentView('payment'),
           }, {
             label: 'Request Review',
@@ -169,7 +176,7 @@ const CustomerManagement = ({
   };
 
   // =====================================================================
-  // PAYMENT
+  // PAYMENT (now Create Fatora)
   // =====================================================================
   const renderRequestPayment = () => {
     if (!selectedCustomer) return null;
@@ -185,9 +192,16 @@ const CustomerManagement = ({
               <FaArrowLeft size={18} />
             </button>
 
-            <div className="flex-1 ml-3 min-w-0 overflow-hidden">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Request Payment</h2>
-              <p className="text-gray-600 text-sm sm:text-base truncate">{selectedCustomer.name}</p>
+            <div className="flex items-center gap-3 flex-1 ml-3 min-w-0 overflow-hidden">
+              <img 
+                src={fatoraLogo} 
+                alt="Fatora" 
+                className="w-5 h-5 object-contain"
+              />
+              <div className="min-w-0 overflow-hidden">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Create Fatora</h2>
+                <p className="text-gray-600 text-sm sm:text-base truncate">{selectedCustomer.name}</p>
+              </div>
             </div>
 
             <button

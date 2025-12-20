@@ -109,4 +109,22 @@ html, body {
     transform: translateY(0) scale(1);
   }
 }
+/* Add to your global CSS */
+@layer utilities {
+  .glass-effect {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  
+  /* Ultra thin borders for high-res displays */
+  @media (min-width: 1920px) {
+    .glass-effect {
+      border-width: 0.5px;
+    }
+  }
+}
 
+/* Optional: Add smooth transitions */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}

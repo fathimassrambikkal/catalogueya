@@ -5,7 +5,7 @@ import { useFollowing } from "../context/FollowingContext";
 import { useFollowers } from "../context/FollowersContext";
 import { getCompany, getSettings, getFixedWords } from "../api";
 
-// =================== SVG Icons ===================
+// =================== SVG Icons (keep the same) ===================
 const ArrowLeftIcon = ({ className = "" }) => (
   <svg 
     className={`${className} transform-gpu`}
@@ -114,36 +114,63 @@ const UserIcon = ({ className = "" }) => (
   </svg>
 );
 
-// =================== Pre-fetch Data ===================
-let preloadedData = {
-  company: null,
-  settings: {},
-  fixedWords: {}
+// =================== API Helper Functions ===================
+const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+
+// ✅ Function to get country from IP
+const getCountryFromIP = async () => {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    return data.country_name;
+  } catch (e) {
+    console.warn("Failed to get country from IP:", e);
+    return null;
+  }
 };
 
-// Pre-fetch company data immediately when module loads
-(async () => {
-  try {
-    // Get company ID from current path
-    const pathSegments = window.location.pathname.split('/');
-    const companyId = pathSegments[pathSegments.length - 1];
-    
-    if (companyId && companyId !== 'company') {
-      const [companyRes, settingsRes, fixedWordsRes] = await Promise.allSettled([
-        getCompany(companyId),
-        getSettings(),
-        getFixedWords(),
-      ]);
+// ✅ Build payload for showCompany API (similar to showProduct)
+const buildShowCompanyPayload = async () => {
+  const country = await getCountryFromIP();
+  console.log("🌍 Country for Company API:", country);
 
-      preloadedData.company = companyRes.status === 'fulfilled' ? 
-        (companyRes.value?.data?.data?.company || companyRes.value?.data?.company || companyRes.value?.data) : null;
-      preloadedData.settings = settingsRes.status === 'fulfilled' ? settingsRes.value?.data || {} : {};
-      preloadedData.fixedWords = fixedWordsRes.status === 'fulfilled' ? fixedWordsRes.value?.data || {} : {};
-    }
-  } catch (err) {
-    console.warn("Pre-fetch failed:", err);
+  const device = navigator.userAgent;
+  console.log("📱 Device Type:", device);
+
+  const token =
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token") ||
+    null;
+  
+  console.log("🔑 Token exists:", !!token);
+
+  return {
+    device,
+    country,
+    ...(token && { token }),
+  };
+};
+
+// =================== Modified getCompany API Wrapper ===================
+const fetchCompanyWithPayload = async (id) => {
+  console.log("🔄 Calling showCompany API:");
+  console.log("   ID:", id);
+  
+  const payload = await buildShowCompanyPayload();
+  console.log("   Payload:", payload);
+  console.log("   Endpoint:", `/showCompany/${id}`);
+  
+  try {
+    const response = await getCompany(id, payload);
+    console.log("✅ showCompany Response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("❌ showCompany Error:", error);
+    console.error("   Status:", error.response?.status);
+    console.error("   Response:", error.response?.data);
+    throw error;
   }
-})();
+};
 
 // =================== Skeleton Components ===================
 const BannerSkeleton = () => (
@@ -179,19 +206,15 @@ export default function CompanyPage() {
   const { isFollowing: checkFollowing, toggleFollow } = useFollowing();
   const { simulateCustomerFollow } = useFollowers();
 
-  const [company, setCompany] = useState(preloadedData.company);
-  const [loading, setLoading] = useState(false);
+  const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [settings, setSettings] = useState(preloadedData.settings);
-  const [fixedWords, setFixedWords] = useState(preloadedData.fixedWords);
+  const [settings, setSettings] = useState({});
+  const [fixedWords, setFixedWords] = useState({});
   const [isRTL, setIsRTL] = useState(false);
-  const [products, setProducts] = useState(
-    preloadedData.company?.products || []
-  );
+  const [products, setProducts] = useState([]);
 
   // =================== Helper Functions ===================
-  const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
-
   // Helper function to get proper image URLs
   const getImageUrl = useCallback((imgPath) => {
     if (!imgPath) return "/api/placeholder/300/300";
@@ -224,13 +247,13 @@ export default function CompanyPage() {
     }));
   }, [companyId, company?.name, getImageUrl]);
 
-  // Function to refresh company data
+  // Function to refresh company data with payload
   const refreshCompanyData = useCallback(async () => {
     if (!companyId) return;
     
     try {
-      console.log("🔄 Refreshing company data in CompanyPage...");
-      const companyRes = await getCompany(companyId);
+      console.log("🔄 Refreshing company data with payload...");
+      const companyRes = await fetchCompanyWithPayload(companyId);
       
       const companyData = 
         companyRes?.data?.data?.company ||
@@ -263,7 +286,7 @@ export default function CompanyPage() {
         }
       }
     } catch (error) {
-      console.error("❌ Failed to refresh company data in CompanyPage:", error);
+      console.error("❌ Failed to refresh company data:", error);
     }
   }, [companyId, getImageUrl, processCompanyProducts]);
 
@@ -346,6 +369,88 @@ export default function CompanyPage() {
     };
   }, [companyId, refreshCompanyData, getImageUrl]);
 
+  // =================== Initial Data Fetch with Payload ===================
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchData = async () => {
+      if (!companyId) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log("🚀 Fetching company data with payload for ID:", companyId);
+        
+        // Fetch company data with payload (device, country, token)
+        const [companyRes, settingsRes, fixedWordsRes] = await Promise.allSettled([
+          fetchCompanyWithPayload(companyId),
+          getSettings(),
+          getFixedWords(),
+        ]);
+
+        if (!mounted) return;
+
+        // Process company response
+        if (companyRes.status === 'fulfilled') {
+          const companyData = 
+            companyRes.value?.data?.data?.company ||
+            companyRes.value?.data?.company ||
+            companyRes.value?.data;
+          
+          if (companyData) {
+            // Process company data to ensure proper URLs
+            const processedCompany = {
+              ...companyData,
+              logo: getImageUrl(companyData.logo),
+              banner: getImageUrl(companyData.banner || companyData.logo),
+            };
+            
+            setCompany(processedCompany);
+            
+            if (companyData.products) {
+              const processedProducts = processCompanyProducts(companyData.products);
+              setProducts(processedProducts);
+            }
+          } else {
+            setError("Company not found in API response");
+          }
+        } else {
+          setError(`Failed to load company: ${companyRes.reason?.message || 'Unknown error'}`);
+        }
+        
+        // Process settings and fixed words
+        if (settingsRes.status === 'fulfilled') {
+          setSettings(settingsRes.value?.data || {});
+        }
+        
+        if (fixedWordsRes.status === 'fulfilled') {
+          setFixedWords(fixedWordsRes.value?.data || {});
+        }
+
+      } catch (err) {
+        console.error("❌ Error loading company data:", err);
+        if (mounted) setError(`Failed to load company: ${err.message}`);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [companyId, getImageUrl, processCompanyProducts]);
+
+  // =================== Background Data Refresh ===================
+  useEffect(() => {
+    if (company?.products) {
+      const processedProducts = processCompanyProducts(company.products);
+      setProducts(processedProducts);
+    }
+  }, [company, processCompanyProducts]);
+
   // =================== Helper Functions ===================
   const isFavourite = (id) => favourites.some((fav) => fav.id === id);
 
@@ -377,84 +482,10 @@ export default function CompanyPage() {
     return "/";
   };
 
-  // =================== Background Data Refresh ===================
-  useEffect(() => {
-    if (company?.products) {
-      const processedProducts = processCompanyProducts(company.products);
-      setProducts(processedProducts);
-    }
-  }, [company, processCompanyProducts]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const refreshData = async () => {
-      try {
-        const [companyRes, settingsRes, fixedWordsRes] = await Promise.allSettled([
-          getCompany(companyId),
-          getSettings(),
-          getFixedWords(),
-        ]);
-
-        if (!mounted) return;
-
-        // Update state silently in background
-        if (companyRes.status === 'fulfilled') {
-          const companyData = companyRes.value?.data?.data?.company || 
-                             companyRes.value?.data?.company || 
-                             companyRes.value?.data;
-          
-          if (companyData) {
-            // Process company data to ensure proper URLs
-            const processedCompany = {
-              ...companyData,
-              logo: getImageUrl(companyData.logo),
-              banner: getImageUrl(companyData.banner || companyData.logo),
-            };
-            
-            setCompany(processedCompany);
-            
-            if (companyData.products) {
-              const processedProducts = processCompanyProducts(companyData.products);
-              setProducts(processedProducts);
-            }
-          }
-        }
-        
-        if (settingsRes.status === 'fulfilled') {
-          setSettings(settingsRes.value?.data || {});
-        }
-        
-        if (fixedWordsRes.status === 'fulfilled') {
-          setFixedWords(fixedWordsRes.value?.data || {});
-        }
-
-      } catch (err) {
-        console.error("Background data refresh failed:", err);
-        // Don't show error to user for background refresh
-      }
-    };
-
-    // Only refresh if we don't have preloaded data
-    if (!company) {
-      setLoading(true);
-      refreshData().finally(() => {
-        if (mounted) setLoading(false);
-      });
-    } else {
-      // Still refresh in background but don't show loading
-      refreshData();
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [categoryId, companyId, processCompanyProducts, getImageUrl]);
-
   // =================== UI Functions ===================
   const showContent = company;
 
-  if (!showContent && loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white transform-gpu">
         <BannerSkeleton />

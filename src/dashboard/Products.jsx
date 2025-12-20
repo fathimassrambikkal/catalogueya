@@ -588,17 +588,7 @@ export default function Products({
         </h2>
 
         <div className="flex items-center gap-2">
-          {/* ✅ Refresh Button */}
-          <button
-            type="button"
-            onClick={refreshCompanyData}
-            className="flex items-center justify-center gap-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition-all text-sm flex-shrink-0"
-            title="Refresh products"
-            disabled={isSubmitting}
-          >
-            <span className="hidden sm:inline">Refresh</span>
-            <span className="sm:hidden">↻</span>
-          </button>
+     
 
           {/* ✅ Add Product Button */}
           <button

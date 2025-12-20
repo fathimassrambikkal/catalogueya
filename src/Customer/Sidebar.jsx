@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import fatoraLogo from '../assets/fatora.webp';
 import {
   FaComments,
   FaBell,
@@ -19,6 +20,7 @@ const menuItems = [
   { label: "Notifications", icon: <FaBell className="text-sm" />, page: "notifications" },
   { label: "Reviews", icon: <FaStar className="text-sm" />, page: "reviews" },
   { label: "Following", icon: <FaUserPlus className="text-sm" />, page: "following" },
+  { label: "Fatora", icon: <img src={fatoraLogo} alt="Fatora" className="w-4 h-4" />, page: "fatora" },
   { label: "Settings", icon: <FaCog className="text-sm" />, page: "settings" },
   { label: "Help", icon: <FaQuestionCircle className="text-sm" />, page: "help" }
 ];
@@ -79,6 +81,7 @@ function Sidebar({ activeTab, setActiveTab, onCloseSidebar }) {
         {menuItems.map((item) => {
           const isActive = activeTab === item.page;
           const showBadge = item.page === "following" && getFollowingCount() > 0;
+          const isFatora = item.page === "fatora";
 
           return (
             <button
@@ -90,7 +93,9 @@ function Sidebar({ activeTab, setActiveTab, onCloseSidebar }) {
             >
               <div
                 className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  isActive ? activeIconStyles : inactiveIconStyles
+                  isActive 
+                    ? (isFatora ? "bg-white" : activeIconStyles)
+                    : inactiveIconStyles
                 }`}
               >
                 {item.icon}

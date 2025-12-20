@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   FaWhatsapp,
   FaMapMarkerAlt,
@@ -13,34 +13,131 @@ import {
 import { FiEdit } from "react-icons/fi";
 
 export default function Cover({ companyInfo = {}, setActiveTab }) {
+  // Use local state to prevent stale data
+  const [localCompanyInfo, setLocalCompanyInfo] = useState({
+    companyName: "",
+    companyDescription: "",
+    contactMobile: "",
+    address: "",
+    specialties: [],
+    logo: null,
+    coverPhoto: null,
+    facebook: "",
+    instagram: "",
+    youtube: "",
+    linkedin: "",
+    pinterest: "",
+    snapchat: "",
+    whatsapp: "",
+    google: "",
+  });
+
+  // Update local state when companyInfo changes
+  useEffect(() => {
+    console.log("🔄 Cover component received new companyInfo:", companyInfo?.companyName || "No name");
+    
+    // Reset to defaults first if no valid company info
+    if (!companyInfo || Object.keys(companyInfo).length === 0) {
+      setLocalCompanyInfo({
+        companyName: "",
+        companyDescription: "",
+        contactMobile: "",
+        address: "",
+        specialties: [],
+        logo: null,
+        coverPhoto: null,
+        facebook: "",
+        instagram: "",
+        youtube: "",
+        linkedin: "",
+        pinterest: "",
+        snapchat: "",
+        whatsapp: "",
+        google: "",
+      });
+      return;
+    }
+
+    // Only update if we have valid data
+    setLocalCompanyInfo({
+      companyName: companyInfo.companyName || "",
+      companyDescription: companyInfo.companyDescription || "",
+      contactMobile: companyInfo.contactMobile || "",
+      address: companyInfo.address || "",
+      specialties: Array.isArray(companyInfo.specialties) ? companyInfo.specialties : [],
+      logo: companyInfo.logo || null,
+      coverPhoto: companyInfo.coverPhoto || null,
+      facebook: companyInfo.facebook || "",
+      instagram: companyInfo.instagram || "",
+      youtube: companyInfo.youtube || "",
+      linkedin: companyInfo.linkedin || "",
+      pinterest: companyInfo.pinterest || "",
+      snapchat: companyInfo.snapchat || "",
+      whatsapp: companyInfo.whatsapp || "",
+      google: companyInfo.google || "",
+    });
+  }, [companyInfo]);
+
   const {
-    companyName = "Company Name",
-    companyDescription = "Company Description",
-    contactMobile = "",
-    address = "",
-    specialties = [],
-    logo = null,
-    coverPhoto = null,
-    facebook = "",
-    instagram = "",
-    youtube = "",
-    linkedin = "",
-    pinterest = "",
-    snapchat = "",
-    whatsapp = "",
-    google = "",
-  } = companyInfo;
+    companyName,
+    companyDescription,
+    contactMobile,
+    address,
+    specialties,
+    logo,
+    coverPhoto,
+    facebook,
+    instagram,
+    youtube,
+    linkedin,
+    pinterest,
+    snapchat,
+    whatsapp,
+    google,
+  } = localCompanyInfo;
 
   const coverSrc = useMemo(() => {
     if (!coverPhoto) return "/cover.jpg";
-    return typeof coverPhoto === "string"
-      ? coverPhoto
-      : URL.createObjectURL(coverPhoto);
+    
+    // Handle both string URLs and File objects
+    if (typeof coverPhoto === "string") {
+      // Check if it's a valid URL or needs processing
+      if (coverPhoto.startsWith("http") || coverPhoto.startsWith("/") || coverPhoto.startsWith("data:")) {
+        return coverPhoto;
+      }
+      // If it's just a filename or path, try to construct URL
+      try {
+        // Try to create object URL if it looks like a file path
+        if (coverPhoto.includes("/") || coverPhoto.includes("\\")) {
+          return coverPhoto;
+        }
+      } catch (err) {
+        console.error("Error processing cover photo:", err);
+      }
+    }
+    
+    // Fallback to default
+    return "/cover.jpg";
   }, [coverPhoto]);
 
   const logoSrc = useMemo(() => {
     if (!logo) return null;
-    return typeof logo === "string" ? logo : URL.createObjectURL(logo);
+    
+    // Handle both string URLs and File objects
+    if (typeof logo === "string") {
+      // Check if it's a valid URL
+      if (logo.startsWith("http") || logo.startsWith("/") || logo.startsWith("data:")) {
+        return logo;
+      }
+      // If it's just a filename or path
+      try {
+        return logo;
+      } catch (err) {
+        console.error("Error processing logo:", err);
+      }
+    }
+    
+    return null;
   }, [logo]);
 
   const socialIcons = useMemo(
@@ -65,7 +162,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
   );
 
   const activeSocialIcons = useMemo(
-    () => Object.entries(socialIcons).filter(([, obj]) => obj.link),
+    () => Object.entries(socialIcons).filter(([, obj]) => obj.link && obj.link.trim() !== ""),
     [socialIcons]
   );
 
@@ -77,6 +174,16 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
     return rows;
   }, [activeSocialIcons]);
 
+  // Debug log
+  useEffect(() => {
+    console.log("🎯 Cover component rendering with:", {
+      companyName,
+      hasLogo: !!logo,
+      hasCover: !!coverPhoto,
+      socialIconsCount: activeSocialIcons.length
+    });
+  }, [companyName, logo, coverPhoto, activeSocialIcons.length]);
+
   return (
     <div className="relative w-full overflow-hidden shadow-md mb-6 max-w-full min-w-0">
 
@@ -86,6 +193,10 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
           src={coverSrc}
           alt="Cover"
           className="w-full h-full object-cover min-w-0"
+          onError={(e) => {
+            console.error("❌ Cover image failed to load:", coverSrc);
+            e.target.src = "/cover.jpg";
+          }}
         />
       </div>
 
@@ -131,6 +242,11 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
                         backdrop-blur-md transition-all duration-300 group
                         hover:bg-white/30 hover:scale-110 hover:-translate-y-1
                       "
+                      onClick={(e) => {
+                        if (!link || link.trim() === "") {
+                          e.preventDefault();
+                        }
+                      }}
                     >
                       <div className="z-10 group-hover:scale-110 transition-transform">
                         {icon}
@@ -165,15 +281,23 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
             w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 min-w-0
             rounded-lg sm:rounded-xl overflow-hidden 
             border border-white/20 backdrop-blur-md
-            shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2)]
+            shadow-[inset_1px_1px_2px rgba(255,255,255,0.2)]
           "
         >
-          {logoSrc && (
+          {logoSrc ? (
             <img
               src={logoSrc}
               alt="Logo"
               className="w-full h-full object-contain p-1"
+              onError={(e) => {
+                console.error("❌ Logo failed to load:", logoSrc);
+                e.target.style.display = "none";
+              }}
             />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/50 text-xs">
+              No Logo
+            </div>
           )}
         </div>
 
@@ -181,19 +305,19 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
         <div className="flex-1 min-w-0">
 
           <h1 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-bold truncate">
-            {companyName}
+            {companyName || "Company Name"}
           </h1>
 
           <p className="text-white text-xs sm:text-sm opacity-90 mt-1 line-clamp-2 min-w-0">
-            {companyDescription}
+            {companyDescription || "Company Description"}
           </p>
 
           {/* Specialties */}
           {specialties.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2 min-w-0">
-              {specialties.map((s) => (
+              {specialties.map((s, index) => (
                 <span
-                  key={s}
+                  key={`${s}-${index}`}
                   className="
                     px-2 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-full 
                     text-white bg-gray-900/10 border border-white/20 

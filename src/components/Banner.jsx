@@ -32,6 +32,7 @@ export default function Banner() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState({});
+  const [imageLoadErrors, setImageLoadErrors] = useState({});
 
   const sectionRef = useRef(null);
   const animationFrameRef = useRef(null);
@@ -39,48 +40,156 @@ export default function Banner() {
   const isInView = useIsInViewport(sectionRef);
 
   /* -------------------------------------------
-      HERO IMAGES (API ONLY)
+      HERO IMAGES - FIXED VERSION
   ------------------------------------------- */
   const responsiveImages = useMemo(() => {
-    const apiRaw = settings?.hero_backgrounds; // ✅ FIXED
-    if (!apiRaw) return [];
+    const apiImages = settings?.hero_backgrounds;
+    
+    console.log("🎯 Banner received hero_backgrounds:", apiImages);
+    console.log("🎯 Type:", typeof apiImages);
+    console.log("🎯 Is array?", Array.isArray(apiImages));
 
-    try {
-      const imgs =
-        typeof apiRaw === "string" ? JSON.parse(apiRaw) : apiRaw;
-
-      if (!Array.isArray(imgs) || imgs.length === 0) return [];
-
-      const ASSET_BASE =
-        import.meta.env.VITE_ASSET_BASE_URL?.replace(/\/$/, "");
-
-      return imgs.map((src, i) => ({
-        src: src.startsWith("http")
-          ? src
-          : `${ASSET_BASE}/${src.replace(/^\/+/, "")}`,
-        alt: `Hero image ${i + 1}`,
-        id: `api-banner-${i}`,
-      }));
-    } catch {
+    // If undefined or null
+    if (!apiImages) {
+      console.log("⚠️ No hero images found in settings");
       return [];
     }
+
+    // FIX 1: Handle string case (JSON inside string)
+    if (typeof apiImages === 'string') {
+      console.log("🔍 Processing hero_backgrounds as string");
+      console.log("🔍 Raw string:", apiImages);
+      
+      try {
+        // Clean the string first
+        const cleanStr = apiImages
+          .replace(/\\\//g, '/')  // Fix escaped slashes: \/ to /
+          .replace(/\\"/g, '"')   // Fix escaped quotes: \" to "
+          .replace(/\\\\/g, '\\'); // Fix double backslashes
+        
+        console.log("🔍 Cleaned string:", cleanStr);
+        
+        // Try to extract JSON array
+        const match = cleanStr.match(/\[.*\]/);
+        if (match) {
+          console.log("🔍 Found JSON array:", match[0]);
+          const parsedArray = JSON.parse(match[0]);
+          console.log("🔍 Parsed array:", parsedArray);
+          
+          // Convert to proper image objects
+          const images = parsedArray.map((item, i) => {
+            const src = String(item).trim();
+            let finalSrc = src;
+            
+            // Make sure URL is complete
+            if (!src.startsWith('http')) {
+              finalSrc = `https://catalogueyanew.com.awu.zxu.temporary.site/${src}`;
+            }
+            
+            return {
+              src: finalSrc,
+              alt: `Hero image ${i + 1}`,
+              id: `api-banner-${i}`,
+            };
+          });
+          
+          console.log("✅ Converted to images:", images);
+          return images;
+        }
+      } catch (err) {
+        console.error("❌ Error parsing hero_backgrounds string:", err);
+      }
+      
+      return [];
+    }
+
+    // FIX 2: Handle array case
+    if (Array.isArray(apiImages)) {
+      console.log("📦 Processing hero_backgrounds as array");
+      
+      // Check if it's an array with a JSON string inside
+      if (apiImages.length === 1 && typeof apiImages[0] === 'string' && 
+          apiImages[0].includes('[') && apiImages[0].includes(']')) {
+        
+        console.log("🔍 Array contains JSON string:", apiImages[0]);
+        
+        try {
+          const cleanStr = apiImages[0]
+            .replace(/\\\//g, '/')
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\');
+          
+          const match = cleanStr.match(/\[.*\]/);
+          if (match) {
+            const parsedArray = JSON.parse(match[0]);
+            
+            return parsedArray.map((item, i) => {
+              const src = String(item).trim();
+              let finalSrc = src;
+              
+              if (!src.startsWith('http')) {
+                finalSrc = `https://catalogueyanew.com.awu.zxu.temporary.site/${src}`;
+              }
+              
+              return {
+                src: finalSrc,
+                alt: `Hero image ${i + 1}`,
+                id: `api-banner-${i}`,
+              };
+            });
+          }
+        } catch (err) {
+          console.error("❌ Error parsing array content:", err);
+        }
+      } else {
+        // Normal array processing
+        return apiImages
+          .filter(src => src && typeof src === 'string')
+          .map((src, i) => {
+            let finalSrc = src.trim();
+            
+            // Make sure URL is complete
+            if (!finalSrc.startsWith('http')) {
+              finalSrc = `https://catalogueyanew.com.awu.zxu.temporary.site/${finalSrc}`;
+            }
+            
+            return {
+              src: finalSrc,
+              alt: `Hero image ${i + 1}`,
+              id: `api-banner-${i}`,
+            };
+          });
+      }
+    }
+
+    console.log("⚠️ hero_backgrounds is not string or array, returning empty");
+    return [];
   }, [settings?.hero_backgrounds]);
 
   /* -------------------------------------------
       HERO TEXT (TITLE + SUBTITLE)
   ------------------------------------------- */
-  const headingText = settings?.hero_title ?? "";        // ✅ FIXED
-  const subtitleText = settings?.hero_sub_title ?? "";   // ✅ FIXED
+  const headingText = settings?.hero_title ?? "";
+  const subtitleText = settings?.hero_sub_title ?? "";
 
-  /* Preload first image */
+  /* Preload first image with error handling */
   useEffect(() => {
     const first = responsiveImages[0];
     if (!first?.src) return;
 
+    console.log("🖼️ Preloading first image:", first.src);
+    
     const img = new Image();
     img.src = first.src;
-    img.onload = () =>
+    img.onload = () => {
+      console.log(`✅ First image loaded successfully:`, first.src);
       setLoadedImages((p) => ({ ...p, [first.id]: true }));
+    };
+    img.onerror = (err) => {
+      console.error(`❌ Failed to load first image:`, first.src, err);
+      console.error(`❌ Error details:`, err);
+      setImageLoadErrors((p) => ({ ...p, [first.id]: true }));
+    };
   }, [responsiveImages]);
 
   /* Auto-slide animation */
@@ -100,7 +209,9 @@ export default function Banner() {
       animationFrameRef.current = requestAnimationFrame(tick);
     };
 
-    if (isInView) animationFrameRef.current = requestAnimationFrame(tick);
+    if (isInView && responsiveImages.length > 1) {
+      animationFrameRef.current = requestAnimationFrame(tick);
+    }
     return () => cancelAnimationFrame(animationFrameRef.current);
   }, [isInView, responsiveImages.length]);
 
@@ -109,7 +220,20 @@ export default function Banner() {
     setCurrentIndex(i);
   }, []);
 
+  // Handle image load errors
+  const handleImageError = useCallback((imgId, imgSrc) => {
+    console.error(`❌ Failed to load image ${imgId}:`, imgSrc);
+    setImageLoadErrors((p) => ({ ...p, [imgId]: true }));
+  }, []);
+
   const sectionHeight = "h-[60vh] sm:h-[80vh] md:h-[90vh] lg:h-screen";
+
+  // Debug: Show what we have
+  console.log("🔍 FINAL - responsiveImages:", responsiveImages);
+  console.log("🔍 FINAL - Number of images:", responsiveImages.length);
+  responsiveImages.forEach((img, i) => {
+    console.log(`🔍 FINAL - Image ${i}:`, img.src);
+  });
 
   return (
     <section
@@ -131,20 +255,34 @@ export default function Banner() {
           height="1080"
           loading={i === 0 ? "eager" : "lazy"}
           decoding="async"
-          onLoad={() =>
-            setLoadedImages((p) => ({ ...p, [img.id]: true }))
-          }
+          onLoad={() => {
+            console.log(`✅ Image ${img.id} loaded successfully`);
+            setLoadedImages((p) => ({ ...p, [img.id]: true }));
+          }}
+          onError={(e) => {
+            console.error(`❌ Image ${img.id} failed to load:`, img.src);
+            console.error(`❌ Error event:`, e);
+            handleImageError(img.id, img.src);
+          }}
           className={`
             absolute inset-0 w-full h-full object-cover
             transition-opacity duration-[800ms] ease-out
             ${i === currentIndex ? "opacity-100" : "opacity-0"}
+            ${imageLoadErrors[img.id] ? 'hidden' : ''}
           `}
+          style={imageLoadErrors[img.id] ? { display: 'none' } : {}}
         />
       ))}
 
+      {/* Fallback background if no images */}
+      {responsiveImages.length === 0 && (
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600" />
+      )}
+
       {/* Skeleton loading */}
       {!loadedImages[responsiveImages[0]?.id] &&
-        responsiveImages.length > 0 && (
+        responsiveImages.length > 0 &&
+        !imageLoadErrors[responsiveImages[0]?.id] && (
           <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
         )}
 
@@ -164,21 +302,23 @@ export default function Banner() {
       </div>
 
       {/* Pagination dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-        <div className="flex gap-2 p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
-          {responsiveImages.map((_, idx) => (
-            <button key={idx} onClick={() => handleDotClick(idx)}>
-              <div
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  idx === currentIndex
-                    ? "bg-white scale-125"
-                    : "bg-white/40"
-                }`}
-              />
-            </button>
-          ))}
+      {responsiveImages.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex gap-2 p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
+            {responsiveImages.map((_, idx) => (
+              <button key={idx} onClick={() => handleDotClick(idx)}>
+                <div
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    idx === currentIndex
+                      ? "bg-white scale-125"
+                      : "bg-white/40"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

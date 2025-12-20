@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import barImage from "../assets/bar.jpg";
+import fatoraLogo from "../assets/fatora.webp";
 import {
   FaTags,
   FaChartLine,
@@ -24,6 +25,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { label: "Contacts", icon: <FaUsers className="text-[10px]" /> },
     { label: "Followers", icon: <FaUserFriends className="text-[10px]" /> },
     { label: "Notifications", icon: <FaBell className="text-[10px]" /> },
+    { label: "Fatora", icon: <img src={fatoraLogo} alt="Fatora" className="w-3 h-3 object-contain" /> },
     { label: "Settings", icon: <FaCog className="text-[10px]" /> },
   ];
 
@@ -36,7 +38,6 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     window.location.href = "/sign";
   };
 
-  // REAL DOWNLOAD FUNCTION
   const handleDownloadBarcode = () => {
     const link = document.createElement("a");
     link.href = barImage;
@@ -44,21 +45,24 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     link.click();
   };
 
-  const activeTabStyles =
-    "bg-blue-500/10 text-blue-600 border border-blue-200 shadow";
-  const inactiveTabStyles =
-    "bg-white/60 text-gray-700 border border-gray-200 shadow-inner hover:text-blue-500 hover:border-blue-100";
+  // FATORA STYLES
+  const fatoraActiveTabStyles = "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm";
+  const fatoraActiveIconStyles = "bg-white text-white shadow-sm";
+  const fatoraHoverStyles = "hover:text-blue-600 hover:border-blue-200";
+  
+  // REGULAR STYLES
+  const activeTabStyles = "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm";
+  const inactiveTabStyles = "bg-white/60 text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300";
 
-  const activeIconStyles = "bg-blue-500 text-white shadow";
-  const inactiveIconStyles =
-    "bg-gray-100 text-gray-600 shadow-inner group-hover:bg-blue-50 group-hover:text-blue-500";
+  const activeIconStyles = "bg-blue-500 text-white shadow-sm";
+  const inactiveIconStyles = "bg-gray-100 text-gray-600 group-hover:bg-gray-200";
 
   return (
     <div
       className="
-        bg-white/80 backdrop-blur-lg text-gray-900
+        bg-white/90 backdrop-blur-sm text-gray-900
         h-full p-3 flex flex-col
-        border-r border-gray-200/60
+        border-r border-gray-200
         w-52 shrink-0
         overflow-x-hidden
         min-w-0
@@ -66,9 +70,9 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     >
 
       {/* USER PROFILE */}
-      <div className="p-2 border-b border-gray-200/60 mb-3 mt-5 min-w-0">
+      <div className="p-2 border-b border-gray-200 mb-4 mt-6 min-w-0">
         <div className="flex items-center gap-2 justify-start min-w-0">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
             <span className="text-white font-medium text-xs">C</span>
           </div>
 
@@ -76,7 +80,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             <h2 className="text-sm font-semibold text-gray-900 truncate">
               Company
             </h2>
-            <p className="text-[11px] text-gray-600 truncate">
+            <p className="text-[11px] text-gray-500 truncate">
               Business Account
             </p>
           </div>
@@ -87,51 +91,61 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       <nav className="flex-1 flex flex-col gap-1 overflow-y-auto overflow-x-hidden min-w-0">
         {tabs.map((t) => {
           const isActive = activeTab === t.label;
+          const isFatora = t.label === "Fatora";
+          
           return (
             <button
               key={t.label}
               onClick={() => setActiveTab(t.label)}
-              className={`group flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all w-full min-w-0 ${
-                isActive ? activeTabStyles : inactiveTabStyles
+              className={`group flex items-center gap-1.5 px-2.5 py-2 rounded-lg transition-all w-full min-w-0 ${
+                isActive 
+                  ? (isFatora ? fatoraActiveTabStyles : activeTabStyles)
+                  : `${inactiveTabStyles} ${isFatora ? fatoraHoverStyles : ""}`
               }`}
             >
               <div
-                className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
-                  isActive ? activeIconStyles : inactiveIconStyles
+                className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isActive 
+                    ? (isFatora ? fatoraActiveIconStyles : activeIconStyles)
+                    : (isFatora ? 'bg-gray-100 text-gray-600 group-hover:bg-blue-100' : inactiveIconStyles)
                 }`}
               >
                 {t.icon}
               </div>
 
-              <span className="text-[13px] font-medium truncate flex-1 min-w-0">
+              <span className={`text-[13px] font-medium truncate flex-none max-w-fit text-left ${
+                isActive && isFatora ? "text-blue-600" : ""
+              }`}>
                 {t.label}
               </span>
 
               {t.label === "Followers" && getFollowersCount() > 0 && (
-                <span className="bg-green-500 text-white text-[9px] rounded-full px-1.5 py-0.5 flex-shrink-0">
+                <span className="ml-auto bg-green-500 text-white text-[9px] rounded-full px-1.5 py-0.5 flex-shrink-0">
                   {getFollowersCount()}
                 </span>
               )}
 
               {t.label === "Notifications" &&
                 getUnreadNotificationsCount() > 0 && (
-                  <span className="bg-red-500 text-white text-[9px] rounded-full px-1.5 py-0.5 flex-shrink-0">
+                  <span className="ml-auto bg-red-500 text-white text-[9px] rounded-full px-1.5 py-0.5 flex-shrink-0">
                     {getUnreadNotificationsCount()}
                   </span>
                 )}
 
               {isActive && (
-                <FaChevronRight className="text-blue-500 text-[10px] flex-shrink-0" />
+                <FaChevronRight className={`ml-auto text-[10px] flex-shrink-0 ${
+                  isFatora ? "text-blue-500" : "text-blue-500"
+                }`} />
               )}
             </button>
           );
         })}
 
         {/* BARCODE SECTION */}
-        <div className="relative w-full overflow-x-hidden min-w-0">
+        <div className="relative w-full overflow-x-hidden min-w-0 mt-1">
           <button
             onClick={() => setShowBarcode(!showBarcode)}
-            className={`group flex items-center gap-2 px-2.5 py-2 rounded-lg w-full min-w-0 ${
+            className={`group flex items-center gap-1.5 px-2.5 py-2 rounded-lg w-full min-w-0 ${
               showBarcode ? activeTabStyles : inactiveTabStyles
             }`}
           >
@@ -143,12 +157,12 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
               <FaDownload className="text-[10px]" />
             </div>
 
-            <span className="text-[13px] font-medium truncate flex-1 min-w-0">
+            <span className="text-[13px] font-medium truncate flex-none max-w-fit text-left">
               Barcode
             </span>
 
             <FaChevronDown
-              className={`text-[10px] transition-transform flex-shrink-0 ${
+              className={`ml-auto text-[10px] transition-transform flex-shrink-0 text-gray-400 ${
                 showBarcode ? "rotate-180" : ""
               }`}
             />
@@ -159,19 +173,19 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
               showBarcode ? "max-h-48 mt-2" : "max-h-0"
             }`}
           >
-            <div className="p-3 bg-white/80 backdrop-blur-lg rounded-xl border border-gray-200 shadow w-full max-w-full overflow-x-hidden min-w-0">
+            <div className="p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm w-full max-w-full overflow-x-hidden min-w-0">
 
               <img
                 src={barImage}
                 alt="Barcode"
-                className="w-full max-w-[90px] mx-auto h-20 object-contain rounded-lg mb-2 border"
+                className="w-full max-w-[90px] mx-auto h-20 object-contain rounded mb-2 border border-gray-200"
               />
 
               <button
                 onClick={handleDownloadBarcode}
-                className="w-full px-3 py-2 bg-blue-500 text-white rounded-lg font-medium shadow hover:scale-[1.03] transition text-sm"
+                className="w-full px-3 py-2 bg-blue-500 text-white rounded-lg font-medium shadow-sm hover:bg-blue-600 transition text-sm flex items-center justify-center"
               >
-                <FaDownload className="text-[10px] inline-block mr-2" />
+                <FaDownload className="text-xs mr-2" />
                 Download
               </button>
             </div>
@@ -182,22 +196,22 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       {/* SIGN OUT */}
       <button
         onClick={handleSignOut}
-        className="group mt-1 mb-10 flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/60 text-gray-700 border border-gray-200 shadow-inner hover:text-red-500 transition w-full min-w-0"
+        className="group mt-2 mb-8 flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white/80 text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-red-600 transition w-full min-w-0"
       >
-        <div className="w-5 h-5 rounded-md flex items-center justify-center bg-gray-100 text-gray-600 flex-shrink-0">
+        <div className="w-5 h-5 rounded-md flex items-center justify-center bg-gray-100 text-gray-600 flex-shrink-0 group-hover:bg-red-50 group-hover:text-red-500">
           <FaSignOutAlt className="text-[10px]" />
         </div>
 
-        <span className="text-[13px] font-medium truncate flex-1 min-w-0">
+        <span className="text-[13px] font-medium truncate flex-none max-w-fit text-left">
           Sign Out
         </span>
       </button>
 
       {/* STATUS */}
-      <div className="mt-3 pt-3 border-t border-gray-200 min-w-0">
+      <div className="mt-auto pt-3 border-t border-gray-200 min-w-0">
         <div className="flex items-center justify-between text-[11px] text-gray-600 min-w-0">
           <span className="truncate flex-1 min-w-0">Online</span>
-          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 shadow-sm"></div>
         </div>
       </div>
     </div>

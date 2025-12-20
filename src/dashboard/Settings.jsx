@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FaFacebook, FaInstagram, FaYoutube, FaLinkedin,
   FaPinterest, FaSnapchat, FaWhatsapp, FaGooglePlusG,
@@ -8,50 +8,96 @@ import {
 import { editCompanyPost } from "../api";
 
 export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }) {
+  // Track previous company ID to detect changes
+  const prevCompanyIdRef = useRef(null);
+  
+  // Initialize with empty values
+  const emptyForm = {
+    companyName: "",
+    companyDescription: "",
+    contactMobile: "",
+    address: "",
+    specialties: [],
+    logo: null,
+    coverPhoto: null,
+    facebook: "",
+    instagram: "",
+    youtube: "",
+    linkedin: "",
+    pinterest: "",
+    snapchat: "",
+    whatsapp: "",
+    google: "",
+  };
 
-  const initial = {
-  companyName: "",
-  companyDescription: "",
-  contactMobile: "", // This will map to 'phone' in API
-  address: "",
-  // REMOVED: specialties: [],
-  logo: null,
-  coverPhoto: null,
-  facebook: "",
-  instagram: "",
-  youtube: "",
-  linkedin: "",
-  pinterest: "",
-  snapchat: "",
-  whatsapp: "",
-  google: "",
-  ...companyInfo,
-};
-
-  const [form, setForm] = useState(initial);
+  const [form, setForm] = useState(emptyForm);
   const [isSpecialtiesOpen, setIsSpecialtiesOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false); // false | "confirm" | "success"
+  const [isLoading, setIsLoading] = useState(true);
 
-  /* ---------- LOAD DATA ---------- */
+  /* ---------- RESET FORM WHEN COMPANY CHANGES ---------- */
   useEffect(() => {
-    setForm({
-      ...initial,
-      specialties: Array.isArray(initial.specialties) ? initial.specialties : [],
+    console.log("🔄 Settings component - Company changed:", {
+      newCompanyId: companyId,
+      prevCompanyId: prevCompanyIdRef.current,
+      hasCompanyInfo: !!companyInfo && Object.keys(companyInfo).length > 0
     });
-    // eslint-disable-next-line
-  }, []);
 
-  useEffect(() => {
-    setForm((prev) => ({
-      ...prev,
-      ...companyInfo,
-      specialties: Array.isArray(companyInfo?.specialties)
-        ? companyInfo.specialties
-        : prev.specialties,
-    }));
-  }, [companyInfo]);
+    // Check if company has actually changed
+    if (companyId !== prevCompanyIdRef.current) {
+      console.log("🔄 Company ID changed, resetting form data");
+      
+      // Reset form to empty first
+      setForm(emptyForm);
+      setIsLoading(true);
+      
+      // Update previous company ID
+      prevCompanyIdRef.current = companyId;
+    }
+
+    // If no companyInfo or empty, reset form
+    if (!companyInfo || Object.keys(companyInfo).length === 0) {
+      console.log("📭 No company info, using empty form");
+      setForm(emptyForm);
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if this is actually new data
+    const currentCompanyName = form.companyName || "";
+    const newCompanyName = companyInfo.companyName || "";
+    
+    if (currentCompanyName === newCompanyName && currentCompanyName !== "") {
+      console.log("📋 Same company data, skipping update");
+      setIsLoading(false);
+      return;
+    }
+
+    console.log("📥 Loading new company data into form:", newCompanyName);
+
+    // Set form with new company data
+    setForm({
+      companyName: companyInfo.companyName || "",
+      companyDescription: companyInfo.companyDescription || "",
+      contactMobile: companyInfo.contactMobile || companyInfo.mobile || companyInfo.phone || "",
+      address: companyInfo.address || "",
+      specialties: Array.isArray(companyInfo.specialties) ? companyInfo.specialties : [],
+      logo: companyInfo.logo || null,
+      coverPhoto: companyInfo.coverPhoto || null,
+      facebook: companyInfo.facebook || companyInfo.tweeter || "",
+      instagram: companyInfo.instagram || "",
+      youtube: companyInfo.youtube || "",
+      linkedin: companyInfo.linkedin || "",
+      pinterest: companyInfo.pinterest || "",
+      snapchat: companyInfo.snapchat || "",
+      whatsapp: companyInfo.whatsapp || "",
+      google: companyInfo.google || "",
+    });
+    
+    setIsLoading(false);
+  }, [companyId, companyInfo]);
 
   const specialtiesList = [
     "Carpenter",
@@ -95,122 +141,179 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
   };
 
   /* ---------- SAVE ---------- */
-const handleSave = async () => {
-  try {
-    // Prepare data according to backend API requirements
-    const apiData = {
-      // File uploads
-      logo: form.logo,
-      cover_photo: form.coverPhoto,
-      
-      // Basic info
-      name: form.companyName || "",
-      address: form.address || "",
-      phone: form.contactMobile || "",  // Changed from 'mobile' to 'phone'
-      description: form.companyDescription || "",
-      
-      // Social media
-      whatsapp: form.whatsapp || "",
-      snapchat: form.snapchat || "",
-      pinterest: form.pinterest || "",
-      instagram: form.instagram || "",
-      tweeter: form.facebook || "",  // Important: 'tweeter' uses facebook value
-      facebook: form.facebook || "",
-      youtube: form.youtube || "",
-      google: form.google || "",
-      linkedin: form.linkedin || "",
-      
-      // REMOVED: specialties (not in API documentation)
-    };
-
-    console.log('📤 Sending to API:', apiData);
-
-    // Send to API
-    await editCompanyPost(companyId, apiData);
-
-    // Update local state - map phone back to contactMobile for your UI
-    const updatedCompanyInfo = {
-      ...form,
-      contactMobile: apiData.phone, // Ensure consistency
-    };
-    
-    setCompanyInfo(updatedCompanyInfo);
-    
-    // Also update localStorage if needed
-    const currentCompany = JSON.parse(localStorage.getItem('company') || '{}');
-    const updatedLocalCompany = {
-      ...currentCompany,
-      name: apiData.name,
-      description: apiData.description,
-      phone: apiData.phone,
-      address: apiData.address,
-      whatsapp: apiData.whatsapp,
-      snapchat: apiData.snapchat,
-      pinterest: apiData.pinterest,
-      instagram: apiData.instagram,
-      tweeter: apiData.tweeter,
-      facebook: apiData.facebook,
-      youtube: apiData.youtube,
-      google: apiData.google,
-      linkedin: apiData.linkedin,
-    };
-    localStorage.setItem('company', JSON.stringify(updatedLocalCompany));
-
-    setShowAlert(true);
-    setTimeout(() => setShowAlert(false), 3000);
-    
-  } catch (err) {
-    console.error('❌ Save error:', err);
-    
-    // Better error handling
-    if (err.response) {
-      // Server responded with error
-      console.error('Server error:', err.response.status, err.response.data);
-      alert(`Server error: ${err.response.status} - ${JSON.stringify(err.response.data)}`);
-    } else if (err.request) {
-      // Request was made but no response
-      console.error('No response:', err.request);
-      alert('No response from server. Check CORS settings or network connection.');
-    } else {
-      // Something else
-      alert(`Failed to save settings: ${err.message}`);
+  const handleSave = async () => {
+    if (!companyId) {
+      alert("Company ID is missing. Please log in again.");
+      return;
     }
-  }
-};
 
-  /* ---------- DELETE ---------- */
-  const handleDeleteAll = async () => {
     try {
-      await editCompanyPost(companyId, {
-        name: "",
-        description: "",
-        mobile: "",
-        address: "",
-        specialties: [],
-        logo: null,
-        cover_photo: null,
-        facebook: "",
-        instagram: "",
-        youtube: "",
-        linkedin: "",
-        pinterest: "",
-        snapchat: "",
-        whatsapp: "",
-        google: "",
+      setIsLoading(true);
+      
+      // Prepare data according to backend API requirements
+      const apiData = new FormData();
+      
+      // Add files if they exist
+      if (form.logo && typeof form.logo !== 'string') {
+        apiData.append("logo", form.logo);
+      } else if (!form.logo) {
+        // If logo is cleared, send empty string to remove it
+        apiData.append("logo", "");
+      }
+      
+      if (form.coverPhoto && typeof form.coverPhoto !== 'string') {
+        apiData.append("cover_photo", form.coverPhoto);
+      } else if (!form.coverPhoto) {
+        // If cover photo is cleared, send empty string to remove it
+        apiData.append("cover_photo", "");
+      }
+      
+      // Add basic info
+      apiData.append("name", form.companyName || "");
+      apiData.append("address", form.address || "");
+      apiData.append("phone", form.contactMobile || "");
+      apiData.append("description", form.companyDescription || "");
+      
+      // Add social media
+      apiData.append("whatsapp", form.whatsapp || "");
+      apiData.append("snapchat", form.snapchat || "");
+      apiData.append("pinterest", form.pinterest || "");
+      apiData.append("instagram", form.instagram || "");
+      apiData.append("tweeter", form.facebook || "");  // Important: 'tweeter' uses facebook value
+      apiData.append("facebook", form.facebook || "");
+      apiData.append("youtube", form.youtube || "");
+      apiData.append("google", form.google || "");
+      apiData.append("linkedin", form.linkedin || "");
+
+      console.log('📤 Sending to API for company:', companyId);
+      console.log('📤 Form data:', {
+        name: form.companyName,
+        phone: form.contactMobile,
+        address: form.address
       });
 
-      setForm({ ...initial });
-      setCompanyInfo({ ...initial });
+      // Send to API
+      await editCompanyPost(companyId, apiData);
 
-      setShowDeleteAlert("success");
-      setTimeout(() => setShowDeleteAlert(false), 3000);
+      // Update local state
+      const updatedCompanyInfo = {
+        ...form,
+        contactMobile: form.contactMobile,
+      };
+      
+      setCompanyInfo(updatedCompanyInfo);
+      
+      // Also update localStorage
+      const currentCompany = JSON.parse(localStorage.getItem('company') || '{}');
+      const updatedLocalCompany = {
+        ...currentCompany,
+        name: form.companyName,
+        description: form.companyDescription,
+        phone: form.contactMobile,
+        mobile: form.contactMobile,
+        address: form.address,
+        whatsapp: form.whatsapp,
+        snapchat: form.snapchat,
+        pinterest: form.pinterest,
+        instagram: form.instagram,
+        tweeter: form.facebook,
+        facebook: form.facebook,
+        youtube: form.youtube,
+        google: form.google,
+        linkedin: form.linkedin,
+        specialties: form.specialties,
+        logo: currentCompany.logo || form.logo,
+        cover_photo: currentCompany.cover_photo || form.coverPhoto,
+      };
+      localStorage.setItem('company', JSON.stringify(updatedLocalCompany));
+
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      
     } catch (err) {
-      console.error(err);
-      alert("Failed to delete settings");
+      console.error('❌ Save error:', err);
+      
+      if (err.response) {
+        console.error('Server error:', err.response.status, err.response.data);
+        alert(`Server error: ${err.response.status} - ${err.response.data?.message || 'Unknown error'}`);
+      } else if (err.request) {
+        console.error('No response:', err.request);
+        alert('No response from server. Check network connection.');
+      } else {
+        alert(`Failed to save settings: ${err.message}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  /* ---------- SPECIALTIES DROPDOWN TOGGLE (MISSING BEFORE) ---------- */
+  /* ---------- DELETE ---------- */
+  const handleDeleteAll = async () => {
+    if (!companyId) {
+      alert("Company ID is missing. Please log in again.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const apiData = new FormData();
+      apiData.append("name", "");
+      apiData.append("description", "");
+      apiData.append("phone", "");
+      apiData.append("address", "");
+      apiData.append("whatsapp", "");
+      apiData.append("snapchat", "");
+      apiData.append("pinterest", "");
+      apiData.append("instagram", "");
+      apiData.append("tweeter", "");
+      apiData.append("facebook", "");
+      apiData.append("youtube", "");
+      apiData.append("google", "");
+      apiData.append("linkedin", "");
+
+      await editCompanyPost(companyId, apiData);
+
+      // Reset form - ONLY CLEAR THE FORM, NO NAVIGATION
+      setForm(emptyForm);
+      setCompanyInfo(emptyForm);
+      
+      // Clear localStorage for this company
+      const currentCompany = JSON.parse(localStorage.getItem('company') || '{}');
+      if (currentCompany.id === companyId) {
+        const clearedCompany = {
+          ...currentCompany,
+          name: "",
+          description: "",
+          phone: "",
+          mobile: "",
+          address: "",
+          whatsapp: "",
+          snapchat: "",
+          pinterest: "",
+          instagram: "",
+          tweeter: "",
+          facebook: "",
+          youtube: "",
+          google: "",
+          linkedin: "",
+          specialties: [],
+        };
+        localStorage.setItem('company', JSON.stringify(clearedCompany));
+      }
+
+      setShowDeleteAlert("success");
+      setTimeout(() => setShowDeleteAlert(false), 3000);
+      
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete settings");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /* ---------- SPECIALTIES DROPDOWN TOGGLE ---------- */
   const toggleSpecialtiesDropdown = () => {
     if (isSpecialtiesOpen) {
       setIsAnimating(true);
@@ -223,7 +326,6 @@ const handleSave = async () => {
     }
   };
 
-
   /* ---------- CONFIRM DELETE MODAL ---------- */
   const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm }) => {
     if (!isOpen) return null;
@@ -232,7 +334,7 @@ const handleSave = async () => {
         <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
           <h3 className="font-bold mb-2">Delete All Settings?</h3>
           <p className="text-gray-600 text-sm mb-4">
-            This action cannot be undone.
+            This will clear all settings but keep you on this page. Continue?
           </p>
           <div className="flex gap-3">
             <button onClick={onClose} className="flex-1 bg-gray-200 p-2 rounded">
@@ -247,8 +349,43 @@ const handleSave = async () => {
     );
   };
 
+  /* ---------- FORCE CLEAR CACHE BUTTON (DEBUG) ---------- */
+  const handleForceClearCache = () => {
+    if (window.confirm("Clear all cached company data from this form only?")) {
+      // ✅ FIXED: Only clear the form, NO PAGE RELOAD OR NAVIGATION
+      
+      // Reset form to empty
+      setForm(emptyForm);
+      
+      // Clear image previews
+      if (form.logo && form.logo instanceof File) {
+        URL.revokeObjectURL(form.logo);
+      }
+      if (form.coverPhoto && form.coverPhoto instanceof File) {
+        URL.revokeObjectURL(form.coverPhoto);
+      }
+      
+      // Show success message
+      setShowDeleteAlert("success");
+      setTimeout(() => setShowDeleteAlert(false), 3000);
+      
+      console.log("✅ Form cache cleared (no page reload)");
+    }
+  };
+
+  // Show loading state
+  if (isLoading && !form.companyName) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    // top-level container: force no horizontal overflow
     <div
       className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-3 sm:p-4 md:p-6 overflow-x-hidden"
       style={{ maxWidth: "100vw", boxSizing: "border-box" }}
@@ -302,8 +439,8 @@ const handleSave = async () => {
               </div>
 
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 text-lg">Deleted</h3>
-                <p className="text-gray-600 text-sm truncate">All settings have been cleared</p>
+                <h3 className="font-semibold text-gray-900 text-lg">Cleared</h3>
+                <p className="text-gray-600 text-sm truncate">All form data has been cleared</p>
               </div>
 
               <button onClick={() => setShowDeleteAlert(false)} className="text-gray-400 hover:text-gray-600 p-1">
@@ -329,9 +466,14 @@ const handleSave = async () => {
       />
 
       <div className="max-w-6xl mx-auto" style={{ paddingLeft: 8, paddingRight: 8 }}>
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 mt-2 sm:mt-4 break-words">
-          Settings
-        </h1>
+        <div className="flex justify-between items-center mb-4 sm:mb-6 mt-2 sm:mt-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 break-words">
+            Settings
+          </h1>
+          
+       
+        </div>
+
 
         <div className="rounded-xl sm:rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
           {/* FORM WITH SCROLL */}
@@ -351,11 +493,16 @@ const handleSave = async () => {
                       alt="cover preview"
                       className="w-full h-full object-cover max-w-full"
                       style={{ display: "block" }}
+                      onError={(e) => {
+                        console.error("Cover photo failed to load");
+                        e.target.style.display = "none";
+                      }}
                     />
                     <button
                       type="button"
                       onClick={() => handleDeleteFile("coverPhoto")}
                       className="absolute top-2 right-2 bg-red-500 text-white p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-red-600 transition-all duration-200 text-xs shadow-[3px_3px_10px_rgba(239,68,68,0.3)] hover:shadow-[3px_3px_15px_rgba(239,68,68,0.4)]"
+                      disabled={isLoading}
                     >
                       <FaTrash className="text-xs sm:text-sm" />
                     </button>
@@ -366,8 +513,9 @@ const handleSave = async () => {
                   type="file"
                   name="coverPhoto"
                   onChange={handleFileChange}
-                  className="w-full p-2 sm:p-3 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-xs sm:text-sm file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded file:sm:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300"
+                  className="w-full p-2 sm:p-3 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-xs sm:text-sm file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded file:sm:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ boxSizing: "border-box" }}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -384,11 +532,16 @@ const handleSave = async () => {
                       alt="logo preview"
                       className="w-full h-full object-contain max-w-full"
                       style={{ display: "block" }}
+                      onError={(e) => {
+                        console.error("Logo failed to load");
+                        e.target.style.display = "none";
+                      }}
                     />
                     <button
                       type="button"
                       onClick={() => handleDeleteFile("logo")}
                       className="absolute top-1.5 right-1.5 bg-red-500 text-white p-1 rounded hover:bg-red-600 transition-all duration-200 text-xs shadow-[2px_2px_8px_rgba(239,68,68,0.3)]"
+                      disabled={isLoading}
                     >
                       <FaTrash className="text-xs" />
                     </button>
@@ -399,21 +552,23 @@ const handleSave = async () => {
                   type="file"
                   name="logo"
                   onChange={handleFileChange}
-                  className="w-full p-2 sm:p-3 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-xs sm:text-sm file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded file:sm:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300"
+                  className="w-full p-2 sm:p-3 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-xs sm:text-sm file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded file:sm:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ boxSizing: "border-box" }}
+                  disabled={isLoading}
                 />
               </div>
             </div>
 
             {/* FORM FIELDS */}
-            <form className="space-y-4 sm:space-y-6">
+            <form className="space-y-4 sm:space-y-6" onSubmit={(e) => e.preventDefault()}>
               <input
                 name="companyName"
                 placeholder="Company Name"
                 value={form.companyName}
                 onChange={handleChange}
-                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200"
+                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200 disabled:opacity-50"
                 style={{ minWidth: 0 }}
+                disabled={isLoading}
               />
 
               <textarea
@@ -422,8 +577,9 @@ const handleSave = async () => {
                 value={form.companyDescription}
                 onChange={handleChange}
                 rows="3"
-                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200 resize-none"
+                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px rgba(0,0,0,0.05)] transition-all duration-200 resize-none disabled:opacity-50"
                 style={{ minWidth: 0 }}
+                disabled={isLoading}
               />
 
               <input
@@ -431,8 +587,9 @@ const handleSave = async () => {
                 placeholder="Contact Mobile"
                 value={form.contactMobile}
                 onChange={handleChange}
-                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200"
+                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200 disabled:opacity-50"
                 style={{ minWidth: 0 }}
+                disabled={isLoading}
               />
 
               <input
@@ -440,8 +597,9 @@ const handleSave = async () => {
                 placeholder="Address"
                 value={form.address}
                 onChange={handleChange}
-                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200"
+                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200 disabled:opacity-50"
                 style={{ minWidth: 0 }}
+                disabled={isLoading}
               />
 
               {/* SPECIALTIES DROPDOWN */}
@@ -453,7 +611,8 @@ const handleSave = async () => {
                 <button
                   type="button"
                   onClick={toggleSpecialtiesDropdown}
-                  className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 flex items-center justify-between text-sm sm:text-base hover:bg-white/70 transition-all duration-200 text-gray-900 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 flex items-center justify-between text-sm sm:text-base hover:bg-white/70 transition-all duration-200 text-gray-900 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] hover:shadow-[3px_3px_10px_rgba(0,0,0,0.08),-3px_-3px_10px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
                 >
                   <span className="truncate">
                     Select ({(form.specialties || []).length} selected)
@@ -479,8 +638,9 @@ const handleSave = async () => {
                           <input
                             type="checkbox"
                             checked={(form.specialties || []).includes(item)}
-                            onChange={() => toggleSpecialty(item)}
+                            onChange={() => !isLoading && toggleSpecialty(item)}
                             className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300 flex-shrink-0"
+                            disabled={isLoading}
                           />
                           <span className="text-gray-900 text-xs sm:text-sm font-medium truncate">
                             {item}
@@ -501,8 +661,9 @@ const handleSave = async () => {
                         <span className="truncate">{specialty}</span>
                         <button
                           type="button"
-                          onClick={() => toggleSpecialty(specialty)}
-                          className="text-white hover:text-blue-100 text-xs font-bold w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center rounded-full hover:bg-white/20"
+                          onClick={() => !isLoading && toggleSpecialty(specialty)}
+                          className="text-white hover:text-blue-100 text-xs font-bold w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center rounded-full hover:bg-white/20 disabled:opacity-50"
+                          disabled={isLoading}
                         >
                           ×
                         </button>
@@ -542,8 +703,9 @@ const handleSave = async () => {
                         placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
                         value={form[key] || ""}
                         onChange={handleChange}
-                        className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500 text-xs sm:text-sm focus:placeholder-blue-300 transition-colors duration-200"
+                        className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500 text-xs sm:text-sm focus:placeholder-blue-300 transition-colors duration-200 disabled:opacity-50"
                         style={{ minWidth: 0 }}
+                        disabled={isLoading}
                       />
                     </div>
                   ))}
@@ -555,15 +717,24 @@ const handleSave = async () => {
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                  disabled={isLoading || !companyId}
+                  className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  Save Settings
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save Settings"
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setShowDeleteAlert("confirm")}
-                  className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold text-sm sm:text-base hover:from-red-600 hover:to-red-700 transition-all duration-200 transform shadow-lg shadow-red-500/30 hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                  disabled={isLoading || !companyId}
+                  className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold text-sm sm:text-base hover:from-red-600 hover:to-red-700 transition-all duration-200 transform shadow-lg shadow-red-500/30 hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   Delete All
                 </button>

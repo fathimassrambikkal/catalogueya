@@ -235,7 +235,7 @@ const fw = fixedWords?.fixed_words || {};
       {/* Right Section */}
       <div className="flex items-center space-x-3 sm:space-x-5 md:mr-20">
         <FavouritesCounter />
-{/* 
+
         <Link
           to="/sign"
           className="border border-gray-300 text-gray-900 hover:text-blue-500
@@ -246,7 +246,7 @@ const fw = fixedWords?.fixed_words || {};
         {fw.login}
 
 
-        </Link> */}
+        </Link>
 
         <LanguageToggle
           toggleLanguage={toggleLanguage}

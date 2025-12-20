@@ -78,7 +78,7 @@ const ChatIcon = ({ className = "" }) => (
     viewBox="0 0 16 16"
     fill="currentColor"
   >
-    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z" />
+    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.520.263-1.639.742-3.468 1.105z" />
     <circle cx="4" cy="8" r="1" />
     <circle cx="8" cy="8" r="1" />
     <circle cx="12" cy="8" r="1" />
@@ -149,6 +149,37 @@ const getSafeRating = (value) => {
   return num;
 };
 
+// ✅ Function to get country from IP
+const getCountryFromIP = async () => {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    return data.country_name;
+  } catch (e) {
+    console.warn("Failed to get country from IP:", e);
+    return null;
+  }
+};
+
+// ✅ Build payload for showProduct API
+const buildShowProductPayload = async () => {
+  const country = await getCountryFromIP();
+  console.log("🌍 Country:", country);
+
+  const device = navigator.userAgent;
+
+  const token =
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token") ||
+    null;
+
+  return {
+    device,
+    country,
+    ...(token && { token }),
+  };
+};
+
 export default function ProductProfile() {
   const params = useParams();
   const navigate = useNavigate();
@@ -186,7 +217,10 @@ export default function ProductProfile() {
       console.log("🔄 Refreshing product data for ID:", resolvedProductId);
       setLoading(true);
       
-      const productResponse = await getProduct(resolvedProductId);
+      // ✅ Use POST request with payload
+      const payload = await buildShowProductPayload();
+      const productResponse = await getProduct(resolvedProductId, payload);
+      
       const productData =
         productResponse?.data?.data?.product ||
         productResponse?.data?.product;
@@ -299,7 +333,7 @@ export default function ProductProfile() {
     };
   }, [resolvedProductId, product?.company_id, refreshProductData]);
 
-  // ✅ Fetch product + similar products
+  // ✅ Fetch product + similar products - SINGLE API CALL
   useEffect(() => {
     let mounted = true;
 
@@ -308,7 +342,11 @@ export default function ProductProfile() {
         setLoading(true);
         setError(null);
 
-        const productResponse = await getProduct(resolvedProductId);
+        // ✅ SINGLE POST REQUEST with payload
+        const payload = await buildShowProductPayload();
+        console.log("📦 showProduct payload:", payload);
+
+        const productResponse = await getProduct(resolvedProductId, payload);
         const productData =
           productResponse?.data?.data?.product ||
           productResponse?.data?.product;
@@ -402,7 +440,7 @@ export default function ProductProfile() {
       }
     };
 
-    fetchProductData();
+    if (resolvedProductId) fetchProductData();
 
     return () => {
       mounted = false;
@@ -516,9 +554,6 @@ export default function ProductProfile() {
     product.image,
     ...(product.albums || []),
   ].filter(Boolean);
-
-  // ============ REST OF THE UI CODE REMAINS EXACTLY THE SAME ============
-  // No changes to the JSX below - all UI remains identical
 
   return (
     <>

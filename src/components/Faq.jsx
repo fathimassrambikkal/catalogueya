@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getQuestions } from "../api";
 import { useTranslation } from "react-i18next";
+import { useSettings } from "../hooks/useSettings";
 
 /* -----------------------------------
    EXACT  SVGs (UNCHANGED)
@@ -118,6 +119,7 @@ export default function Faq() {
   const [loadedAnswers, setLoadedAnswers] = useState({});
   const [isLoading, setIsLoading] = useState(!preloadedFAQs);
   const { i18n } = useTranslation();
+  const { settings } = useSettings();
 
   const isRTL = i18n.language === "ar";
 
@@ -187,16 +189,16 @@ export default function Faq() {
   return (
     <section
       dir={isRTL ? "rtl" : "ltr"}
-      className="bg-white px-6 md:px-16 flex justify-center items-center py-16"
+      className="bg-white px-6 md:px-16 flex justify-center items-center py-2"
       id="faq"
     >
       <div className="w-full max-w-4xl p-10 md:p-16 flex flex-col items-center gap-12">
-       <div className="text-center mb-16 px-4">
+       <div className="text-center mb-4 px-4">
   <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight leading-tight text-gray-900">
-    FAQs
+      {settings.questions_title }
   </h2>
   <p className="text-base sm:text-lg md:text-xl font-normal tracking-normal leading-relaxed text-gray-600 mt-1 max-w-xl mx-auto">
-    Everything you need to know before getting started.
+  {settings.questions_sub_title}
   </p>
 </div>
 

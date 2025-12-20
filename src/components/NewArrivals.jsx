@@ -95,7 +95,7 @@ const ChatIcon = ({ className = "" }) => (
     fill="currentColor"
   >
     {/* Chat bubble outline with tail */}
-    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z" />
+    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.520.263-1.639.742-3.468 1.105z" />
     
     {/* Three dots */}
     <circle cx="4" cy="8" r="1" />
@@ -186,9 +186,10 @@ const useIsInViewport = (ref) => {
   return isIntersecting;
 };
 
-const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => {
+const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, currency, isRTL }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const { i18n } = useTranslation();
 
   const getImageUrl = (imgPath) => {
     if (!imgPath) return null;
@@ -260,19 +261,19 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
         )}
 
         {/* RATING */}
-<div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
-  {Array.from({ length: 5 }).map((_, i) => (
-    <StarIcon
-      key={i}
-      filled={i < Math.floor(product.rating ?? 0)}
-      className={`w-2 h-2 ${i < Math.floor(product.rating ?? 0) ? "text-white" : ""}`}
-    />
-  ))}
+        <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <StarIcon
+              key={i}
+              filled={i < Math.floor(product.rating ?? 0)}
+              className={`w-2 h-2 ${i < Math.floor(product.rating ?? 0) ? "text-white" : ""}`}
+            />
+          ))}
 
-  <span className="text-[9px] text-white/90 ml-1">
-    {(product.rating ?? 0).toFixed(1)}
-  </span>
-</div>
+          <span className="text-[9px] text-white/90 ml-1">
+            {(product.rating ?? 0).toFixed(1)}
+          </span>
+        </div>
       </div>
 
       <div
@@ -284,9 +285,15 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate }) => 
         <div className="flex flex-col w-[80%] z-10">
           <h3 className="font-semibold text-xs truncate text-gray-900 mb-1">{product.name}</h3>
           <div className="flex items-center gap-1">
-            <span className="text-xs font-bold text-gray-900">QAR {product.price}</span>
+            <span className="text-xs font-bold text-gray-900">
+              {/* Updated: For Arabic (currency then price), for English (price then currency) */}
+              {i18n.language === "ar" ? `${currency} ${product.price}` : `${product.price} ${currency}`}
+            </span>
             {product.oldPrice && (
-              <span className="text-[10px] line-through text-gray-500">QAR {product.oldPrice}</span>
+              <span className="text-[10px] line-through text-gray-500">
+                {/* Updated: Same formatting for old price */}
+                {i18n.language === "ar" ? `${currency} ${product.oldPrice}` : `${product.oldPrice} ${currency}`}
+              </span>
             )}
           </div>
         </div>
@@ -510,16 +517,13 @@ function NewArrivalsComponent() {
     // for fixed word
   const fw = fixedWords?.fixed_words || {};
 
-useEffect(() => {
-  console.log("✅ NewArrivals FixedWords:", {
-    new_arrivals: fw.new_arrivals,
-    view_more: fw.view_more,
-    full_fixedWords: fixedWords,
-  });
-}, [fw, fixedWords]);
-
-
-
+  useEffect(() => {
+    console.log("✅ NewArrivals FixedWords:", {
+      new_arrivals: fw.new_arrivals,
+      view_more: fw.view_more,
+      full_fixedWords: fixedWords,
+    });
+  }, [fw, fixedWords]);
 
   return (
     <section 
@@ -528,7 +532,7 @@ useEffect(() => {
     >
       <div className="flex flex-row items-end justify-between mb-8 sm:mb-12 gap-4">
        <h2 className="text-4xl sm:text-5xl md:text-5xl font-light tracking-tight leading-tight text-gray-900">
-        {fw.new_arrivals}
+        {fw.products}
       </h2>
         <div className="flex justify-end">
        <Link
@@ -538,10 +542,14 @@ useEffect(() => {
                     flex items-center gap-1.5 group"
             >
           {fw.view_more}
-          <ArrowOutwardIcon className="w-4 h-4 text-gray-400 
-                                      group-hover:text-gray-900 
-                                      group-hover:translate-x-0.5 
-                                      transition-all duration-300" />
+          <ArrowOutwardIcon 
+              className={`w-4 h-4 text-gray-400 
+                        group-hover:text-gray-900 
+                        transition-all duration-300
+                        ${i18n.language === "ar" 
+                          ? "group-hover:-translate-x-0.5 rotate-180" 
+                          : "group-hover:translate-x-0.5"}`} 
+            />
         </Link>
         </div>
       </div>
@@ -568,6 +576,7 @@ useEffect(() => {
                     isFav={favourites.some(item => item.id === product.id)}
                     onToggleFavourite={handleToggleFav}
                     onNavigate={handleNavigate}
+                    currency={fw.qar}
                   />
                 </div>
               ))

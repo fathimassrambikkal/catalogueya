@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
@@ -149,9 +149,44 @@ const getSafeRating = (value) => {
   return num;
 };
 
+// ✅ Function to get country from IP
+const getCountryFromIP = async () => {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    return data.country_name;
+  } catch (e) {
+    console.warn("Failed to get country from IP:", e);
+    return null;
+  }
+};
+
+// ✅ Build payload for showProduct API
+const buildShowProductPayload = async () => {
+  const country = await getCountryFromIP();
+  console.log("🌍 Country:", country);
+
+  const device = navigator.userAgent;
+
+  const token =
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token") ||
+    null;
+
+  return {
+    device,
+    country,
+    ...(token && { token }),
+  };
+};
+
 export default function NewArrivalProductProfile() {
-  const { id } = useParams();
+  const params = useParams();
   const navigate = useNavigate();
+  const { favourites, toggleFavourite } = useFavourites();
+
+  const { companyId, id: routeProductId, productId, pid } = params;
+  const resolvedProductId = routeProductId || productId || pid;
 
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
@@ -164,7 +199,6 @@ export default function NewArrivalProductProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const { favourites, toggleFavourite } = useFavourites();
   const isFavourite = product ? favourites.some((f) => f.id === product.id) : false;
 
   // ✅ Convert relative image path to absolute URL
@@ -175,32 +209,155 @@ export default function NewArrivalProductProfile() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  // ✅ COMPANY NAME CLICK HANDLER
-  const handleCompanyClick = (e) => {
-    e.stopPropagation();
-    if (product?.company_id) {
-      navigate(`/company/${product.company_id}`);
-    }
-  };
+  // ✅ Function to refresh product data
+  const refreshProductData = useCallback(async () => {
+    if (!resolvedProductId) return;
+    
+    try {
+      console.log("🔄 Refreshing new arrival product data for ID:", resolvedProductId);
+      setLoading(true);
+      
+      // ✅ Use POST request with payload
+      const payload = await buildShowProductPayload();
+      const productResponse = await getProduct(resolvedProductId, payload);
+      
+      const productData =
+        productResponse?.data?.data?.product ||
+        productResponse?.data?.product;
 
-  // ✅ Fetch product + similar products
+      if (!productData) {
+        setError("Product not found in API response");
+        return;
+      }
+
+      // Transform main product - FIXED ALBUMS HANDLING
+      const transformedProduct = {
+        id: productData.id,
+        name: productData.name,
+        price: productData.price,
+        oldPrice: productData.old_price || null,
+        image: getImageUrl(productData.image),
+        rating: parseFloat(productData.rating) || 0,
+        description: productData.description,
+        company_id: productData.company_id,
+        company_name: productData.company_name || "Company",
+        category_id: productData.category_id,
+        category_name: "NEW ARRIVAL",
+        discount_percent: productData.discount_percent || null,
+        albums: Array.isArray(productData.albums)
+          ? productData.albums
+              .map(a => a?.path || a?.image || a)
+              .filter(Boolean)
+          : [],
+        isNewArrival: true,
+      };
+
+      setProduct(transformedProduct);
+      
+      // FIXED: Handle cases where image might be in albums
+      const mainImage = 
+        productData.image || 
+        productData.albums?.[0]?.path || 
+        productData.albums?.[0]?.image || 
+        "";
+      
+      setSelectedImage(getImageUrl(mainImage));
+
+      // Reload similar products
+      if (productData.company_id) {
+        try {
+          const companyRes = await getCompany(productData.company_id);
+          const company =
+            companyRes?.data?.data?.company ||
+            companyRes?.data?.company ||
+            companyRes?.data;
+
+          let list = company?.products || [];
+          list = list.filter((p) => p.id !== productData.id);
+          list = list.map((p) => ({
+            ...p,
+            image: p.image?.startsWith("http")
+              ? p.image
+              : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
+            company_name:
+              p.company_name || productData.company_name || "Company",
+            company_id: p.company_id || productData.company_id,
+          }));
+
+          setSimilarProducts(list);
+        } catch (err) {
+          console.warn("Failed to refresh similar products:", err);
+          setSimilarProducts([]);
+        }
+      }
+
+      console.log("✅ New arrival product data refreshed");
+    } catch (err) {
+      console.error("❌ Error refreshing new arrival product:", err);
+      setError(`Failed to refresh product: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [resolvedProductId]);
+
+  // ✅ Listen for product updates from Dashboard
   useEffect(() => {
+    const handleProductsUpdated = (event) => {
+      console.log("🔄 NewArrivalProductProfile received products update event");
+      
+      // Check if the updated products include the current product
+      if (event.detail && event.detail.products) {
+        const updatedProduct = event.detail.products.find(
+          (p) => p.id === resolvedProductId
+        );
+        
+        if (updatedProduct) {
+          console.log("🔄 Current new arrival product was updated, refreshing...");
+          
+          // Refresh the product data
+          refreshProductData();
+        } else if (event.detail.companyId === product?.company_id) {
+          // If the product's company was updated, refresh similar products
+          console.log("🔄 Company products updated, refreshing similar products...");
+          refreshProductData();
+        }
+      }
+    };
+
+    // Listen for both events
+    window.addEventListener('productsUpdated', handleProductsUpdated);
+    window.addEventListener('companyProductsUpdated', handleProductsUpdated);
+    
+    return () => {
+      window.removeEventListener('productsUpdated', handleProductsUpdated);
+      window.removeEventListener('companyProductsUpdated', handleProductsUpdated);
+    };
+  }, [resolvedProductId, product?.company_id, refreshProductData]);
+
+  // ✅ Fetch product + similar products - SINGLE API CALL
+  useEffect(() => {
+    let mounted = true;
+
     const fetchProductData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const productResponse = await getProduct(id);
+        // ✅ SINGLE POST REQUEST with payload
+        const payload = await buildShowProductPayload();
+        console.log("📦 showProduct payload for new arrival:", payload);
+
+        const productResponse = await getProduct(resolvedProductId, payload);
         const productData =
           productResponse?.data?.data?.product ||
           productResponse?.data?.product;
 
         if (!productData) {
-          setError("Product not found in API response");
+          if (mounted) setError("Product not found in API response");
           return;
         }
 
-        // Transform main product
+        // ⭐ Transform main product - New Arrival specific
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
@@ -214,19 +371,33 @@ export default function NewArrivalProductProfile() {
           category_id: productData.category_id,
           category_name: "NEW ARRIVAL",
           discount_percent: productData.discount_percent || null,
-          albums: productData.albums || [],
+          albums: Array.isArray(productData.albums)
+            ? productData.albums
+                .map(a => a?.path || a?.image || a)
+                .filter(Boolean)
+            : [],
           isNewArrival: true,
         };
 
-        setProduct(transformedProduct);
-        setSelectedImage(getImageUrl(productData.image));
+        if (!mounted) return;
 
-        // Load saved reviews
+        setProduct(transformedProduct);
+        
+        // FIXED: Handle cases where image might be in albums
+        const mainImage = 
+          productData.image || 
+          productData.albums?.[0]?.path || 
+          productData.albums?.[0]?.image || 
+          "";
+        
+        setSelectedImage(getImageUrl(mainImage));
+
+        // ⭐ Load saved reviews (new arrival specific key)
         const storageKey = `reviews_newarrival_${transformedProduct.id}`;
         const saved = JSON.parse(localStorage.getItem(storageKey)) || [];
         setReviews(saved);
 
-        // Fetch similar products using company_id
+        // ⭐ Fetch similar products using company_id
         if (productData.company_id) {
           try {
             const companyRes = await getCompany(productData.company_id);
@@ -241,39 +412,64 @@ export default function NewArrivalProductProfile() {
             // Remove current product
             list = list.filter((p) => p.id !== productData.id);
 
+            // Normalize similar products
             list = list.map((p) => ({
               ...p,
               image: p.image?.startsWith("http")
                 ? p.image
                 : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
-              company_name: p.company_name || productData.company_name || "Company",
+              company_name:
+                p.company_name || productData.company_name || "Company",
               company_id: p.company_id || productData.company_id,
             }));
 
-            setSimilarProducts(list);
+            if (mounted) setSimilarProducts(list);
           } catch (err) {
             console.warn("Failed to load similar products:", err);
-            setSimilarProducts([]);
+            if (mounted) setSimilarProducts([]);
           }
         } else {
-          setSimilarProducts([]);
+          if (mounted) setSimilarProducts([]);
         }
-
       } catch (err) {
-        console.error("❌ Error loading product:", err);
-        setError(`Failed to load product: ${err.message}`);
+        console.error("❌ Error loading new arrival product:", err);
+        if (mounted) setError(`Failed to load product: ${err.message}`);
       } finally {
-        setLoading(false);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (mounted) {
+          setLoading(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
       }
     };
 
-    fetchProductData();
-  }, [id]);
+    if (resolvedProductId) fetchProductData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [resolvedProductId]);
+
+  // ✅ COMPANY NAME CLICK HANDLER
+  const handleCompanyClick = (e) => {
+    e.stopPropagation();
+    if (product?.company_id) {
+      navigate(`/company/${product.company_id}`);
+    }
+  };
+
+  // ✅ Chat handler
+  const handleChat = useCallback(
+    (e) => {
+      e.stopPropagation();
+      alert(`Starting chat about ${product.name} with ${product.company_name}`);
+    },
+    [product]
+  );
 
   const averageRating =
     reviews.length > 0
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      ? reviews.reduce((sum, r) => sum + getSafeRating(r.rating), 0) /
+        reviews.length
       : product?.rating || 0;
 
   const handleShare = async () => {
@@ -329,7 +525,7 @@ export default function NewArrivalProductProfile() {
       <div className="flex justify-center items-center min-h-screen transform-gpu">
         <div className="text-center py-20 text-lg text-gray-600 transform-gpu">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4 transform-gpu"></div>
-          Loading product...
+          Loading new arrival...
         </div>
       </div>
     );
@@ -340,8 +536,10 @@ export default function NewArrivalProductProfile() {
       <div className="flex justify-center items-center min-h-screen transform-gpu">
         <div className="text-center py-20 text-lg text-gray-600 transform-gpu">
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
-          {error || "Product not found."}
-          <div className="text-sm text-gray-500 mb-4">Product ID: {id}</div>
+          {error || "New arrival product not found."}
+          <div className="text-sm text-gray-500 mb-4">
+            Product ID: {resolvedProductId}
+          </div>
           <button
             onClick={() => navigate(-1)}
             className="mt-4 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition transform-gpu"
@@ -353,14 +551,18 @@ export default function NewArrivalProductProfile() {
     );
   }
 
-  const productImages = [product.image, ...(product.albums || [])].filter(Boolean);
+  // FIXED: Proper productImages array
+  const productImages = [
+    product.image,
+    ...(product.albums || []),
+  ].filter(Boolean);
 
   return (
     <>
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-20 sm:top-8 left-5 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition transform-gpu"
+        className="absolute top-20 sm:top-8 left-5 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition transform-gpu active:scale-95"
       >
         <ArrowLeftIcon className="text-gray-700 text-sm sm:text-md md:text-lg transform-gpu" />
       </button>
@@ -407,7 +609,7 @@ export default function NewArrivalProductProfile() {
                 <ShareIcon className="text-[16px] text-[rgba(18,18,18,0.88)] transform-gpu" />
               </PremiumIconButton>
 
-              <PremiumIconButton title="Chat">
+              <PremiumIconButton title="Chat" onClick={handleChat}>
                 <ChatIcon className="text-[17px] text-[rgba(18,18,18,0.88)] transform-gpu" />
               </PremiumIconButton>
             </div>
@@ -473,7 +675,7 @@ export default function NewArrivalProductProfile() {
           {/* Category + Title + Company */}
           <div className="space-y-2 transform-gpu">
             <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500 transform-gpu">
-              {product.category_name || "NEW ARRIVAL"}
+              NEW ARRIVAL
             </p>
 
             <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight transform-gpu">
@@ -680,6 +882,7 @@ export default function NewArrivalProductProfile() {
       {showReviewModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg px-4 animate-fade-in transform-gpu"
+          onClick={() => setShowReviewModal(false)}
         >
           <div
             className="
@@ -691,6 +894,7 @@ export default function NewArrivalProductProfile() {
               animate-slide-up
               transform-gpu
             "
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between transform-gpu">
               <h3 className="text-lg font-semibold text-gray-900 transform-gpu">
