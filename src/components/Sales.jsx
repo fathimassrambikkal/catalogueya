@@ -34,7 +34,7 @@ const HeartIcon = ({ filled = false, className = "" }) => (
     aria-hidden="true"
     focusable="false"
   >
-    <path d="M12 21s-6.716-4.734-9.428-7.446C.86 11.84.5 9.273 1.793 7.5A5.38 5.38 0 0 1 12 6.343 5.38 5.38 0 0 1 22.207 7.5c1.293 1.773.933 4.34-.779 6.054C18.716 16.266 12 21 12 21z" />
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
 
@@ -219,9 +219,12 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
           ${isFav ? "bg-red-100 text-red-600 border-red-200" : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"}`}
       >
         <HeartIcon
-          filled={isFav}
-          className={`text-xs ${isFav ? "text-red-500" : "hover:text-red-400"}`}
-        />
+        filled={isFav}
+        className={`w-3 h-3 ${
+          isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
+        }`}
+      />
+
       </button>
 
       <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
