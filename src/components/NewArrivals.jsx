@@ -21,17 +21,17 @@ const StarIcon = ({ filled, className = "" }) => (
   </svg>
 );
 
-const HeartIcon = ({ filled, className = "" }) => (
-  <svg 
-    className={`${className}`}
-    width="12" 
-    height="12" 
+const HeartIcon = ({ filled = false, className = "" }) => (
+  <svg
     viewBox="0 0 24 24"
+    className={className}
     fill={filled ? "currentColor" : "none"}
-    stroke="currentColor"
+    stroke={filled ? "none" : "currentColor"}
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
   >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
@@ -228,9 +228,11 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
           ${isFav ? "bg-red-100 text-red-600 border-red-200" : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"}`}
       >
         <HeartIcon
-          filled={isFav}
-          className={`text-xs ${isFav ? "text-red-500" : "hover:text-red-400"}`}
-        />
+        filled={isFav}
+        className={`w-3 h-3 ${
+          isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
+        }`}
+      />
       </button>
 
       <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
@@ -283,7 +285,22 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
                    flex items-center justify-between overflow-hidden"
       >
         <div className="flex flex-col w-[80%] z-10">
-          <h3 className="font-semibold text-xs truncate text-gray-900 mb-1">{product.name}</h3>
+              <h3
+        className="
+          font-semibold
+          text-xs
+          text-gray-900
+          mb-1
+          leading-snug
+          break-words
+          line-clamp-2
+          overflow-hidden
+        "
+        dir={i18n.language === "ar" ? "rtl" : "ltr"}
+      >
+        {product.name}
+      </h3>
+
           <div className="flex items-center gap-1">
             <span className="text-xs font-bold text-gray-900">
               {/* Updated: For Arabic (currency then price), for English (price then currency) */}

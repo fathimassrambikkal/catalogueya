@@ -4,22 +4,34 @@ import { useTranslation } from "react-i18next";
 import { useSettings } from "../hooks/useSettings";
 
 /* -----------------------------------
-   EXACT  SVGs (UNCHANGED)
+   SAFARI-SAFE SVG ICONS
 ----------------------------------- */
-const IoAdd = () => (
-  <svg viewBox="0 0 512 512" fill="currentColor">
+const IoAdd = ({ className = "" }) => (
+  <svg
+    viewBox="0 0 512 512"
+    className={className}
+    fill="currentColor"
+    aria-hidden="true"
+    focusable="false"
+  >
     <path d="M256 112a16 16 0 0 0-16 16v112H128a16 16 0 0 0 0 32h112v112a16 16 0 0 0 32 0V272h112a16 16 0 0 0 0-32H272V128a16 16 0 0 0-16-16z" />
   </svg>
 );
 
-const IoRemove = () => (
-  <svg viewBox="0 0 512 512" fill="currentColor">
+const IoRemove = ({ className = "" }) => (
+  <svg
+    viewBox="0 0 512 512"
+    className={className}
+    fill="currentColor"
+    aria-hidden="true"
+    focusable="false"
+  >
     <path d="M112 240a16 16 0 0 0 0 32h288a16 16 0 0 0 0-32z" />
   </svg>
 );
 
 /* -----------------------------------
-   Pre-fetch FAQs
+   PRE-FETCH FAQs
 ----------------------------------- */
 let preloadedFAQs = null;
 
@@ -41,10 +53,10 @@ let preloadedFAQs = null;
 })();
 
 /* -----------------------------------
-   FAQ ITEM (PURE CSS)
+   FAQ ITEM
 ----------------------------------- */
 const MemoizedFaqItem = React.memo(
-  ({ faq, isOpen, onToggle, answer, index, isRTL }) => (
+  ({ faq, isOpen, onToggle, index, isRTL }) => (
     <div
       className={`relative border rounded-3xl overflow-hidden transition-colors duration-300 ${
         isOpen
@@ -64,18 +76,21 @@ const MemoizedFaqItem = React.memo(
         {/* RTL ICON */}
         {isRTL && (
           <span
-            className={`w-4 h-4 md:w-5 md:h-5 flex items-center justify-center flex-shrink-0
-                        text-blue-500 text-xl transform transition-transform duration-300 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
+            className={`flex items-center justify-center flex-shrink-0
+                        text-blue-500 transition-transform duration-300
+                        ${isOpen ? "rotate-180" : ""}`}
           >
-            {isOpen ? <IoRemove /> : <IoAdd />}
+            {isOpen ? (
+              <IoRemove className="w-4 h-4 md:w-5 md:h-5 block" />
+            ) : (
+              <IoAdd className="w-4 h-4 md:w-5 md:h-5 block" />
+            )}
           </span>
         )}
 
         {/* QUESTION */}
         <span
-          className={`font-medium text-gray-900 text-xs sm:text-sm md:text-base flex-1 break-words leading-snug  ${
+          className={`font-medium text-gray-900 text-xs sm:text-sm md:text-base flex-1 break-words leading-snug ${
             isRTL ? "text-right mr-3" : "text-left ml-3"
           }`}
         >
@@ -85,17 +100,20 @@ const MemoizedFaqItem = React.memo(
         {/* LTR ICON */}
         {!isRTL && (
           <span
-            className={`w-4 h-4 md:w-5 md:h-5 flex items-center justify-center flex-shrink-0
-                        text-blue-500 text-xl transform transition-transform duration-300 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
+            className={`flex items-center justify-center flex-shrink-0
+                        text-blue-500 transition-transform duration-300
+                        ${isOpen ? "rotate-180" : ""}`}
           >
-            {isOpen ? <IoRemove /> : <IoAdd />}
+            {isOpen ? (
+              <IoRemove className="w-4 h-4 md:w-5 md:h-5 block" />
+            ) : (
+              <IoAdd className="w-4 h-4 md:w-5 md:h-5 block" />
+            )}
           </span>
         )}
       </button>
 
-      {/* ANSWER (PURE CSS COLLAPSE) */}
+      {/* ANSWER */}
       <div
         id={`faq-answer-${index}`}
         role="region"
@@ -104,23 +122,22 @@ const MemoizedFaqItem = React.memo(
           ${isOpen ? "max-h-96 opacity-100 pb-5" : "max-h-0 opacity-0 pb-0"}
           ${isRTL ? "text-right" : ""}`}
       >
-        <p className="text-gray-600 text-sm leading-relaxed">{answer}</p>
+        <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
       </div>
     </div>
   )
 );
 
 /* -----------------------------------
-   MAIN FAQ
+   MAIN FAQ COMPONENT
 ----------------------------------- */
 export default function Faq() {
   const [faqs, setFaqs] = useState(preloadedFAQs || []);
   const [openIndex, setOpenIndex] = useState(null);
-  const [loadedAnswers, setLoadedAnswers] = useState({});
   const [isLoading, setIsLoading] = useState(!preloadedFAQs);
+
   const { i18n } = useTranslation();
   const { settings } = useSettings();
-
   const isRTL = i18n.language === "ar";
 
   useEffect(() => {
@@ -159,13 +176,8 @@ export default function Faq() {
   }, []);
 
   const toggleFaq = useCallback(
-    (index) => {
-      setOpenIndex((prev) => (prev === index ? null : index));
-      setLoadedAnswers((prev) =>
-        prev[index] ? prev : { ...prev, [index]: faqs[index]?.answer || "" }
-      );
-    },
-    [faqs]
+    (index) => setOpenIndex((prev) => (prev === index ? null : index)),
+    []
   );
 
   const faqList = useMemo(
@@ -177,34 +189,31 @@ export default function Faq() {
               key={index}
               faq={faq}
               isOpen={openIndex === index}
-              answer={loadedAnswers[index]}
               onToggle={() => toggleFaq(index)}
               index={index}
               isRTL={isRTL}
             />
           )),
-    [faqs, isLoading, openIndex, loadedAnswers, isRTL, toggleFaq]
+    [faqs, isLoading, openIndex, isRTL, toggleFaq]
   );
 
   return (
     <section
       dir={isRTL ? "rtl" : "ltr"}
-      className="bg-white px-6 md:px-16 flex justify-center items-center py-2"
+      className="bg-white px-6 md:px-16 flex justify-center py-2"
       id="faq"
     >
       <div className="w-full max-w-4xl p-10 md:p-16 flex flex-col items-center gap-12">
-       <div className="text-center mb-4 px-4">
-  <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight leading-tight text-gray-900">
-      {settings.questions_title }
-  </h2>
-  <p className="text-base sm:text-lg md:text-xl font-normal tracking-normal leading-relaxed text-gray-600 mt-1 max-w-xl mx-auto">
-  {settings.questions_sub_title}
-  </p>
-</div>
-
-        <div className="w-full max-w-3xl space-y-4">
-          {faqList}
+        <div className="text-center px-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-gray-900">
+            {settings.questions_title}
+          </h2>
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 mt-1 max-w-xl mx-auto">
+            {settings.questions_sub_title}
+          </p>
         </div>
+
+        <div className="w-full max-w-3xl space-y-4">{faqList}</div>
       </div>
     </section>
   );

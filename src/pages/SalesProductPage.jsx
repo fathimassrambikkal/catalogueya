@@ -21,17 +21,17 @@ const StarIcon = ({ filled, className = "" }) => (
   </svg>
 );
 
-const HeartIcon = ({ filled, className = "" }) => (
-  <svg 
-    className={`${className} transform-gpu`}
-    width="14" 
-    height="14" 
+const HeartIcon = ({ filled = false, className = "" }) => (
+  <svg
     viewBox="0 0 24 24"
+    className={className}
     fill={filled ? "currentColor" : "none"}
-    stroke="currentColor"
+    stroke={filled ? "none" : "currentColor"}
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
   >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
@@ -254,12 +254,12 @@ function SalesProductPageComponent() {
                           : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"
                       }`}
                   >
-                    <HeartIcon
-                      filled={isFav}
-                      className={`text-xs sm:text-sm md:text-base transform-gpu ${
-                        isFav ? "text-red-500" : "hover:text-red-400"
-                      }`}
-                    />
+              <HeartIcon
+              filled={isFav}
+              className={`w-3 h-3 ${
+                isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
+              }`}
+            />
                   </button>
 
                   {/* 🖼️ Product Image */}
