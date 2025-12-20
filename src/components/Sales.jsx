@@ -22,22 +22,21 @@ const StarIcon = ({ filled, className = "" }) => (
   </svg>
 );
 
-const HeartIcon = ({ filled = false, className = "" }) => (
-  <svg
+const HeartIcon = ({ filled, className = "" }) => (
+  <svg 
+    className={`${className}`}
+    width="12" 
+    height="12" 
     viewBox="0 0 24 24"
-    className={className}
     fill={filled ? "currentColor" : "none"}
-    stroke={filled ? "none" : "currentColor"}
+    stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    aria-hidden="true"
-    focusable="false"
   >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
-
 
 const ChevronLeftIcon = ({ className = "" }) => (
   <svg 
@@ -219,12 +218,9 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
           ${isFav ? "bg-red-100 text-red-600 border-red-200" : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"}`}
       >
         <HeartIcon
-        filled={isFav}
-        className={`w-3 h-3 ${
-          isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
-        }`}
-      />
-
+          filled={isFav}
+          className={`text-xs ${isFav ? "text-red-500" : "hover:text-red-400"}`}
+        />
       </button>
 
       <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
