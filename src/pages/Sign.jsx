@@ -72,8 +72,8 @@ const WelcomePage = ({ user, userType, onGoToDashboard, onSignOut }) => {
   const userName = user?.name || user?.email?.split('@')[0] || 'User';
   
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-blue-50/30 flex items-center justify-center z-50 p-4">
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-8 max-w-md w-full animate-scale-in">
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-blue-50/30 flex items-center justify-center z-50 p-4 overflow-x-hidden">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-4 sm:p-6 md:p-8 w-[95%] max-w-md animate-scale-in">
         
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -352,7 +352,7 @@ export default function Sign() {
 
       {/* Main Login Form - Only show if not showing welcome page */}
       {!showWelcome && (
-        <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/30 py-16 px-4">
+        <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/30 py-16 px-4 overflow-x-hidden">
           <div className="w-full max-w-md">
             <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl p-8">
               

@@ -270,7 +270,7 @@ const DeleteIcon = () => (
             >
               <div className="flex items-center justify-center">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" fill="none" stroke="currentColor">
+                  <svg className="w-6 h-6 sm:w-5 sm:h-5 text-blue-500" fill="none" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
