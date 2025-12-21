@@ -10,7 +10,7 @@ const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 // SVG Icons
 const ArrowLeftIcon = ({ className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="18" 
     height="18" 
     viewBox="0 0 24 24"
@@ -42,7 +42,7 @@ const HeartIcon = ({ filled = false, className = "" }) => (
 
 const StarIcon = ({ filled, className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="16" 
     height="16" 
     viewBox="0 0 576 512"
@@ -56,7 +56,7 @@ const StarIcon = ({ filled, className = "" }) => (
 
 const ShareIcon = ({ className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="16" 
     height="16" 
     viewBox="0 0 24 24"
@@ -72,13 +72,13 @@ const ShareIcon = ({ className = "" }) => (
 
 const ChatIcon = ({ className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="17" 
     height="17" 
     viewBox="0 0 16 16"
     fill="currentColor"
   >
-    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z" />
+    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.520.263-1.639.742-3.468 1.105z" />
     <circle cx="4" cy="8" r="1" />
     <circle cx="8" cy="8" r="1" />
     <circle cx="12" cy="8" r="1" />
@@ -87,7 +87,7 @@ const ChatIcon = ({ className = "" }) => (
 
 const CloseIcon = ({ className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="16" 
     height="16" 
     viewBox="0 0 24 24"
@@ -116,26 +116,26 @@ const PremiumIconButton = ({ onClick, title, children }) => (
       border border-[rgba(255,255,255,0.28)]
       shadow-[0_8px_24px_rgba(0,0,0,0.18)]
       hover:bg-white/55 transition-all duration-300
-      transform-gpu
+      
       active:scale-95
     "
   >
     <span
       className="absolute inset-0 rounded-[16px]
       bg-gradient-to-br from-white/70 via-white/10 to-transparent
-      opacity-40 pointer-events-none transform-gpu"
+      opacity-40 pointer-events-none "
     />
     <span
       className="absolute inset-0 rounded-[16px]
       bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)]
-      opacity-35 pointer-events-none transform-gpu"
+      opacity-35 pointer-events-none "
     />
     <span
       className="absolute inset-0 rounded-[16px]
       bg-gradient-to-t from-black/20 to-transparent
-      opacity-20 pointer-events-none transform-gpu"
+      opacity-20 pointer-events-none "
     />
-    <span className="relative z-10 flex items-center justify-center transform-gpu">
+    <span className="relative z-10 flex items-center justify-center ">
       {children}
     </span>
   </button>
@@ -149,22 +149,76 @@ const getSafeRating = (value) => {
   return num;
 };
 
-// ✅ Function to get country from IP
+// ✅ Function to get country from IP - UPDATED with fallback and better error handling
 const getCountryFromIP = async () => {
   try {
-    const res = await fetch("https://ipapi.co/json/");
-    const data = await res.json();
-    return data.country_name;
+    // Try ipapi.co first with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    try {
+      const res = await fetch("https://ipapi.co/json/", {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      const data = await res.json();
+      return data.country_name;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
   } catch (e) {
-    console.warn("Failed to get country from IP:", e);
-    return null;
+    console.warn("Failed to get country from ipapi.co:", e);
+    
+    // Try alternative API as fallback
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      try {
+        const res = await fetch("https://ipwho.is/", {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        
+        const data = await res.json();
+        return data.country;
+      } catch (fallbackError) {
+        clearTimeout(timeoutId);
+        throw fallbackError;
+      }
+    } catch (fallbackError) {
+      console.warn("Fallback IP API also failed:", fallbackError);
+      return null;
+    }
   }
 };
 
-// ✅ Build payload for showProduct API
+// ✅ Build payload for showProduct API - UPDATED with better error handling
 const buildShowProductPayload = async () => {
-  const country = await getCountryFromIP();
-  console.log("🌍 Country:", country);
+  let country = null;
+  
+  try {
+    country = await getCountryFromIP();
+    console.log("🌍 Country:", country);
+  } catch (error) {
+    console.warn("Failed to get country, proceeding without it:", error);
+  }
 
   const device = navigator.userAgent;
 
@@ -173,11 +227,15 @@ const buildShowProductPayload = async () => {
     sessionStorage.getItem("token") ||
     null;
 
-  return {
+  // Build the payload - ensure it matches what your backend expects
+  const payload = {
     device,
-    country,
+    ...(country && { country }), // Only include country if we have it
     ...(token && { token }),
   };
+
+  console.log("📦 showProduct payload:", payload);
+  return payload;
 };
 
 export default function NewArrivalProductProfile() {
@@ -209,7 +267,7 @@ export default function NewArrivalProductProfile() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  // ✅ Function to refresh product data
+  // ✅ Function to refresh product data - UPDATED with simplified payload option
   const refreshProductData = useCallback(async () => {
     if (!resolvedProductId) return;
     
@@ -217,9 +275,20 @@ export default function NewArrivalProductProfile() {
       console.log("🔄 Refreshing new arrival product data for ID:", resolvedProductId);
       setLoading(true);
       
-      // ✅ Use POST request with payload
-      const payload = await buildShowProductPayload();
-      const productResponse = await getProduct(resolvedProductId, payload);
+      // ✅ Try with a simpler payload first if the full one fails
+      let productResponse;
+      try {
+        // First try with the full payload
+        const payload = await buildShowProductPayload();
+        productResponse = await getProduct(resolvedProductId, payload);
+      } catch (apiError) {
+        console.warn("Full payload failed, trying simplified payload:", apiError);
+        // Fallback to simpler payload
+        const simplePayload = {
+          device: navigator.userAgent,
+        };
+        productResponse = await getProduct(resolvedProductId, simplePayload);
+      }
       
       const productData =
         productResponse?.data?.data?.product ||
@@ -334,7 +403,7 @@ export default function NewArrivalProductProfile() {
     };
   }, [resolvedProductId, product?.company_id, refreshProductData]);
 
-  // ✅ Fetch product + similar products - SINGLE API CALL
+  // ✅ Fetch product + similar products - UPDATED with error handling
   useEffect(() => {
     let mounted = true;
 
@@ -343,11 +412,43 @@ export default function NewArrivalProductProfile() {
         setLoading(true);
         setError(null);
 
-        // ✅ SINGLE POST REQUEST with payload
-        const payload = await buildShowProductPayload();
-        console.log("📦 showProduct payload for new arrival:", payload);
+        console.log("📦 Fetching new arrival product for ID:", resolvedProductId);
 
-        const productResponse = await getProduct(resolvedProductId, payload);
+        // Try different payload approaches
+        let productResponse;
+        let lastError = null;
+        
+        // Try approach 1: Full payload
+        try {
+          const payload = await buildShowProductPayload();
+          console.log("📦 Trying with full payload:", payload);
+          productResponse = await getProduct(resolvedProductId, payload);
+        } catch (error1) {
+          lastError = error1;
+          console.warn("Approach 1 failed, trying approach 2:", error1);
+          
+          // Try approach 2: Simple payload
+          try {
+            const simplePayload = {
+              device: navigator.userAgent,
+            };
+            console.log("📦 Trying with simple payload:", simplePayload);
+            productResponse = await getProduct(resolvedProductId, simplePayload);
+          } catch (error2) {
+            lastError = error2;
+            console.warn("Approach 2 failed, trying approach 3:", error2);
+            
+            // Try approach 3: Empty payload
+            try {
+              console.log("📦 Trying with empty payload");
+              productResponse = await getProduct(resolvedProductId, {});
+            } catch (error3) {
+              lastError = error3;
+              throw error3;
+            }
+          }
+        }
+
         const productData =
           productResponse?.data?.data?.product ||
           productResponse?.data?.product;
@@ -433,7 +534,16 @@ export default function NewArrivalProductProfile() {
         }
       } catch (err) {
         console.error("❌ Error loading new arrival product:", err);
-        if (mounted) setError(`Failed to load product: ${err.message}`);
+        if (mounted) {
+          // Provide more specific error message
+          if (err.response?.status === 422) {
+            setError(`API validation error (422). Please check the product ID: ${resolvedProductId}`);
+          } else if (err.response?.status === 404) {
+            setError(`Product not found (404). ID: ${resolvedProductId}`);
+          } else {
+            setError(`Failed to load product: ${err.message || "Network error"}`);
+          }
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -522,9 +632,9 @@ export default function NewArrivalProductProfile() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen transform-gpu">
-        <div className="text-center py-20 text-lg text-gray-600 transform-gpu">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4 transform-gpu"></div>
+      <div className="flex justify-center items-center min-h-screen ">
+        <div className="text-center py-20 text-lg text-gray-600 ">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4 "></div>
           Loading new arrival...
         </div>
       </div>
@@ -533,8 +643,8 @@ export default function NewArrivalProductProfile() {
 
   if (error || !product) {
     return (
-      <div className="flex justify-center items-center min-h-screen transform-gpu">
-        <div className="text-center py-20 text-lg text-gray-600 transform-gpu">
+      <div className="flex justify-center items-center min-h-screen ">
+        <div className="text-center py-20 text-lg text-gray-600 ">
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
           {error || "New arrival product not found."}
           <div className="text-sm text-gray-500 mb-4">
@@ -542,9 +652,15 @@ export default function NewArrivalProductProfile() {
           </div>
           <button
             onClick={() => navigate(-1)}
-            className="mt-4 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition transform-gpu"
+            className="mt-4 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition "
           >
             Go Back
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 ml-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition "
+          >
+            Retry
           </button>
         </div>
       </div>
@@ -562,55 +678,52 @@ export default function NewArrivalProductProfile() {
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-20 sm:top-8 left-5 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition transform-gpu active:scale-95"
+        className="absolute top-20 sm:top-8 left-5 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition  active:scale-95"
       >
-        <ArrowLeftIcon className="text-gray-700 text-sm sm:text-md md:text-lg transform-gpu" />
+        <ArrowLeftIcon className="text-gray-700 text-sm sm:text-md md:text-lg " />
       </button>
 
       <section
         key={product.id}
-        className="max-w-[1200px] mx-auto px-6 md:px-10 py-24 grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-16 bg-white rounded-3xl shadow-sm transform-gpu animate-fade-in"
+        className="max-w-[1200px] mx-auto px-6 md:px-10 py-24 grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-16 bg-white rounded-3xl shadow-sm  animate-fade-in"
       >
         {/* LEFT: Image viewer – VisionOS style with internal thumbnails */}
-        <div className="relative flex flex-col md:sticky md:top-24 h-fit w-full transform-gpu">
+        <div className="relative flex flex-col md:sticky md:top-24 h-fit w-full ">
           {/* MAIN IMAGE WRAPPER */}
-          <div className="relative w-full h-[520px] md:h-[620px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm transform-gpu">
+          <div className="relative w-full h-[520px] md:h-[620px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm ">
             
             {/* MAIN IMAGE (Animated) */}
               <img
                 key={selectedImage}
                 src={selectedImage}
                 alt={product.name}
-                className="w-full h-full object-cover transform-gpu animate-image-fade"
+                className="w-full h-full object-cover  animate-image-fade"
                 onError={(e) => (e.target.src = "/api/placeholder/500/500")}
               />
            
 
-            {/* NEW Badge */}
-            <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold border border-blue-100 shadow-sm transform-gpu">
-              NEW
-            </div>
+           
 
             {/* RIGHT SIDE ICONS */}
-            <div className="absolute top-4 right-4 flex flex-col gap-3 z-30 transform-gpu">
+            <div className="absolute top-4 right-4 flex flex-col gap-3 z-30 ">
               <PremiumIconButton
                 title={isFavourite ? "Remove from favourites" : "Add to favourites"}
                 onClick={() => toggleFavourite(product)}
               >
                 <HeartIcon
-            filled={isFav}
-            className={`w-3 h-3 ${
-              isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
-            }`}
-          />
+                  filled={isFavourite}
+                  className={`w-3 h-3 ${
+                    isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                  }`}
+                />
               </PremiumIconButton>
 
               <PremiumIconButton title="Share product" onClick={handleShare}>
-                <ShareIcon className="text-[16px] text-[rgba(18,18,18,0.88)] transform-gpu" />
+                <ShareIcon className="text-[16px] text-[rgba(18,18,18,0.88)] " />
               </PremiumIconButton>
 
               <PremiumIconButton title="Chat" onClick={handleChat}>
-                <ChatIcon className="text-[17px] text-[rgba(18,18,18,0.88)] transform-gpu" />
+                <ChatIcon className="text-[17px] text-[rgba(18,18,18,0.88)] " />
               </PremiumIconButton>
             </div>
 
@@ -624,7 +737,7 @@ export default function NewArrivalProductProfile() {
                   bg-white/55 backdrop-blur-xl border border-white/40
                   shadow-[0_8px_20px_rgba(0,0,0,0.15)]
                   z-30
-                  transform-gpu
+                  
                 "
               >
                 {productImages.slice(0, 5).map((src, idx) => {
@@ -641,7 +754,7 @@ export default function NewArrivalProductProfile() {
                         rounded-xl overflow-hidden
                         flex items-center justify-center
                         border transition-all duration-300
-                        transform-gpu
+                        
                         ${isActive
                           ? "border-gray-900 shadow-xl bg-white/40 scale-105"
                           : "border-gray-300 opacity-80 bg-white/25 hover:scale-105"
@@ -652,14 +765,14 @@ export default function NewArrivalProductProfile() {
                       {/* Smooth highlight outline */}
                       {isActive && (
                         <div
-                          className="absolute inset-0 rounded-xl border-[2.5px] border-white shadow-lg transform-gpu"
+                          className="absolute inset-0 rounded-xl border-[2.5px] border-white shadow-lg "
                         />
                       )}
 
                       {/* Thumbnail image */}
                       <img
                         src={img}
-                        className={`w-full h-full object-cover transform-gpu ${isActive ? 'scale-110' : 'scale-100'}`}
+                        className={`w-full h-full object-cover  ${isActive ? 'scale-110' : 'scale-100'}`}
                         onError={(e) => (e.target.src = "/api/placeholder/200/200")}
                       />
                     </button>
@@ -671,21 +784,21 @@ export default function NewArrivalProductProfile() {
         </div>
 
         {/* RIGHT: Product details panel */}
-        <div className="flex flex-col gap-6 transform-gpu">
+        <div className="flex flex-col gap-6 ">
           {/* Category + Title + Company */}
-          <div className="space-y-2 transform-gpu">
-            <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500 transform-gpu">
-              NEW ARRIVAL
+          <div className="space-y-2 ">
+            <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500 ">
+              NEW PRODUCT
             </p>
 
-            <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight transform-gpu">
+            <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight ">
               {product.name}
             </h1>
 
             {product.company_name && (
               <button
                 onClick={handleCompanyClick}
-                className="text-sm text-blue-600 font-medium hover:underline w-fit flex items-center gap-1 transform-gpu"
+                className="text-sm text-blue-600 font-medium hover:underline w-fit flex items-center gap-1 "
               >
                 <span className="text-gray-500">by</span>
                 {product.company_name}
@@ -694,47 +807,47 @@ export default function NewArrivalProductProfile() {
           </div>
 
           {/* Price + rating */}
-          <div className="space-y-1 transform-gpu">
-            <div className="flex items-baseline gap-2 transform-gpu">
-              <span className="text-3xl font-semibold text-gray-900 transform-gpu">
+          <div className="space-y-1 ">
+            <div className="flex items-baseline gap-2 ">
+              <span className="text-3xl font-semibold text-gray-900 ">
                 QAR {product.price}
               </span>
 
               {product.oldPrice && (
-                <span className="text-sm line-through text-gray-400 transform-gpu">
+                <span className="text-sm line-through text-gray-400 ">
                   QAR {product.oldPrice}
                 </span>
               )}
 
               {product.discount_percent && (
-                <span className="text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 transform-gpu">
+                <span className="text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 ">
                   -{product.discount_percent}%
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-1 transform-gpu">
+            <div className="flex items-center gap-1 ">
               {Array.from({ length: 5 }).map((_, i) => (
                 <StarIcon
                   key={i}
                   filled={i < Math.round(averageRating)}
-                  className={`w-4 h-4 transform-gpu ${
+                  className={`w-4 h-4  ${
                     i < Math.round(averageRating)
                       ? "text-gray-900"
                       : "text-gray-400"
                   }`}
                 />
               ))}
-              <span className="text-sm text-gray-600 transform-gpu">
+              <span className="text-sm text-gray-600 ">
                 {averageRating.toFixed(1)}
               </span>
             </div>
           </div>
 
           {/* Product Details */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3 transform-gpu">
-            <h3 className="text-lg font-medium text-gray-900 transform-gpu">Product Details</h3>
-            <p className="text-gray-600 leading-relaxed text-sm md:text-base transform-gpu">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3 ">
+            <h3 className="text-lg font-medium text-gray-900 ">Product Details</h3>
+            <p className="text-gray-600 leading-relaxed text-sm md:text-base ">
               {product.description ||
                 `Discover our latest ${product.name} — fresh new design and premium quality.`}
             </p>
@@ -743,39 +856,39 @@ export default function NewArrivalProductProfile() {
           {/* Write Review Button */}
           <button
             onClick={() => setShowReviewModal(true)}
-            className="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition transform-gpu active:scale-95"
+            className="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition  active:scale-95"
           >
             Write a Review
           </button>
 
           {/* Customer Reviews */}
-          <div className="space-y-3 transform-gpu">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between transform-gpu">
+          <div className="space-y-3 ">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between ">
               Customer Reviews
               {reviews.length > 0 && (
-                <span className="text-xs font-normal text-gray-500 transform-gpu">
+                <span className="text-xs font-normal text-gray-500 ">
                   {reviews.length} review{reviews.length > 1 ? "s" : ""}
                 </span>
               )}
             </h3>
 
-            <div className="space-y-2 transform-gpu">
+            <div className="space-y-2 ">
               {reviews.slice(0, 2).map((rev) => (
                 <div
                   key={rev.id}
-                  className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm transform-gpu"
+                  className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm "
                 >
-                  <div className="flex justify-between mb-1 transform-gpu">
-                    <span className="font-semibold text-gray-800 transform-gpu">{rev.name}</span>
-                    <span className="text-gray-500 text-xs transform-gpu">{rev.date}</span>
+                  <div className="flex justify-between mb-1 ">
+                    <span className="font-semibold text-gray-800 ">{rev.name}</span>
+                    <span className="text-gray-500 text-xs ">{rev.date}</span>
                   </div>
 
-                  <div className="flex items-center gap-1 mb-1 transform-gpu">
+                  <div className="flex items-center gap-1 mb-1 ">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <StarIcon
                         key={i}
                         filled={i < getSafeRating(rev.rating)}
-                        className={`w-4 h-4 transform-gpu ${
+                        className={`w-4 h-4  ${
                           i < getSafeRating(rev.rating)
                             ? "text-gray-950"
                             : "text-gray-400"
@@ -784,12 +897,12 @@ export default function NewArrivalProductProfile() {
                     ))}
                   </div>
 
-                  <p className="text-gray-700 text-sm transform-gpu">{rev.comment}</p>
+                  <p className="text-gray-700 text-sm ">{rev.comment}</p>
                 </div>
               ))}
 
               {reviews.length === 0 && (
-                <p className="text-sm text-gray-500 transform-gpu">
+                <p className="text-sm text-gray-500 ">
                   No reviews yet – be the first to share your experience.
                 </p>
               )}
@@ -797,7 +910,7 @@ export default function NewArrivalProductProfile() {
               {reviews.length > 2 && (
                 <button
                   onClick={() => setShowReviewModal(true)}
-                  className="text-sm text-blue-600 hover:underline transform-gpu"
+                  className="text-sm text-blue-600 hover:underline "
                 >
                   View {reviews.length - 2} more review(s)
                 </button>
@@ -809,19 +922,19 @@ export default function NewArrivalProductProfile() {
 
       {/* ⭐ Similar Products Section */}
       {similarProducts.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 py-20 transform-gpu">
-          <h2 className="text-3xl font-light text-gray-900 text-start mb-12 transform-gpu">
+        <section className="max-w-6xl mx-auto px-6 py-20 ">
+          <h2 className="text-3xl font-light text-gray-900 text-start mb-12 ">
             Similar Products
           </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 transform-gpu">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 ">
             {similarProducts.map((sp) => {
               const isFav = favourites.some((f) => f.id === sp.id);
 
               return (
                 <div
                   key={sp.id}
-                  className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer transform-gpu hover:scale-[1.03]"
+                  className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer  hover:scale-[1.03]"
                   onClick={() => navigate(`/newarrivalprofile/${sp.id}`)}
                 >
                   {/* ❤️ Favourite Button */}
@@ -832,21 +945,23 @@ export default function NewArrivalProductProfile() {
                     }}
                     className={`absolute top-3 right-3 z-20 p-2 rounded-full border border-gray-200 
                       bg-white hover:bg-gray-100 shadow-sm transition-all hover:scale-110 
-                      active:scale-90 transform-gpu
+                      active:scale-90 
                       ${isFav ? "text-red-500" : "text-gray-500"}`}
                   >
                     <HeartIcon
                       filled={isFav}
-                      className="text-lg transform-gpu"
+                      className={`w-3 h-3 ${
+                        isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                      }`}
                     />
                   </button>
 
                   {/* Product Image */}
-                  <div className="w-full h-[220px] overflow-hidden rounded-t-2xl transform-gpu">
+                  <div className="w-full h-[220px] overflow-hidden rounded-t-2xl ">
                     <img
                       src={sp.image}
                       alt={sp.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 transform-gpu"
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 "
                       onError={(e) => {
                         e.target.src = "/api/placeholder/300/300";
                       }}
@@ -854,15 +969,15 @@ export default function NewArrivalProductProfile() {
                   </div>
 
                   {/* Title + Price */}
-                  <div className="p-4 transform-gpu">
-                    <h3 className="font-medium text-gray-800 text-sm truncate mb-1 transform-gpu">
+                  <div className="p-4 ">
+                    <h3 className="font-medium text-gray-800 text-sm truncate mb-1 ">
                       {sp.name}
                     </h3>
 
-                    <div className="flex items-center gap-1 text-gray-700 transform-gpu">
-                      <span className="text-sm font-semibold transform-gpu">QAR {sp.price}</span>
+                    <div className="flex items-center gap-1 text-gray-700 ">
+                      <span className="text-sm font-semibold ">QAR {sp.price}</span>
                       {sp.oldPrice && (
-                        <span className="text-xs line-through text-gray-400 transform-gpu">
+                        <span className="text-xs line-through text-gray-400 ">
                           QAR {sp.oldPrice}
                         </span>
                       )}
@@ -881,7 +996,7 @@ export default function NewArrivalProductProfile() {
       {/* Review Modal – Glass Skiper style with list + form */}
       {showReviewModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg px-4 animate-fade-in transform-gpu"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg px-4 animate-fade-in "
           onClick={() => setShowReviewModal(false)}
         >
           <div
@@ -892,12 +1007,12 @@ export default function NewArrivalProductProfile() {
               shadow-[0_12px_32px_rgba(0,0,0,0.12)]
               p-6 space-y-6
               animate-slide-up
-              transform-gpu
+              
             "
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between transform-gpu">
-              <h3 className="text-lg font-semibold text-gray-900 transform-gpu">
+            <div className="flex items-center justify-between ">
+              <h3 className="text-lg font-semibold text-gray-900 ">
                 Customer Reviews
               </h3>
               <button
@@ -905,34 +1020,34 @@ export default function NewArrivalProductProfile() {
                 className="
                   h-8 w-8 flex items-center justify-center rounded-full
                   bg-white/60 text-gray-500 hover:bg-white
-                  transition transform-gpu
+                  transition 
                   active:scale-95
                 "
               >
-                <CloseIcon className="w-4 h-4 transform-gpu" />
+                <CloseIcon className="w-4 h-4 " />
               </button>
             </div>
 
             {/* All reviews list */}
-            <div className="max-h-[40vh] overflow-y-auto space-y-3 pr-1 transform-gpu">
+            <div className="max-h-[40vh] overflow-y-auto space-y-3 pr-1 ">
               {reviews.length > 0 ? (
                 reviews.map((rev) => (
                   <div
                     key={rev.id}
-                    className="border border-white/40 rounded-2xl p-4 bg-white/60 transform-gpu"
+                    className="border border-white/40 rounded-2xl p-4 bg-white/60 "
                   >
-                    <div className="flex justify-between mb-1 transform-gpu">
-                      <span className="font-semibold text-gray-800 transform-gpu">
+                    <div className="flex justify-between mb-1 ">
+                      <span className="font-semibold text-gray-800 ">
                         {rev.name}
                       </span>
-                      <span className="text-gray-500 text-xs transform-gpu">{rev.date}</span>
+                      <span className="text-gray-500 text-xs ">{rev.date}</span>
                     </div>
-                    <div className="flex items-center gap-1 mb-1 transform-gpu">
+                    <div className="flex items-center gap-1 mb-1 ">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <StarIcon
                           key={i}
                           filled={i < getSafeRating(rev.rating)}
-                          className={`w-4 h-4 transform-gpu ${
+                          className={`w-4 h-4  ${
                             i < getSafeRating(rev.rating)
                               ? "text-gray-950"
                               : "text-gray-400"
@@ -940,24 +1055,24 @@ export default function NewArrivalProductProfile() {
                         />
                       ))}
                     </div>
-                    <p className="text-gray-700 text-sm transform-gpu">{rev.comment}</p>
+                    <p className="text-gray-700 text-sm ">{rev.comment}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center text-sm transform-gpu">
+                <p className="text-gray-500 text-center text-sm ">
                   No reviews yet – be the first to review!
                 </p>
               )}
             </div>
 
-            <div className="space-y-3 pt-2 border-t border-white/40 transform-gpu">
-              <h3 className="text-md font-semibold text-gray-900 transform-gpu">
+            <div className="space-y-3 pt-2 border-t border-white/40 ">
+              <h3 className="text-md font-semibold text-gray-900 ">
                 Write a Review
               </h3>
 
               {/* Name */}
-              <div className="space-y-1.5 transform-gpu">
-                <label className="text-xs font-medium text-gray-700 transform-gpu">
+              <div className="space-y-1.5 ">
+                <label className="text-xs font-medium text-gray-700 ">
                   Your Name
                 </label>
                 <input
@@ -970,21 +1085,21 @@ export default function NewArrivalProductProfile() {
                     bg-white/60 border border-white/20
                     placeholder:text-gray-400
                     focus:outline-none focus:ring-2 focus:ring-gray-900/40
-                    transform-gpu
+                    
                   "
                 />
               </div>
 
               {/* Rating */}
-              <div className="space-y-1.5 transform-gpu">
-                <label className="text-xs font-medium text-gray-700 transform-gpu">
+              <div className="space-y-1.5 ">
+                <label className="text-xs font-medium text-gray-700 ">
                   Rating
                 </label>
                 <div
                   className="
                     flex items-center justify-center gap-3 px-4 py-2.5
                     rounded-xl bg-white/50 border border-white/20
-                    transform-gpu
+                    
                   "
                 >
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -992,11 +1107,11 @@ export default function NewArrivalProductProfile() {
                       key={i}
                       type="button"
                       onClick={() => setReviewRating(i + 1)}
-                      className="transition-transform duration-150 transform-gpu active:scale-95"
+                      className="transition-transform duration-150  active:scale-95"
                     >
                       <StarIcon
                         filled={i < reviewRating}
-                        className={`w-6 h-6 transform-gpu`}
+                        className={`w-6 h-6 `}
                       />
                     </button>
                   ))}
@@ -1004,8 +1119,8 @@ export default function NewArrivalProductProfile() {
               </div>
 
               {/* Comment */}
-              <div className="space-y-1.5 transform-gpu">
-                <label className="text-xs font-medium text-gray-700 transform-gpu">
+              <div className="space-y-1.5 ">
+                <label className="text-xs font-medium text-gray-700 ">
                   Your Review
                 </label>
                 <textarea
@@ -1019,20 +1134,20 @@ export default function NewArrivalProductProfile() {
                     placeholder:text-gray-400
                     resize-none
                     focus:outline-none focus:ring-2 focus:ring-gray-900/40
-                    transform-gpu
+                    
                   "
                 />
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-1 transform-gpu">
+              <div className="flex justify-end gap-3 pt-1 ">
                 <button
                   onClick={() => setShowReviewModal(false)}
                   className="
                     px-4 py-2 text-sm rounded-xl
                     bg-white/70 text-gray-700
                     hover:bg-white transition
-                    transform-gpu
+                    
                     active:scale-95
                   "
                 >
@@ -1043,7 +1158,7 @@ export default function NewArrivalProductProfile() {
                   disabled={!reviewText || !reviewName || reviewRating === 0}
                   className={`
                     px-4 py-2 text-sm rounded-xl text-white
-                    transform-gpu
+                    
                     active:scale-95
                     ${
                       reviewText && reviewName && reviewRating

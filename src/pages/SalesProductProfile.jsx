@@ -599,12 +599,12 @@ export default function SalesProductProfile() {
                 title={isFavourite ? "Remove from favourites" : "Add to favourites"}
                 onClick={() => toggleFavourite(product)}
               >
-            <HeartIcon
-            filled={isFav}
-            className={`w-3 h-3 ${
-              isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
-            }`}
-          />
+                <HeartIcon
+                  filled={isFavourite}
+                  className={`w-3 h-3 ${
+                    isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                  }`}
+                />
               </PremiumIconButton>
 
               <PremiumIconButton title="Share product" onClick={handleShare}>
@@ -836,10 +836,12 @@ export default function SalesProductProfile() {
                       active:scale-90 transform-gpu
                       ${isFav ? "text-red-500" : "text-gray-500"}`}
                   >
-                    <HeartIcon
-                      filled={isFav}
-                      className="text-lg transform-gpu"
-                    />
+                   <HeartIcon
+                  filled={isFavourite}
+                  className={`w-3 h-3 ${
+                    isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                  }`}
+                />
                   </button>
 
                   {/* Product Image */}

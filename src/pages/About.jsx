@@ -329,13 +329,13 @@ export default function About() {
           <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-6 sm:gap-8 lg:gap-16 mt-6 sm:mt-8">
             <div className="flex-1 flex flex-col items-center lg:items-start gap-1">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 text-center lg:text-left leading-snug tracking-tighter">
-                {settings?.about_title || "Trusted home services"}
+                {settings?.about_title }
               </h2>
             </div>
 
             <div className="flex-1 mt-4 sm:mt-6 lg:mt-0 text-center lg:text-left">
               <p className="text-gray-600 text-base sm:text-lg md:text-xl leading-relaxed font-light">
-                {settings?.about_text || "Catalogueya is your go-to platform for trusted home services. Discover verified professionals for every part of your home from repairs and renovations to cleaning and landscaping. We feature only reliable, subscribed businesses you can trust."}
+                {settings?.about_text }
               </p>
             </div>
           </div>
@@ -374,13 +374,13 @@ export default function About() {
           <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-4 sm:gap-6 lg:gap-12 mb-6 sm:mb-8 md:mb-12">
             <div className="flex-1 flex flex-col items-center lg:items-start gap-1">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 text-center lg:text-left leading-snug tracking-tighter">
-                {settings?.partners_title || "Partners in Progress"}
+                {settings?.partners_title }
               </h2>
             </div>
 
             <div className="flex-1 mt-4 sm:mt-6 lg:mt-0 text-center lg:text-left">
               <p className="text-gray-600 text-sm sm:text-base md:text-lg leading-relaxed">
-                {settings?.partners_text || "Long-term relationships built on creative trust, shared ambition, and measurable results."}
+                {settings?.partners_text }
               </p>
             </div>
           </div>

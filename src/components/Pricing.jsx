@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getSubscribeDetails } from "../api";
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
@@ -24,11 +24,13 @@ const Pricing = () => {
   const isRTL = i18n.language === "ar";
 
   const [tabs, setTabs] = useState([]);
-  const [pricing, setPricing] = useState({ monthly: 350, yearly: 3200 }); // Default values
+  const [pricing, setPricing] = useState({}); 
   const [activeTab, setActiveTab] = useState(null);
   const [currentFeatures, setCurrentFeatures] = useState([]);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [isLoading, setIsLoading] = useState(true);
+  const [tabDimensions, setTabDimensions] = useState({});
+  const tabRefs = useRef([]);
 
   // ================= FETCH DATA =================
   useEffect(() => {
@@ -41,14 +43,11 @@ const Pricing = () => {
         
         const data = response?.data;
         
-        // The API returns an object with numeric keys ("0", "1", "2") and "pricing"
         if (data) {
           console.log("📊 Response keys:", Object.keys(data));
           
-          // Extract tabs from numeric keys
           const extractedTabs = [];
           Object.keys(data).forEach(key => {
-            // Check if key is numeric (tabs data)
             if (!isNaN(key)) {
               const tabGroup = data[key];
               if (Array.isArray(tabGroup)) {
@@ -67,20 +66,24 @@ const Pricing = () => {
             setTabs([]);
           }
           
-          // Extract pricing data
           if (data.pricing) {
             console.log("💰 Pricing data:", data.pricing);
             setPricing(data.pricing);
+          } else {
+            console.warn("⚠️ No pricing data in API response");
+            setPricing({});
           }
         } else {
           console.warn("⚠️ No data in response");
           setTabs([]);
+          setPricing({});
         }
         
       } catch (err) {
         console.error("❌ Error fetching subscription details:", err);
         console.error("Error details:", err.response?.data || err.message);
         setTabs([]);
+        setPricing({});
       } finally {
         setIsLoading(false);
       }
@@ -89,12 +92,29 @@ const Pricing = () => {
     fetchData();
   }, []);
 
+  // ================= MEASURE TAB DIMENSIONS =================
+  useEffect(() => {
+    if (tabs.length > 0 && tabRefs.current.length === tabs.length) {
+      const dimensions = {};
+      tabRefs.current.forEach((ref, index) => {
+        if (ref) {
+          dimensions[index] = {
+            width: ref.offsetWidth,
+            height: ref.offsetHeight,
+          };
+        }
+      });
+      setTabDimensions(dimensions);
+    }
+  }, [tabs]);
+
   // ================= DEBUG LOGS =================
   useEffect(() => {
     console.log("📌 Tabs state:", tabs);
     console.log("📌 Active tab key:", activeTab);
     console.log("💰 Pricing state:", pricing);
-  }, [tabs, activeTab, pricing]);
+    console.log("📏 Tab dimensions:", tabDimensions);
+  }, [tabs, activeTab, pricing, tabDimensions]);
 
   // ================= ACTIVE TAB DATA =================
   const activeTabData = tabs.find(t => t.key === activeTab);
@@ -115,9 +135,10 @@ const Pricing = () => {
   }, [activeTabData]);
 
   // ================= PRICING =================
-  const monthlyPrice = pricing.monthly || 350;
-  const yearlyPrice = pricing.yearly || Math.round(monthlyPrice * 12 * 0.8);
-  const yearlySavings = monthlyPrice * 12 - yearlyPrice;
+  // Only show pricing if data exists from API
+  const monthlyPrice = pricing.monthly;
+  const yearlyPrice = pricing.yearly;
+  const yearlySavings = monthlyPrice && yearlyPrice ? monthlyPrice * 12 - yearlyPrice : 0;
 
   const handleBillingToggle = useCallback(() => {
     setBillingCycle(p => (p === "monthly" ? "yearly" : "monthly"));
@@ -129,6 +150,39 @@ const Pricing = () => {
 
   const getTabPosition = () =>
     tabs.findIndex(tab => tab.key === activeTab);
+
+  const getSliderWidth = () => {
+    const position = getTabPosition();
+    if (position !== -1 && tabDimensions[position]) {
+      return tabDimensions[position].width;
+    }
+    return 0;
+  };
+
+  const getSliderLeftPosition = () => {
+    const position = getTabPosition();
+    if (position === -1) return 0;
+    
+    let left = 0;
+    for (let i = 0; i < position; i++) {
+      if (tabDimensions[i]) {
+        left += tabDimensions[i].width;
+      } else {
+        // Estimate width if not measured yet
+        left += 120; // Default width estimate
+      }
+    }
+    
+    // Add gap between tabs (4px each side = 8px total per tab)
+    left += position * 8;
+    
+    return left;
+  };
+
+  // Initialize tab refs array
+  useEffect(() => {
+    tabRefs.current = tabRefs.current.slice(0, tabs.length);
+  }, [tabs]);
 
   // ================= RENDER =================
   if (isLoading) {
@@ -156,70 +210,81 @@ const Pricing = () => {
         {fw.simple_pricing}
       </h1>
 
-      {/* BILLING TOGGLE */}
-      <div className="flex items-center gap-4 my-8 p-3 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60">
-        <span className={`text-sm font-medium ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}>
-          {fw.monthly }
-        </span>
-        <button onClick={handleBillingToggle} className={`relative w-16 h-8 rounded-full ${billingCycle === "yearly" ? "bg-blue-500" : "bg-gray-300"}`}>
-          <div
-            className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${
-              billingCycle === "yearly"
-                ? isRTL ? "left-1" : "right-1"
-                : isRTL ? "right-1" : "left-1"
-            }`}
-          />
-        </button>
-        <span className={`text-sm font-medium ${billingCycle === "yearly" ? "text-blue-600" : "text-gray-500"}`}>
-          {fw.yearly }
-        </span>
-      </div>
+      {/* BILLING TOGGLE - Only show if we have pricing data */}
+      {monthlyPrice && yearlyPrice && (
+        <div className="flex items-center gap-4 my-8 p-2 rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60">
+          <span className={`text-sm font-medium ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}>
+            {fw.monthly}
+          </span>
+          <button onClick={handleBillingToggle} className={`relative w-16 h-8 rounded-full ${billingCycle === "yearly" ? "bg-blue-500" : "bg-gray-300"}`}>
+            <div
+              className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${
+                billingCycle === "yearly"
+                  ? isRTL ? "left-1" : "right-1"
+                  : isRTL ? "right-1" : "left-1"
+              }`}
+            />
+          </button>
+          <span className={`text-sm font-medium ${billingCycle === "yearly" ? "text-blue-600" : "text-gray-500"}`}>
+            {fw.yearly}
+          </span>
+        </div>
+      )}
 
-      {/* PRICE */}
-      <div className="text-center mb-6 space-y-2">
-        {billingCycle === "monthly" ? (
-          <>
-            <h2 className="text-2xl font-bold text-blue-500">
-              {monthlyPrice} {fw.qar }
-            </h2>
-            <p className="text-sm text-gray-500">{fw.per_month }</p>
-          </>
-        ) : (
-          <>
-            <h2 className="text-2xl font-bold text-blue-600">
+      {/* PRICE - Only show if we have pricing data */}
+      {monthlyPrice && billingCycle === "monthly" ? (
+        <div className="text-center mb-6 space-y-2">
+          <h2 className="text-2xl font-bold text-blue-500">
+            {monthlyPrice} {fw.qar}
+          </h2>
+          <p className="text-sm text-gray-500">{fw.per_month}</p>
+        </div>
+      ) : yearlyPrice && billingCycle === "yearly" ? (
+        <div className="text-center mb-6 space-y-2">
+          <h2 className="text-2xl font-bold text-blue-600">
+            {monthlyPrice && (
               <span className="line-through text-gray-400 mr-2">
-                {monthlyPrice * 12} {fw.qar }
+                {monthlyPrice * 12} {fw.qar}
               </span>
-              {yearlyPrice} {fw.qar }
-            </h2>
-            <p className="text-sm text-gray-500">
-              {fw.per_year || "per year"} ({yearlySavings} {fw.qar } saved)
-            </p>
-          </>
-        )}
-      </div>
+            )}
+            {yearlyPrice} {fw.qar}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {fw.per_year } {yearlySavings > 0 && `(${yearlySavings} ${fw.qar} saved)`}
+          </p>
+        </div>
+      ) : !isLoading && !monthlyPrice && !yearlyPrice && (
+        <div className="text-center mb-6 text-gray-500">
+          Pricing information not available
+        </div>
+      )}
 
       {/* Benefits Section */}
       <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center mb-4">
-        {fw.benefits_of_subscription }
+        {fw.benefits_of_subscription}
       </h2>
 
       {/* TABS */}
       {tabs.length > 0 ? (
-        <div className="relative flex items-center justify-center gap-1 mb-12 bg-white/70 rounded-2xl p-2 backdrop-blur shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] tabs-container">
-          {/* Sliding Background */}
-          {tabs.length > 0 && (
+        <div className="relative flex items-center justify-center gap-2 mb-12 bg-white/70 rounded-2xl p-2 backdrop-blur shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] tabs-container">
+          {/* Sliding Background - Dynamic Width */}
+          {tabs.length > 0 && activeTab !== null && (
             <div 
-              className={`absolute top-2 bottom-2 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 tab-slider tab-${getTabPosition()}`}
-              style={{ width: `calc(${100/tabs.length}% - 12px)` }}
+              className={`absolute top-2 bottom-2 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 tab-slider transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]`}
+              style={{ 
+                width: `${getSliderWidth()}px`,
+                left: isRTL ? 'auto' : `${getSliderLeftPosition()}px`,
+                right: isRTL ? `${getSliderLeftPosition()}px` : 'auto'
+              }}
             />
           )}
           
           {tabs.map((tab, index) => (
             <button
               key={tab.key}
+              ref={el => tabRefs.current[index] = el}
               onClick={() => handleTabClick(tab.key)}
-              className={`relative flex-1 max-w-[120px] sm:max-w-[160px] md:max-w-[180px] text-center px-5 sm:px-5 py-3 rounded-2xl text-[10px] sm:text-sm font-medium transition-all duration-300 whitespace-nowrap z-10 ${
+              className={`relative text-center px-4 sm:px-5 py-2 sm:py-3 rounded-2xl text-[10px] sm:text-sm font-medium transition-all duration-300 whitespace-nowrap z-10 ${
                 activeTab === tab.key 
                   ? "text-white scale-105" 
                   : "text-gray-700 hover:text-blue-500 hover:scale-105"
@@ -297,23 +362,6 @@ const Pricing = () => {
           </div>
         </div>
       )}
-
-      {/* CSS for animations */}
-      <style jsx>{`
-        /* Tab slider animation */
-        .tab-slider {
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* Position tabs based on LTR/RTL and active tab index */
-        ${tabs.map((_, index) => `
-          .tab-slider.tab-${index} {
-            left: ${isRTL 
-              ? `calc(100% - (${100/tabs.length}% - 12px) - ${(index * (100/tabs.length))}% + 4px)` 
-              : `calc(${(index * (100/tabs.length))}% + 4px)`};
-          }
-        `).join('')}
-      `}</style>
     </section>
   );
 };

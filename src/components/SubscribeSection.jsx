@@ -192,11 +192,7 @@ const SubscribeSection = memo(() => {
   return (
     <section className="relative flex flex-col items-center justify-center bg-white px-4 sm:px-6 md:px-12 py-10 overflow-hidden">
       {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white text-xs p-2 rounded opacity-50 z-50">
-          Cards: {subscribeData.cards.length}
-        </div>
-      )}
+    
       
       {/* Animated Heading - Only show if we have a title from fw */}
       {fw.subscribe_now && (

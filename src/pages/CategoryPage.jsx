@@ -726,11 +726,7 @@ const CategoryPage = memo(() => {
   return (
     <section
       className="min-h-screen w-full py-10 sm:py-14 px-4 sm:px-8 md:px-12 relative overflow-hidden transform-gpu"
-      style={{
-        backgroundColor: "#ffffff",
-        backgroundImage: "radial-gradient(rgba(59,130,246,0.08) 1.2px, transparent 0)",
-        backgroundSize: "18px 18px",
-      }}
+     
     >
      <button
     onClick={handleBackClick}

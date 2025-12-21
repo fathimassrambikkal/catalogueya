@@ -45,9 +45,7 @@ export default function Banner() {
   const responsiveImages = useMemo(() => {
     const apiImages = settings?.hero_backgrounds;
     
-    console.log("🎯 Banner received hero_backgrounds:", apiImages);
-    console.log("🎯 Type:", typeof apiImages);
-    console.log("🎯 Is array?", Array.isArray(apiImages));
+  
 
     // If undefined or null
     if (!apiImages) {
@@ -274,11 +272,6 @@ export default function Banner() {
         />
       ))}
 
-      {/* Fallback background if no images */}
-      {responsiveImages.length === 0 && (
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600" />
-      )}
-
       {/* Skeleton loading */}
       {!loadedImages[responsiveImages[0]?.id] &&
         responsiveImages.length > 0 &&
@@ -288,11 +281,12 @@ export default function Banner() {
 
       {/* Banner content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4 z-10">
-        <div className="w-full max-w-2xl z-30">
+        {/* Search bar positioned lower */}
+        <div className="w-full max-w-2xl z-30 mt-16 ">
           <SearchBar />
         </div>
 
-        <h1 className="font-semibold text-center text-white drop-shadow-lg text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight px-4">
+        <h1 className="font-semibold text-center text-white drop-shadow-lg text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight px-4 ">
           {headingText}
         </h1>
 

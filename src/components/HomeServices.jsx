@@ -223,26 +223,34 @@ export default function HomeServices() {
     };
   }, []);
 
-  // 3. PERFORMANCE OPTIMIZED DUPLICATION
+  // 3. PERFORMANCE OPTIMIZED DUPLICATION - FIXED FOR SEAMLESS INFINITE SCROLL
   const duplicatedCategories = useMemo(() => {
     if (!Array.isArray(categories) || categories.length === 0) return [];
     
-    // Calculate minimum needed for seamless loop
-    const totalNeeded = Math.max(12, cardsPerView * 3);
-    const repeats = Math.ceil(totalNeeded / categories.length);
+    // Create enough duplicates for truly infinite scroll without gaps
+    // We need at least 3 full sets for smooth transition
+    const baseCount = categories.length;
+    const repeats = Math.max(3, Math.ceil((cardsPerView * 3) / baseCount)) * 2;
     
-    return Array.from({ length: repeats }, () => categories).flat();
+    return Array.from({ length: repeats }, () => [...categories]).flat();
   }, [categories, cardsPerView]);
 
-  // 4. OPTIMIZED RAF ANIMATION WITH VISIBILITY & PAGE VISIBILITY
+  // 4. OPTIMIZED RAF ANIMATION WITH SEAMLESS INFINITE SCROLL
   const scrollRef = useRef(0);
   const requestRef = useRef(null);
   const isPaused = useRef(!isInViewport);
   const lastTimeRef = useRef(0);
   const SCROLL_SPEED = 0.25;
+  
+  // Track the total container width for modulo operation
+  const containerWidthRef = useRef(0);
 
   useEffect(() => {
     if (!containerRef.current || duplicatedCategories.length === 0) return;
+
+    // Calculate the total scrollable width (half of total since we duplicated)
+    const containerWidth = containerRef.current.scrollWidth / 2;
+    containerWidthRef.current = containerWidth;
 
     const animate = (time) => {
       if (!lastTimeRef.current) lastTimeRef.current = time;
@@ -255,13 +263,14 @@ export default function HomeServices() {
         return;
       }
 
-      const containerWidth = containerRef.current.scrollWidth / 2 || 0;
+      // Increment scroll position
       scrollRef.current += SCROLL_SPEED * (deltaTime / 16);
-
-      if (scrollRef.current >= containerWidth) scrollRef.current = 0;
-
-      // ✅ ONLY container animation gets will-change
-      containerRef.current.style.transform = `translate3d(-${scrollRef.current}px, 0, 0)`;
+      
+      // Use modulo for seamless infinite scrolling - NO RESET DELAY
+      const scrollPosition = scrollRef.current % containerWidth;
+      
+      // Apply the transform - this creates the infinite effect
+      containerRef.current.style.transform = `translate3d(-${scrollPosition}px, 0, 0)`;
 
       requestRef.current = requestAnimationFrame(animate);
     };
@@ -299,12 +308,13 @@ export default function HomeServices() {
     }
   }, [isInViewport]);
 
-  // 6. OPTIMIZED SMOOTH SCROLL (Apple's easing)
+  // 6. OPTIMIZED SMOOTH SCROLL WITH INFINITE SUPPORT
   const smoothScroll = useCallback((distance) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !containerWidthRef.current) return;
     
     const start = scrollRef.current;
-    const end = scrollRef.current + distance;
+    // Apply modulo to ensure we stay within bounds
+    const end = (scrollRef.current + distance) % containerWidthRef.current;
     const startTime = performance.now();
     const duration = 300;
 
@@ -315,10 +325,15 @@ export default function HomeServices() {
       // Apple's easing function (cubic-bezier(0.25, 0.46, 0.45, 0.94))
       const ease = 1 - Math.pow(1 - progress, 3);
       
-      scrollRef.current = start + (end - start) * ease;
+      // Calculate current position
+      const current = start + (end - start) * ease;
+      
+      // Apply modulo for infinite effect
+      const scrollPosition = current % containerWidthRef.current;
+      scrollRef.current = current;
       
       if (containerRef.current) {
-        containerRef.current.style.transform = `translate3d(-${scrollRef.current}px, 0, 0)`;
+        containerRef.current.style.transform = `translate3d(-${scrollPosition}px, 0, 0)`;
       }
 
       if (progress < 1) {
@@ -330,13 +345,15 @@ export default function HomeServices() {
   }, []);
 
   const handlePrev = useCallback(() => {
-    if (!containerRef.current) return;
-    smoothScroll(-(containerRef.current.offsetWidth / cardsPerView));
+    if (!containerRef.current || !containerWidthRef.current) return;
+    const moveDistance = containerRef.current.offsetWidth / cardsPerView;
+    smoothScroll(-moveDistance);
   }, [smoothScroll, cardsPerView]);
 
   const handleNext = useCallback(() => {
-    if (!containerRef.current) return;
-    smoothScroll(containerRef.current.offsetWidth / cardsPerView);
+    if (!containerRef.current || !containerWidthRef.current) return;
+    const moveDistance = containerRef.current.offsetWidth / cardsPerView;
+    smoothScroll(moveDistance);
   }, [smoothScroll, cardsPerView]);
 
   // 7. OPTIMIZED TOUCH HANDLERS WITH PASSIVE LISTENERS
@@ -357,9 +374,12 @@ export default function HomeServices() {
     
     const touchX = e.touches[0].clientX;
     const diff = touchStartX.current - touchX;
-
+    
+    // Apply modulo for infinite dragging
+    const newScroll = (scrollStartX.current + diff) % containerWidthRef.current;
     scrollRef.current = scrollStartX.current + diff;
-    containerRef.current.style.transform = `translate3d(-${scrollRef.current}px, 0, 0)`;
+    
+    containerRef.current.style.transform = `translate3d(-${newScroll}px, 0, 0)`;
   }, []);
 
   const handleTouchEnd = useCallback(() => {
@@ -488,7 +508,7 @@ export default function HomeServices() {
           {settings?.service_title}
         </h2>
 
-        <p className="text-gray-600 mt-2 text-sm sm:text-base tracking-normal">
+        <p className="text-gray-600 mt-2 text-[10px]  md:text-sm sm:text-base tracking-normal">
           {settings?.service_sub_title}
         </p>
       </div>
@@ -546,7 +566,7 @@ export default function HomeServices() {
             hover:scale-[1.06] active:scale-[0.95]
           "
           aria-label="Next categories"
-          style={{ willChange: "transform" }} // ✅ Correct: This animates on hover
+          style={{ willChange: "transform" }} 
         >
           <ChevronRight size={16} />
         </button>

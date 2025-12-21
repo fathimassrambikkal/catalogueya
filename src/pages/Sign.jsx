@@ -385,16 +385,16 @@ export default function Sign() {
               )}
 
               {/* Info message about temporary login */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200/50 text-blue-700 rounded-2xl text-sm backdrop-blur-sm">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3 shadow-sm">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200/50 text-blue-700 rounded-2xl text-sm backdrop-blur-sm">
+                <div className="flex items-center"> */}
+                  {/* <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3 shadow-sm"> */}
+                    {/* <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </div>
-                  <span className="font-medium">Demo Mode: Temporary authentication active</span>
-                </div>
-              </div>
+                    </svg> */}
+                  {/* </div> */}
+                  {/* <span className="font-medium">Demo Mode: Temporary authentication active</span> */}
+                {/* </div>
+              </div> */}
 
               {/* Tabs */}
               <div className="flex justify-center mb-8 bg-gray-100/50 rounded-2xl p-1 backdrop-blur-sm">

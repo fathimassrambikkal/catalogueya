@@ -284,23 +284,8 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
                    shadow-[0_4px_20px_rgba(255,255,255,0.15)] 
                    flex items-center justify-between overflow-hidden"
       >
-        <div className="flex flex-col w-[80%] z-10">
-                <h3
-        className="
-          font-semibold
-          text-xs
-          text-gray-900
-          mb-1
-          leading-snug
-          break-words
-          line-clamp-2
-          overflow-hidden
-        "
-        dir={i18n.language === "ar" ? "rtl" : "ltr"}
-      >
-        {product.name}
-      </h3>
-
+        <div className="flex flex-col w-[90%] z-10">
+          <h3 className="font-semibold text-[10px] md:text-xs truncate text-gray-900 mb-1">{product.name}</h3>
           <div className="flex items-center gap-1">
             <span className="text-xs font-bold text-gray-900">
               {/* Updated: For Arabic (currency then price), for English (price then currency) */}
@@ -316,7 +301,7 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
         </div>
 
         {/* MODERN CHAT BUTTON */}
-        {/* <button
+        <button
           onClick={(e) => e.stopPropagation()}
           title="Chat"
           className="
@@ -330,46 +315,46 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
             hover:bg-white/55
             transition-all duration-300
           "
-        > */}
+        >
           {/* Chrome liquid highlight */}
-          {/* <span
+          <span
             className="
               absolute inset-0 rounded-[16px]
               bg-gradient-to-br from-white/70 via-white/10 to-transparent
               opacity-40
               pointer-events-none
             "
-          /> */}
+          />
 
           {/* Glass ribbon streak */}
-          {/* <span
+          <span
             className="
               absolute inset-0 rounded-[16px]
               bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)]
               opacity-35
               pointer-events-none
             "
-          /> */}
+          />
 
           {/* Titanium black bottom depth */}
-          {/* <span
+          <span
             className="
               absolute inset-0 rounded-[16px]
               bg-gradient-to-t from-black/20 to-transparent
               opacity-20
               pointer-events-none
             "
-          /> */}
+          />
 
           {/* Chat Icon */}
-          {/* <ChatIcon
+          <ChatIcon
             className="
               text-[rgba(18,18,18,0.88)]
               drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
               relative z-10
             "
-          /> */}
-        {/* </button> */}
+          />
+        </button>
       </div>
     </div>
   );

@@ -254,11 +254,11 @@ function NewArrivalProductPageComponent() {
                       }`}
                   >
                     <HeartIcon
-                  filled={isFav}
-                  className={`w-3 h-3 ${
-                    isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
-                  }`}
-                />
+            filled={isFav}
+            className={`w-3 h-3 ${
+              isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
+            }`}
+          />
                   </button>
 
                   {/* 🖼️ Product Image */}
