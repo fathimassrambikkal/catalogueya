@@ -842,22 +842,22 @@ const BackIcon = () => (
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-row justify-between items-center gap-3 p-6 bg-white rounded-2xl shadow-xl">
+        <div className="flex flex-row justify-between items-center gap-4 p-6 bg-white rounded-2xl shadow-xl">
           <div className="text-sm text-gray-600">
             <p>Created on {invoiceDate} at {invoiceTime}</p>
           </div>
           <div className="flex flex-row gap-3">
             <button
               onClick={onBack}
-              className="px-5 py-1 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-[9px] md:text-sm"
+              className="px-5 py-2 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-[9px] md:text-sm"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateFatora}
-              className="px-5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-[9px] md:text-sm shadow-lg hover:shadow-xl"
+              className="px-5 py-2 bg-blue-500 text-white rounded-xl hover:from-blue-600 hover:to-blue-800 transition-all font-medium text-[9px] md:text-sm shadow-lg hover:shadow-xl"
             >
-              Create Fatora
+              Create 
             </button>
           </div>
         </div>

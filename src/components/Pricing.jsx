@@ -270,7 +270,7 @@ const Pricing = () => {
           {/* Sliding Background - Dynamic Width */}
           {tabs.length > 0 && activeTab !== null && (
             <div 
-              className={`absolute top-2 bottom-2 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 tab-slider transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]`}
+              className={`absolute top-2 bottom-2 rounded-2xl bg-blue-500 tab-slider transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]`}
               style={{ 
                 width: `${getSliderWidth()}px`,
                 left: isRTL ? 'auto' : `${getSliderLeftPosition()}px`,
@@ -309,7 +309,7 @@ const Pricing = () => {
           <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-10 border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
             {/* Left Content */}
             <div className={`w-full md:w-1/2 text-center md:text-left ${isRTL ? 'md:text-right' : ''} space-y-6`}>
-              <span className="inline-block bg-blue-50 text-blue-600 text-xs font-medium px-3 py-1.5 rounded-full">
+              <span className="inline-block bg-blue-50 text-blue-500 text-xs font-medium px-3 py-1.5 rounded-full">
                 {(activeTabData.key || "").toUpperCase()}
               </span>
               <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
@@ -338,7 +338,7 @@ const Pricing = () => {
                           flex-shrink-0 
                           w-6 h-6 
                           rounded-full 
-                          bg-gradient-to-br from-blue-500 to-blue-600
+                          bg-blue-500
                           flex items-center justify-center 
                           ${isRTL ? 'order-2 ml-2' : 'mr-2'}
                           shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_2px rgba(255,255,255,0.8)]

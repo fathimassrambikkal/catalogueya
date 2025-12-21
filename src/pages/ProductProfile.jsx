@@ -594,16 +594,16 @@ export default function ProductProfile() {
             {/* RIGHT SIDE ICONS */}
             <div className="absolute top-4 right-4 flex flex-col gap-3 z-30 transform-gpu">
               <PremiumIconButton
-                title={isFavourite ? "Remove from favourites" : "Add to favourites"}
-                onClick={() => toggleFavourite(product)}
-              >
-                <HeartIcon
-                filled={isFav}
-                className={`w-3 h-3 ${
-                  isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
-                }`}
-              />
-              </PremiumIconButton>
+    title={isFavourite ? "Remove from favourites" : "Add to favourites"}
+    onClick={() => toggleFavourite(product)}
+  >
+    <HeartIcon
+      filled={isFavourite}  // Changed from isFav to isFavourite
+      className={`w-3 h-3 ${
+        isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+      }`}
+    />
+  </PremiumIconButton>
 
               <PremiumIconButton title="Share product" onClick={handleShare}>
                 <ShareIcon className="text-[16px] text-[rgba(18,18,18,0.88)] transform-gpu" />
