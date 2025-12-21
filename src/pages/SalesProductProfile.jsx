@@ -149,22 +149,76 @@ const getSafeRating = (value) => {
   return num;
 };
 
-// ✅ Function to get country from IP
+// ✅ Function to get country from IP - UPDATED with fallback and better error handling
 const getCountryFromIP = async () => {
   try {
-    const res = await fetch("https://ipapi.co/json/");
-    const data = await res.json();
-    return data.country_name;
+    // Try ipapi.co first with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    try {
+      const res = await fetch("https://ipapi.co/json/", {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      const data = await res.json();
+      return data.country_name;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
   } catch (e) {
-    console.warn("Failed to get country from IP:", e);
-    return null;
+    console.warn("Failed to get country from ipapi.co:", e);
+    
+    // Try alternative API as fallback
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      try {
+        const res = await fetch("https://ipwho.is/", {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        
+        const data = await res.json();
+        return data.country;
+      } catch (fallbackError) {
+        clearTimeout(timeoutId);
+        throw fallbackError;
+      }
+    } catch (fallbackError) {
+      console.warn("Fallback IP API also failed:", fallbackError);
+      return null;
+    }
   }
 };
 
-// ✅ Build payload for showProduct API
+// ✅ Build payload for showProduct API - UPDATED with better error handling
 const buildShowProductPayload = async () => {
-  const country = await getCountryFromIP();
-  console.log("🌍 Country:", country);
+  let country = null;
+  
+  try {
+    country = await getCountryFromIP();
+    console.log("🌍 Country:", country);
+  } catch (error) {
+    console.warn("Failed to get country, proceeding without it:", error);
+  }
 
   const device = navigator.userAgent;
 
@@ -173,11 +227,15 @@ const buildShowProductPayload = async () => {
     sessionStorage.getItem("token") ||
     null;
 
-  return {
+  // Build the payload - ensure it matches what your backend expects
+  const payload = {
     device,
-    country,
+    ...(country && { country }), // Only include country if we have it
     ...(token && { token }),
   };
+
+  console.log("📦 showProduct payload:", payload);
+  return payload;
 };
 
 export default function SalesProductProfile() {
@@ -209,17 +267,28 @@ export default function SalesProductProfile() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  // ✅ Function to refresh product data
+  // ✅ Function to refresh product data - UPDATED with simplified payload option
   const refreshProductData = useCallback(async () => {
     if (!resolvedProductId) return;
     
     try {
-      console.log("🔄 Refreshing product data for ID:", resolvedProductId);
+      console.log("🔄 Refreshing sale product data for ID:", resolvedProductId);
       setLoading(true);
       
-      // ✅ Use POST request with payload
-      const payload = await buildShowProductPayload();
-      const productResponse = await getProduct(resolvedProductId, payload);
+      // ✅ Try with a simpler payload first if the full one fails
+      let productResponse;
+      try {
+        // First try with the full payload
+        const payload = await buildShowProductPayload();
+        productResponse = await getProduct(resolvedProductId, payload);
+      } catch (apiError) {
+        console.warn("Full payload failed, trying simplified payload:", apiError);
+        // Fallback to simpler payload
+        const simplePayload = {
+          device: navigator.userAgent,
+        };
+        productResponse = await getProduct(resolvedProductId, simplePayload);
+      }
       
       const productData =
         productResponse?.data?.data?.product ||
@@ -291,9 +360,9 @@ export default function SalesProductProfile() {
         }
       }
 
-      console.log("✅ Product data refreshed");
+      console.log("✅ Sale product data refreshed");
     } catch (err) {
-      console.error("❌ Error refreshing product:", err);
+      console.error("❌ Error refreshing sale product:", err);
       setError(`Failed to refresh product: ${err.message}`);
     } finally {
       setLoading(false);
@@ -334,7 +403,7 @@ export default function SalesProductProfile() {
     };
   }, [resolvedProductId, product?.company_id, refreshProductData]);
 
-  // ✅ Fetch product + similar products - SINGLE API CALL
+  // ✅ Fetch product + similar products - UPDATED with error handling
   useEffect(() => {
     let mounted = true;
 
@@ -343,11 +412,43 @@ export default function SalesProductProfile() {
         setLoading(true);
         setError(null);
 
-        // ✅ SINGLE POST REQUEST with payload
-        const payload = await buildShowProductPayload();
-        console.log("📦 showProduct payload:", payload);
+        console.log("📦 Fetching sale product for ID:", resolvedProductId);
 
-        const productResponse = await getProduct(resolvedProductId, payload);
+        // Try different payload approaches
+        let productResponse;
+        let lastError = null;
+        
+        // Try approach 1: Full payload
+        try {
+          const payload = await buildShowProductPayload();
+          console.log("📦 Trying with full payload:", payload);
+          productResponse = await getProduct(resolvedProductId, payload);
+        } catch (error1) {
+          lastError = error1;
+          console.warn("Approach 1 failed, trying approach 2:", error1);
+          
+          // Try approach 2: Simple payload
+          try {
+            const simplePayload = {
+              device: navigator.userAgent,
+            };
+            console.log("📦 Trying with simple payload:", simplePayload);
+            productResponse = await getProduct(resolvedProductId, simplePayload);
+          } catch (error2) {
+            lastError = error2;
+            console.warn("Approach 2 failed, trying approach 3:", error2);
+            
+            // Try approach 3: Empty payload
+            try {
+              console.log("📦 Trying with empty payload");
+              productResponse = await getProduct(resolvedProductId, {});
+            } catch (error3) {
+              lastError = error3;
+              throw error3;
+            }
+          }
+        }
+
         const productData =
           productResponse?.data?.data?.product ||
           productResponse?.data?.product;
@@ -357,7 +458,7 @@ export default function SalesProductProfile() {
           return;
         }
 
-        // ⭐ Transform main product - Sales-specific with isOnSale
+        // ⭐ Transform main product - Sales specific
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
@@ -392,7 +493,7 @@ export default function SalesProductProfile() {
         
         setSelectedImage(getImageUrl(mainImage));
 
-        // ⭐ Load saved reviews (sales-specific key)
+        // ⭐ Load saved reviews (sales specific key)
         const storageKey = `reviews_sale_${transformedProduct.id}`;
         const saved = JSON.parse(localStorage.getItem(storageKey)) || [];
         setReviews(saved);
@@ -432,8 +533,17 @@ export default function SalesProductProfile() {
           if (mounted) setSimilarProducts([]);
         }
       } catch (err) {
-        console.error("❌ Error loading product:", err);
-        if (mounted) setError(`Failed to load product: ${err.message}`);
+        console.error("❌ Error loading sale product:", err);
+        if (mounted) {
+          // Provide more specific error message
+          if (err.response?.status === 422) {
+            setError(`API validation error (422). Please check the product ID: ${resolvedProductId}`);
+          } else if (err.response?.status === 404) {
+            setError(`Product not found (404). ID: ${resolvedProductId}`);
+          } else {
+            setError(`Failed to load product: ${err.message || "Network error"}`);
+          }
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -545,6 +655,12 @@ export default function SalesProductProfile() {
             className="mt-4 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition transform-gpu"
           >
             Go Back
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 ml-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition transform-gpu"
+          >
+            Retry
           </button>
         </div>
       </div>
@@ -836,12 +952,12 @@ export default function SalesProductProfile() {
                       active:scale-90 transform-gpu
                       ${isFav ? "text-red-500" : "text-gray-500"}`}
                   >
-                   <HeartIcon
-                  filled={isFavourite}
-                  className={`w-3 h-3 ${
-                    isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
-                  }`}
-                />
+                    <HeartIcon
+                      filled={isFav}
+                      className={`w-3 h-3 ${
+                        isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                      }`}
+                    />
                   </button>
 
                   {/* Product Image */}
