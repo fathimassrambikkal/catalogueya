@@ -834,10 +834,12 @@ export default function ProductProfile() {
                       active:scale-90 transform-gpu
                       ${isFav ? "text-red-500" : "text-gray-500"}`}
                   >
-                    <HeartIcon
-                      filled={isFav}
-                      className="text-lg transform-gpu"
-                    />
+            <HeartIcon
+          filled={isFavourite}  // Changed from isFav to isFavourite
+          className={`w-3 h-3 ${
+            isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+          }`}
+        />
                   </button>
 
                   {/* Product Image */}

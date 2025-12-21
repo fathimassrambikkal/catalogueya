@@ -775,7 +775,7 @@ export default function CompanyPage() {
       {showContent ? (
         <section className="py-12 animate-fade-in transform-gpu">
           <h2 className="text-xl md:text-2xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12 text-start rtl:text-right transform-gpu">
-            Our Products ({products.length})
+            Our Products 
           </h2>
 
           {products.length > 0 ? (
