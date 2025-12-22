@@ -117,16 +117,18 @@ let preloadedData = {
       arr = products.map(product => ({
         id: product.id,
         name: product.name,
-        price: product.price,
-        oldPrice: null,
+        price: product.discount_price || product.price, // Use discount price as current price
+        oldPrice: product.discount_price ? product.price : null, // Show original price as old price if discount exists
         img: product.image,
         rating: parseFloat(product.rating) || 0,
         description: product.description,
-        isOnSale: true,
+        isOnSale: !!product.discount_price, // Mark as on sale if discount_price exists
         company_id: product.company_id,
         company_name: product.company_name || "Company",
         category_id: product.category_id,
-        category_name: product.category_name || "Product"
+        category_name: product.category_name || "Product",
+        discount_price: product.discount_price,
+        original_price: product.price
       }));
     }
     preloadedData.salesProducts = arr;
@@ -200,6 +202,11 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
     setImageError(true);
   };
 
+  // Calculate discount percentage if oldPrice exists
+  const discountPercentage = product.oldPrice ? 
+    Math.round(((parseFloat(product.oldPrice) - parseFloat(product.price)) / parseFloat(product.oldPrice)) * 100) : 
+    0;
+
   return (
     <div
       className="flex-none rounded-2xl overflow-hidden group cursor-pointer
@@ -254,6 +261,13 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
           </div>
         )}
 
+        {/* DISCOUNT BADGE */}
+        {/* {product.oldPrice && discountPercentage > 0 && (
+          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
+            -{discountPercentage}%
+          </div>
+        )} */}
+
         {/* RATING */}
         <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -278,8 +292,8 @@ const ProductCard = memo(({ product, isFav, onToggleFavourite, onNavigate, curre
       >
         <div className="flex flex-col w-[80%] z-10">
           <h3 className="font-semibold text-xs truncate text-gray-900 mb-1">{product.name}</h3>
-          <div className="flex items-center gap-1">
-            {/* UPDATED: Same currency formatting as NewArrivals */}
+          <div className="flex items-center gap-1 flex-wrap">
+            {/* UPDATED: Show discount price as current price */}
             <span className="text-xs font-bold text-gray-900">
               {i18n.language === "ar" ? `${currency} ${product.price}` : `${product.price} ${currency}`}
             </span>
@@ -386,15 +400,17 @@ function SalesComponent() {
           arr = products.map(product => ({
             id: product.id,
             name: product.name,
-            price: product.price,
-            oldPrice: null,
+            price: product.discount_price || product.price, // Use discount price as current price
+            oldPrice: product.discount_price ? product.price : null, // Show original price as old price if discount exists
             img: product.image,
             rating: parseFloat(product.rating) || 0,
             description: product.description,
             company_id: product.company_id,
             company_name: product.company_name || "Company",
             category_id: product.category_id,
-            category_name: product.category_name || "Product"
+            category_name: product.category_name || "Product",
+            discount_price: product.discount_price,
+            original_price: product.price
           }));
         }
 

@@ -702,10 +702,10 @@ export default function ProductProfile() {
               />
             
 
-            {/* PRODUCT Badge */}
+            {/* PRODUCT Badge
             <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold border border-blue-100 shadow-sm ">
               PRODUCT
-            </div>
+            </div> */}
 
             {/* RIGHT SIDE ICONS */}
             <div className="absolute top-4 right-4 flex flex-col gap-3 z-30 ">

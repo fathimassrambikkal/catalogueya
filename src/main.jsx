@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom"; // CHANGED: BrowserRouter → HashRouter
 import { FavouriteProvider } from "./context/FavouriteContext";
 import { FollowingProvider } from "./context/FollowingContext";
 import { FollowersProvider } from "./context/FollowersContext";
@@ -65,7 +65,7 @@ const Main = () => {
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <HashRouter> {/* CHANGED: BrowserRouter → HashRouter */}
         <FavouriteProvider>
           <FollowingProvider>
             <FollowersProvider>
@@ -75,7 +75,7 @@ const Main = () => {
             </FollowersProvider>
           </FollowingProvider>
         </FavouriteProvider>
-      </BrowserRouter>
+      </HashRouter> {/* CHANGED: BrowserRouter → HashRouter */}
     </ErrorBoundary>
   );
 };
