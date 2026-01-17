@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCategories } from "../api";
+import { searchCategories } from "../api";
 import { useTranslation } from "react-i18next"; 
 import qatarflag from "../assets/Qatarflag.jpg";
 
-// SVG Icons - EXACT SAME SIZE AND VISUAL STYLE AS AiOutlineSearch/AiOutlineClose
+// SVG Icons 
 const SearchIcon = ({ className = "" }) => (
   <svg 
     className={`${className} transform-gpu`}
@@ -39,101 +39,77 @@ const CloseIcon = ({ className = "" }) => (
 );
 
 // Pre-fetch categories immediately when module loads
-let preloadedCategories = null;
-
-(async () => {
-  try {
-    const res = await getCategories();
-    preloadedCategories = res?.data?.data || [];
-  } catch (err) {
-    console.warn("Pre-fetch categories failed:", err);
-    preloadedCategories = [];
-  }
-})();
 
 export default function SearchBar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categories, setCategories] = useState(preloadedCategories || []);
-  const [isLoading, setIsLoading] = useState(!preloadedCategories);
+ 
+  
+
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
   const { i18n } = useTranslation();
+  const [categories, setCategories] = useState([]);
+const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch categories if preload didn't complete
-  useEffect(() => {
-    if (preloadedCategories !== null) {
-      setCategories(preloadedCategories);
-      setIsLoading(false);
-      return;
+const [placeholderCategories, setPlaceholderCategories] = useState([]);
+
+
+const PLACEHOLDER_SEEDS = useMemo(() => {
+  return i18n.language === "ar"
+    ? ["ا", "ب", "خ", "ك"]
+    : ["a", "g", "p", "c"];
+}, [i18n.language]);
+
+useEffect(() => {
+  if (searchTerm) return; // ⛔ stop when typing
+
+  let active = true;
+
+  const loadPlaceholderData = async () => {
+    try {
+      const seed =
+        PLACEHOLDER_SEEDS[
+          Math.floor(Math.random() * PLACEHOLDER_SEEDS.length)
+        ];
+
+      const res = await searchCategories(seed);
+      if (!active) return;
+
+      const data = res?.data;
+
+      // ✅ make sure placeholder has MULTIPLE items
+      const combined = [
+        ...(data?.categories || []),
+        ...(data?.products || []).map(p => ({
+          id: `p-${p.id}`,
+          name: p.name
+        }))
+      ];
+
+      setPlaceholderCategories(combined);
+      setCurrentWordIndex(0);
+    } catch (e) {
+      console.warn("Placeholder fetch failed", e);
     }
+  };
 
-    let mounted = true;
-    const fetchCategories = async () => {
-      try {
-        const res = await getCategories();
-        if (mounted && res?.data?.data) {
-          setCategories(res.data.data);
-          preloadedCategories = res.data.data;
-        }
-        setIsLoading(false);
-      } catch (err) {
-        console.warn("Failed to fetch categories:", err);
-        setIsLoading(false);
-      }
-    };
+  loadPlaceholderData();
+  const id = setInterval(loadPlaceholderData, 10000); // refresh content
 
-    fetchCategories();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  return () => {
+    active = false;
+    clearInterval(id);
+  };
+}, [searchTerm, i18n.language, PLACEHOLDER_SEEDS]);
 
-  // Extract category titles from API response
-  const categoryTitles = useMemo(() => {
-    if (!Array.isArray(categories)) return [];
-    return categories.map((c) => c.title_en || c.title || c.name).filter(Boolean);
-  }, [categories]);
 
-  // Debounced search term for performance
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 50);
 
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
-  // SLOWER placeholder animation with proper cleanup
-  useEffect(() => {
-    if (searchTerm || categoryTitles.length === 0) return;
-    
-    let intervalId;
 
-    const animatePlaceholder = () => {
-      intervalId = setInterval(() => {
-        setShowPlaceholder(false);
-        setTimeout(() => {
-          setCurrentWordIndex((prev) => (prev + 1) % categoryTitles.length);
-          setShowPlaceholder(true);
-        }, 300);
-      }, 3000);
-    };
 
-    animatePlaceholder();
 
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [searchTerm, categoryTitles.length]);
-
-  // Show/hide dropdown based on search term
-  useEffect(() => {
-    setIsDropdownVisible(searchTerm.length > 0);
-  }, [searchTerm]);
 
   // Optimized click outside handler
   useEffect(() => {
@@ -168,33 +144,69 @@ export default function SearchBar() {
     }
   }, [searchTerm, categories, navigate]);
 
-  // Highly optimized category filtering
-  const filteredCategories = useMemo(() => {
-    if (!debouncedSearch || !Array.isArray(categories)) return [];
-    
-    const searchLower = debouncedSearch.toLowerCase();
-    const exactMatches = [];
-    const partialMatches = [];
-    
-    // Single pass optimization for API data structure
-    for (let i = 0; i < categories.length; i++) {
-      const cat = categories[i];
-      const title = cat.title_en || cat.title || cat.name;
-      if (!title) continue;
-      
-      const titleLower = title.toLowerCase();
-      
-      if (titleLower === searchLower) {
-        exactMatches.push({ ...cat, displayTitle: title });
-      } else if (titleLower.startsWith(searchLower)) {
-        exactMatches.push({ ...cat, displayTitle: title });
-      } else if (titleLower.includes(searchLower)) {
-        partialMatches.push({ ...cat, displayTitle: title });
-      }
+useEffect(() => {
+  if (!searchTerm.trim()) {
+    setCategories([]);
+    setIsDropdownVisible(false);
+    return;
+  }
+
+  const timer = setTimeout(async () => {
+    setIsLoading(true);
+    try {
+      const res = await searchCategories(searchTerm);
+      setCategories(res?.data?.categories || []);
+      setIsDropdownVisible(true);
+    } catch (err) {
+      console.warn("Category search failed", err);
+      setCategories([]);
+    } finally {
+      setIsLoading(false);
     }
-    
-    return [...exactMatches, ...partialMatches].slice(0, 12);
-  }, [debouncedSearch, categories]);
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [searchTerm]);
+
+
+
+const placeholderTitles = useMemo(() => {
+  return placeholderCategories
+    .map(c => c.title_en || c.title || c.name)
+    .filter(Boolean);
+}, [placeholderCategories]);
+
+useEffect(() => {
+  if (placeholderTitles.length > 0) {
+    setCurrentWordIndex(0);
+  }
+}, [placeholderTitles]);
+
+const placeholderContent = useMemo(() => {
+  if (placeholderTitles.length === 0) return null;
+  return placeholderTitles[currentWordIndex];
+}, [placeholderTitles, currentWordIndex]);
+
+
+useEffect(() => {
+  if (searchTerm || placeholderTitles.length === 0) return;
+
+  const interval = setInterval(() => {
+    setCurrentWordIndex(prev =>
+      placeholderTitles.length > 1
+        ? (prev + 1) % placeholderTitles.length
+        : prev // keep same word if only one
+    );
+  }, 2000);
+
+  return () => clearInterval(interval);
+}, [searchTerm, placeholderTitles]);
+
+
+
+
+
+
 
   // Optimized input handler
   const handleInputChange = useCallback((e) => {
@@ -208,19 +220,19 @@ export default function SearchBar() {
   }, []);
 
   // Optimized category selection (when clicking a category item)
-  const handleCategorySelect = useCallback((category) => {
-    const displayTitle = category.title_en || category.title || category.name;
-    setSearchTerm(displayTitle);
-    // Show the category name in search bar but don't navigate yet
-  }, []);
+const handleCategorySelect = useCallback(
+  (category) => {
+    navigate(`/category/${category.id}`);
+    setSearchTerm("");
+    setIsDropdownVisible(false);
+  },
+  [navigate]
+);
 
-  // Loading skeleton for placeholder
-  const placeholderContent = useMemo(() => {
-    if (isLoading || categoryTitles.length === 0) {
-      return "Search categories...";
-    }
-    return categoryTitles[currentWordIndex];
-  }, [isLoading, categoryTitles, currentWordIndex]);
+
+useEffect(() => {
+  console.log("Placeholder categories:", placeholderTitles);
+}, [placeholderTitles]);
 
   // Handle Enter key press
   const handleKeyPress = useCallback((e) => {
@@ -241,7 +253,8 @@ export default function SearchBar() {
         {/* Search Icon - Smaller size for desktop */}
         <SearchIcon
           className={`text-white transform-gpu
-            text-lg xs:text-xl sm:text-xl md:text-xl /* Smaller for desktop */
+              w-[clamp(19px,4vw,22px)]
+    h-[clamp(18px,4vw,22px)]
             ${i18n.language === "ar" ? "ml-2 xs:ml-3" : "mr-2 xs:mr-2"}
           `}
           style={{ willChange: 'transform' }}
@@ -252,25 +265,26 @@ export default function SearchBar() {
           value={searchTerm}
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
-          className="flex-1 outline-none bg-transparent text-white text-sm xs:text-base transform-gpu placeholder-transparent"
+          className="flex-1 outline-none bg-transparent text-white text-sm xs:text-base transform-gpu "
           style={{ willChange: 'transform' }}
-          placeholder={isLoading ? "Loading..." : "Search categories..."}
+          
         />
 
         {/* Placeholder with CSS animation */}
-        {!searchTerm && showPlaceholder && (
-          <span
-            key={placeholderContent}
-            className={`absolute top-3 xs:top-4 pointer-events-none select-none text-gray-400 text-sm xs:text-base transform-gpu animate-placeholder-slide ${
-              i18n.language === "ar"
-                ? "right-12 xs:right-14 text-right"
-                : "left-12 xs:left-14 text-left"
-            }`}
-            style={{ willChange: 'transform, opacity' }}
-          >
-            {placeholderContent}
-          </span>
-        )}
+        {!searchTerm && (
+  <span
+    key={`${placeholderContent}-${currentWordIndex}`}
+    className={`absolute top-3 xs:top-4 pointer-events-none select-none 
+      text-gray-400 text-sm xs:text-base 
+      transform-gpu animate-placeholder-slide
+      ${i18n.language === "ar"
+        ? "right-12 xs:right-14 text-right"
+        : "left-12 xs:left-14 text-left"
+      }`}
+  >
+    {placeholderContent}
+  </span>
+)}
 
         {/* Qatar Flag */}
         <img
@@ -294,16 +308,22 @@ export default function SearchBar() {
       {/* Dropdown Container - Pure CSS animation */}
       {isDropdownVisible && (
         <div
-          className="absolute top-full left-0 w-full mt-2 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl z-[9999] transform-gpu animate-dropdown-slide"
+          className="absolute top-full left-0 w-full mt-2
+  rounded-xl
+  border border-white/20
+  bg-black/40 backdrop-blur-xl
+  shadow-xl
+  z-[9999]
+  px-1 transform-gpu animate-dropdown-slide"
           style={{ 
             willChange: 'transform, opacity',
             isolation: 'isolate'
           }}
         >
           {/* Dropdown Header with Close Icon INSIDE */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/10">
+          <div className="flex items-center justify-between px-3 pt-1 pb-1 border-b border-white/10">
             <h3 className="text-white text-sm font-medium">
-              {filteredCategories.length} {filteredCategories.length === 1 ? 'result' : 'results'} found
+              {categories.length} {categories.length === 1 ? 'result' : 'results'} found
             </h3>
             <button
               onClick={handleClear}
@@ -314,125 +334,141 @@ export default function SearchBar() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-5 pt-4 pb-3 transform-gpu">
-            {isLoading ? (
-              // Loading skeleton
-              Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={`skeleton-${index}`}
-                  className="p-2 rounded-lg bg-white/10 animate-pulse transform-gpu"
-                  style={{ willChange: 'transform' }}
-                >
-                  <div className="h-4 bg-white/20 rounded transform-gpu"></div>
-                </div>
-              ))
-            ) : filteredCategories.length > 0 ? (
-              filteredCategories.map((cat, index) => (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategorySelect(cat)}
-                  className={`p-2 rounded-lg cursor-pointer text-center transition transform-gpu animate-item-fade-in ${
-                    cat.displayTitle?.toLowerCase() === searchTerm.toLowerCase()
-                      ? "bg-white/20 text-white font-semibold"
-                      : "text-gray-200 hover:bg-white/10"
-                  } active:scale-95`}
-                  style={{ 
-                    willChange: 'transform',
-                    animationDelay: `${index * 0.05}s`
-                  }}
-                >
-                  {cat.displayTitle}
-                </button>
-              ))
-            ) : (
-              <div 
-                className="col-span-full text-center text-gray-400 py-4 transform-gpu animate-fade-in"
-                style={{ willChange: 'transform' }}
-              >
-                No categories found
-              </div>
-            )}
-          </div>
           
-          {/* Search Button - Only navigates when clicked */}
-          {!isLoading && filteredCategories.length > 0 && (
-            <div className="px-5 pb-5 pt-2 border-t border-white/10 transform-gpu">
-              <button
-                onClick={handleSearch}
-                className="w-full bg-white/20 text-white py-2.5 rounded-xl hover:bg-white/30 transition font-medium transform-gpu animate-fade-in active:scale-95"
-                style={{ 
-                  willChange: 'transform',
-                  animationDelay: '0.2s'
-                }}
-              >
-                Search for "{searchTerm}"
-              </button>
-            </div>
-          )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-5 pt-4 pb-3 transform-gpu">
+  {isLoading ? (
+    // Loading skeleton
+    Array.from({ length: 6 }).map((_, index) => (
+      <div
+        key={`skeleton-${index}`}
+        className="p-2 rounded-lg bg-white/10 animate-pulse transform-gpu"
+        style={{ willChange: "transform" }}
+      >
+        <div className="h-4 bg-white/20 rounded transform-gpu"></div>
+      </div>
+    ))
+  ) : categories.length > 0 ? (
+    categories.map((cat, index) => {
+      const title = cat.title_en || cat.title || cat.name;
+
+      return (
+        <button
+          key={cat.id}
+          onClick={() => handleCategorySelect(cat)}
+       className={`
+  text-center
+  rounded-md
+  px-1 py-1
+  text-xs
+  sm:px-3 sm:py-2 sm:text-sm
+  transition
+  active:scale-95
+  ${
+    title.toLowerCase() === searchTerm.toLowerCase()
+      ? "bg-white/20 text-white font-semibold"
+      : "text-gray-300 hover:bg-white/10"
+  }
+`}
+
+          style={{
+            willChange: "transform",
+            animationDelay: `${index * 0.05}s`
+          }}
+        >
+          {title}
+        </button>
+      );
+    })
+  ) : (
+    <div
+      className="col-span-full text-center text-gray-400 py-4 transform-gpu animate-fade-in"
+      style={{ willChange: "transform" }}
+    >
+      No categories found
+    </div>
+  )}
+</div>
+
+          
+         
+         
         </div>
       )}
 
       {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes placeholder-slide {
-          0% {
-            opacity: 0;
-            transform: translateY(5px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes dropdown-slide {
-          0% {
-            opacity: 0;
-            transform: translateY(-10px) scale(0.95);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-        
-        @keyframes item-fade-in {
-          0% {
-            opacity: 0;
-            transform: translateY(5px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes fade-in {
-          0% {
-            opacity: 0;
-          }
-          100% {
-            opacity: 1;
-          }
-        }
-        
-        .animate-placeholder-slide {
-          animation: placeholder-slide 0.6s ease-out;
-        }
-        
-        .animate-dropdown-slide {
-          animation: dropdown-slide 0.2s ease-out;
-        }
-        
-        .animate-item-fade-in {
-          animation: item-fade-in 0.3s ease-out forwards;
-          opacity: 0;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
-      `}</style>
+ <style>{`
+/* ================= Placeholder animation ================= */
+@keyframes placeholder-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.animate-placeholder-slide {
+  animation: placeholder-slide 2s ease-in-out;
+}
+
+/* ================= Dropdown animation ================= */
+@keyframes dropdown-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown-slide {
+  animation: dropdown-slide 0.2s ease-out;
+}
+
+/* ================= Item animation ================= */
+@keyframes item-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-item-fade-in {
+  animation: item-fade-in 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+/* ================= Generic fade ================= */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+`}</style>
+
     </div>
   );
 }

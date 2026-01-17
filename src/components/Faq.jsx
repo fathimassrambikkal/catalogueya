@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getQuestions } from "../api";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../hooks/useSettings";
@@ -31,171 +31,138 @@ const IoRemove = ({ className = "" }) => (
 );
 
 /* -----------------------------------
-   PRE-FETCH FAQs
------------------------------------ */
-let preloadedFAQs = null;
-
-(async () => {
-  try {
-    const response = await getQuestions();
-    const list =
-      response.data?.data?.questions ||
-      response.data?.questions ||
-      (Array.isArray(response.data) ? response.data : []);
-
-    preloadedFAQs = list.map((faq) => ({
-      question: faq.title || faq.question || "No question",
-      answer: faq.description || faq.answer || "No answer",
-    }));
-  } catch {
-    preloadedFAQs = [];
-  }
-})();
-
-/* -----------------------------------
-   FAQ ITEM
+   FAQ ITEM (UI UNCHANGED, FASTEST POSSIBLE)
 ----------------------------------- */
 const MemoizedFaqItem = React.memo(
-  ({ faq, isOpen, onToggle, index, isRTL }) => (
-    <div
-      className={`relative border rounded-3xl overflow-hidden transition-colors duration-300 ${
-        isOpen
-          ? "bg-blue-50/80 border-blue-200"
-          : "bg-white/70 hover:bg-gray-50/80 border-gray-200"
-      }`}
-    >
-      <button
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        aria-controls={`faq-answer-${index}`}
-        id={`faq-question-${index}`}
-        className={`w-full flex items-center px-4 sm:px-6 py-5 ${
-          isRTL ? "flex-row-reverse" : ""
+  function FaqItem({ faq, isOpen, onToggle, index, isRTL }) {
+    return (
+      <div
+        className={`relative border rounded-3xl overflow-hidden transition-colors duration-300 ${
+          isOpen
+            ? "bg-blue-50/80 border-blue-200"
+            : "bg-white/70 hover:bg-gray-50/80 border-gray-200"
         }`}
+        style={{ contain: "layout paint" }}
       >
-        {/* RTL ICON */}
-        {isRTL && (
-          <span
-            className={`flex items-center justify-center flex-shrink-0
-                        text-blue-500 transition-transform duration-300
-                        ${isOpen ? "rotate-180" : ""}`}
-          >
-            {isOpen ? (
-              <IoRemove className="w-4 h-4 md:w-5 md:h-5 block" />
-            ) : (
-              <IoAdd className="w-4 h-4 md:w-5 md:h-5 block" />
-            )}
-          </span>
-        )}
-
-        {/* QUESTION */}
-        <span
-          className={`font-medium text-gray-900 text-xs sm:text-sm md:text-base flex-1 break-words leading-snug ${
-            isRTL ? "text-right mr-3" : "text-left ml-3"
+        <button
+          onClick={onToggle}
+          aria-expanded={isOpen}
+          aria-controls={`faq-answer-${index}`}
+          id={`faq-question-${index}`}
+          className={`w-full flex items-center px-4 sm:px-6 py-5 ${
+            isRTL ? "flex-row-reverse" : ""
           }`}
         >
-          {faq.question}
-        </span>
+          {/* RTL ICON */}
+          {isRTL && (
+            <span
+              className={`flex items-center justify-center flex-shrink-0
+                          text-blue-500 transition-transform duration-300
+                          ${isOpen ? "rotate-180" : ""}`}
+            >
+              {isOpen ? (
+                <IoRemove className="w-4 h-4 md:w-5 md:h-5 block" />
+              ) : (
+                <IoAdd className="w-4 h-4 md:w-5 md:h-5 block" />
+              )}
+            </span>
+          )}
 
-        {/* LTR ICON */}
-        {!isRTL && (
+          {/* QUESTION */}
           <span
-            className={`flex items-center justify-center flex-shrink-0
-                        text-blue-500 transition-transform duration-300
-                        ${isOpen ? "rotate-180" : ""}`}
+            className={`font-medium text-gray-900 text-xs sm:text-sm md:text-base flex-1 break-words leading-snug ${
+              isRTL ? "text-right mr-3" : "text-left ml-3"
+            }`}
           >
-            {isOpen ? (
-              <IoRemove className="w-4 h-4 md:w-5 md:h-5 block" />
-            ) : (
-              <IoAdd className="w-4 h-4 md:w-5 md:h-5 block" />
-            )}
+            {faq.question}
           </span>
-        )}
-      </button>
 
-      {/* ANSWER */}
-      <div
-        id={`faq-answer-${index}`}
-        role="region"
-        aria-labelledby={`faq-question-${index}`}
-        className={`px-4 sm:px-6 overflow-hidden transition-all duration-300 ease-out
-          ${isOpen ? "max-h-96 opacity-100 pb-5" : "max-h-0 opacity-0 pb-0"}
-          ${isRTL ? "text-right" : ""}`}
-      >
-        <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
+          {/* LTR ICON */}
+          {!isRTL && (
+            <span
+              className={`flex items-center justify-center flex-shrink-0
+                          text-blue-500 transition-transform duration-300
+                          ${isOpen ? "rotate-180" : ""}`}
+            >
+              {isOpen ? (
+                <IoRemove className="w-4 h-4 md:w-5 md:h-5 block" />
+              ) : (
+                <IoAdd className="w-4 h-4 md:w-5 md:h-5 block" />
+              )}
+            </span>
+          )}
+        </button>
+
+        {/* ANSWER — UI IDENTICAL */}
+        <div
+          id={`faq-answer-${index}`}
+          role="region"
+          aria-labelledby={`faq-question-${index}`}
+          className={`px-4 sm:px-6 overflow-hidden transition-all duration-300 ease-out
+            ${isOpen ? "max-h-96 opacity-100 pb-5" : "max-h-0 opacity-0 pb-0"}
+            ${isRTL ? "text-right" : ""}`}
+        >
+          <p className="text-gray-600 text-sm leading-relaxed">
+            {faq.answer}
+          </p>
+        </div>
       </div>
-    </div>
-  )
+    );
+  },
+  (prev, next) =>
+    prev.isOpen === next.isOpen &&
+    prev.faq.question === next.faq.question &&
+    prev.isRTL === next.isRTL
 );
 
 /* -----------------------------------
    MAIN FAQ COMPONENT
 ----------------------------------- */
 export default function Faq() {
-  const [faqs, setFaqs] = useState(preloadedFAQs || []);
+  const [faqs, setFaqs] = useState([]);
   const [openIndex, setOpenIndex] = useState(null);
-  const [isLoading, setIsLoading] = useState(!preloadedFAQs);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { i18n } = useTranslation();
   const { settings } = useSettings();
   const isRTL = i18n.language === "ar";
 
   useEffect(() => {
-    if (preloadedFAQs) {
-      setIsLoading(false);
-      return;
-    }
-
     let mounted = true;
 
     const fetchFaqs = async () => {
-      try {
-        setIsLoading(true);
-        const response = await getQuestions();
-        if (!mounted) return;
+      const response = await getQuestions();
+      if (!mounted) return;
 
-        const list =
-          response.data?.data?.questions ||
-          response.data?.questions ||
-          (Array.isArray(response.data) ? response.data : []);
+      const list =
+        response.data?.data?.questions ||
+        response.data?.questions ||
+        [];
 
-        const formatted = list.map((faq) => ({
+      setFaqs(
+        list.map((faq) => ({
           question: faq.title || faq.question || "No question",
           answer: faq.description || faq.answer || "No answer",
-        }));
-
-        setFaqs(formatted);
-        preloadedFAQs = formatted;
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
+        }))
+      );
+      setIsLoading(false);
     };
 
-    fetchFaqs();
-    return () => (mounted = false);
+    // idle-safe fetch
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(fetchFaqs);
+    } else {
+      setTimeout(fetchFaqs, 0);
+    }
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const toggleFaq = useCallback(
-    (index) => setOpenIndex((prev) => (prev === index ? null : index)),
-    []
-  );
-
-  const faqList = useMemo(
-    () =>
-      isLoading
-        ? null
-        : faqs.map((faq, index) => (
-            <MemoizedFaqItem
-              key={index}
-              faq={faq}
-              isOpen={openIndex === index}
-              onToggle={() => toggleFaq(index)}
-              index={index}
-              isRTL={isRTL}
-            />
-          )),
-    [faqs, isLoading, openIndex, isRTL, toggleFaq]
-  );
+  const toggleFaq = useCallback((index) => {
+    setOpenIndex((prev) => (prev === index ? null : index));
+  }, []);
 
   return (
     <section
@@ -213,7 +180,19 @@ export default function Faq() {
           </p>
         </div>
 
-        <div className="w-full max-w-3xl space-y-4">{faqList}</div>
+        <div className="w-full max-w-3xl space-y-4">
+          {!isLoading &&
+            faqs.map((faq, index) => (
+              <MemoizedFaqItem
+                key={faq.question}
+                faq={faq}
+                isOpen={openIndex === index}
+                onToggle={() => toggleFaq(index)}
+                index={index}
+                isRTL={isRTL}
+              />
+            ))}
+        </div>
       </div>
     </section>
   );

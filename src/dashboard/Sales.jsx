@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FaPlus, FaTimes, FaEdit } from "react-icons/fa";
+import { addSalesProduct } from "../api";
+
 
 export default function Sales({ products }) {
   const [saleProducts, setSaleProducts] = useState([]);
@@ -22,6 +24,25 @@ export default function Sales({ products }) {
       }))
     );
   }, [products]);
+
+
+  const saveSaleToApi = async (product) => {
+  if (!product.rate || !product.fromDate || !product.toDate) return;
+
+  try {
+    await addSalesProduct(product.id, {
+      discount: product.rate,
+      discount_from: product.fromDate,
+      discount_to: product.toDate,
+    });
+
+    console.log("✅ Sale saved for product:", product.id);
+  } catch (err) {
+    console.error("❌ Sale API failed:", err);
+    alert(`Failed to save sale for ${product.name}`);
+  }
+};
+
 
   /** Helpers */
   const getSaleInfo = useCallback((product) => {
@@ -70,20 +91,36 @@ export default function Sales({ products }) {
   };
 
   /** Publish bulk sale */
-  const handlePublishSales = () => {
-    if (!bulkFromDate || !bulkToDate) return alert("Select both dates");
-    if (new Date(bulkFromDate) >= new Date(bulkToDate)) return alert("End date must be after start date");
+ const handlePublishSales = async () => {
+  if (!bulkFromDate || !bulkToDate)
+    return alert("Select both dates");
 
-    setSaleProducts((prev) =>
-      prev.map((p) => ({
-        ...p,
+  if (new Date(bulkFromDate) >= new Date(bulkToDate))
+    return alert("End date must be after start date");
+
+  // 🔥 SAVE TO API
+  for (const product of saleProducts) {
+    if (product.rate > 0) {
+      await saveSaleToApi({
+        ...product,
         fromDate: bulkFromDate,
         toDate: bulkToDate,
-      }))
-    );
+      });
+    }
+  }
 
-    setShowStartModal(false);
-  };
+  // 🔄 Update UI
+  setSaleProducts((prev) =>
+    prev.map((p) => ({
+      ...p,
+      fromDate: bulkFromDate,
+      toDate: bulkToDate,
+    }))
+  );
+
+  setShowStartModal(false);
+};
+
 
   /** Open edit modal */
   const handleEditProduct = (product) => {
@@ -92,20 +129,29 @@ export default function Sales({ products }) {
   };
 
   /** Publish edit */
-  const handlePublishEdit = () => {
-    if (selectedEditProduct.fromDate && selectedEditProduct.toDate) {
-      if (new Date(selectedEditProduct.fromDate) >= new Date(selectedEditProduct.toDate)) {
-        return alert("End date must be after start date");
-      }
+  const handlePublishEdit = async () => {
+  const p = selectedEditProduct;
+
+  if (p.fromDate && p.toDate) {
+    if (new Date(p.fromDate) >= new Date(p.toDate)) {
+      return alert("End date must be after start date");
     }
+  }
 
-    setSaleProducts((prev) =>
-      prev.map((p) => (p.id === selectedEditProduct.id ? { ...selectedEditProduct } : p))
-    );
+  // 🔥 SAVE TO API
+  await saveSaleToApi(p);
 
-    setShowEditModal(false);
-    setSelectedEditProduct(null);
-  };
+  // 🔄 Update UI
+  setSaleProducts((prev) =>
+    prev.map((item) =>
+      item.id === p.id ? { ...p } : item
+    )
+  );
+
+  setShowEditModal(false);
+  setSelectedEditProduct(null);
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-2 sm:p-4 md:p-6 overflow-x-hidden">

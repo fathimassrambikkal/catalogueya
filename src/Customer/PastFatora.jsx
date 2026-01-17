@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCalendarAlt, FaClock, FaFileInvoice, FaBuilding, FaChevronRight, FaStar } from "react-icons/fa";
+import { FaCalendarAlt, FaChevronRight, FaStar } from "react-icons/fa";
 
 function PastFatora() {
   const [ratings, setRatings] = useState({});

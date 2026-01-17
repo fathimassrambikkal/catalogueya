@@ -3,7 +3,7 @@ import {
   FaFacebook, FaInstagram, FaYoutube, FaLinkedin,
   FaPinterest, FaSnapchat, FaWhatsapp, FaGooglePlusG,
   FaTrash, FaChevronDown, FaChevronUp,
-  FaCheckCircle
+  FaCheckCircle, FaTwitter
 } from "react-icons/fa";
 import { editCompanyPost } from "../api";
 
@@ -28,6 +28,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
     snapchat: "",
     whatsapp: "",
     google: "",
+    tweeter: "", // Added missing field
   };
 
   const [form, setForm] = useState(emptyForm);
@@ -65,28 +66,31 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       return;
     }
 
-    // Check if this is actually new data
-    const currentCompanyName = form.companyName || "";
-    const newCompanyName = companyInfo.companyName || "";
+    // Better check: compare the entire form data to prevent stale updates
+    const hasDataChanged = 
+      form.companyName !== (companyInfo.companyName || companyInfo.name || "") ||
+      form.companyDescription !== (companyInfo.companyDescription || companyInfo.description || "") ||
+      form.contactMobile !== (companyInfo.contactMobile || companyInfo.mobile || companyInfo.phone || "");
     
-    if (currentCompanyName === newCompanyName && currentCompanyName !== "") {
+    if (!hasDataChanged && form.companyName !== "") {
       console.log("📋 Same company data, skipping update");
       setIsLoading(false);
       return;
     }
 
-    console.log("📥 Loading new company data into form:", newCompanyName);
+    console.log("📥 Loading new company data into form:", companyInfo.companyName || companyInfo.name);
 
-    // Set form with new company data
+    // Set form with new company data - FIXED coverPhoto mapping
     setForm({
-      companyName: companyInfo.companyName || "",
-      companyDescription: companyInfo.companyDescription || "",
+      companyName: companyInfo.companyName || companyInfo.name || "",
+      companyDescription: companyInfo.companyDescription || companyInfo.description || "",
       contactMobile: companyInfo.contactMobile || companyInfo.mobile || companyInfo.phone || "",
       address: companyInfo.address || "",
       specialties: Array.isArray(companyInfo.specialties) ? companyInfo.specialties : [],
       logo: companyInfo.logo || null,
-      coverPhoto: companyInfo.coverPhoto || null,
-      facebook: companyInfo.facebook || companyInfo.tweeter || "",
+      // FIXED: Map cover_photo to coverPhoto correctly
+      coverPhoto: companyInfo.cover_photo || companyInfo.coverPhoto || null,
+      facebook: companyInfo.facebook || "",
       instagram: companyInfo.instagram || "",
       youtube: companyInfo.youtube || "",
       linkedin: companyInfo.linkedin || "",
@@ -94,6 +98,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       snapchat: companyInfo.snapchat || "",
       whatsapp: companyInfo.whatsapp || "",
       google: companyInfo.google || "",
+      tweeter: companyInfo.tweeter || "", // Added missing field
     });
     
     setIsLoading(false);
@@ -153,18 +158,18 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       // Prepare data according to backend API requirements
       const apiData = new FormData();
       
-      // Add files if they exist
-      if (form.logo && typeof form.logo !== 'string') {
+      // ✅ FIXED: Only send files if they exist as File objects
+      if (form.logo && form.logo instanceof File) {
         apiData.append("logo", form.logo);
-      } else if (!form.logo) {
-        // If logo is cleared, send empty string to remove it
+      } else if (form.logo === null) {
+        // Send empty string only if explicitly cleared (not undefined)
         apiData.append("logo", "");
       }
       
-      if (form.coverPhoto && typeof form.coverPhoto !== 'string') {
+      if (form.coverPhoto && form.coverPhoto instanceof File) {
         apiData.append("cover_photo", form.coverPhoto);
-      } else if (!form.coverPhoto) {
-        // If cover photo is cleared, send empty string to remove it
+      } else if (form.coverPhoto === null) {
+        // Send empty string only if explicitly cleared (not undefined)
         apiData.append("cover_photo", "");
       }
       
@@ -174,12 +179,22 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       apiData.append("phone", form.contactMobile || "");
       apiData.append("description", form.companyDescription || "");
       
-      // Add social media
+      // ✅ FIXED: Added specialties to API data
+      if (Array.isArray(form.specialties) && form.specialties.length > 0) {
+        form.specialties.forEach((specialty, index) => {
+          apiData.append(`specialties[${index}]`, specialty);
+        });
+      } else {
+        // Send empty array if no specialties
+        apiData.append("specialties[]", "");
+      }
+      
+      // Add social media - FIXED: tweeter uses its own field, not facebook
       apiData.append("whatsapp", form.whatsapp || "");
       apiData.append("snapchat", form.snapchat || "");
       apiData.append("pinterest", form.pinterest || "");
       apiData.append("instagram", form.instagram || "");
-      apiData.append("tweeter", form.facebook || "");  // Important: 'tweeter' uses facebook value
+      apiData.append("tweeter", form.tweeter || ""); // ✅ FIXED: Use tweeter field
       apiData.append("facebook", form.facebook || "");
       apiData.append("youtube", form.youtube || "");
       apiData.append("google", form.google || "");
@@ -189,7 +204,9 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       console.log('📤 Form data:', {
         name: form.companyName,
         phone: form.contactMobile,
-        address: form.address
+        address: form.address,
+        specialties: form.specialties,
+        tweeter: form.tweeter
       });
 
       // Send to API
@@ -197,16 +214,19 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
 
       // Update local state
       const updatedCompanyInfo = {
+        ...companyInfo,
         ...form,
         contactMobile: form.contactMobile,
+        cover_photo: form.coverPhoto, // Keep both for consistency
       };
       
       setCompanyInfo(updatedCompanyInfo);
       
-      // Also update localStorage
+      // Also update localStorage - FIXED: Proper file handling
       const currentCompany = JSON.parse(localStorage.getItem('company') || '{}');
       const updatedLocalCompany = {
         ...currentCompany,
+        id: companyId,
         name: form.companyName,
         description: form.companyDescription,
         phone: form.contactMobile,
@@ -216,14 +236,15 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
         snapchat: form.snapchat,
         pinterest: form.pinterest,
         instagram: form.instagram,
-        tweeter: form.facebook,
+        tweeter: form.tweeter, // ✅ FIXED: Store tweeter separately
         facebook: form.facebook,
         youtube: form.youtube,
         google: form.google,
         linkedin: form.linkedin,
         specialties: form.specialties,
-        logo: currentCompany.logo || form.logo,
-        cover_photo: currentCompany.cover_photo || form.coverPhoto,
+        // ✅ FIXED: Use new images if uploaded, otherwise keep existing
+        logo: form.logo instanceof File ? URL.createObjectURL(form.logo) : (form.logo || currentCompany.logo),
+        cover_photo: form.coverPhoto instanceof File ? URL.createObjectURL(form.coverPhoto) : (form.coverPhoto || currentCompany.cover_photo),
       };
       localStorage.setItem('company', JSON.stringify(updatedLocalCompany));
 
@@ -271,6 +292,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       apiData.append("youtube", "");
       apiData.append("google", "");
       apiData.append("linkedin", "");
+      apiData.append("specialties[]", ""); // Clear specialties
 
       await editCompanyPost(companyId, apiData);
 
@@ -337,12 +359,24 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
             This will clear all settings but keep you on this page. Continue?
           </p>
           <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 bg-gray-200 p-2 rounded">
-              Cancel
-            </button>
-            <button onClick={onConfirm} className="flex-1 bg-red-600 text-white p-2 rounded">
-              Delete All
-            </button>
+          <button
+          type="button"
+          onClick={handleSave}
+          className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold"
+        >
+          Save Settings
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowDeleteAlert('confirm')}
+          className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold"
+        >
+          Delete All
+        </button>
+
+
+
           </div>
         </div>
       </div>
@@ -470,10 +504,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 break-words">
             Settings
           </h1>
-          
-       
         </div>
-
 
         <div className="rounded-xl sm:rounded-2xl bg-white/80 backdrop-blur-lg border border-gray-200/60 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
           {/* FORM WITH SCROLL */}
@@ -689,6 +720,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
                     { key: "pinterest", icon: FaPinterest, color: "text-red-600" },
                     { key: "linkedin", icon: FaLinkedin, color: "text-blue-700" },
                     { key: "snapchat", icon: FaSnapchat, color: "text-yellow-400" },
+                    { key: "tweeter", icon: FaTwitter, color: "text-blue-400" }, // Added Twitter/X field
                   ].map(({ key, icon: Icon, color }) => (
                     <div
                       key={key}
@@ -700,7 +732,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
                       />
                       <input
                         name={key}
-                        placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
+                        placeholder={key === "tweeter" ? "Twitter/X" : key.charAt(0).toUpperCase() + key.slice(1)}
                         value={form[key] || ""}
                         onChange={handleChange}
                         className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500 text-xs sm:text-sm focus:placeholder-blue-300 transition-colors duration-200 disabled:opacity-50"
@@ -717,7 +749,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={isLoading || !companyId}
+                  
                   className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isLoading ? (
@@ -733,7 +765,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
                 <button
                   type="button"
                   onClick={() => setShowDeleteAlert("confirm")}
-                  disabled={isLoading || !companyId}
+                  
                   className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold text-sm sm:text-base hover:from-red-600 hover:to-red-700 transition-all duration-200 transform shadow-lg shadow-red-500/30 hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   Delete All

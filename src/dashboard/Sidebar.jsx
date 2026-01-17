@@ -1,6 +1,15 @@
-import React, { useState } from "react";
-import barImage from "../assets/bar.jpg";
+import React, { useState, useEffect } from "react";
+
 import fatoraLogo from "../assets/fatora.webp";
+
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
+import { performLogout } from "../lib/authUtils";
+import { getBarcode } from "../api";
+
+
+
 import {
   FaTags,
   FaChartLine,
@@ -14,9 +23,23 @@ import {
   FaUserFriends,
   FaBell
 } from "react-icons/fa";
-
+ 
 const Sidebar = ({ activeTab, setActiveTab }) => {
+
+  const { user } = useSelector((state) => state.auth);
+const companyId = user?.id;
+const [barcode, setBarcode] = useState(null);
+const [loadingBarcode, setLoadingBarcode] = useState(false);
+
   const [showBarcode, setShowBarcode] = useState(false);
+    const dispatch = useDispatch();
+    const { userType } = useSelector((state) => state.auth);
+    const navigate = useNavigate();
+    const handleSignOut = () => {
+  performLogout(dispatch, navigate, userType);
+};
+
+
 
   const tabs = [
     { label: "Products", icon: <FaTags className="text-[10px]" /> },
@@ -32,18 +55,18 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
   const getFollowersCount = () => 0;
   const getUnreadNotificationsCount = () => 3;
 
-  const handleSignOut = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = "/sign";
-  };
+
 
   const handleDownloadBarcode = () => {
-    const link = document.createElement("a");
-    link.href = barImage;
-    link.download = "barcode.jpg";
-    link.click();
-  };
+  if (!barcode) return;
+
+  const link = document.createElement("a");
+  link.href = barcode;
+  link.download = "company-barcode.png";
+  link.click();
+};
+
+
 
   // FATORA STYLES
   const fatoraActiveTabStyles = "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm";
@@ -56,6 +79,33 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
 
   const activeIconStyles = "bg-blue-500 text-white shadow-sm";
   const inactiveIconStyles = "bg-gray-100 text-gray-600 group-hover:bg-gray-200";
+   useEffect(() => {
+  if (!showBarcode || !companyId) return;
+
+  const fetchBarcode = async () => {
+    try {
+      setLoadingBarcode(true);
+      const res = await getBarcode(companyId);
+
+      // Backend usually returns image path or base64
+      const barcodeData =
+        res.data?.data?.barcode ||
+        res.data?.barcode ||
+        res.data;
+
+      setBarcode(barcodeData);
+    } catch (err) {
+      console.error("❌ Failed to load barcode", err);
+    } finally {
+      setLoadingBarcode(false);
+    }
+  };
+
+  fetchBarcode();
+}, [showBarcode, companyId]);
+
+
+
 
   return (
     <div
@@ -169,27 +219,44 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
           </button>
 
           <div
-            className={`transition-all duration-300 overflow-hidden w-full max-w-full min-w-0 ${
-              showBarcode ? "max-h-48 mt-2" : "max-h-0"
-            }`}
-          >
-            <div className="p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm w-full max-w-full overflow-x-hidden min-w-0">
+  className={`transition-all duration-300 overflow-hidden w-full max-w-full min-w-0 ${
+    showBarcode ? "max-h-48 mt-2" : "max-h-0"
+  }`}
+>
+  <div className="p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm w-full max-w-full overflow-x-hidden min-w-0">
 
-              <img
-                src={barImage}
-                alt="Barcode"
-                className="w-full max-w-[90px] mx-auto h-20 object-contain rounded mb-2 border border-gray-200"
-              />
+    {loadingBarcode ? (
+      <p className="text-xs text-center text-gray-500">
+        Loading barcode...
+      </p>
+    ) : barcode ? (
+      <img
+        src={barcode}
+        alt="Company Barcode"
+        className="w-full max-w-[90px] mx-auto h-20 object-contain rounded mb-2 border border-gray-200"
+      />
+    ) : (
+      <p className="text-xs text-center text-red-500">
+        Barcode not available
+      </p>
+    )}
 
-              <button
-                onClick={handleDownloadBarcode}
-                className="w-full px-3 py-2 bg-blue-500 text-white rounded-lg font-medium shadow-sm hover:bg-blue-600 transition text-sm flex items-center justify-center"
-              >
-                <FaDownload className="text-xs mr-2" />
-                Download
-              </button>
-            </div>
-          </div>
+    <button
+      onClick={handleDownloadBarcode}
+      disabled={!barcode}
+      className={`w-full px-3 py-2 rounded-lg font-medium shadow-sm transition text-sm flex items-center justify-center ${
+        barcode
+          ? "bg-blue-500 text-white hover:bg-blue-600"
+          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+      }`}
+    >
+      <FaDownload className="text-xs mr-2" />
+      Download
+    </button>
+
+  </div>
+</div>
+
         </div>
       </nav>
 
@@ -203,7 +270,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         </div>
 
         <span className="text-[13px] font-medium truncate flex-none max-w-fit text-left">
-          Sign Out
+          Log out
         </span>
       </button>
 

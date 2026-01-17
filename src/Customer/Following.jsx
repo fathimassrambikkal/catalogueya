@@ -1,14 +1,132 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFollowing } from "../context/FollowingContext";
-import { FaStar, FaMapMarkerAlt, FaPhone, FaTrash, FaUserPlus } from "react-icons/fa";
+import { FaStar, FaMapMarkerAlt, FaPhone, FaExternalLinkAlt, FaTimes } from "react-icons/fa";
+import { HiOutlineUserRemove } from "react-icons/hi";
+import { useSelector } from "react-redux";
+import { getCustomerFollowUps, unfollowCompany } from "../api";
 
 export default function Following() {
-  const { following, toggleFollow } = useFollowing();
+  const [following, setFollowing] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [unfollowLoading, setUnfollowLoading] = useState({});
   const navigate = useNavigate();
 
-  const handleUnfollow = (company) => {
-    toggleFollow(company);
+  // Get current user from Redux
+  const currentUser = useSelector((state) => state.auth.user);
+
+  // Helper function to get proper image URLs
+  const getImageUrl = (imgPath) => {
+    if (!imgPath) return "/api/placeholder/300/300";
+    if (imgPath.startsWith("http")) return imgPath;
+    if (imgPath.startsWith("blob:")) return imgPath;
+    if (imgPath.startsWith("data:")) return imgPath;
+    
+    // Handle relative paths from API
+    const cleanPath = imgPath.startsWith("/") ? imgPath.slice(1) : imgPath;
+    return `https://catalogueyanew.com.awu.zxu.temporary.site/${cleanPath}`;
+  };
+
+  // Fetch followed companies from API
+  const fetchFollowing = async () => {
+    // Check if user is authenticated
+    if (!currentUser?.id) {
+      console.warn("⚠️ No customer ID available");
+      setLoading(false);
+      setFollowing([]);
+      return;
+    }
+
+    // Check for token
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("❌ No auth token found. Please log in.");
+      setError("Please log in to view followed companies");
+      setLoading(false);
+      return;
+    }
+
+    console.log("📡 Fetching follow-ups...");
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await getCustomerFollowUps();
+      console.log("✅ Follow-ups API response:", res.data);
+
+      // Handle the nested response format
+      let companies = [];
+      
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        // Format: { data: [{ id, company: {...} }] }
+        companies = res.data.data.map(item => ({
+          ...item.company,
+          follow_id: item.id,
+        }));
+      } else if (res.data?.companies && Array.isArray(res.data.companies)) {
+        companies = res.data.companies;
+      } else if (Array.isArray(res.data)) {
+        companies = res.data;
+      }
+
+      // Process companies
+      const processedCompanies = companies.map(company => ({
+        ...company,
+        logo: getImageUrl(company.logo),
+        name: company.name_en || company.name_ar || company.name || "Unknown Company",
+        address: company.address_en || company.address_ar || company.address || "",
+        description: company.description_en || company.description_ar || company.description || "",
+        rating: company.rating ? Number(company.rating) : 0,
+        number_of_reviews: company.number_of_reviews || 0,
+        phone: company.phone || ""
+      }));
+      
+      setFollowing(processedCompanies);
+
+    } catch (err) {
+      console.error("❌ Failed to load follow-ups:", err);
+
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("userType");
+      } else {
+        setError(err.response?.data?.message || "Failed to load followed companies");
+      }
+      setFollowing([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFollowing();
+    
+    const handleFollowUpdated = () => {
+      console.log("🔄 Received follow-updated event, refreshing following list");
+      fetchFollowing();
+    };
+
+    window.addEventListener("follow-updated", handleFollowUpdated);
+    return () => window.removeEventListener("follow-updated", handleFollowUpdated);
+  }, [currentUser?.id]);
+
+  const handleUnfollow = async (company) => {
+    if (!company?.id) return;
+    
+    try {
+      setUnfollowLoading(prev => ({ ...prev, [company.id]: true }));
+      await unfollowCompany(company.id);
+      setFollowing(prev => prev.filter(c => c.id !== company.id));
+      window.dispatchEvent(new Event("follow-updated"));
+    } catch (err) {
+      console.error("❌ Unfollow failed", err);
+      setError(err.response?.data?.message || "Failed to unfollow company");
+    } finally {
+      setUnfollowLoading(prev => ({ ...prev, [company.id]: false }));
+    }
   };
 
   const handleCompanyClick = (companyId) => {
@@ -16,131 +134,260 @@ export default function Following() {
   };
 
   /* -------------------------
-        EMPTY STATE
+        LOADING STATE - Minimal
   -------------------------- */
-  if (following.length === 0) {
+  if (loading) {
     return (
-      <div className="w-full max-w-full overflow-x-hidden">
-        <div className="text-center py-6 sm:py-8 md:py-12">
-          <div className="w-12 h-12 xs:w-14 xs:h-14 sm:w-16 sm:h-16 md:w-20 md:h-24 mx-auto mb-2 sm:mb-3 md:mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <FaUserPlus className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-400" />
+      <div className="min-h-full bg-gradient-to-br from-gray-50 to-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-10">
+            <div className="h-9 w-40 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg animate-pulse mb-2"></div>
+            <div className="h-4 w-60 bg-gradient-to-r from-gray-50 to-white rounded animate-pulse"></div>
           </div>
-          <h2 className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-700 mb-1 sm:mb-2">
-            No Companies Followed
-          </h2>
-          <p className="text-gray-500 text-xs xs:text-sm sm:text-sm md:text-base mb-3 sm:mb-4 md:mb-6 max-w-md mx-auto px-2 break-words">
-            Start following companies to see them here. You'll get updates from companies you follow.
-          </p>
-          <button
-            onClick={() => navigate("/")}
-            className="bg-blue-500 text-white px-3 xs:px-4 sm:px-6 py-2 rounded-full hover:bg-blue-600 transition-colors text-xs xs:text-sm sm:text-base"
-          >
-            Explore Companies
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 w-3/4 bg-gradient-to-r from-gray-100 to-gray-50 rounded"></div>
+                    <div className="h-3 w-1/2 bg-gradient-to-r from-gray-50 to-white rounded"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   /* -------------------------
-         MAIN UI
+        ERROR STATE - Minimal
+  -------------------------- */
+  if (error) {
+    return (
+      <div className=" h-full overflow-y-auto bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-gradient-to-r from-red-50 to-white flex items-center justify-center">
+              <FaTimes className="text-2xl text-red-400" />
+            </div>
+            <h2 className="text-xl font-medium text-gray-800 mb-3">
+              Unable to load
+            </h2>
+            <p className="text-gray-600 text-sm mb-6">
+              {error}
+            </p>
+            {error.includes("expired") || error.includes("401") ? (
+              <button
+                onClick={() => navigate("/sign")}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-sm font-medium"
+              >
+                Sign In Again
+              </button>
+            ) : (
+              <button
+                onClick={fetchFollowing}
+                className="w-full bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-2.5 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-200 text-sm font-medium"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* -------------------------
+        EMPTY STATE - Minimal
+  -------------------------- */
+  if (following.length === 0 && !loading) {
+    return (
+      <div className=" h-full overflow-y-auto 
+      
+      
+      flex items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 p-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-r from-blue-50 to-white flex items-center justify-center">
+              <HiOutlineUserRemove className="text-3xl text-blue-400" />
+            </div>
+            <h2 className="text-xl font-medium text-gray-800 mb-3">
+              No companies followed
+            </h2>
+            <p className="text-gray-600 text-sm mb-7">
+              Companies you follow will appear here.
+            </p>
+            <button
+              onClick={() => navigate("/")}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-sm font-medium"
+            >
+              Browse Companies
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* -------------------------
+         MAIN UI - Minimal High-End Design
   -------------------------- */
   return (
-    <div className="w-full max-w-4xl mx-auto p-2 xs:p-3 sm:p-6 overflow-x-hidden">
-      
-      {/* Header */}
-      <div className="mb-3 sm:mb-4 md:mb-6 lg:mb-8">
-        <h1 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 break-words">
-          Following
-        </h1>
-        <p className="text-gray-600 text-xs xs:text-sm sm:text-sm md:text-base break-words">
-          You're following {following.length} compan{following.length === 1 ? "y" : "ies"}
-        </p>
-      </div>
+    <div className="h-full overflow-y-auto  p-4 sm:p-6">
+      <div className=" w-full max-w-full mx-auto overflow-hidden">
+        
+        {/* Minimal Header */}
+        <div className="mb-10 mt-10">
+          
+          <div className="flex justify-center items-center mb-6">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 break-words">
+              Following
+            </h1>
+        
+          </div>
+       
+        </div>
 
-      {/* Companies Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:gap-4 w-full">
-        {following.map((company) => (
-          <div
-            key={company.id}
-            className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md border border-gray-200 
-            overflow-hidden hover:shadow-lg transition-shadow duration-300 w-full"
-          >
-            {/* Company Header */}
-            <div
-              className="p-3 sm:p-4 cursor-pointer"
-              onClick={() => handleCompanyClick(company.id)}
-            >
-              <div className="flex items-start gap-3 w-full">
-                <img
-                  src={company.logo || "/api/placeholder/60/60"}
-                  alt={company.name}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                  onError={(e) => {
-                    e.target.src = "/api/placeholder/60/60";
-                  }}
-                />
+        {/* Compact Grid - Minimal Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {following.map((company) => {
+            const isLoading = unfollowLoading[company.id];
+            
+            return (
+              <div
+                key={company.id}
+                className="group bg-white/90 backdrop-blur-sm rounded-xl border border-gray-100 hover:border-blue-100 hover:shadow-lg transition-all duration-300 overflow-hidden"
+              >
+                {/* Card Content */}
+                <div className="p-4">
+                  {/* Header with Logo and Actions */}
+                  <div className="flex items-start justify-between mb-3">
+                    {/* Logo and Name */}
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer"
+                      onClick={() => handleCompanyClick(company.id)}
+                    >
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200">
+                        <img
+                          src={company.logo || "/api/placeholder/80/80"}
+                          alt={company.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = "/api/placeholder/80/80";
+                            e.target.className = "w-full h-full object-contain bg-gradient-to-br from-blue-50 to-gray-100 p-2";
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900 text-sm line-clamp-1">
+                          {company.name}
+                        </h3>
+                        {/* Rating - Minimal */}
+                        {company.rating > 0 && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <FaStar className="text-xs text-yellow-400 fill-yellow-400" />
+                            <span className="text-xs text-gray-600 font-medium">
+                              {company.rating.toFixed(1)}
+                            </span>
+                            {company.number_of_reviews > 0 && (
+                              <span className="text-xs text-gray-400">
+                                ({company.number_of_reviews})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                    {company.name}
-                  </h3>
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1">
+                      {/* Visit Button */}
+                      <button
+                        onClick={() => handleCompanyClick(company.id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+                        title="Visit company"
+                      >
+                        <FaExternalLinkAlt className="text-xs" />
+                      </button>
+                      
+                     
+                  
+                    </div>
+                  </div>
 
-                  {company.title && (
-                    <p className="text-xs sm:text-sm text-gray-500 truncate mt-1">
-                      {company.title}
-                    </p>
+                  {/* Description - Minimal */}
+                  {company.description && (
+                    <p 
+                      className="text-xs text-gray-600 line-clamp-2 mb-3"
+                      dangerouslySetInnerHTML={{ __html: company.description }}
+                    />
                   )}
 
-                  <div className="flex items-center gap-2 mt-1">
-                    <FaStar className="text-yellow-400 text-xs sm:text-sm flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-gray-600 truncate">
-                      {company.rating ? company.rating.toFixed(1) : "N/A"}
+                  {/* Contact Info - Minimal */}
+                  <div className="space-y-1.5">
+                    {company.address && (
+                      <div className="flex items-center gap-1.5">
+                        <FaMapMarkerAlt className="text-xs text-gray-400" />
+                        <span className="text-xs text-gray-500 truncate">
+                          {company.address}
+                        </span>
+                      </div>
+                    )}
+
+                    {company.phone && (
+                      <div className="flex items-center gap-1.5">
+                        <FaPhone className="text-xs text-gray-400" />
+                        <span className="text-xs text-gray-500">
+                          {company.phone}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Subtle Footer */}
+                <div className="px-4 py-2.5 border-t border-gray-50 bg-gray-50/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">
+                      Followed
                     </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnfollow(company);
+                      }}
+                      disabled={isLoading}
+                      className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors duration-200 disabled:opacity-50"
+                    >
+                      {isLoading ? "Removing..." : "Unfollow"}
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Company Details */}
-            <div className="px-3 sm:px-4 pb-3">
-              {(company.location || company.phone) && (
-                <div className="flex flex-col gap-1 text-xs text-gray-500 mb-3">
-
-                  {company.location && (
-                    <div className="flex items-center gap-1 min-w-0">
-                      <FaMapMarkerAlt className="flex-shrink-0 text-xs" />
-                      <span className="truncate text-xs">{company.location}</span>
-                    </div>
-                  )}
-
-                  {company.phone && (
-                    <div className="flex items-center gap-1 min-w-0">
-                      <FaPhone className="flex-shrink-0 text-xs" />
-                      <span className="truncate text-xs">{company.phone}</span>
-                    </div>
-                  )}
-
-                </div>
-              )}
-
-              {/* Unfollow Button */}
-              <button
-                onClick={() => handleUnfollow(company)}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-red-50 text-red-600 rounded-lg 
-                hover:bg-red-100 transition-colors duration-200 text-sm font-medium"
-              >
-                <FaTrash className="text-xs flex-shrink-0" />
-                Unfollow
-              </button>
-            </div>
-
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
 
-      {/* Bottom Spacing (Mobile) */}
-      <div className="h-4 sm:h-6"></div>
+      {/* Inline Styles */}
+      <style jsx>{`
+        .line-clamp-1 {
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+        }
+        
+        .line-clamp-2 {
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+        }
+      `}</style>
     </div>
   );
 }

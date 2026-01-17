@@ -2,10 +2,14 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { HashRouter } from "react-router-dom"; // CHANGED: BrowserRouter → HashRouter
-import { FavouriteProvider } from "./context/FavouriteContext";
-import { FollowingProvider } from "./context/FollowingContext";
+import { HashRouter } from "react-router-dom";
+import { Provider } from "react-redux"; 
+import { store } from "./store";
+
+
+
 import { FollowersProvider } from "./context/FollowersContext";
+
 import ErrorBoundary from "./components/ErrorBoundary";
 import { getGoogleMap } from "./api";
 import Lenis from "lenis";
@@ -28,13 +32,7 @@ const LenisProvider = ({ children }) => {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-      smoothTouch: false,
-      infinite: false,
     });
 
     const raf = (time) => {
@@ -52,30 +50,32 @@ const LenisProvider = ({ children }) => {
 /* Main App Wrapper */
 const Main = () => {
   useEffect(() => {
-    const initializeApp = async () => {
+    const init = async () => {
       try {
         const res = await getGoogleMap();
-        const apiKey = res?.data?.apiKey;
-        if (apiKey) loadGoogleMaps(apiKey);
+        if (res?.data?.apiKey) {
+          loadGoogleMaps(res.data.apiKey);
+        }
       } catch {}
     };
-
-    initializeApp();
+    init();
   }, []);
 
   return (
     <ErrorBoundary>
-      <HashRouter> {/* CHANGED: BrowserRouter → HashRouter */}
-        <FavouriteProvider>
-          <FollowingProvider>
-            <FollowersProvider>
-              <LenisProvider>
-                <App />
-              </LenisProvider>
-            </FollowersProvider>
-          </FollowingProvider>
-        </FavouriteProvider>
-      </HashRouter> {/* CHANGED: BrowserRouter → HashRouter */}
+      <Provider store={store}> {/* REDUX WRAPPER */}
+        <HashRouter>
+          
+          
+              <FollowersProvider>
+                <LenisProvider>
+                  <App />
+                </LenisProvider>
+              </FollowersProvider>
+           
+          
+        </HashRouter>
+      </Provider>
     </ErrorBoundary>
   );
 };

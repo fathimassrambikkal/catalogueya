@@ -1,18 +1,25 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import ReviewModal from "../components/ReviewModal";
+import SimilarProducts from "../components/SimilarProducts";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
-import { useFavourites } from "../context/FavouriteContext";
+import { createCustomerConversation,getProductReviews  } from "../api";
+
 import { getProduct, getCompany } from "../api";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 // SVG Icons
 const ArrowLeftIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="18" 
-    height="18" 
+  <svg
+    className={className}
+    width="18"
+    height="18"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -23,6 +30,8 @@ const ArrowLeftIcon = ({ className = "" }) => (
     <path d="M19 12H5M12 19l-7-7 7-7" />
   </svg>
 );
+const backButtonClass =
+  "absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300 transform-gpu active:scale-95";
 
 const HeartIcon = ({ filled = false, className = "" }) => (
   <svg
@@ -85,40 +94,28 @@ const ChatIcon = ({ className = "" }) => (
   </svg>
 );
 
-const CloseIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="16" 
-    height="16" 
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M18 6L6 18M6 6l12 12" />
-  </svg>
-);
-
 // ✅ Reusable VisionOS-style glass / titanium icon button
-const PremiumIconButton = ({ onClick, title, children }) => (
+const PremiumIconButton = ({ onClick, title, children, disabled = false }) => (
   <button
     onClick={(e) => {
       e.stopPropagation();
-      if (onClick) onClick(e);
+      if (onClick && !disabled) onClick(e);
     }}
     title={title}
-    className="
+    disabled={disabled}
+    className={`
       relative flex items-center justify-center
-      w-10 h-10 rounded-[16px]
+      w-[clamp(38px,4vw,44px)]
+h-[clamp(38px,4vw,44px)]
+ rounded-[16px]
       bg-white/40 backdrop-blur-2xl
       border border-[rgba(255,255,255,0.28)]
       shadow-[0_8px_24px_rgba(0,0,0,0.18)]
       hover:bg-white/55 transition-all duration-300
       
       active:scale-95
-    "
+      ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+    `}
   >
     <span
       className="absolute inset-0 rounded-[16px]
@@ -149,25 +146,20 @@ const getSafeRating = (value) => {
   return num;
 };
 
-// ✅ Function to get country from IP - UPDATED with fallback and better error handling
+// ✅ Function to get country from IP
 const getCountryFromIP = async () => {
   try {
-    // Try ipapi.co first with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     
     try {
       const res = await fetch("https://ipapi.co/json/", {
         signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-        }
+        headers: { 'Accept': 'application/json' }
       });
       clearTimeout(timeoutId);
       
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const data = await res.json();
       return data.country_name;
@@ -176,8 +168,6 @@ const getCountryFromIP = async () => {
       throw fetchError;
     }
   } catch (e) {
-    console.warn("Failed to get country from ipapi.co:", e);
-    
     // Try alternative API as fallback
     try {
       const controller = new AbortController();
@@ -186,15 +176,11 @@ const getCountryFromIP = async () => {
       try {
         const res = await fetch("https://ipwho.is/", {
           signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-          }
+          headers: { 'Accept': 'application/json' }
         });
         clearTimeout(timeoutId);
         
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
         const data = await res.json();
         return data.country;
@@ -203,45 +189,44 @@ const getCountryFromIP = async () => {
         throw fallbackError;
       }
     } catch (fallbackError) {
-      console.warn("Fallback IP API also failed:", fallbackError);
       return null;
     }
   }
 };
 
-// ✅ Build payload for showProduct API - UPDATED with better error handling
+// ✅ Build payload for showProduct API
 const buildShowProductPayload = async () => {
   let country = null;
   
   try {
     country = await getCountryFromIP();
-    console.log("🌍 Country:", country);
   } catch (error) {
-    console.warn("Failed to get country, proceeding without it:", error);
+    // Silently fail
   }
 
   const device = navigator.userAgent;
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token") || null;
 
-  const token =
-    localStorage.getItem("token") ||
-    sessionStorage.getItem("token") ||
-    null;
-
-  // Build the payload - ensure it matches what your backend expects
   const payload = {
     device,
-    ...(country && { country }), // Only include country if we have it
+    ...(country && { country }),
     ...(token && { token }),
   };
 
-  console.log("📦 showProduct payload:", payload);
   return payload;
 };
 
 export default function ProductProfile() {
   const params = useParams();
   const navigate = useNavigate();
-  const { favourites, toggleFavourite } = useFavourites();
+  const dispatch = useDispatch();
+  const favourites = useSelector((state) => state.favourites.items);
+const auth = useSelector((state) => state.auth);
+const { fixedWords } = useFixedWords();
+const { i18n } = useTranslation();
+const location = useLocation();
+
+const fw = fixedWords?.fixed_words || {};
 
   const { companyId, id: routeProductId, productId, pid } = params;
   const resolvedProductId = routeProductId || productId || pid;
@@ -267,39 +252,29 @@ export default function ProductProfile() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  // ✅ Function to refresh product data - UPDATED with simplified payload option
+  // ✅ Function to refresh product data
   const refreshProductData = useCallback(async () => {
     if (!resolvedProductId) return;
     
     try {
-      console.log("🔄 Refreshing product data for ID:", resolvedProductId);
       setLoading(true);
       
-      // ✅ Try with a simpler payload first if the full one fails
       let productResponse;
       try {
-        // First try with the full payload
         const payload = await buildShowProductPayload();
         productResponse = await getProduct(resolvedProductId, payload);
       } catch (apiError) {
-        console.warn("Full payload failed, trying simplified payload:", apiError);
-        // Fallback to simpler payload
-        const simplePayload = {
-          device: navigator.userAgent,
-        };
+        const simplePayload = { device: navigator.userAgent };
         productResponse = await getProduct(resolvedProductId, simplePayload);
       }
       
-      const productData =
-        productResponse?.data?.data?.product ||
-        productResponse?.data?.product;
+      const productData = productResponse?.data?.data?.product || productResponse?.data?.product;
 
       if (!productData) {
         setError("Product not found in API response");
         return;
       }
 
-      // Transform main product - FIXED ALBUMS HANDLING
       const transformedProduct = {
         id: productData.id,
         name: productData.name,
@@ -322,46 +297,30 @@ export default function ProductProfile() {
 
       setProduct(transformedProduct);
       
-      // FIXED: Handle cases where image might be in albums
-      const mainImage = 
-        productData.image || 
-        productData.albums?.[0]?.path || 
-        productData.albums?.[0]?.image || 
-        "";
-      
+      const mainImage = productData.image || productData.albums?.[0]?.path || productData.albums?.[0]?.image || "";
       setSelectedImage(getImageUrl(mainImage));
 
       // Reload similar products
       if (productData.company_id) {
         try {
           const companyRes = await getCompany(productData.company_id);
-          const company =
-            companyRes?.data?.data?.company ||
-            companyRes?.data?.company ||
-            companyRes?.data;
+          const company = companyRes?.data?.data?.company || companyRes?.data?.company || companyRes?.data;
 
           let list = company?.products || [];
           list = list.filter((p) => p.id !== productData.id);
           list = list.map((p) => ({
             ...p,
-            image: p.image?.startsWith("http")
-              ? p.image
-              : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
-            company_name:
-              p.company_name || productData.company_name || "Company",
+            image: p.image?.startsWith("http") ? p.image : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
+            company_name: p.company_name || productData.company_name || "Company",
             company_id: p.company_id || productData.company_id,
           }));
 
           setSimilarProducts(list);
         } catch (err) {
-          console.warn("Failed to refresh similar products:", err);
           setSimilarProducts([]);
         }
       }
-
-      console.log("✅ Product data refreshed");
     } catch (err) {
-      console.error("❌ Error refreshing product:", err);
       setError(`Failed to refresh product: ${err.message}`);
     } finally {
       setLoading(false);
@@ -371,28 +330,17 @@ export default function ProductProfile() {
   // ✅ Listen for product updates from Dashboard
   useEffect(() => {
     const handleProductsUpdated = (event) => {
-      console.log("🔄 ProductProfile received products update event");
-      
-      // Check if the updated products include the current product
       if (event.detail && event.detail.products) {
-        const updatedProduct = event.detail.products.find(
-          (p) => p.id === resolvedProductId
-        );
+        const updatedProduct = event.detail.products.find((p) => p.id === resolvedProductId);
         
         if (updatedProduct) {
-          console.log("🔄 Current product was updated, refreshing...");
-          
-          // Refresh the product data
           refreshProductData();
         } else if (event.detail.companyId === product?.company_id) {
-          // If the product's company was updated, refresh similar products
-          console.log("🔄 Company products updated, refreshing similar products...");
           refreshProductData();
         }
       }
     };
 
-    // Listen for both events
     window.addEventListener('productsUpdated', handleProductsUpdated);
     window.addEventListener('companyProductsUpdated', handleProductsUpdated);
     
@@ -402,7 +350,7 @@ export default function ProductProfile() {
     };
   }, [resolvedProductId, product?.company_id, refreshProductData]);
 
-  // ✅ Fetch product + similar products - UPDATED with error handling
+  // ✅ Fetch product + similar products - Optimized for instant loading
   useEffect(() => {
     let mounted = true;
 
@@ -411,53 +359,27 @@ export default function ProductProfile() {
         setLoading(true);
         setError(null);
 
-        console.log("📦 Fetching product for ID:", resolvedProductId);
-
-        // Try different payload approaches
+        // Try simple payload first for instant loading
         let productResponse;
-        let lastError = null;
-        
-        // Try approach 1: Full payload
         try {
-          const payload = await buildShowProductPayload();
-          console.log("📦 Trying with full payload:", payload);
-          productResponse = await getProduct(resolvedProductId, payload);
+          const simplePayload = { device: navigator.userAgent };
+          productResponse = await getProduct(resolvedProductId, simplePayload);
         } catch (error1) {
-          lastError = error1;
-          console.warn("Approach 1 failed, trying approach 2:", error1);
-          
-          // Try approach 2: Simple payload
           try {
-            const simplePayload = {
-              device: navigator.userAgent,
-            };
-            console.log("📦 Trying with simple payload:", simplePayload);
-            productResponse = await getProduct(resolvedProductId, simplePayload);
+            const payload = await buildShowProductPayload();
+            productResponse = await getProduct(resolvedProductId, payload);
           } catch (error2) {
-            lastError = error2;
-            console.warn("Approach 2 failed, trying approach 3:", error2);
-            
-            // Try approach 3: Empty payload
-            try {
-              console.log("📦 Trying with empty payload");
-              productResponse = await getProduct(resolvedProductId, {});
-            } catch (error3) {
-              lastError = error3;
-              throw error3;
-            }
+            productResponse = await getProduct(resolvedProductId, {});
           }
         }
 
-        const productData =
-          productResponse?.data?.data?.product ||
-          productResponse?.data?.product;
+        const productData = productResponse?.data?.data?.product || productResponse?.data?.product;
 
         if (!productData) {
           if (mounted) setError("Product not found in API response");
           return;
         }
 
-        // ⭐ Transform main product
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
@@ -480,60 +402,40 @@ export default function ProductProfile() {
 
         if (!mounted) return;
 
+        // Set product IMMEDIATELY for instant rendering
         setProduct(transformedProduct);
         
-        // FIXED: Handle cases where image might be in albums
-        const mainImage = 
-          productData.image || 
-          productData.albums?.[0]?.path || 
-          productData.albums?.[0]?.image || 
-          "";
-        
+        const mainImage = productData.image || productData.albums?.[0]?.path || productData.albums?.[0]?.image || "";
         setSelectedImage(getImageUrl(mainImage));
 
-        // ⭐ Load saved reviews
-        const storageKey = `reviews_${transformedProduct.id}`;
-        const saved = JSON.parse(localStorage.getItem(storageKey)) || [];
-        setReviews(saved);
+     
 
-        // ⭐ Fetch similar products using company_id
+        // Fetch similar products IN BACKGROUND (non-blocking)
         if (productData.company_id) {
-          try {
-            const companyRes = await getCompany(productData.company_id);
+          setTimeout(async () => {
+            try {
+              const companyRes = await getCompany(productData.company_id);
+              const company = companyRes?.data?.data?.company || companyRes?.data?.company || companyRes?.data;
 
-            const company =
-              companyRes?.data?.data?.company ||
-              companyRes?.data?.company ||
-              companyRes?.data;
+              let list = company?.products || [];
+              list = list.filter((p) => p.id !== productData.id);
+              list = list.map((p) => ({
+                ...p,
+                image: p.image?.startsWith("http") ? p.image : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
+                company_name: p.company_name || productData.company_name || "Company",
+                company_id: p.company_id || productData.company_id,
+              }));
 
-            let list = company?.products || [];
-
-            // Remove current product
-            list = list.filter((p) => p.id !== productData.id);
-
-            // Normalize similar products
-            list = list.map((p) => ({
-              ...p,
-              image: p.image?.startsWith("http")
-                ? p.image
-                : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
-              company_name:
-                p.company_name || productData.company_name || "Company",
-              company_id: p.company_id || productData.company_id,
-            }));
-
-            if (mounted) setSimilarProducts(list);
-          } catch (err) {
-            console.warn("Failed to load similar products:", err);
-            if (mounted) setSimilarProducts([]);
-          }
+              if (mounted) setSimilarProducts(list);
+            } catch (err) {
+              if (mounted) setSimilarProducts([]);
+            }
+          }, 300); // Small delay so main content appears first
         } else {
           if (mounted) setSimilarProducts([]);
         }
       } catch (err) {
-        console.error("❌ Error loading product:", err);
         if (mounted) {
-          // Provide more specific error message
           if (err.response?.status === 422) {
             setError(`API validation error (422). Please check the product ID: ${resolvedProductId}`);
           } else if (err.response?.status === 404) {
@@ -557,6 +459,49 @@ export default function ProductProfile() {
     };
   }, [resolvedProductId]);
 
+
+
+
+
+
+
+  // ✅ Fetch product reviews from backend (Product Page)
+useEffect(() => {
+  if (!resolvedProductId) return;
+
+  let mounted = true;
+
+  const fetchReviews = async () => {
+    try {
+      const res = await getProductReviews(resolvedProductId);
+
+      const apiData = res?.data?.data || {};
+      const apiReviews = apiData.reviews || [];
+
+      // ✅ MAP API → UI FORMAT
+      const mappedReviews = apiReviews.map((r) => ({
+        id: r.review_id,
+        name: r.user?.name || "Anonymous",
+        rating: Number(r.rating) || 0,
+        comment: r.comment || "",
+        date: new Date(r.created_at).toLocaleDateString(),
+        userImage: r.user?.image || null,
+      }));
+
+      if (mounted) setReviews(mappedReviews);
+    } catch (err) {
+      console.error("Failed to load product reviews", err);
+      if (mounted) setReviews([]);
+    }
+  };
+
+  fetchReviews();
+
+  return () => {
+    mounted = false;
+  };
+}, [resolvedProductId]);
+
   // ✅ COMPANY NAME CLICK HANDLER
   const handleCompanyClick = (e) => {
     e.stopPropagation();
@@ -567,12 +512,56 @@ export default function ProductProfile() {
 
   // ✅ Chat handler
   const handleChat = useCallback(
-    (e) => {
-      e.stopPropagation();
-      alert(`Starting chat about ${product.name} with ${product.company_name}`);
-    },
-    [product]
-  );
+  async (e) => {
+    e.stopPropagation();
+    if (!product) return;
+
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
+    const userType = localStorage.getItem("userType");
+
+    const companyId =
+      typeof product.company_id === "object"
+        ? product.company_id?.id
+        : product.company_id;
+
+    if (!companyId) {
+      console.error("Invalid company ID for chat", product);
+      return;
+    }
+
+    // 🚫 Guest → login with intent
+    if (!token || userType !== "customer") {
+      navigate(`/sign?redirect=/chat-intent/company/${companyId}`);
+      return;
+    }
+
+    // ✅ Logged-in customer → create/open chat
+    try {
+      const res = await createCustomerConversation({
+        is_group: false,
+        participant_ids: [Number(companyId)],
+      });
+
+      const conversationId =
+        res.data?.data?.id ||
+        res.data?.conversation?.id ||
+        res.data?.id;
+
+      if (!conversationId) {
+        console.error("Conversation ID missing");
+        return;
+      }
+
+      navigate(`/customer-login/chat/${conversationId}`);
+    } catch (err) {
+      console.error("Chat creation failed", err);
+    }
+  },
+  [product, navigate]
+);
+
 
   const averageRating =
     reviews.length > 0
@@ -601,45 +590,35 @@ export default function ProductProfile() {
   };
 
   const handleReviewSubmit = () => {
-    if (!reviewName || !reviewText || reviewRating === 0) {
-      alert("Please enter your name, rating, and comment.");
-      return;
-    }
-    const storageKey = `reviews_${product.id}`;
-    const saved = JSON.parse(localStorage.getItem(storageKey)) || [];
-    const newRev = {
-      id: Date.now(),
-      name: reviewName,
-      rating: reviewRating,
-      comment: reviewText,
-      date: new Date().toLocaleDateString(),
-    };
-    const updated = [...saved, newRev];
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-    setReviews(updated);
-    setShowReviewModal(false);
-    setReviewName("");
-    setReviewText("");
-    setReviewRating(0);
-    alert(`⭐ ${newRev.rating}-star review submitted!`);
+  if (!reviewText || reviewRating === 0) {
+    alert("Please add rating and comment.");
+    return;
+  }
+
+  const newReview = {
+    id: Date.now(),
+    name: auth?.user?.name || "You",
+    rating: reviewRating,
+    comment: reviewText,
+    date: new Date().toLocaleDateString(),
   };
+
+  // Add review to UI instantly
+  setReviews((prev) => [newReview, ...prev]);
+
+  setShowReviewModal(false);
+  setReviewText("");
+  setReviewRating(0);
+};
+
 
   const handleImageClick = (src) => {
     setSelectedImage(getImageUrl(src));
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen ">
-        <div className="text-center py-20 text-lg text-gray-600 ">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4 "></div>
-          Loading product...
-        </div>
-      </div>
-    );
-  }
 
-  if (error || !product) {
+  // Only show error if we have no product AND an error occurred
+  if (error && !product) {
     return (
       <div className="flex justify-center items-center min-h-screen ">
         <div className="text-center py-20 text-lg text-gray-600 ">
@@ -665,25 +644,49 @@ export default function ProductProfile() {
     );
   }
 
-  // FIXED: Proper productImages array
   const productImages = [
-    product.image,
-    ...(product.albums || []),
+    product?.image,
+    ...(product?.albums || []),
   ].filter(Boolean);
+
+
+  useEffect(() => {
+  if (!auth?.user) return;
+  if (!product) return;
+
+  const params = new URLSearchParams(location.search);
+  const action = params.get("action");
+
+  if (action === "review") {
+    setShowReviewModal(true);
+
+    //  clean URL after opening modal
+    navigate(location.pathname, { replace: true });
+  }
+}, [auth?.user, product]);
+
 
   return (
     <>
+      {/* ✅ Tiny non-blocking loading indicator (Apple Safari style) */}
+      {loading && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        </div>
+      )}
+
       {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-20 sm:top-8 left-5 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/70 shadow-md hover:bg-white/80 transition  active:scale-95"
-      >
-        <ArrowLeftIcon className="text-gray-700 text-sm sm:text-md md:text-lg " />
-      </button>
+   <button
+  onClick={() => navigate(-1)}
+  className={backButtonClass}
+  aria-label="Go back"
+>
+  <ArrowLeftIcon className="text-gray-700 transform-gpu" />
+</button>
 
       {/* Main layout */}
       <section
-        key={product.id}
+        key={product?.id || 'loading'}
         className="max-w-[1200px] mx-auto px-6 md:px-10 py-24 grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-16 bg-white rounded-3xl shadow-sm  animate-fade-in"
       >
         {/* LEFT: Image viewer */}
@@ -691,8 +694,8 @@ export default function ProductProfile() {
           {/* MAIN IMAGE WRAPPER */}
           <div className="relative w-full h-[520px] md:h-[620px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm ">
             
-            {/* MAIN IMAGE (Animated) */}
-            
+            {/* MAIN IMAGE with Apple-style placeholder */}
+            {product ? (
               <img
                 key={selectedImage}
                 src={selectedImage}
@@ -700,38 +703,66 @@ export default function ProductProfile() {
                 className="w-full h-full object-cover  animate-image-fade"
                 onError={(e) => (e.target.src = "/api/placeholder/500/500")}
               />
-            
+            ) : (
+              <div className="w-full h-full bg-gray-100 animate-pulse rounded-2xl" />
+            )}
 
-            {/* PRODUCT Badge
-            <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold border border-blue-100 shadow-sm ">
-              PRODUCT
-            </div> */}
-
-            {/* RIGHT SIDE ICONS */}
-            <div className="absolute top-4 right-4 flex flex-col gap-3 z-30 ">
+            {/* RIGHT SIDE ICONS - Show immediately */}
+            <div className={`absolute top-4 right-4 flex flex-col gap-3 z-30 ${!product ? 'opacity-40' : ''}`}>
               <PremiumIconButton
-                title={isFavourite ? "Remove from favourites" : "Add to favourites"}
-                onClick={() => toggleFavourite(product)}
-              >
+  title={isFavourite ? "Remove from favourites" : "Add to favourites"}
+  disabled={!product}
+  onClick={() => {
+    if (!product) return;
+
+    const payload = {
+      ...product,
+      name: product.name || "Unnamed Product",
+      company_name: product.company_name || "Company",
+      company_id: product.company_id || null,
+      price: product.price || 0,
+      category_name: product.category_name || "",
+      image: product.image || "/api/placeholder/400/400",
+
+      // ✅ REQUIRED
+      source: "product_profile",
+    };
+
+    const alreadyFav = favourites.some((f) => f.id === product.id);
+
+    // 🔄 toggle always
+    dispatch(toggleFavourite(payload));
+
+    // 🔐 popup only when logged in & adding
+    if (auth?.user && !alreadyFav) {
+      dispatch(openListPopup(payload));
+    }
+  }}
+>
+
+
                 <HeartIcon
                   filled={isFavourite}
-                  className={`w-3 h-3 ${
+                  className={`w-[clamp(12px,1.1vw,16px)]
+              h-[clamp(12px,1.1vw,16px)] ${
                     isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
                   }`}
                 />
               </PremiumIconButton>
 
-              <PremiumIconButton title="Share product" onClick={handleShare}>
-                <ShareIcon className="text-[16px] text-[rgba(18,18,18,0.88)] " />
+              <PremiumIconButton title="Share product" onClick={handleShare} disabled={!product}>
+                <ShareIcon className="w-[clamp(13px,1.1vw,16px)]
+             h-[clamp(13px,1.1vw,16px)] text-[rgba(18,18,18,0.88)] " />
               </PremiumIconButton>
 
-              <PremiumIconButton title="Chat" onClick={handleChat}>
-                <ChatIcon className="text-[17px] text-[rgba(18,18,18,0.88)] " />
+              <PremiumIconButton title="Chat" onClick={handleChat} disabled={!product}>
+                <ChatIcon className="w-[clamp(13px,1.1vw,17px)]
+             h-[clamp(13px,1.1vw,17px)] text-[rgba(18,18,18,0.88)] " />
               </PremiumIconButton>
             </div>
 
             {/* THUMBNAIL PREVIEW STRIP */}
-            {productImages.length > 1 && (
+            {productImages.length > 1 ? (
               <div
                 className="
                   absolute bottom-4 left-1/2 -translate-x-1/2
@@ -782,7 +813,13 @@ export default function ProductProfile() {
                   );
                 })}
               </div>
-            )}
+            ) : productImages.length === 0 && product ? (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3">
+                {[...Array(3)].map((_, idx) => (
+                  <div key={idx} className="w-14 h-14 bg-gray-100 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -790,442 +827,273 @@ export default function ProductProfile() {
         <div className="flex flex-col gap-6 ">
           {/* Category + Title + Company */}
           <div className="space-y-2 ">
-            <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500 ">
-              {product.category_name || "PRODUCT"}
-            </p>
+  <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500">
+  {fw.product}
+</p>
 
-            <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight ">
-              {product.name}
-            </h1>
 
-            {product.company_name && (
-              <button
-                onClick={handleCompanyClick}
-                className="text-sm text-blue-600 font-medium hover:underline w-fit flex items-center gap-1 "
-              >
-                <span className="text-gray-500">by</span>
-                {product.company_name}
-              </button>
+
+            {product ? (
+              <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight ">
+                {product.name}
+              </h1>
+            ) : (
+              <div className="h-10 w-3/4 bg-gray-100 rounded-lg animate-pulse" />
+            )}
+
+            {product ? (
+              product.company_name && (
+                <button
+                  onClick={handleCompanyClick}
+                  className="text-sm text-blue-600 font-medium hover:underline w-fit flex items-center gap-1 "
+                >
+                  <span className="text-gray-500">{fw.by}</span>
+                  {product.company_name}
+                </button>
+              )
+            ) : (
+              <div className="h-4 w-32 bg-gray-100 rounded animate-pulse" />
             )}
           </div>
 
           {/* Price + rating */}
           <div className="space-y-1 ">
-            <div className="flex items-baseline gap-2 ">
-              <span className="text-3xl font-semibold text-gray-900 ">
-                QAR {product.price}
+            {product ? (
+              <>
+                <div className="flex items-baseline gap-2 ">
+                <span className="text-3xl font-semibold text-gray-900">
+                {i18n.language === "ar"
+                  ? `${fw.qar || "QAR"} ${product.price}`
+                  : `${product.price} ${fw.qar || "QAR"}`
+                }
               </span>
 
-              {product.oldPrice && (
-                <span className="text-sm line-through text-gray-400 ">
-                  QAR {product.oldPrice}
-                </span>
-              )}
 
-              {product.discount_percent && (
-                <span className="text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 ">
-                  -{product.discount_percent}%
+                  {product.oldPrice && (
+                  <span className="text-sm line-through text-gray-400 ">
+                  {i18n.language === "ar"
+                    ? `${fw.qar || "QAR"} ${product.oldPrice}`
+                    : `${product.oldPrice} ${fw.qar || "QAR"}`
+                  }
                 </span>
-              )}
-            </div>
+                  )}
 
-            {/* ⭐ Rating */}
-            <div className="flex items-center gap-1 ">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <StarIcon
-                  key={i}
-                  filled={i < Math.round(averageRating)}
-                  className={`w-4 h-4  ${
-                    i < Math.round(averageRating)
-                      ? "text-gray-900"
-                      : "text-gray-400"
-                  }`}
-                />
-              ))}
-              <span className="text-sm text-gray-600 ">
-                {averageRating.toFixed(1)}
-              </span>
-            </div>
+                  {product.discount_percent && (
+                    <span className="text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 ">
+                      -{product.discount_percent}%
+                    </span>
+                  )}
+                </div>
+
+                {/* ⭐ Rating */}
+                <div className="flex items-center gap-1 ">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <StarIcon
+                      key={i}
+                      filled={i < Math.round(averageRating)}
+                      className={`w-4 h-4  ${
+                        i < Math.round(averageRating)
+                          ? "text-gray-900"
+                          : "text-gray-400"
+                      }`}
+                    />
+                  ))}
+                  <span className="text-sm text-gray-600 ">
+                    {averageRating.toFixed(1)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-8 w-40 bg-gray-100 rounded animate-pulse" />
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-4 h-4 bg-gray-100 rounded animate-pulse" />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Product Details */}
           <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3 ">
-            <h3 className="text-lg font-medium text-gray-900 ">Product Details</h3>
-            <p className="text-gray-600 leading-relaxed text-sm md:text-base ">
-              {product.description ||
-                `Introducing our ${product.name} – designed for superior quality and style.`}
-            </p>
+            <h3 className="text-lg font-medium text-gray-900 ">{fw.product_details}</h3>
+            {product ? (
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base ">
+                {product.description ||
+                  `Introducing our ${product.name} – designed for superior quality and style.`}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
+              </div>
+            )}
           </div>
 
           {/* Write Review Button */}
-          <button
-            onClick={() => setShowReviewModal(true)}
-            className="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition  active:scale-95"
-          >
-            Write a Review
-          </button>
+<button
+  onClick={(e) => {
+    e.stopPropagation();
 
-          {/* Customer Reviews */}
-          <div className="space-y-3 ">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between ">
-              Customer Reviews
-              {reviews.length > 0 && (
-                <span className="text-xs font-normal text-gray-500 ">
-                  {reviews.length} review{reviews.length > 1 ? "s" : ""}
-                </span>
-              )}
-            </h3>
+    // 🚫 Guest → redirect to login with intent
+    if (!auth?.user) {
+      navigate(
+        `/sign?redirect=/product/${resolvedProductId}&action=review`
+      );
+      return;
+    }
 
-            <div className="space-y-2 ">
-              {reviews.slice(0, 2).map((rev) => (
-                <div
-                  key={rev.id}
-                  className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm "
-                >
-                  <div className="flex justify-between mb-1 ">
-                    <span className="font-semibold text-gray-800 ">{rev.name}</span>
-                    <span className="text-gray-500 text-xs ">{rev.date}</span>
-                  </div>
+    // ✅ Logged-in customer → open modal
+    setShowReviewModal(true);
+  }}
+  disabled={!product}
+  className={`inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl transition active:scale-95 ${
+    product
+      ? "bg-gray-900 text-white hover:bg-gray-800"
+      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+  }`}
+>
+  {product ? fw.write_review : "Loading..."}
+</button>
 
-                  <div className="flex items-center gap-1 mb-1 ">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <StarIcon
-                        key={i}
-                        filled={i < getSafeRating(rev.rating)}
-                        className={`w-4 h-4  ${
-                          i < getSafeRating(rev.rating)
-                            ? "text-gray-950"
-                            : "text-gray-400"
-                        }`}
-                      />
-                    ))}
-                  </div>
 
-                  <p className="text-gray-700 text-sm ">{rev.comment}</p>
-                </div>
-              ))}
 
-              {reviews.length === 0 && (
-                <p className="text-sm text-gray-500 ">
-                  No reviews yet – be the first to share your experience.
-                </p>
-              )}
+         {/* Customer Reviews */}
+<div className="space-y-3 transform-gpu">
+  <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between">
+    {fw.customer_reviews}
+  
+  </h3>
 
-              {reviews.length > 2 && (
-                <button
-                  onClick={() => setShowReviewModal(true)}
-                  className="text-sm text-blue-600 hover:underline "
-                >
-                  View {reviews.length - 2} more review(s)
-                </button>
-              )}
-            </div>
+  {product && reviews.length > 0 ? (
+    <>
+      {/* Show only first 2 reviews */}
+      {reviews.slice(0, 2).map((rev) => (
+        <div
+          key={rev.id}
+          className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
+        >
+          <div className="flex justify-between mb-1">
+            <span className="font-semibold text-gray-800">{rev.name}</span>
+            <span className="text-gray-500 text-xs">{rev.date}</span>
           </div>
+
+          <div className="flex items-center  gap-1 mb-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <StarIcon
+                key={i}
+                filled={i < getSafeRating(rev.rating)}
+                className={`w-4 h-4 ${
+                  i < getSafeRating(rev.rating)
+                    ? "text-gray-900"
+                    : "text-gray-400"
+                }`}
+              />
+            ))}
+          </div>
+
+          <p className="text-gray-700 text-sm">{rev.comment}</p>
+        </div>
+      ))}
+
+      {/* 🔗 VIEW ALL REVIEWS BUTTON */}
+       {reviews.length > 2 && (
+        <button
+          onClick={() =>
+            navigate(`/product/${resolvedProductId}/reviews`)
+          }
+          className="
+           group
+    w-full mt-2 py-2
+    text-sm font-medium
+    text-blue-600 hover:text-blue-700
+    hover:underline
+    transition
+    flex items-center gap-1.5
+    text-left
+
+    ltr:flex-row
+  
+          "
+        >
+         <span>
+     {(fw.view_all_reviews || "View all")} {reviews.length}{" "}
+    {(fw.reviews || "reviews")}
+  </span>
+  
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="
+      w-4 h-4
+      transition-transform duration-200
+      transform-gpu
+
+      ltr:group-hover:translate-x-0.5
+      rtl:group-hover:-translate-x-0.5
+
+      rtl:scale-x-[-1]
+    "
+    aria-hidden="true"
+  >
+    <path d="M5 12h14" />
+    <path d="M13 5l6 7-6 7" />
+  </svg>
+        </button>
+      )}
+    </>
+  ) : (
+    <p className="text-sm text-gray-500">{fw.no_reviews}</p>
+  )}
+</div>
         </div>
       </section>
 
-      {/* ⭐ Similar Products Section */}
-      {similarProducts.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 py-20 ">
-          <h2 className="text-3xl font-light text-gray-900 text-start mb-12 ">
-            Similar Products
-          </h2>
+      {/* ⭐ Similar Products Section - Using imported component */}
+      <SimilarProducts
+  products={similarProducts}
+  favourites={favourites}
+  toggleFavourite={(item) => {
+    const payload = {
+      ...item,
+      source: "product_profile",
+    };
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 ">
-            {similarProducts.map((sp) => {
-              const isFav = favourites.some((f) => f.id === sp.id);
+    const alreadyFav = favourites.some((f) => f.id === item.id);
 
-              return (
-                <div
-                  key={sp.id}
-                  className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer  hover:scale-[1.03]"
-                  onClick={() => navigate(`/product/${sp.id}`)}
-                >
-                  {/* ❤️ Favourite Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavourite(sp);
-                    }}
-                    className={`absolute top-3 right-3 z-20 p-2 rounded-full border border-gray-200 
-                      bg-white hover:bg-gray-100 shadow-sm transition-all hover:scale-110 
-                      active:scale-90 
-                      ${isFav ? "text-red-500" : "text-gray-500"}`}
-                  >
-                    <HeartIcon
-                      filled={isFav}
-                      className={`w-3 h-3 ${
-                        isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"
-                      }`}
-                    />
-                  </button>
+    dispatch(toggleFavourite(payload));
 
-                  {/* Product Image */}
-                  <div className="w-full h-[220px] overflow-hidden rounded-t-2xl ">
-                    <img
-                      src={sp.image}
-                      alt={sp.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 "
-                      onError={(e) => {
-                        e.target.src = "/api/placeholder/300/300";
-                      }}
-                    />
-                  </div>
+    if (auth?.user && !alreadyFav) {
+      dispatch(openListPopup(payload));
+    }
+  }}
+/>
 
-                  {/* Title + Price */}
-                  <div className="p-4 ">
-                    <h3 className="font-medium text-gray-800 text-sm truncate mb-1 ">
-                      {sp.name}
-                    </h3>
-
-                    <div className="flex items-center gap-1 text-gray-700 ">
-                      <span className="text-sm font-semibold ">QAR {sp.price}</span>
-                      {sp.oldPrice && (
-                        <span className="text-xs line-through text-gray-400 ">
-                          QAR {sp.oldPrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       <Faq />
       <CallToAction />
 
-      {/* Review Modal – Glass Skiper style with list + form */}
-      {showReviewModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-lg px-4 animate-fade-in "
-          onClick={() => setShowReviewModal(false)}
-        >
-          <div
-            className="
-              w-full max-w-lg rounded-3xl
-              bg-white/55 backdrop-blur-2xl
-              border border-white/30
-              shadow-[0_12px_32px_rgba(0,0,0,0.12)]
-              p-6 space-y-6
-              animate-slide-up
-              
-            "
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between ">
-              <h3 className="text-lg font-semibold text-gray-900 ">
-                Customer Reviews
-              </h3>
-              <button
-                onClick={() => setShowReviewModal(false)}
-                className="
-                  h-8 w-8 flex items-center justify-center rounded-full
-                  bg-white/60 text-gray-500 hover:bg-white
-                  transition 
-                  active:scale-95
-                "
-              >
-                <CloseIcon className="w-4 h-4 " />
-              </button>
-            </div>
-
-            {/* All reviews list */}
-            <div className="max-h-[40vh] overflow-y-auto space-y-3 pr-1 ">
-              {reviews.length > 0 ? (
-                reviews.map((rev) => (
-                  <div
-                    key={rev.id}
-                    className="border border-white/40 rounded-2xl p-4 bg-white/60 "
-                  >
-                    <div className="flex justify-between mb-1 ">
-                      <span className="font-semibold text-gray-800 ">
-                        {rev.name}
-                      </span>
-                      <span className="text-gray-500 text-xs ">{rev.date}</span>
-                    </div>
-                    <div className="flex items-center gap-1 mb-1 ">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <StarIcon
-                          key={i}
-                          filled={i < getSafeRating(rev.rating)}
-                          className={`w-4 h-4  ${
-                            i < getSafeRating(rev.rating)
-                              ? "text-gray-950"
-                              : "text-gray-400"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-gray-700 text-sm ">{rev.comment}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center text-sm ">
-                  No reviews yet – be the first to review!
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-3 pt-2 border-t border-white/40 ">
-              <h3 className="text-md font-semibold text-gray-900 ">
-                Write a Review
-              </h3>
-
-              {/* Name */}
-              <div className="space-y-1.5 ">
-                <label className="text-xs font-medium text-gray-700 ">
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Your Name"
-                  value={reviewName}
-                  onChange={(e) => setReviewName(e.target.value)}
-                  className="
-                    w-full rounded-xl px-3 py-2.5 text-sm
-                    bg-white/60 border border-white/20
-                    placeholder:text-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-gray-900/40
-                    
-                  "
-                />
-              </div>
-
-              {/* Rating */}
-              <div className="space-y-1.5 ">
-                <label className="text-xs font-medium text-gray-700 ">
-                  Rating
-                </label>
-                <div
-                  className="
-                    flex items-center justify-center gap-3 px-4 py-2.5
-                    rounded-xl bg-white/50 border border-white/20
-                    
-                  "
-                >
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setReviewRating(i + 1)}
-                      className="transition-transform duration-150  active:scale-95"
-                    >
-                      <StarIcon
-                        filled={i < reviewRating}
-                        className={`w-6 h-6 `}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Comment */}
-              <div className="space-y-1.5 ">
-                <label className="text-xs font-medium text-gray-700 ">
-                  Your Review
-                </label>
-                <textarea
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  placeholder="Share your thoughts about this product..."
-                  rows="4"
-                  className="
-                    w-full rounded-xl px-3 py-2.5 text-sm
-                    bg-white/60 border border-white/20
-                    placeholder:text-gray-400
-                    resize-none
-                    focus:outline-none focus:ring-2 focus:ring-gray-900/40
-                    
-                  "
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-1 ">
-                <button
-                  onClick={() => setShowReviewModal(false)}
-                  className="
-                    px-4 py-2 text-sm rounded-xl
-                    bg-white/70 text-gray-700
-                    hover:bg-white transition
-                    
-                    active:scale-95
-                  "
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleReviewSubmit}
-                  disabled={!reviewText || !reviewName || reviewRating === 0}
-                  className={`
-                    px-4 py-2 text-sm rounded-xl text-white
-                    
-                    active:scale-95
-                    ${
-                      reviewText && reviewName && reviewRating
-                        ? "bg-gray-900 hover:bg-gray-800"
-                        : "bg-gray-400 cursor-not-allowed"
-                    }
-                  `}
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Review Modal – Using imported component */}
+      {showReviewModal && product && (
+        <ReviewModal
+          reviews={reviews}
+          reviewName={reviewName}
+          reviewText={reviewText}
+          reviewRating={reviewRating}
+          setReviewName={setReviewName}
+          setReviewText={setReviewText}
+          setReviewRating={setReviewRating}
+          onClose={() => setShowReviewModal(false)}
+          onSubmit={handleReviewSubmit}
+        />
       )}
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes fade-in {
-          0% {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes image-fade {
-          0% {
-            opacity: 0.6;
-            transform: scale(1.03);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
-        @keyframes slide-up {
-          0% {
-            opacity: 0;
-            transform: translateY(20px) scale(0.98);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-        
-        .animate-image-fade {
-          animation: image-fade 0.35s ease-out;
-        }
-        
-        .animate-slide-up {
-          animation: slide-up 0.22s cubic-bezier(0.25, 1, 0.3, 1);
-        }
-      `}</style>
     </>
   );
 }

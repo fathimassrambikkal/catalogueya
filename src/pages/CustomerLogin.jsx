@@ -7,85 +7,133 @@ import Fav from "../Customer/Fav.jsx";
 import Following from "../Customer/Following.jsx";
 import Settings from "../Customer/Settings.jsx";
 import Help from "../Customer/Help.jsx";
-import Fatora from "../Customer/Fatora.jsx"; 
-import { TbLayoutSidebarRightFilled } from "react-icons/tb";
+import Fatora from "../Customer/Fatora.jsx";
+
+import { useDispatch, useSelector } from "react-redux";
+import { setCustomerTab } from "../store/authSlice";
+
+import { RiMenu2Fill } from "react-icons/ri";
 
 function CustomerLogin() {
-  const [activeTab, setActiveTab] = useState("messages");
+  const dispatch = useDispatch();
+  const activeTab = useSelector((state) => state.auth.customerActiveTab);
+  const setActiveTab = (tab) => dispatch(setCustomerTab(tab));
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
+ 
+
+  /* ✅ ensure a default tab */
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [activeTab]);
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "messages":
-        return <Messages />;
-      case "notifications":
-        return <Notifications />;
-      case "reviews":
-        return <Reviews />;
-      case "fav":
-        return <Fav />;
-      case "following":
-        return <Following />;
-      case "fatora":
-        return <Fatora />; // Add Fatora case
-      case "settings":
-        return <Settings />;
-      case "help":
-        return <Help />;
-      default:
-        return <Messages />;
+    if (!activeTab) {
+      setActiveTab("messages");
     }
+  }, [activeTab, setActiveTab]);
+
+  /* Detect mobile / desktop */
+  useEffect(() => {
+    const check = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(false);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (isMobile) setSidebarOpen(false);
   };
 
   return (
-    <div className="flex bg-gray-100 min-h-screen w-full overflow-x-hidden">
-
-      {/* Sidebar Panel */}
-      <div
+    <div className="flex w-full h-[calc(100vh-64px)] overflow-hidden  bg-gradient-to-br from-blue-50/50 via-white to-blue-50/30
+        backdrop-blur-[2px]
+       
+        border border-white/80
+        shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02),inset_0_1px_0_rgba(255,255,255,0.8)]
+       
+    
+        ">
+      {/* ================= Sidebar ================= */}
+      <aside
         className={`
-          fixed top-0 left-0 h-screen w-72 max-w-[90%] 
-          transition-transform duration-300
+          ${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"}
+          h-full
+          bg-white
+          border-r border-gray-200/80
+          transform transition-transform duration-300 ease-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          bg-white z-50 overflow-y-auto overflow-x-hidden
+          lg:translate-x-0 lg:relative
+          flex flex-col
+          shadow-sm
         `}
       >
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onCloseSidebar={() => setSidebarOpen(false)}
-        />
-      </div>
+        {/* Sidebar Content */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
+            onCloseSidebar={() => isMobile && setSidebarOpen(false)}
+            isMobile={isMobile}
+          />
+        </div>
+      </aside>
 
-      {/* Black Overlay */}
-      {sidebarOpen && (
+      {/* ================= Overlay (mobile) ================= */}
+      {isMobile && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-40"
           onClick={() => setSidebarOpen(false)}
+          className={`
+            fixed inset-0 bg-black/40 z-30
+            transition-opacity duration-300
+            ${
+              sidebarOpen
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }
+          `}
         />
       )}
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-h-screen w-full overflow-y-auto overflow-x-hidden relative">
+      {/* ================= Mobile Menu Button ================= */}
+      {isMobile && !sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+          className="
+            fixed left-2 top-12 z-50
+            p-2
+            flex items-center justify-center
+            rounded-xl
+            bg-white/90 backdrop-blur
+            border border-gray-200
+            shadow-sm
+            hover:shadow-md hover:bg-white
+            active:scale-95
+            transition-all duration-200
+          "
+        >
+          <RiMenu2Fill size={18} className="text-gray-700" />
+        </button>
+      )}
 
-        {/* Toggle Button */}
-        <div className="fixed top-4 left-3 sm:left-6 z-30">
-          <button
-            onClick={() => setSidebarOpen((prev) => !prev)}
-            className="p-3 rounded-xl text-sm bg-white text-gray-600 shadow-md hover:bg-gray-100"
-          >
-            <TbLayoutSidebarRightFilled size={18} />
-          </button>
+      {/* ================= Main Content ================= */}
+      <main className="flex-1 h-full w-full bg-gray-50 overflow-hidden">
+        {/* ✅ FIX 2: SINGLE SCROLL CONTAINER */}
+        <div className="h-full overflow-y-auto">
+          {activeTab === "messages" && <Messages />}
+          {activeTab === "notifications" && <Notifications />}
+          {activeTab === "reviews" && <Reviews />}
+          {activeTab === "fav" && <Fav />}
+          {activeTab === "following" && <Following />}
+          {activeTab === "fatora" && <Fatora />}
+          {activeTab === "settings" && <Settings />}
+          {activeTab === "help" && <Help />}
         </div>
-
-        {/* Page Content */}
-        <div className="flex-1 p-6 mt-16 w-full max-w-full overflow-x-hidden">
-          {renderContent()}
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

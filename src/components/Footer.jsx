@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import ios from "../assets/ios.png";
 import android from "../assets/android.png";
 import { useSettings } from "../hooks/useSettings";
 import { useFixedWords } from "../hooks/useFixedWords";
 
-// Arrow icon for all list items
-const ArrowIcon = () => (
+/* -----------------------------------
+   Arrow Icon (memoized)
+----------------------------------- */
+const ArrowIcon = React.memo(() => (
   <svg
     width="14"
     height="14"
@@ -21,44 +23,46 @@ const ArrowIcon = () => (
     <path d="M7 17L17 7" />
     <polyline points="7 7 17 7 17 17" />
   </svg>
-);
+));
 
 const Footer = React.memo(() => {
   const { settings } = useSettings();
   const { fixedWords } = useFixedWords();
   const fw = fixedWords?.fixed_words || {};
 
-  // Navigation links
-  const navLinks = [
-    { label: fw.home, path: "/" },
-    { label: fw.aboute, path: "/about" },
-    { label: fw.offers, path: "/salesproducts" },
-    { label: fw.contact_us, path: "/contact" }
-  ].filter(item => item.label);
+  /* ------------------------------
+     Memoized navigation links
+  ------------------------------ */
+  const navLinks = useMemo(
+    () =>
+      [
+        { label: fw.home, path: "/" },
+        { label: fw.aboute, path: "/about" },
+        { label: fw.offers, path: "/salesproducts" },
+        { label: fw.contact_us, path: "/contact" },
+      ].filter((item) => item.label),
+    [fw]
+  );
 
-  // CORRECTED: Social media mapping - match fixed_words labels with settings URLs
-  // Fixed: Use the exact keys from your settings data
-  const socialItems = [
-    { 
-      label: fw.facebook, 
-      url: settings?.facebook_url // Note: settings has "facebook_url" not "facebook"
-    },
-    { 
-      label: fw.instagram, 
-      url: settings?.Instagram_url // Note: capital "I" in settings
-    },
-    { 
-      label: fw.tiktok, 
-      url: settings?.tiktok_url
-    },
-    { 
-      label: fw.snapchat, 
-      url: settings?.snapchat_url
-    },
-  ].filter(item => item.label && item.url); // Only show if we have both label and URL
+  /* ------------------------------
+     Memoized social links
+  ------------------------------ */
+  const socialItems = useMemo(
+    () =>
+      [
+        { label: fw.facebook, url: settings?.facebook_url },
+        { label: fw.instagram || fw.instegram, url: settings?.Instagram_url },
+        { label: fw.tiktok, url: settings?.tiktok_url },
+        { label: fw.snapchat, url: settings?.snapchat_url },
+      ].filter((item) => item.label && item.url),
+    [fw, settings]
+  );
 
   return (
-    <footer className="w-full relative flex justify-center font-inter overflow-hidden">
+    <footer
+      className="w-full relative flex justify-center font-inter overflow-hidden"
+      style={{ contain: "layout paint" }}
+    >
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#2F6CFF] to-[#82B2FF]" />
 
       <div className="relative z-20 w-[90%] max-w-7xl flex flex-col md:flex-row justify-between items-start py-40 text-white">
@@ -84,7 +88,7 @@ const Footer = React.memo(() => {
           )}
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT */}
         <div className="flex flex-col md:flex-row gap-16 mt-16 md:mt-0">
 
           {/* NAVIGATION */}
@@ -95,8 +99,8 @@ const Footer = React.memo(() => {
               </h3>
 
               <ul className="space-y-3">
-                {navLinks.map((item, i) => (
-                  <li key={i}>
+                {navLinks.map((item) => (
+                  <li key={item.path}>
                     <Link
                       to={item.path}
                       className="group flex items-center gap-2 hover:text-white transition"
@@ -118,49 +122,31 @@ const Footer = React.memo(() => {
               </h3>
 
               <ul className="space-y-3">
-                {socialItems.map((item, i) => {
-                  const isClickable = Boolean(item.url);
-                  
-                  // Note: Fixed typo in your fixed_words - it's "instegram" not "instagram"
-                  // But we'll use fw.instagram if available, fallback to fw.instegram
-                  const displayLabel = item.label === fw.instagram && !fw.instagram && fw.instegram 
-                    ? fw.instegram 
-                    : item.label;
-
-                  return (
-                    <li key={i}>
-                      {isClickable ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex items-center gap-2 hover:text-white transition"
-                        >
-                          {displayLabel}
-                          <ArrowIcon />
-                        </a>
-                      ) : (
-                        <div className="group flex items-center gap-2 text-blue-200/70 cursor-default">
-                          {displayLabel}
-                          <ArrowIcon />
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
+                {socialItems.map((item) => (
+                  <li key={item.url}>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center gap-2 hover:text-white transition"
+                    >
+                      {item.label}
+                      <ArrowIcon />
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
-
         </div>
       </div>
 
-      {/* APP STORE BUTTONS - Use settings URLs */}
+      {/* APP STORE BUTTONS */}
       <div className="absolute bottom-20 w-full flex justify-center gap-6 z-20">
         {settings?.app_store_url && (
-          <a 
-            href={settings.app_store_url} 
-            target="_blank" 
+          <a
+            href={settings.app_store_url}
+            target="_blank"
             rel="noopener noreferrer"
             className="hover:opacity-90 transition"
           >
@@ -168,28 +154,40 @@ const Footer = React.memo(() => {
           </a>
         )}
         {settings?.google_play_url && (
-          <a 
-            href={settings.google_play_url} 
-            target="_blank" 
+          <a
+            href={settings.google_play_url}
+            target="_blank"
             rel="noopener noreferrer"
             className="hover:opacity-90 transition"
           >
-            <img src={android} loading="lazy" className="w-32 md:w-20" alt="Android App" />
+            <img
+              src={android}
+              loading="lazy"
+              className="w-32 md:w-20"
+              alt="Android App"
+            />
           </a>
         )}
       </div>
 
-      {/* Footer Bottom Line */}
+      {/* FOOTER BOTTOM */}
       <div className="absolute bottom-6 w-full text-center text-sm text-blue-100 z-20">
         <p>
-          {fw.privacy_policy || "PRIVACY POLICY"} ・{" "}
+          <Link
+            to="/privacy-policy"
+            className="hover:text-white transition hover:underline"
+          >
+            {fw.privacy_policy || "PRIVACY POLICY"}
+          </Link>
+          {" ・ "}
           <Link
             to="/terms"
-            className="cursor-pointer hover:text-white transition hover:underline"
+            className="hover:text-white transition hover:underline"
           >
             {fw.termss_service || "TERMS OF SERVICE"}
-          </Link>{" "}
-          ・ {fw.created_by || "CREATED BY"}{" "}
+          </Link>
+          {" ・ "}
+          {fw.created_by || "CREATED BY"}{" "}
           <span className="text-white font-semibold">
             {fw.catalogueya || "CATALOGUEYA"}
           </span>

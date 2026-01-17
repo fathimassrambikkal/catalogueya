@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { HiDotsHorizontal } from "react-icons/hi";
+import { HiDotsVertical } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
 import Cookies from "js-cookie";
-import { useFavourites } from "../context/FavouriteContext";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import CustomerAccountDropdown from "./CustomerAccountDropdown";
+
 import { AiOutlineHeart } from "react-icons/ai";
 import { changeLanguage as apiChangeLanguage } from "../api";
 import { useSettings } from "../hooks/useSettings";
@@ -20,17 +23,14 @@ const DropdownMenu = memo(function DropdownMenu({
   closeMenu,
 }) {
   if (!isOpen) return null;
-const fw = fixedWords?.fixed_words || {};
+  const fw = fixedWords?.fixed_words || {};
 
-const links = [
-  { path: "/", label: fw.home },
-  { path: "/about", label: fw.aboute },       
-  { path: "/salesproducts", label: fw.ofer }, 
-  { path: "/contact", label: fw.contact_us }, 
-];
-
-
-
+  const links = [
+    { path: "/", label: fw.home },
+    { path: "/about", label: fw.aboute },
+   
+    { path: "/contact", label: fw.contact_us },
+  ];
 
   return (
     <div
@@ -59,10 +59,7 @@ const links = [
             onClick={closeMenu}
             className="block bg-blue-500 text-white px-3 py-1.5 rounded-full hover:bg-blue-600 transition text-sm"
           >
-          {fw.singup}
-
-
-
+            {fw.singup}
           </Link>
         </li>
       </ul>
@@ -81,16 +78,19 @@ const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
       bg-white/30 text-gray-900 px-2 py-1 sm:px-2 sm:py-2
       rounded-lg md:rounded-xl hover:bg-white/50 transition backdrop-blur-md"
     >
-      <HiDotsHorizontal className="text-gray-700 text-xl" />
+      <HiDotsVertical className=" text-gray-700
+    text-sm sm:text-xs md:text-lg lg:text-lg xl:text-xl
+    
+    " />
     </button>
   );
 });
 
 /* =============================
-   FAVOURITES COUNTER
+   FAVOURITES COUNTER (FIXED - NO AUTH LOGIC)
 ============================= */
 const FavouritesCounter = memo(function FavouritesCounter() {
-  const { favourites } = useFavourites();
+  const favourites = useSelector((state) => state.favourites.items);
   const { i18n } = useTranslation();
   const count = favourites.length;
 
@@ -100,15 +100,25 @@ const FavouritesCounter = memo(function FavouritesCounter() {
       className={`relative ${i18n.language === "ar" ? "ml-2" : ""}`}
     >
       <AiOutlineHeart
-        className={`text-2xl cursor-pointer transition ${
+        className={` cursor-pointer transition text-base sm:text-xl md:text-2xl lg:text-2xl xl:text-2xl ${
           count > 0
             ? "text-red-500 hover:text-red-600"
             : "text-gray-600 hover:text-red-400"
         }`}
       />
       {count > 0 && (
-        <span className="absolute -top-2 -right-2 bg-red-500 text-white
-        text-[10px] sm:text-xs rounded-full px-1.5 py-0.5 shadow-md">
+        <span
+          className=" absolute
+        -top-1.5 sm:-top-2
+        -right-1.5 sm:-right-2
+        bg-red-500 text-white
+        text-[9px] sm:text-[10px] md:text-xs
+        rounded-full
+        px-1 sm:px-1.5
+        py-0.5
+        shadow-md
+        leading-none"
+        >
           {count}
         </span>
       )}
@@ -133,8 +143,8 @@ const LanguageToggle = memo(function LanguageToggle({
     <button
       onClick={handleClick}
       className="border border-gray-300 text-gray-900
-      px-2 py-1 sm:px-3 sm:py-2 rounded-lg md:rounded-xl
-      hover:bg-white/50 transition text-xs sm:text-sm backdrop-blur-md"
+      px-2 py-1 sm:px-3 sm:py-1 rounded-lg md:rounded-xl
+      hover:bg-white/50 transition text-[10px] sm:text-xs md:text-sm lg:text-sm xl:text-base backdrop-blur-md"
     >
       {language === "en" ? "عربي" : "EN"}
     </button>
@@ -145,10 +155,21 @@ const LanguageToggle = memo(function LanguageToggle({
    NAVBAR (MAIN)
 ============================= */
 export default function Navbar() {
+  // ✅ FIX 1 & 2: Declare auth state and accountOpen in Navbar
+  const { isAuthenticated, userType, user } = useSelector((state) => state.auth);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  // ✅ FIX 3: Calculate displayName in Navbar
+ const displayName =
+  user?.name ||
+  [user?.first_name].filter(Boolean).join(" ") ||
+  "Customer";
+
+
   const { settings } = useSettings();
   const { fixedWords } = useFixedWords();
 
-const fw = fixedWords?.fixed_words || {};
+  const fw = fixedWords?.fixed_words || {};
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -208,6 +229,44 @@ const fw = fixedWords?.fixed_words || {};
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  const navigate = useNavigate();
+
+  const handleAccountClick = () => {
+    if (!isAuthenticated) {
+      navigate("/sign");
+      return;
+    }
+
+    if (userType === "customer") {
+      navigate("/customer-login");
+    } else if (userType === "company") {
+      navigate("/company-dashboard");
+    }
+  };
+
+  const preloadDashboard = () => {
+    if (userType === "customer") {
+      import("../pages/CustomerLogin");
+    } else if (userType === "company") {
+      import("../pages/CompanyDashboard");
+    }
+  };
+useEffect(() => {
+  setAccountOpen(false);
+}, [isAuthenticated, userType]);
+useEffect(() => {
+  if (!accountOpen) return;
+
+  const handleClickOutside = (e) => {
+    if (!e.target.closest(".customer-account-container")) {
+      setAccountOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [accountOpen]);
+
   return (
     <nav
       dir={i18n.language === "ar" ? "rtl" : "ltr"}
@@ -222,13 +281,11 @@ const fw = fixedWords?.fixed_words || {};
       {/* Logo */}
       <div className="flex-shrink-0">
         <Link to="/">
-        <img
-  src={`${import.meta.env.VITE_ASSET_BASE_URL}/${settings?.logo}`}
-  alt="Catalogueya Logo"
-  className="h-12 sm:h-14 object-contain ml-2 lg:ml-16"
-/>
-
-
+          <img
+            src={`${import.meta.env.VITE_ASSET_BASE_URL}/${settings?.logo}`}
+            alt="Catalogueya Logo"
+            className="h-12 sm:h-14 object-contain ml-3 lg:ml-16"
+          />
         </Link>
       </div>
 
@@ -236,17 +293,41 @@ const fw = fixedWords?.fixed_words || {};
       <div className="flex items-center space-x-3 sm:space-x-5 md:mr-20">
         <FavouritesCounter />
 
-        <Link
-          to="/sign"
-          className="border border-gray-300 text-gray-900 hover:text-blue-500
-          px-2 sm:px-3 py-1 sm:py-2 rounded-lg md:rounded-xl
-          transition text-xs sm:text-sm flex items-center justify-center
-          bg-white/30 hover:bg-white/50"
-        >
-        {fw.login}
+        {/* ✅ FIX 3: Customer Account Dropdown (now has access to accountOpen and displayName) */}
+       {isAuthenticated && userType === "customer" ? (
+  <div className="relative customer-account-container">
+  <button
+  onMouseEnter={preloadDashboard}
+  onClick={() => setAccountOpen((prev) => !prev)}
+  className="
+    border border-gray-300 text-gray-900 hover:text-blue-500
+    px-2 sm:px-3 py-1 sm:py-2 rounded-lg md:rounded-xl
+    transition text-xs sm:text-sm flex flex-col md:flex-row items-center justify-center
+    bg-white/30 hover:bg-white/50
+  "
+>
+  <span className="text-gray-700">{fw.welcome}</span>
+  <span className=" ml-0 md:ml-1 font-semibold text-blue-500 text-[10px] md:text-sm">
+    {displayName}
+  </span>
+</button>
 
 
-        </Link>
+    {accountOpen && (
+      <CustomerAccountDropdown onClose={() => setAccountOpen(false)} />
+    )}
+  </div>
+) : (
+  <button
+    onClick={() => navigate("/sign")}
+    className="border border-gray-300 text-gray-900
+    px-2 sm:px-3 py-1 sm:py-2 rounded-lg md:rounded-xl
+    bg-white/30 hover:bg-white/50 transition text-xs sm:text-sm"
+  >
+    {fw.login}
+  </button>
+)}
+
 
         <LanguageToggle
           toggleLanguage={toggleLanguage}

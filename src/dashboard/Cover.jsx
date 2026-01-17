@@ -97,48 +97,16 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
   } = localCompanyInfo;
 
   const coverSrc = useMemo(() => {
-    if (!coverPhoto) return "/cover.jpg";
-    
-    // Handle both string URLs and File objects
-    if (typeof coverPhoto === "string") {
-      // Check if it's a valid URL or needs processing
-      if (coverPhoto.startsWith("http") || coverPhoto.startsWith("/") || coverPhoto.startsWith("data:")) {
-        return coverPhoto;
-      }
-      // If it's just a filename or path, try to construct URL
-      try {
-        // Try to create object URL if it looks like a file path
-        if (coverPhoto.includes("/") || coverPhoto.includes("\\")) {
-          return coverPhoto;
-        }
-      } catch (err) {
-        console.error("Error processing cover photo:", err);
-      }
-    }
-    
-    // Fallback to default
-    return "/cover.jpg";
-  }, [coverPhoto]);
+  return typeof coverPhoto === "string" && coverPhoto.trim()
+    ? coverPhoto
+    : null;
+}, [coverPhoto]);
+const logoSrc = useMemo(() => {
+  return typeof logo === "string" && logo.trim()
+    ? logo
+    : null;
+}, [logo]);
 
-  const logoSrc = useMemo(() => {
-    if (!logo) return null;
-    
-    // Handle both string URLs and File objects
-    if (typeof logo === "string") {
-      // Check if it's a valid URL
-      if (logo.startsWith("http") || logo.startsWith("/") || logo.startsWith("data:")) {
-        return logo;
-      }
-      // If it's just a filename or path
-      try {
-        return logo;
-      } catch (err) {
-        console.error("Error processing logo:", err);
-      }
-    }
-    
-    return null;
-  }, [logo]);
 
   const socialIcons = useMemo(
     () => ({
@@ -188,17 +156,15 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
     <div className="relative w-full overflow-hidden shadow-md mb-6 max-w-full min-w-0">
 
       {/* COVER PHOTO */}
-      <div className="w-full h-52 sm:h-48 md:h-56 lg:h-64 bg-gray-300 min-w-0">
-        <img
-          src={coverSrc}
-          alt="Cover"
-          className="w-full h-full object-cover min-w-0"
-          onError={(e) => {
-            console.error("❌ Cover image failed to load:", coverSrc);
-            e.target.src = "/cover.jpg";
-          }}
-        />
-      </div>
+     <div className="w-full h-52 sm:h-48 md:h-56 lg:h-64 bg-gray-300 min-w-0">
+  {coverSrc && (
+  <img
+    src={coverSrc}
+    alt="Cover"
+    className="w-full h-full object-cover"
+  />
+)}
+</div>
 
       {/* EDIT BUTTON */}
       <button
@@ -275,31 +241,28 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
       {/* COMPANY INFO BLOCK */}
       <div className="absolute bottom-0 left-0 w-full p-4 flex items-start gap-3 sm:gap-4 min-w-0">
 
-        {/* LOGO */}
-        <div
-          className="
-            w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 min-w-0
-            rounded-lg sm:rounded-xl overflow-hidden 
-            border border-white/20 backdrop-blur-md
-            shadow-[inset_1px_1px_2px rgba(255,255,255,0.2)]
-          "
-        >
-          {logoSrc ? (
-            <img
-              src={logoSrc}
-              alt="Logo"
-              className="w-full h-full object-contain p-1"
-              onError={(e) => {
-                console.error("❌ Logo failed to load:", logoSrc);
-                e.target.style.display = "none";
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/50 text-xs">
-              No Logo
-            </div>
-          )}
-        </div>
+      {/* LOGO */}
+<div
+  className="
+    w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 min-w-0
+    rounded-lg sm:rounded-xl overflow-hidden 
+    border border-white/20 backdrop-blur-md
+    shadow-[inset_1px_1px_2px rgba(255,255,255,0.2)]
+  "
+>
+  {logoSrc ? (
+    <img
+      src={logoSrc}
+      alt="Logo"
+      className="w-full h-full object-contain p-1"
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center text-white/50 text-xs">
+      No Logo
+    </div>
+  )}
+</div>
+
 
         {/* TEXT BLOCK */}
         <div className="flex-1 min-w-0">

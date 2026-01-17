@@ -52,28 +52,27 @@ function Fatora() {
 
   return (
     <div className="
-      min-h-[600px] 
-      bg-gradient-to-br from-blue-50/50 via-white to-blue-50/30
-      backdrop-blur-[2px]
-      rounded-3xl 
-      border border-white/80
-      shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02),inset_0_1px_0_rgba(255,255,255,0.8)]
+      min-h-full
+      
       p-4 sm:p-6 md:p-8
     ">
-      {/* Header - Centered and Responsive */}
-      <div className="mb-8 md:mb-10">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
-              Fatora
-            </h1>
-            
-          </div>
-          
-          {/* Filter Tabs - Responsive Row */}
-         <div className="flex items-center justify-start md:justify-end">
+      {/* ===== Updated Header Section ===== */}
+      <div className="relative mt-10 mb-8 md:mb-10">
+        {/* Center title */}
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+            Fatora
+          </h1>
+        </div>
+
+        {/* Tabs */}
         <div
           className="
+            mt-4 md:mt-0
+            flex justify-center md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2
+          "
+        >
+          <div className="
             flex
             bg-white/70 backdrop-blur-md
             rounded-2xl
@@ -81,50 +80,47 @@ function Fatora() {
             shadow-sm
             p-1
             gap-1
-          "
-        >
-          {/* Pending */}
-          <button
-            onClick={() => setActiveFilter("pending")}
-            className={`
-              relative
-              px-5 md:px-8 py-2.5
-              rounded-xl
-              text-[10px] md:text-base font-semibold
-              transition-all duration-300
-              ${
-                activeFilter === "pending"
-                  ? "bg-blue-500/15 text-blue-600 shadow-inner"
-                  : "text-gray-600 hover:text-gray-800"
-              }
-            `}
-          >
-            Pending Fatora
-          
-          </button>
+          ">
+            {/* Pending Button */}
+            <button
+              onClick={() => setActiveFilter("pending")}
+              className={`
+                relative
+                px-5 md:px-8 py-2.5
+                rounded-xl
+                text-[10px] md:text-base font-semibold
+                transition-all duration-300
+                ${
+                  activeFilter === "pending"
+                    ? "bg-blue-500/15 text-blue-600 shadow-inner"
+                    : "text-gray-600 hover:text-gray-800"
+                }
+              `}
+            >
+              Pending Fatora
+            </button>
 
-          {/* Past */}
-          <button
-            onClick={() => setActiveFilter("past")}
-            className={`
-              px-5 md:px-8 py-2.5
-              rounded-xl
-              text-[10px] md:text-base font-semibold
-              transition-all duration-300
-              ${
-                activeFilter === "past"
-                  ? "bg-blue-500/15 text-blue-600 shadow-inner"
-                  : "text-gray-600 hover:text-gray-800"
-              }
-            `}
-          >
-            Past Fatora
-          </button>
+            {/* Past Button */}
+            <button
+              onClick={() => setActiveFilter("past")}
+              className={`
+                px-5 md:px-8 py-2.5
+                rounded-xl
+                text-[10px] md:text-base font-semibold
+                transition-all duration-300
+                ${
+                  activeFilter === "past"
+                    ? "bg-blue-500/15 text-blue-600 shadow-inner"
+                    : "text-gray-600 hover:text-gray-800"
+                }
+              `}
+            >
+              Past Fatora
+            </button>
+          </div>
         </div>
       </div>
-
-        </div>
-      </div>
+      {/* ===== End Header Section ===== */}
 
       {/* Render the appropriate component based on active filter */}
       {activeFilter === "pending" && (

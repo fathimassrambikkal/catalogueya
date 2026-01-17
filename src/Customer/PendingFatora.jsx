@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaChevronRight, FaClock, FaFileInvoice, FaBuilding, FaCalendarAlt, FaTimes, FaWallet } from "react-icons/fa";
+import { FaChevronRight, FaClock, FaTimes, FaWallet } from "react-icons/fa";
 
 function PendingFatora({ fatoras }) {
   const [showModal, setShowModal] = useState(false);

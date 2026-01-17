@@ -1,6 +1,9 @@
 // AnalyticsAppleFull.jsx
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSelector } from "react-redux";
+import { getAnalytics } from "../api";
+
 import {
   AreaChart,
   Area,
@@ -66,6 +69,8 @@ function useCountUp(value, duration = 900) {
 // Small skeleton & card helpers
 // -----------------------------
 function Skeleton({ className = "", shimmer = false }) {
+
+
   return (
     <div
       className={`relative overflow-hidden animate-pulse bg-gray-200/60 rounded-lg ${className}`}
@@ -173,82 +178,84 @@ const StatsCard = React.memo(function StatsCard({
 // Main Component
 // -----------------------------
 export default function AnalyticsAppleFull({ products = [] }) {
+  const { user } = useSelector((state) => state.auth);
+  const companyId = user?.id;
+
+  const [analytics, setAnalytics] = useState(null);
   const safeProducts = Array.isArray(products) ? products : [];
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState("weekly");
   const containerRef = useRef(null);
 
+  const statsData = useMemo(() => {
+  if (!analytics) return [];
+
+  return [
+    {
+      icon: FaShoppingBag,
+      value: analytics.total_products ?? 0,
+      label: "Products",
+      trend: analytics.products_trend,
+    },
+    {
+      icon: FaEye,
+      value: analytics.total_views ?? 0,
+      label: "Total Views",
+      trend: analytics.views_trend,
+    },
+    {
+      icon: FaUsers,
+      value: analytics.profile_views ?? 0,
+      label: "Profile Views",
+      trend: analytics.profile_trend,
+    },
+  ];
+}, [analytics]);
+
+
   // loading simulation cleanup
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(t);
-  }, []);
+ useEffect(() => {
+  if (!companyId) return;
 
-  // base data memoized
-  const baseData = useMemo(
-    () => ({
-      weekly: Array.from({ length: 7 }, (_, i) => ({
-        label: `D${i + 1}`,
-        v: Math.floor(Math.random() * 500 + 200),
-      })),
-      monthly: Array.from({ length: 30 }, (_, i) => ({
-        label: `D${i + 1}`,
-        v: Math.floor(Math.random() * 500 + 200),
-      })),
-      yearly: Array.from({ length: 12 }, (_, i) => ({
-        label: `M${i + 1}`,
-        v: Math.floor(Math.random() * 6000 + 4000),
-      })),
-    }),
-    []
-  );
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
 
-  const [trend, setTrend] = useState(() => baseData[range]?.slice() || []);
+      const res = await getAnalytics(companyId, range);
 
-  // set trend when range changes
-  useEffect(() => {
-    if (!baseData[range]) return;
-    setTrend(baseData[range].map((d) => ({ ...d })));
-  }, [range, baseData]);
+      // expected backend shape (safe access)
+      setAnalytics(res.data?.data || res.data);
+    } catch (err) {
+      console.error("❌ Analytics API failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // periodic trend updates with cleanup
-  useEffect(() => {
-    let mounted = true;
-    let intervalId = null;
+  fetchAnalytics();
+}, [companyId, range]);
 
-    const updateTrend = () => {
-      if (!mounted) return;
-      setTrend((t) =>
-        t.map((d) => ({
-          ...d,
-          v: Math.max(
-            0,
-            Math.round(
-              d.v +
-                (Math.random() - 0.45) *
-                  (range === "weekly" ? 40 : range === "monthly" ? 80 : 200)
-            )
-          ),
-        }))
-      );
-    };
 
-    const intervalMs = range === "weekly" ? 2800 : range === "monthly" ? 3200 : 4000;
-    intervalId = setInterval(updateTrend, intervalMs);
+  
+ 
 
-    return () => {
-      mounted = false;
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [range]);
+
+ 
 
   // top product safely computed
   const topProduct = useMemo(() => {
-    if (safeProducts.length === 0) return {};
-    return safeProducts.reduce((a, b) => (b.views > (a.views || 0) ? b : a), safeProducts[0] || {});
-  }, [safeProducts]);
+  return analytics?.top_product || {};
+}, [analytics]);
 
-  const areaData = useMemo(() => trend.map((d) => ({ name: d.label, views: d.v })), [trend]);
+
+  const areaData = useMemo(() => {
+  if (!analytics?.chart) return [];
+  return analytics.chart.map((d) => ({
+    name: d.label,
+    views: d.value,
+  }));
+}, [analytics]);
+
 
   const viewsAnimated = useCountUp(Number(topProduct.views) || 0, 800);
   const totalViewsCount = useCountUp(
@@ -268,24 +275,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
     setRange(newRange);
   }, []);
 
-  const statsData = useMemo(
-    () => [
-      {
-        icon: FaShoppingBag,
-        value: safeProducts.length,
-        label: "Most Viewed",
-        trend: 12,
-      },
-      {
-        icon: FaEye,
-        value: safeProducts.reduce((s, p) => s + (Number(p.views) || 0), 0),
-        label: "Total Views",
-        trend: 8,
-      },
-      { icon: FaUsers, value: 830, label: "Profile Views", trend: -2 },
-    ],
-    [safeProducts]
-  );
+  
 
   return (
     <div
@@ -489,7 +479,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   </AnalyticsCard>
                 ))
               ) : (
-                safeProducts.slice(0, 6).map((p) => (
+                (analytics?.products || []).slice(0, 6).map((p) => (
                   <motion.div
                     key={p.id}
                     initial={{ opacity: 0, y: 20 }}

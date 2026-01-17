@@ -7,17 +7,21 @@ import React, {
   useRef
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useFavourites } from "../context/FavouriteContext";
-import { getCategory, getCompanies, getProducts } from "../api";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
+import { useFixedWords } from "../hooks/useFixedWords";
+
+
+import { getCategory} from "../api";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 // =================== SVG ICONS ===================
 const ArrowLeftIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} transform-gpu`}
-    width="18" 
-    height="18" 
+  <svg
+    className={className}
+    width="18"
+    height="18"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -28,10 +32,12 @@ const ArrowLeftIcon = ({ className = "" }) => (
     <path d="M19 12H5M12 19l-7-7 7-7" />
   </svg>
 );
+const backButtonClass =
+  "absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300 transform-gpu active:scale-95";
 
 const HeartIcon = ({ filled, className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="14" 
     height="14" 
     viewBox="0 0 24 24"
@@ -47,7 +53,7 @@ const HeartIcon = ({ filled, className = "" }) => (
 
 const StarIcon = ({ filled, className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="12" 
     height="12" 
     viewBox="0 0 576 512"
@@ -61,7 +67,7 @@ const StarIcon = ({ filled, className = "" }) => (
 
 const ArrowOutwardIcon = ({ className = "" }) => (
   <svg 
-    className={`${className} transform-gpu`}
+    className={`${className} `}
     width="16" 
     height="16" 
     viewBox="0 0 24 24"
@@ -72,21 +78,6 @@ const ArrowOutwardIcon = ({ className = "" }) => (
     strokeLinejoin="round"
   >
     <path d="M7 17L17 7M17 7H7M17 7V17" />
-  </svg>
-);
-
-const ChatIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} transform-gpu`}
-    width="17" 
-    height="17" 
-    viewBox="0 0 16 16"
-    fill="currentColor"
-  >
-    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z" />
-    <circle cx="4" cy="8" r="1" />
-    <circle cx="8" cy="8" r="1" />
-    <circle cx="12" cy="8" r="1" />
   </svg>
 );
 
@@ -149,14 +140,14 @@ const OptimizedImage = memo(({
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden transform-gpu">
+    <div className="relative w-full h-full overflow-hidden ">
       {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse transform-gpu" />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse " />
       )}
       <img
         ref={imgRef}
         alt={alt}
-        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 transform-gpu`}
+        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 `}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         onClick={handleClick}
@@ -205,12 +196,12 @@ const CompanyCard = memo(({ company, navigate }) => {
   }), [company.name, company.title, company.logo, company.image, formatRating, rating, getImageUrl]);
 
   const ratingDisplay = useMemo(() => (
-    <div className="flex items-center gap-1 rtl:flex-row-reverse transform-gpu">
+    <div className="flex items-center gap-1 rtl:flex-row-reverse ">
       <StarIcon
         filled={rating > 0}
-        className="w-3 h-3 transform-gpu"
+        className="w-3 h-3 "
       />
-      <span className="text-xs text-gray-600 font-medium transform-gpu">
+      <span className="text-xs text-gray-600 font-medium ">
         {companyData.rating}
       </span>
     </div>
@@ -219,28 +210,36 @@ const CompanyCard = memo(({ company, navigate }) => {
   return (
     <div
       onClick={handleClick}
-      className="relative group cursor-pointer bg-white rounded-xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden w-full max-w-[220px] mx-auto transform-gpu hover:scale-[1.03]"
+      className="relative group cursor-pointer bg-white rounded-xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden w-full max-w-[220px] mx-auto  hover:scale-[1.03]"
       style={{ willChange: 'transform' }}
     >
-      <div className="relative w-full h-[120px] overflow-hidden rounded-t-xl transform-gpu">
-        <OptimizedImage
-          src={companyData.logo}
-          alt={companyData.name}
-          className="object-cover w-[88%] h-[92%] m-auto rounded-xl transition-transform duration-300 group-hover:scale-105 mt-2 transform-gpu"
-          priority={false}
-          onError={() => {}}
-        />
+      <div className="relative w-full h-[120px] overflow-hidden rounded-t-xl ">
+        {companyData.logo ? (
+          <OptimizedImage
+            src={companyData.logo}
+            alt={companyData.name}
+            className="object-cover w-[88%] h-[92%] m-auto rounded-xl transition-transform duration-300 group-hover:scale-105 mt-2 "
+            priority={false}
+            onError={() => {}}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-shimmer bg-[length:200%_100%] rounded-xl" />
+        )}
       </div>
       
-      <div className="flex items-start justify-between p-3 pt-2 gap-2 transform-gpu">
-        <div className="flex flex-col min-w-0 flex-1 transform-gpu">
-          <h3 className="text-gray-900 font-medium text-sm sm:text-base line-clamp-2 mb-1 leading-tight break-words text-start rtl:text-right transform-gpu">
-            {companyData.name}
-          </h3>
+      <div className="flex items-start justify-between p-3 pt-2 gap-2 ">
+        <div className="flex flex-col min-w-0 flex-1 ">
+          {companyData.name ? (
+            <h3 className="text-gray-900 font-medium text-sm sm:text-base line-clamp-2 mb-1 leading-tight break-words text-start rtl:text-right ">
+              {companyData.name}
+            </h3>
+          ) : (
+            <div className="h-4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-3/4 mb-2" />
+          )}
           {ratingDisplay}
         </div>
-        <div className="flex-shrink-0 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300 mt-1 transform-gpu">
-          <ArrowOutwardIcon className="text-gray-700 text-sm transform-gpu" />
+        <div className="flex-shrink-0 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300 mt-1 ">
+          <ArrowOutwardIcon className="text-gray-700 text-sm " />
         </div>
       </div>
     </div>
@@ -248,12 +247,13 @@ const CompanyCard = memo(({ company, navigate }) => {
 });
 CompanyCard.displayName = 'CompanyCard';
 
-// =================== PRODUCT CARD (OPTIMIZED WITH CHAT ICON) ===================
+// =================== PRODUCT CARD (OPTIMIZED) ===================
 const ProductCard = memo(({ 
   product, 
   isFav, 
   toggleFavourite, 
-  navigate 
+  navigate,
+  fw
 }) => {
   const { getSafeRating, formatRating } = useRatingHelpers();
   
@@ -262,7 +262,7 @@ const ProductCard = memo(({
     return formatImageUrl(imgPath);
   }, []);
   
-  // Memoize all derived data - ENHANCED with proper structure for favourites
+  // Memoize all derived data
   const productData = useMemo(() => {
     const imageUrl = getImageUrl(product.image || product.thumbnail);
     const priceNumber = product.price ? parseFloat(product.price) : 0;
@@ -270,9 +270,9 @@ const ProductCard = memo(({
     return {
       id: product.id,
       name: product.name || product.title || 'Product',
-      price: priceNumber, // Store as number, not string
+      price: priceNumber,
       image: imageUrl,
-      img: imageUrl, // Add img field for compatibility
+      img: imageUrl,
       rating: getSafeRating(product.rating),
       description: product.description || '',
       company_name: product.company_name || 'Company',
@@ -281,23 +281,21 @@ const ProductCard = memo(({
       isNewArrival: product.isNewArrival || false,
       category_name: product.category_name || '',
       formattedPrice: product.price 
-        ? `QAR ${priceNumber.toLocaleString()}`
-        : 'Price not available',
+        ? `${fw?.qar || "QAR"} ${priceNumber.toLocaleString()}`
+        : fw?.price_not_available || "Price not available",
       formattedRating: formatRating(product.rating),
-      // Include the original product data for navigation
       ...product
     };
-  }, [product, getSafeRating, formatRating, getImageUrl]);
+  }, [product, getSafeRating, formatRating, getImageUrl, fw]);
 
-  // FIXED: Pass the full productData object
   const handleFavouriteClick = useCallback((e) => {
     e.stopPropagation();
-    // Create a product object with all required fields for FavouriteContext
     const productForFavourite = {
       id: productData.id,
       name: productData.name,
-      price: productData.price, // This is a number
+      price: productData.price,
       image: productData.image,
+      source: "category",
       img: productData.img,
       company_name: productData.company_name,
       company_id: productData.company_id,
@@ -310,33 +308,25 @@ const ProductCard = memo(({
     toggleFavourite(productForFavourite);
   }, [productData, toggleFavourite]);
 
-  const handleChatClick = useCallback((e) => {
-    e.stopPropagation();
-    // Chat functionality - you can add your chat logic here
-    console.log("Open chat for product:", productData.id);
-    // Example: navigate to chat or open chat modal
-  }, [productData.id]);
-
   const handleCardClick = useCallback(() => {
     navigate(`/product/${productData.id}`);
   }, [productData.id, navigate]);
 
-  // Memoize rating stars
   const ratingStars = useMemo(() => (
     Array.from({ length: 5 }).map((_, i) => (
       <StarIcon
         key={i}
         filled={i < Math.floor(productData.rating)}
-        className={`w-3 h-3 transform-gpu ${i < Math.floor(productData.rating) ? "text-white" : "text-gray-400"}`}
+        className={`w-3 h-3  ${i < Math.floor(productData.rating) ? "text-white" : "text-gray-400"}`}
       />
     ))
   ), [productData.rating]);
 
   const ratingBadge = useMemo(() => (
     productData.rating > 0 && (
-      <div className="absolute bottom-3 left-3 rtl:left-auto rtl:right-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg transform-gpu">
+      <div className="absolute bottom-3 left-3 rtl:left-auto rtl:right-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg ">
         {ratingStars}
-        <span className="text-[10px] text-white ml-1 rtl:ml-0 rtl:mr-1 transform-gpu">
+        <span className="text-[10px] text-white ml-1 rtl:ml-0 rtl:mr-1 ">
           {productData.formattedRating}
         </span>
       </div>
@@ -344,134 +334,146 @@ const ProductCard = memo(({
   ), [productData.rating, productData.formattedRating, ratingStars]);
 
   const favouriteButton = useMemo(() => (
-    <button
-      onClick={handleFavouriteClick}
-      className={`absolute top-2 right-2 z-20 p-2 rounded-full shadow-md transition backdrop-blur-md border transform-gpu active:scale-90 ${
-        isFav
-          ? "bg-red-100 text-red-600 border-red-200"
-          : "bg-white text-gray-600 border-white hover:bg-red-50"
-      }`}
-    >
-      <HeartIcon
-        filled={isFav}
-        className={`text-sm transform-gpu ${isFav ? "text-red-500" : "hover:text-red-400"}`}
-      />
-    </button>
+<button
+  onClick={handleFavouriteClick}
+  className={`
+    absolute top-[clamp(6px,1.2vw,8px)] right-[clamp(6px,1.2vw,8px)]
+    z-20
+    flex items-center justify-center
+    w-[clamp(28px,3vw,34px)]
+    h-[clamp(28px,3vw,34px)]
+    rounded-full
+    backdrop-blur-md
+    border
+    shadow-md
+    transition
+    hover:scale-105 active:scale-90
+    ${isFav
+      ? "bg-red-100 text-red-600 border-red-200"
+      : "bg-white text-gray-600 border-white hover:bg-red-50"}
+  `}
+>
+  <HeartIcon
+    filled={isFav}
+    className={`
+      w-[clamp(11px,1.2vw,15px)]
+      h-[clamp(11px,1.2vw,15px)]
+      transition-colors
+      ${isFav ? "text-red-500" : "hover:text-red-400"}
+    `}
+  />
+</button>
+
+
   ), [isFav, handleFavouriteClick]);
 
-  const chatButton = useMemo(() => (
-    <button
-      onClick={handleChatClick}
-      className="
-        relative
-        px-2 py-1.5
-        rounded-[16px]
-        bg-white/40
-        backdrop-blur-2xl
-        border border-[rgba(255,255,255,0.28)]
-        shadow-[0_8px_24px_rgba(0,0,0,0.18)]
-        hover:bg-white/55
-        transition-all duration-300
-        flex-shrink-0
-        transform-gpu
-      "
-    >
-      <span className="
-        absolute inset-0 rounded-[16px]
-        bg-gradient-to-br from-white/70 via-white/10 to-transparent
-        opacity-40
-        pointer-events-none
-        transform-gpu
-      " />
-      <span className="
-        absolute inset-0 rounded-[16px]
-        bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)]
-        opacity-35
-        pointer-events-none
-        transform-gpu
-      " />
-      <span className="
-        absolute inset-0 rounded-[16px]
-        bg-gradient-to-t from-black/20 to-transparent
-        opacity-20
-        pointer-events-none
-        transform-gpu
-      " />
-      <ChatIcon
-        className="
-          text-[rgba(18,18,18,0.88)]
-          drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
-          relative z-10
-          transform-gpu
-        "
-      />
-    </button>
-  ), [handleChatClick]);
-
   return (
-    <div
-      onClick={handleCardClick}
-      className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer bg-white border border-gray-100 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-300 mx-auto transform-gpu hover:scale-[1.04]"
-      style={{ willChange: 'transform' }}
-    >
-      {favouriteButton}
+<div
+  onClick={handleCardClick}
+  className="
+    relative
+    flex-none
+    w-full
+    max-w-[220px]
+    rounded-3xl
+    overflow-hidden
+    group
+    cursor-pointer
+    bg-white
+    border border-gray-200
+    transition-transform duration-300
+    hover:scale-[1.03]
+    mx-auto
+  "
+  style={{ willChange: "transform" }}
+>
+  {favouriteButton}
 
-      {/* Product Image */}
-      <div className="relative w-full h-[200px] overflow-hidden transform-gpu">
-        <OptimizedImage
-          src={productData.image}
-          alt={productData.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 transform-gpu"
-          priority={false}
-          onError={() => {}}
-        />
-        {ratingBadge}
-      </div>
+  {/* Product Image */}
+  <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
+    {productData.image ? (
+      <OptimizedImage
+        src={productData.image}
+        alt={productData.name}
+        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        priority={false}
+        onError={() => {}}
+      />
+    ) : (
+      <div className="w-full h-full bg-gray-100 animate-pulse" />
+    )}
 
-      {/* Product Info */}
-      <div className="p-4 flex items-center justify-between transform-gpu">
-        <div className="flex-1 transform-gpu">
-          <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1 break-words text-start rtl:text-right transform-gpu">
+    {ratingBadge}
+  </div>
+
+  {/* Product Info */}
+  <div className="p-3 border-t border-gray-100">
+    <div className="flex-1">
+      {productData.name ? (
+        <>
+          <h3
+            className="
+              font-semibold
+              text-gray-900
+              mb-1
+              truncate
+              text-[10px]
+              xs:text-[10px]
+              sm:text-[14px]
+              md:text-xs
+              rtl:text-right
+            "
+          >
             {productData.name}
           </h3>
-          <div className="flex items-center gap-1 transform-gpu">
-            <span className="text-sm font-bold text-gray-900 transform-gpu">
+
+          <div className="flex items-center gap-1">
+            <span
+              className="
+                font-bold
+                text-gray-900
+                text-[10px]
+                xs:text-[10px]
+                sm:text-[11px]
+                md:text-xs
+              "
+            >
               {productData.formattedPrice}
             </span>
           </div>
-          {productData.description && (
-            <p className="text-gray-500 text-xs mt-1 line-clamp-1 break-words text-start rtl:text-right transform-gpu">
-              {productData.description}
-            </p>
-          )}
-        </div>
-
-        {/* CHAT BUTTON */}
-        {chatButton}
-      </div>
+        </>
+      ) : (
+        <>
+          <div className="h-3.5 bg-gray-200 rounded-full w-3/4 mb-2 animate-pulse" />
+          <div className="h-3 bg-gray-200 rounded-full w-1/2 animate-pulse" />
+        </>
+      )}
     </div>
+  </div>
+</div>
+
   );
 });
 ProductCard.displayName = 'ProductCard';
 
 // =================== SKELETON LOADERS ===================
 const CompanyCardSkeleton = memo(() => (
-  <div className="relative bg-white rounded-xl border border-gray-100 overflow-hidden w-full max-w-[220px] mx-auto animate-pulse transform-gpu">
-    <div className="w-full h-[120px] bg-gray-200 rounded-t-xl transform-gpu" />
-    <div className="p-3 transform-gpu">
-      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 transform-gpu"></div>
-      <div className="h-3 bg-gray-200 rounded w-1/2 transform-gpu"></div>
+  <div className="relative bg-white rounded-xl border border-gray-100 overflow-hidden w-full max-w-[220px] mx-auto ">
+    <div className="w-full h-[120px] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-t-xl animate-shimmer bg-[length:200%_100%]" />
+    <div className="p-3 space-y-2.5">
+      <div className="h-3.5 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-[85%]"></div>
+      <div className="h-3 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-[60%]"></div>
     </div>
   </div>
 ));
 CompanyCardSkeleton.displayName = 'CompanyCardSkeleton';
 
 const ProductCardSkeleton = memo(() => (
-  <div className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden bg-white border border-gray-100 mx-auto animate-pulse transform-gpu">
-    <div className="w-full h-[200px] bg-gray-200 transform-gpu" />
-    <div className="p-4 transform-gpu">
-      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 transform-gpu"></div>
-      <div className="h-3 bg-gray-200 rounded w-1/2 transform-gpu"></div>
+  <div className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden bg-white border border-gray-100 mx-auto ">
+    <div className="w-full h-[200px] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-shimmer bg-[length:200%_100%]" />
+    <div className="p-4 space-y-2.5">
+      <div className="h-4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-[90%]"></div>
+      <div className="h-3 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-[70%]"></div>
     </div>
   </div>
 ));
@@ -481,8 +483,9 @@ ProductCardSkeleton.displayName = 'ProductCardSkeleton';
 const CategoryPage = memo(() => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
-  const { favourites, toggleFavourite } = useFavourites();
-  
+  const dispatch = useDispatch();
+  const favourites = useSelector((state) => state.favourites.items);
+  const auth = useSelector((state) => state.auth);
   const [category, setCategory] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [products, setProducts] = useState([]);
@@ -491,59 +494,105 @@ const CategoryPage = memo(() => {
   const [viewType, setViewType] = useState("companies");
   const [sortBy, setSortBy] = useState("relevance");
   
+  // ✅ SIMPLIFIED: Single pagination state for products
+  const [productPage, setProductPage] = useState(1);
+  const [hasMoreProducts, setHasMoreProducts] = useState(false);
+  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
+  
+  const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
+
   // Memoize expensive calculations
   const isFavourite = useCallback((id) => 
     favourites.some((f) => f.id === id), 
     [favourites]
   );
 
-  // FIXED: Update to accept product object
-  const handleToggleFavourite = useCallback((product) => {
-    toggleFavourite(product);
-  }, [toggleFavourite]);
+const handleToggleFavourite = useCallback(
+  (product) => {
+    const isAlreadyFav = favourites.some(
+      (item) => item.id === product.id
+    );
 
-  // =================== FETCH DATA (OPTIMIZED) - UPDATED ===================
+    // ✅ 1. IMMEDIATE UI UPDATE (guest + logged-in)
+    dispatch(
+      toggleFavourite({
+        ...product,
+        source: "category",
+      })
+    );
+
+    // ✅ 2. LOGGED-IN → open popup for backend sync
+    if (auth.user && !isAlreadyFav) {
+      dispatch(
+        openListPopup({
+          ...product,
+          source: "category",
+        })
+      );
+    }
+  },
+  [dispatch, favourites, auth.user]
+);
+
+
+
+  // =================== INITIAL FETCH ===================
   useEffect(() => {
     let mounted = true;
     const abortController = new AbortController();
 
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        // Only fetch category data - it contains companies and their products
-        const catRes = await getCategory(categoryId);
+        const catRes = await getCategory(categoryId, {
+          params: {
+            page: productPage,
+            per_page: 20 // Request 20 products per page
+          }
+        });
 
         if (!mounted || abortController.signal.aborted) return;
 
-        // CORRECTED: Extract data based on your actual API response structure
-        // Your API response: {data: {id, title, image, companies}, message}
         const categoryData = catRes?.data?.data || null;
-        
-        // Extract companies from the category response
         const companiesData = categoryData?.companies || [];
-        
-        // Extract and flatten products from all companies
+
+        if (!categoryData) {
+          setError("Category not found.");
+          return;
+        }
+
+        // ✅ FLATTEN all products from all companies
         const allProducts = [];
-        companiesData.forEach(company => {
-          if (company.products && Array.isArray(company.products)) {
-            // Add company info to each product
-            company.products.forEach(product => {
+        
+        companiesData.forEach((company) => {
+          if (Array.isArray(company.products)) {
+            company.products.forEach((product) => {
               allProducts.push({
                 ...product,
                 company_id: company.id,
                 company_name: company.name,
-                company_logo: company.logo
+                company_logo: company.logo,
               });
             });
           }
         });
 
-        if (!categoryData) {
-          setError("Category not found.");
-        } else {
+        if (mounted) {
           setCategory(categoryData);
           setCompanies(companiesData);
           setProducts(allProducts);
+          
+          // ✅ Set pagination state based on response
+          // Assuming API returns total pages or has_more flag
+          const totalPages = categoryData?.products_pagination?.last_page || 1;
+          const currentPage = categoryData?.products_pagination?.page || 1;
+          const hasMore = currentPage < totalPages;
+          
+          setProductPage(currentPage);
+          setHasMoreProducts(hasMore);
         }
       } catch (e) {
         if (!mounted || abortController.signal.aborted) return;
@@ -557,12 +606,63 @@ const CategoryPage = memo(() => {
     };
 
     fetchData();
-    
+
     return () => {
       mounted = false;
       abortController.abort();
     };
-  }, [categoryId]);
+  }, [categoryId, productPage]); // ✅ Re-fetch when productPage changes
+
+  // =================== LOAD MORE PRODUCTS ===================
+  const loadMoreProducts = useCallback(async () => {
+    if (loadingMoreProducts || !hasMoreProducts) return;
+    
+    setLoadingMoreProducts(true);
+    const nextPage = productPage + 1;
+
+    try {
+      const res = await getCategory(categoryId, {
+        params: {
+          page: nextPage,
+          per_page: 20
+        }
+      });
+
+      const categoryData = res?.data?.data;
+      const companiesData = categoryData?.companies || [];
+      
+      // Flatten new products
+      const newProducts = [];
+      companiesData.forEach((company) => {
+        if (Array.isArray(company.products)) {
+          company.products.forEach((product) => {
+            newProducts.push({
+              ...product,
+              company_id: company.id,
+              company_name: company.name,
+              company_logo: company.logo,
+            });
+          });
+        }
+      });
+
+      // Append new products to existing ones
+      setProducts(prev => [...prev, ...newProducts]);
+      setCompanies(prev => [...prev, ...companiesData]);
+      
+      // Update pagination state
+      const totalPages = categoryData?.products_pagination?.last_page || 1;
+      const hasMore = nextPage < totalPages;
+      
+      setProductPage(nextPage);
+      setHasMoreProducts(hasMore);
+      
+    } catch (error) {
+      console.error("Failed to load more products:", error);
+    } finally {
+      setLoadingMoreProducts(false);
+    }
+  }, [categoryId, productPage, hasMoreProducts, loadingMoreProducts]);
 
   // =================== MEMOIZED SORTING ===================
   const sortedCompanies = useMemo(() => {
@@ -622,101 +722,105 @@ const CategoryPage = memo(() => {
     return formatImageUrl(imgPath);
   }, []);
 
-  // Memoize category data - UPDATED: Use title from API
+  // Memoize category data
   const categoryData = useMemo(() => ({
     name: category?.title || category?.name || "Category",
     image: getCategoryImageUrl(category?.image)
   }), [category, getCategoryImageUrl]);
 
+  // =================== RENDER PRODUCTS IN SINGLE GRID ===================
+  const renderProductsGrid = useMemo(() => {
+    if (!sortedProducts.length) return null;
+
+    return (
+      <>
+        {/* Products Grid - ALL products together */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+          {sortedProducts.map((product) => {
+            const enhancedProduct = {
+              ...product,
+              company_name: product.company_name || 'Company',
+              company_id: product.company_id || null,
+              isOnSale: product.isOnSale || false,
+              isNewArrival: product.isNewArrival || false,
+              category_name: category?.title || ''
+            };
+            
+            return (
+              <ProductCard
+                key={`${product.id}-${product.company_id}`}
+                product={enhancedProduct}
+                isFav={isFavourite(product.id)}
+                toggleFavourite={handleToggleFavourite}
+                navigate={navigate}
+                fw={fw}
+              />
+            );
+          })}
+          
+          {/* Skeleton loaders when loading more */}
+          {loadingMoreProducts && Array.from({ length: 4 }).map((_, i) => (
+            <ProductCardSkeleton key={`loading-more-${i}`} />
+          ))}
+        </div>
+
+        {/* Load More Button */}
+        {hasMoreProducts && (
+          <div className="text-center mt-12">
+            <button
+              onClick={loadMoreProducts}
+              disabled={loadingMoreProducts}
+              className={`px-8 py-3 rounded-full font-medium text-sm transition-all duration-300 ${
+                loadingMoreProducts
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-95 shadow-lg hover:shadow-xl'
+              }`}
+            >
+              {loadingMoreProducts ? (
+                <span className="flex items-center justify-center gap-3">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {fw.loading || "Loading..."}
+                </span>
+              ) : (
+                `${fw.load_more || "Load more products"}`
+              )}
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }, [sortedProducts, loadingMoreProducts, hasMoreProducts, isFavourite, handleToggleFavourite, navigate, fw, category, loadMoreProducts]);
+
   // Memoize grid content
   const companiesGrid = useMemo(() => (
-    <div
-      className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center transform-gpu"
-    >
-      {sortedCompanies.map((company) => (
-        <CompanyCard
-          key={company.id}
-          company={company}
-          navigate={navigate}
-        />
-      ))}
-    </div>
-  ), [sortedCompanies, navigate]);
-
-  const productsGrid = useMemo(() => (
-    <div
-      className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-7 justify-items-center transform-gpu"
-    >
-      {sortedProducts.map((product) => {
-        // Ensure product has all required fields
-        const enhancedProduct = {
-          ...product,
-          company_name: product.company_name || 'Company',
-          company_id: product.company_id || null,
-          isOnSale: product.isOnSale || false,
-          isNewArrival: product.isNewArrival || false,
-          category_name: category?.title || ''
-        };
-        
-        return (
-          <ProductCard
-            key={`${product.id}-${product.company_id}`}
-            product={enhancedProduct}
-            isFav={isFavourite(product.id)}
-            toggleFavourite={handleToggleFavourite}
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
+      {loading ? (
+        Array.from({ length: 8 }).map((_, i) => (
+          <CompanyCardSkeleton key={`company-skel-${i}`} />
+        ))
+      ) : (
+        sortedCompanies.map((company) => (
+          <CompanyCard
+            key={company.id}
+            company={company}
             navigate={navigate}
           />
-        );
-      })}
+        ))
+      )}
     </div>
-  ), [sortedProducts, isFavourite, handleToggleFavourite, navigate, category]);
-
-  // Memoize skeleton loaders
-  const skeletonLoaders = useMemo(() => (
-    viewType === "companies" ? (
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center transform-gpu">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <CompanyCardSkeleton key={`company-skel-${i}`} />
-        ))}
-      </div>
-    ) : (
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-7 justify-items-center transform-gpu">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <ProductCardSkeleton key={`product-skel-${i}`} />
-        ))}
-      </div>
-    )
-  ), [viewType]);
-
-  // Loading state
-  if (loading) {
-    return (
-      <section className="min-h-screen w-full py-10 sm:py-14 px-4 sm:px-8 md:px-12 relative overflow-hidden bg-white transform-gpu">
-        <div className="absolute top-20 sm:top-8 left-6 sm:left-8 md:top-28 md:left-12 z-30 p-2 bg-gray-200 rounded-full animate-pulse w-10 h-10 transform-gpu" />
-        <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-20 transform-gpu">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10 transform-gpu">
-            <div className="flex items-center gap-4 ml-10 md:ml-0 transform-gpu">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gray-200 transform-gpu" />
-              <div className="h-8 bg-gray-200 rounded w-48 transform-gpu" />
-            </div>
-          </div>
-          {skeletonLoaders}
-        </div>
-      </section>
-    );
-  }
+  ), [loading, sortedCompanies, navigate]);
 
   // Error state
-  if (error || !category) {
+  if (error && !category) {
     return (
-      <div className="min-h-screen flex items-center justify-center transform-gpu">
-        <div className="text-center py-20 transform-gpu">
-          <div className="text-red-500 text-lg mb-4 transform-gpu">{error || "Category not found"}</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center py-20">
+          <div className="text-red-500 text-lg mb-4">{error || "Category not found"}</div>
           <button
             onClick={handleBackClick}
-            className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition transform-gpu"
+            className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
           >
-            Go Back
+            {fw.back || fw.home || "Go Back"}
           </button>
         </div>
       </div>
@@ -724,54 +828,55 @@ const CategoryPage = memo(() => {
   }
 
   return (
-    <section
-      className="min-h-screen w-full py-10 sm:py-14 px-4 sm:px-8 md:px-12 relative overflow-hidden transform-gpu"
-     
-    >
+    <section className="min-h-screen w-full py-10 sm:py-14 px-4 sm:px-8 md:px-12 relative overflow-hidden">
+      {/* Loading indicator */}
+      {loading && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="relative w-6 h-6">
+            <div className="absolute inset-0 border-2 border-gray-300/50 rounded-full" />
+            <div className="absolute inset-0 border-2 border-transparent border-t-gray-600 border-r-gray-600 rounded-full animate-spin" />
+          </div>
+        </div>
+      )}
+
+      {/* Back Button */}
      <button
-    onClick={handleBackClick}
-    className="
-      fixed
-      top-16 sm:top-6 md:top-24
-      left-4 sm:left-6 md:left-10
-      z-[9999]
-      p-2
-      bg-white/80
-      backdrop-blur-md
-      rounded-full
-      border
-      shadow-lg
-      hover:bg-white
-      transition
-    "
-  >
-    <ArrowLeftIcon className="text-gray-700 text-lg" />
-  </button>
+  onClick={() => navigate(-1)}
+  className={backButtonClass}
+  aria-label="Go back"
+>
+  <ArrowLeftIcon className="text-gray-700 transform-gpu" />
+</button>
 
-
-      <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-20 transform-gpu">
+      <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-24 sm:mt-28 md:mt-32">
         {/* Header */}
-     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
-          <div className="flex items-center gap-4 ml-10 md:ml-0">
-            {category.image && (
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
+          <div className="flex items-center gap-4 ml-0 sm:ml-4 md:ml-0">
+            {categoryData.image && categoryData.image !== "/api/placeholder/300/200" ? (
               <img
-                src={category.image}
-                alt={category.title}
+                src={categoryData.image}
+                alt={categoryData.name}
                 className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover"
                 loading="lazy"
               />
+            ) : (
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-shimmer bg-[length:200%_100%]" />
             )}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900">
-               {categoryData.name}
-            </h2>
+            {categoryData.name ? (
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900">
+                {categoryData.name || fw.category}
+              </h2>
+            ) : (
+              <div className="h-8 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-48" />
+            )}
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 transform-gpu">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-4">
             {/* Toggle Button */}
-            <div className="relative border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm transform-gpu">
+            <div className="relative border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm">
               <div 
-                className={`absolute top-0 bottom-0 w-1/2 rounded-full transition-all duration-300 ease-in-out transform-gpu ${
+                className={`absolute top-0 bottom-0 w-1/2 rounded-full transition-all duration-300 ease-in-out ${
                   viewType === "companies" 
                     ? "left-0 rtl:left-1/2 bg-blue-500" 
                     : "left-1/2 rtl:left-0 bg-gray-900"
@@ -779,48 +884,59 @@ const CategoryPage = memo(() => {
               />
               <button
                 onClick={() => handleViewTypeChange("companies")}
-                className={`relative px-6 py-2.5 text-sm font-medium transition z-10 transform-gpu ${
+                disabled={loading}
+                className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
                   viewType === "companies" ? "text-white" : "text-gray-900"
-                }`}
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Companies
+                {fw.companies || "Companies"}
               </button>
               <button
                 onClick={() => handleViewTypeChange("products")}
-                className={`relative px-6 py-2.5 text-sm font-medium transition z-10 transform-gpu ${
+                disabled={loading}
+                className={`relative px-6 py-2.5 text-sm font-medium transition z-10 ${
                   viewType === "products" ? "text-white" : "text-gray-700"
-                }`}
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Products
+                {fw.products || "Products"}
               </button>
             </div>
 
             <select
               value={sortBy}
               onChange={handleSortChange}
-              className="border border-gray-300 rounded-full px-3 py-2 pr-8 text-sm bg-white focus:ring-2 focus:ring-blue-400 text-start rtl:text-right rtl:pl-8 rtl:pr-3 transform-gpu"
+              disabled={loading}
+              className={`border border-gray-300 rounded-full px-3 py-2 pr-8 text-sm bg-white focus:ring-2 focus:ring-blue-400 text-start rtl:text-right rtl:pl-8 rtl:pr-3 ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <option value="relevance">Sort by Relevance</option>
-              <option value="rating">Top Rated</option>
-              <option value="priceLow">Price: Low → High</option>
-              <option value="priceHigh">Price: High → Low</option>
+              <option value="relevance">
+                {fw.store_by || "Sort by"} {fw.name || "Relevance"}
+              </option>
+              <option value="rating">{fw.rating}</option>
+              <option value="priceLow">
+                {fw.price}: {fw.low_to_hight}
+              </option>
+              <option value="priceHigh">
+                {fw.price}: {fw.hight_to_low}
+              </option>
             </select>
           </div>
         </div>
 
         {/* Content Grid */}
-        {viewType === "companies" ? companiesGrid : productsGrid}
+        {viewType === "companies" ? companiesGrid : renderProductsGrid}
         
         {/* Empty State */}
-        {viewType === "companies" && sortedCompanies.length === 0 && (
-          <div className="col-span-full text-center py-10 text-gray-500 transform-gpu">
-            No companies found
+        {!loading && viewType === "companies" && sortedCompanies.length === 0 && (
+          <div className="col-span-full text-center py-10 text-gray-500">
+            {fw.no_companies || fw.companies || "No companies found"}
           </div>
         )}
-        
-        {viewType === "products" && sortedProducts.length === 0 && (
-          <div className="col-span-full text-center py-10 text-gray-500 transform-gpu">
-            No products found
+
+        {!loading && viewType === "products" && sortedProducts.length === 0 && (
+          <div className="col-span-full text-center py-10 text-gray-500">
+            {fw.no_products || "No products found"}
           </div>
         )}
       </div>

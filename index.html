@@ -3,23 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>Catalogueya</title>
 
-    <!-- Favicon for standard browsers -->
-    <link rel="icon" type="image/png" sizes="16x16" href="/logo.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
-    <link rel="icon" type="image/png" sizes="64x64" href="/logo.png" />
-    <link rel="icon" type="image/png" sizes="128x128" href="/logo.png" />
-    <link rel="icon" type="image/png" sizes="256x256" href="/logo.png" />
+    <!-- ===================== FAVICONS ===================== -->
 
-    <!-- Apple Touch Icon for iOS -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+    <!-- Standard favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+
+    <!-- PNG favicon -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href="/favicon-96x96.png"
+    />
+
+    <!-- SVG favicon (modern browsers) -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon.svg"
+    />
+
+    <!-- Apple Touch Icon (iOS) -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/apple-touch-icon.png"
+    />
 
     <!-- Safari pinned tab -->
-    <link rel="mask-icon" href="/logo.png" color="#0078B7" />
+    <link
+      rel="mask-icon"
+      href="/favicon.svg"
+      color="#0078B7"
+    />
 
-    <meta name="theme-color" content="#ffffff" />
+    <!-- ===================== PWA ===================== -->
+
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Android / Chrome theme -->
+    <meta name="theme-color" content="#0078B7" />
+
+    <!-- iOS status bar -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <!-- Prevent favicon cache issues -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   </head>
 
   <body>
