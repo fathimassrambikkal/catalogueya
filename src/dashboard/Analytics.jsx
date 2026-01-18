@@ -1,28 +1,8 @@
+// AnalyticsAppleFull.jsx
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
-import { getCompanyAnalytics } from "../companyApi";
-import Cookies from "js-cookie";
-
-const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
-
-const getImageUrl = (path) => {
-  if (!path || path === "null") return "";
-  let finalPath = path;
-  if (typeof finalPath === 'string' && finalPath.trim().startsWith('{')) {
-    try {
-      const parsed = JSON.parse(finalPath);
-      finalPath = parsed.webp || parsed.avif || parsed[Object.keys(parsed)[0]];
-    } catch (e) { }
-  } else if (typeof finalPath === 'object' && finalPath !== null) {
-    finalPath = finalPath.webp || finalPath.avif || finalPath[Object.keys(finalPath)[0]];
-  }
-  if (!finalPath || typeof finalPath !== 'string' || finalPath === "null") return "";
-  if (finalPath.startsWith("http")) return finalPath;
-  const lang = Cookies.get("lang") || "en";
-  const cleanPath = finalPath.startsWith('/') ? finalPath.substring(1) : finalPath;
-  return `${API_BASE_URL}/${lang}/storage/${cleanPath}`;
-};
+import { getAnalytics } from "../api";
 
 import {
   AreaChart,
@@ -119,10 +99,10 @@ const AnalyticsCard = React.memo(function AnalyticsCard({
       whileHover={
         hoverable
           ? {
-            y: -4,
-            scale: 1.01,
-            transition: { type: "spring", stiffness: 400, damping: 30 },
-          }
+              y: -4,
+              scale: 1.01,
+              transition: { type: "spring", stiffness: 400, damping: 30 },
+            }
           : {}
       }
       whileTap={hoverable ? { scale: 0.98 } : {}}
@@ -204,104 +184,82 @@ export default function AnalyticsAppleFull({ products = [] }) {
   const [analytics, setAnalytics] = useState(null);
   const safeProducts = Array.isArray(products) ? products : [];
   const [loading, setLoading] = useState(true);
-  const [range, setRange] = useState("month");
+  const [range, setRange] = useState("weekly");
   const containerRef = useRef(null);
 
   const statsData = useMemo(() => {
-    if (!analytics) return [];
+  if (!analytics) return [];
 
-    return [
-      {
-        icon: FaShoppingBag,
-        value: analytics.kpis?.total_search_appearances ?? 0,
-        label: "Search Appearances",
-        trend: 0,
-      },
-      {
-        icon: FaEye,
-        value: analytics.kpis?.total_views ?? 0,
-        label: "Total Views",
-        trend: 0,
-      },
-      {
-        icon: FaUsers,
-        value: analytics.kpis?.total_favorites ?? 0,
-        label: "Favorites",
-        trend: 0,
-      },
-    ];
-  }, [analytics]);
+  return [
+    {
+      icon: FaShoppingBag,
+      value: analytics.total_products ?? 0,
+      label: "Products",
+      trend: analytics.products_trend,
+    },
+    {
+      icon: FaEye,
+      value: analytics.total_views ?? 0,
+      label: "Total Views",
+      trend: analytics.views_trend,
+    },
+    {
+      icon: FaUsers,
+      value: analytics.profile_views ?? 0,
+      label: "Profile Views",
+      trend: analytics.profile_trend,
+    },
+  ];
+}, [analytics]);
 
 
   // loading simulation cleanup
-  useEffect(() => {
-    if (!companyId) return;
+ useEffect(() => {
+  if (!companyId) return;
 
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
 
-        const filterMap = {
-          weekly: "week",
-          monthly: "month",
-          yearly: "year",
-          week: "week",
-          month: "month",
-          year: "year"
-        };
+      const res = await getAnalytics(companyId, range);
 
-        const res = await getCompanyAnalytics({
-          company_id: companyId,
-          filter: filterMap[range] || range
-        });
+      // expected backend shape (safe access)
+      setAnalytics(res.data?.data || res.data);
+    } catch (err) {
+      console.error("❌ Analytics API failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const data = res.data?.data || res.data;
-
-        // Normalize product data
-        if (data?.top_products?.items) {
-          data.top_products.items = data.top_products.items.map(p => ({
-            ...p,
-            name: Cookies.get("lang") === 'ar' ? (p.name_ar || p.name) : (p.name_en || p.name),
-            image: getImageUrl(p.image)
-          }));
-        }
-
-        setAnalytics(data);
-      } catch (err) {
-        console.error("❌ Analytics API failed", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalytics();
-  }, [companyId, range]);
+  fetchAnalytics();
+}, [companyId, range]);
 
 
+  
+ 
 
 
-
-
-
+ 
 
   // top product safely computed
   const topProduct = useMemo(() => {
-    return analytics?.top_products?.items?.[0] || {};
-  }, [analytics]);
+  return analytics?.top_product || {};
+}, [analytics]);
 
 
   const areaData = useMemo(() => {
-    if (!analytics?.trends?.labels) return [];
-    return analytics.trends.labels.map((label, idx) => ({
-      name: label,
-      views: analytics.trends.series?.[0]?.data?.[idx] || 0,
-    }));
-  }, [analytics]);
+  if (!analytics?.chart) return [];
+  return analytics.chart.map((d) => ({
+    name: d.label,
+    views: d.value,
+  }));
+}, [analytics]);
 
 
   const viewsAnimated = useCountUp(Number(topProduct.views) || 0, 800);
   const totalViewsCount = useCountUp(
-    analytics?.kpis?.total_views || 0,
+    safeProducts.reduce((s, p) => s + (Number(p.views) || 0), 0),
     900
   );
 
@@ -317,7 +275,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
     setRange(newRange);
   }, []);
 
-
+  
 
   return (
     <div
@@ -350,8 +308,8 @@ export default function AnalyticsAppleFull({ products = [] }) {
                     range === "weekly"
                       ? "1px"
                       : range === "monthly"
-                        ? "calc(33.333% + 1px)"
-                        : "calc(66.666% + 1px)",
+                      ? "calc(33.333% + 1px)"
+                      : "calc(66.666% + 1px)",
                 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
@@ -521,7 +479,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
                   </AnalyticsCard>
                 ))
               ) : (
-                (analytics?.top_products?.items || []).slice(0, 6).map((p) => (
+                (analytics?.products || []).slice(0, 6).map((p) => (
                   <motion.div
                     key={p.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -547,7 +505,7 @@ export default function AnalyticsAppleFull({ products = [] }) {
                         </div>
 
                         <div className="text-right flex-shrink-0 ml-2 min-w-0">
-                          <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{(Number(p.views_count || p.views) || 0).toLocaleString()}</div>
+                          <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{(Number(p.views) || 0).toLocaleString()}</div>
                           <div className="text-xs text-gray-600 break-words">views</div>
                         </div>
                       </div>

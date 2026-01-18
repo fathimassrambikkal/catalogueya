@@ -9,11 +9,9 @@ import {
   FaArrowLeft,
   FaPaperPlane,
   FaUserPlus,
-  FaArrowRight,
 } from 'react-icons/fa';
-import { sendReviewRequest } from '../companyApi';
 import AddCustomerModal from './AddCustomerModal';
-import fatoraLogo from "../assets/fatora.webp";;
+import fatoraLogo from "../assets/fatora.webp";; 
 
 const CustomerManagement = ({
   loyalCustomers = [],
@@ -21,17 +19,11 @@ const CustomerManagement = ({
   onRequestPayment,
   onRequestReview,
   onSendMessage,
-  messages = [], // New prop for chat messages
-  onChatEnter,   // New prop when entering chat view
-  companyId,     // To identify own messages
-  products = [],  // New prop for product selection
 }) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [currentView, setCurrentView] = useState('list');
   const [reviewType, setReviewType] = useState('');
-  const [selectedItemId, setSelectedItemId] = useState(''); // Stores product_id or serviceName
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCustomerClick = (customer) => {
     setSelectedCustomer(customer);
@@ -49,37 +41,12 @@ const CustomerManagement = ({
     setCurrentView('actions');
   };
 
-  const handleRequestReview = async () => {
-    if (!selectedCustomer || !reviewType || !selectedItemId) {
-      alert("Please select what you want to request a review for.");
-      return;
+  const handleRequestReview = () => {
+    if (selectedCustomer && reviewType) {
+      onRequestReview?.(selectedCustomer, reviewType);
     }
-
-    try {
-      setIsSubmitting(true);
-      const data = {
-        company_id: companyId,
-        customer_id: selectedCustomer.customerId || selectedCustomer.id,
-      };
-
-      if (reviewType === 'product') {
-        data.product_id = selectedItemId;
-      } else {
-        data.service_name = selectedItemId;
-      }
-
-      const response = await sendReviewRequest(data);
-      alert(response.data?.message || "Review request sent successfully!");
-
-      setCurrentView('actions');
-      setReviewType('');
-      setSelectedItemId('');
-    } catch (error) {
-      console.error("Error sending review request:", error);
-      alert(error.response?.data?.message || "Failed to send review request.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setCurrentView('actions');
+    setReviewType('');
   };
 
   const handleSendMessage = (message) => {
@@ -159,43 +126,38 @@ const CustomerManagement = ({
 
         {/* Buttons */}
         <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
-          {[
-            //   {
-            //   label: 'Create Fatora',
-            //   icon: (
-            //     <div className="flex items-center gap-2">
-            //       <img
-            //         src={fatoraLogo}
-            //         alt="Fatora"
-            //         className="w-4 h-4 object-contain"
-            //       />
-
-            //     </div>
-            //   ),
-            //   action: () => setCurrentView('payment'),
-            // },
-            {
-              label: 'Request Review',
-              icon: <FaRegStar className="text-blue-500" />,
-              action: () => setCurrentView('review'),
-            }, {
-              label: 'Chat',
-              icon: <FaRegCommentDots className="text-blue-500" />,
-              action: () => {
-                setCurrentView('chat');
-                onChatEnter?.(selectedCustomer);
-              },
-            }].map((btn, i) => (
-              <button
-                key={i}
-                onClick={btn.action}
-                className="w-full flex items-center gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60
+          {[{
+            label: 'Create Fatora',
+            icon: (
+              <div className="flex items-center gap-2">
+                <img 
+                  src={fatoraLogo} 
+                  alt="Fatora" 
+                  className="w-4 h-4 object-contain"
+                />
+                
+              </div>
+            ),
+            action: () => setCurrentView('payment'),
+          }, {
+            label: 'Request Review',
+            icon: <FaRegStar className="text-blue-500" />,
+            action: () => setCurrentView('review'),
+          }, {
+            label: 'Chat',
+            icon: <FaRegCommentDots className="text-blue-500" />,
+            action: () => setCurrentView('chat'),
+          }].map((btn, i) => (
+            <button
+              key={i}
+              onClick={btn.action}
+              className="w-full flex items-center gap-3 bg-white/80 text-gray-900 py-3 px-4 rounded-xl border border-gray-200/60
               hover:bg-blue-500/10 hover:border-blue-500 transition-all duration-200 text-sm sm:text-base shadow overflow-hidden min-w-0"
-              >
-                {btn.icon}
-                <span className="truncate">{btn.label}</span>
-              </button>
-            ))}
+            >
+              {btn.icon}
+              <span className="truncate">{btn.label}</span>
+            </button>
+          ))}
         </div>
 
         {/* Remove */}
@@ -231,9 +193,9 @@ const CustomerManagement = ({
             </button>
 
             <div className="flex items-center gap-3 flex-1 ml-3 min-w-0 overflow-hidden">
-              <img
-                src={fatoraLogo}
-                alt="Fatora"
+              <img 
+                src={fatoraLogo} 
+                alt="Fatora" 
                 className="w-5 h-5 object-contain"
               />
               <div className="min-w-0 overflow-hidden">
@@ -312,79 +274,41 @@ const CustomerManagement = ({
         <div className="p-4 sm:p-6 space-y-4 overflow-hidden min-w-0">
           {[{
             type: 'company',
-            label: 'Review for Service',
+            label: 'Review for the Company',
           }, {
             type: 'product',
             label: 'Review a product',
           }].map((item, i) => (
-            <div key={i} className="space-y-3">
-              <label
-                className="flex items-center space-x-3 p-3 rounded-xl border border-gray-200/60 cursor-pointer hover:bg-blue-500/10 transition-all shadow text-sm sm:text-base overflow-hidden min-w-0"
-              >
-                <input
-                  type="radio"
-                  name="reviewType"
-                  value={item.type}
-                  checked={reviewType === item.type}
-                  onChange={(e) => {
-                    setReviewType(e.target.value);
-                    setSelectedItemId('');
-                  }}
-                  className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                />
-                <span>{item.label}</span>
-              </label>
-
-              {/* Selection Dropdown for Product/Service */}
-              {reviewType === item.type && (
-                <div className="pl-7 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  {item.type === 'product' ? (
-                    <select
-                      className="w-full p-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                      value={selectedItemId}
-                      onChange={(e) => setSelectedItemId(e.target.value)}
-                    >
-                      <option value="">Select a Product</option>
-                      {products.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <select
-                      className="w-full p-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                      value={selectedItemId}
-                      onChange={(e) => setSelectedItemId(e.target.value)}
-                    >
-                      <option value="">Select a Service</option>
-                      {/* Using common services as fallback or from company specialties if passed */}
-                      {["Carpenter", "Curtains & Blind", "Lighting", "Paint", "Carpet"].map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              )}
-            </div>
+            <label
+              key={i}
+              className="flex items-center space-x-3 p-3 rounded-xl border border-gray-200/60 cursor-pointer hover:bg-blue-500/10 transition-all shadow text-sm sm:text-base overflow-hidden min-w-0"
+            >
+              <input
+                type="radio"
+                name="reviewType"
+                value={item.type}
+                checked={reviewType === item.type}
+                onChange={(e) => setReviewType(e.target.value)}
+                className="w-4 h-4 text-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              />
+              <span>{item.label}</span>
+            </label>
           ))}
         </div>
 
         <div className="p-4 sm:p-6 border-t border-gray-200/60 overflow-hidden min-w-0">
           <button
             onClick={handleRequestReview}
-            disabled={!reviewType || !selectedItemId || isSubmitting}
-            className={`w-full py-3 px-4 rounded-xl text-sm sm:text-base transition-all duration-200 overflow-hidden min-w-0 flex items-center justify-center gap-2
-              ${(reviewType && selectedItemId && !isSubmitting)
-                ? 'bg-blue-500 text-white hover:bg-blue-600 shadow'
-                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+            disabled={!reviewType}
+            className={`w-full py-3 px-4 rounded-xl text-sm sm:text-base transition-all duration-200 overflow-hidden min-w-0
+              ${
+                reviewType
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 shadow'
+                  : 'bg-gray-400 text-gray-200 cursor-not-allowed'
               }
             `}
           >
-            {isSubmitting ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <FaPaperPlane className="text-xs" />
-            )}
-            <span>{isSubmitting ? 'Sending...' : 'Request a Review'}</span>
+            Request a Review
           </button>
         </div>
       </div>
@@ -398,7 +322,7 @@ const CustomerManagement = ({
     if (!selectedCustomer) return null;
 
     return (
-      <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full flex flex-col border border-gray-200/60 shadow h-[calc(100vh-200px)] min-h-[600px] overflow-hidden min-w-0">
+      <div className="bg-white/80 backdrop-blur-lg rounded-2xl w-full flex flex-col border border-gray-200/60 shadow h-[70vh] sm:h-[600px] overflow-hidden min-w-0">
 
         {/* HEADER (fixed, no extra space) */}
         <div className="p-3 sm:p-4 border-b border-gray-200/60 flex-shrink-0 overflow-hidden min-w-0">
@@ -416,10 +340,11 @@ const CustomerManagement = ({
               <div className="min-w-0 overflow-hidden text-left">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{selectedCustomer.name}</h2>
                 <span
-                  className={`text-xs px-2 py-1 rounded-full border whitespace-nowrap ${selectedCustomer.online
-                    ? 'bg-green-500/10 text-green-600 border-green-200/60'
-                    : 'bg-gray-500/10 text-gray-600 border-gray-200/60'
-                    }`}
+                  className={`text-xs px-2 py-1 rounded-full border whitespace-nowrap ${
+                    selectedCustomer.online
+                      ? 'bg-green-500/10 text-green-600 border-green-200/60'
+                      : 'bg-gray-500/10 text-gray-600 border-gray-200/60'
+                  }`}
                 >
                   {selectedCustomer.online ? 'Online' : 'Offline'}
                 </span>
@@ -447,52 +372,10 @@ const CustomerManagement = ({
         </div>
 
         {/* MESSAGES */}
-        <div className="flex-1 p-4 overflow-y-auto bg-gray-50/60 min-w-0 flex flex-col space-y-3">
-          {messages.length === 0 ? (
-            <div className="text-gray-500 py-8 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-200/60 text-left px-4">
-              No messages yet. Start a conversation!
-            </div>
-          ) : (
-            messages.map((msg) => {
-              // Determine if message is from me (Company) or them (Customer)
-              // Ensure consistent comparison by converting both to String
-              const isMe = String(msg.sender_id) === String(companyId);
-
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex w-full mb-2 ${isMe ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[85%] sm:max-w-[75%] p-3 rounded-2xl text-sm sm:text-base shadow-sm break-words relative transition-all ${isMe
-                      ? 'bg-blue-600 text-white rounded-tr-none'
-                      : 'bg-white text-gray-800 border border-gray-200/60 rounded-tl-none'
-                      }`}
-                  >
-                    {/* Attachments */}
-                    {msg.attachments && msg.attachments.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {msg.attachments.map((att) => (
-                          <img
-                            key={att.id}
-                            src={att.path}
-                            alt="attachment"
-                            className="w-32 h-32 object-cover rounded-xl border border-white/20 shadow-sm"
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {msg.body && <p className="leading-relaxed">{msg.body}</p>}
-
-                    <span className={`text-[10px] sm:text-xs block text-right mt-1.5 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div className="flex-1 p-4 overflow-y-auto bg-gray-50/60 min-w-0">
+          <div className="text-gray-500 py-8 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-200/60 text-left px-4">
+            No messages yet. Start a conversation!
+          </div>
         </div>
 
         {/* INPUT */}

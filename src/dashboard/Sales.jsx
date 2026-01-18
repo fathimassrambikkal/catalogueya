@@ -1,27 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FaPlus, FaTimes, FaEdit } from "react-icons/fa";
-import { addSalesProduct, getCompanySales } from "../companyApi";
-import Cookies from "js-cookie";
-
-const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
-
-const getImageUrl = (path) => {
-  if (!path || path === "null") return "";
-  let finalPath = path;
-  if (typeof finalPath === 'string' && finalPath.trim().startsWith('{')) {
-    try {
-      const parsed = JSON.parse(finalPath);
-      finalPath = parsed.webp || parsed.avif || parsed[Object.keys(parsed)[0]];
-    } catch (e) { }
-  } else if (typeof finalPath === 'object' && finalPath !== null) {
-    finalPath = finalPath.webp || finalPath.avif || finalPath[Object.keys(finalPath)[0]];
-  }
-  if (!finalPath || typeof finalPath !== 'string' || finalPath === "null") return "";
-  if (finalPath.startsWith("http")) return finalPath;
-  const lang = Cookies.get("lang") || "en";
-  const cleanPath = finalPath.startsWith('/') ? finalPath.substring(1) : finalPath;
-  return `${API_BASE_URL}/${lang}/storage/${cleanPath}`;
-};
+import { addSalesProduct } from "../api";
 
 
 export default function Sales({ products }) {
@@ -33,86 +12,36 @@ export default function Sales({ products }) {
   const [bulkFromDate, setBulkFromDate] = useState("");
   const [bulkToDate, setBulkToDate] = useState("");
 
-  /* ✅ FETCH SALES FROM API */
-  const fetchSales = useCallback(async () => {
-    try {
-      console.log("🔄 Fetching sales products...");
-      const res = await getCompanySales();
-      const apiSales = res.data?.data?.sales || res.data?.sales || res.data || [];
-      const lang = Cookies.get("lang") || "en";
-
-      if (Array.isArray(apiSales)) {
-        const normalized = apiSales.map(p => {
-          let tags = [];
-          try {
-            if (p.special_marks && typeof p.special_marks === 'string' && p.special_marks !== "null") {
-              tags = JSON.parse(p.special_marks);
-            } else if (Array.isArray(p.special_marks)) {
-              tags = p.special_marks;
-            }
-          } catch (e) { }
-
-          return {
-            ...p,
-            name: lang === 'ar' ? (p.name_ar || p.name) : (p.name_en || p.name),
-            description: lang === 'ar' ? (p.description_ar || p.description) : (p.description_en || p.description),
-            rate: Number(p.discount || 0),
-            fromDate: p.discount_from || "",
-            toDate: p.discount_to || "",
-            image: getImageUrl(p.image),
-            selected: false,
-            price: Number(p.price || 0)
-          };
-        });
-        setSaleProducts(normalized);
-        console.log("✅ Sales refreshed:", normalized.length);
-      }
-    } catch (err) {
-      console.error("❌ Failed to fetch sales:", err);
-    }
-  }, []);
-
+  /** Load products into saleProducts */
   useEffect(() => {
-    fetchSales();
-  }, [fetchSales]);
-
-  /** Fallback if products prop is provided but API hasn't loaded (optional) */
-  useEffect(() => {
-    if (products && products.length > 0 && saleProducts.length === 0) {
-      console.log("📋 Using products prop as fallback for sales");
-      const lang = Cookies.get("lang") || "en";
-      setSaleProducts(
-        products.map((p) => ({
-          ...p,
-          name: lang === 'ar' ? (p.name_ar || p.name) : (p.name_en || p.name),
-          rate: Number(p.discount || 0),
-          fromDate: p.discount_from || "",
-          toDate: p.discount_to || "",
-          image: getImageUrl(p.image),
-          selected: false,
-          price: Number(p.price || 0)
-        }))
-      );
-    }
-  }, [products, saleProducts.length]);
+    if (!products) return;
+    setSaleProducts(
+      products.map((p) => ({
+        ...p,
+        rate: p.rate ?? 0,
+        fromDate: p.fromDate ?? "",
+        toDate: p.toDate ?? "",
+      }))
+    );
+  }, [products]);
 
 
   const saveSaleToApi = async (product) => {
-    if (!product.rate || !product.fromDate || !product.toDate) return;
+  if (!product.rate || !product.fromDate || !product.toDate) return;
 
-    try {
-      await addSalesProduct(product.id, {
-        discount: product.rate,
-        discount_from: product.fromDate,
-        discount_to: product.toDate,
-      });
+  try {
+    await addSalesProduct(product.id, {
+      discount: product.rate,
+      discount_from: product.fromDate,
+      discount_to: product.toDate,
+    });
 
-      console.log("✅ Sale saved for product:", product.id);
-    } catch (err) {
-      console.error("❌ Sale API failed:", err);
-      alert(`Failed to save sale for ${product.name}`);
-    }
-  };
+    console.log("✅ Sale saved for product:", product.id);
+  } catch (err) {
+    console.error("❌ Sale API failed:", err);
+    alert(`Failed to save sale for ${product.name}`);
+  }
+};
 
 
   /** Helpers */
@@ -157,40 +86,40 @@ export default function Sales({ products }) {
 
   const handleRateChange = (id, value) => {
     setSaleProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, rate: Number(value), selected: Number(value) > 0 ? true : p.selected } : p))
-    );
-  };
-
-  const handleToggleSelect = (id) => {
-    setSaleProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p))
+      prev.map((p) => (p.id === id ? { ...p, rate: Number(value) } : p))
     );
   };
 
   /** Publish bulk sale */
-  const handlePublishSales = async () => {
-    if (!bulkFromDate || !bulkToDate)
-      return alert("Select both dates");
+ const handlePublishSales = async () => {
+  if (!bulkFromDate || !bulkToDate)
+    return alert("Select both dates");
 
-    if (new Date(bulkFromDate) >= new Date(bulkToDate))
-      return alert("End date must be after start date");
+  if (new Date(bulkFromDate) >= new Date(bulkToDate))
+    return alert("End date must be after start date");
 
-    // 🔥 SAVE TO API
-    for (const product of saleProducts) {
-      if (product.selected && product.rate > 0) {
-        await saveSaleToApi({
-          ...product,
-          fromDate: bulkFromDate,
-          toDate: bulkToDate,
-        });
-      }
+  // 🔥 SAVE TO API
+  for (const product of saleProducts) {
+    if (product.rate > 0) {
+      await saveSaleToApi({
+        ...product,
+        fromDate: bulkFromDate,
+        toDate: bulkToDate,
+      });
     }
+  }
 
-    // 🔄 REFRESH FROM API
-    await fetchSales();
+  // 🔄 Update UI
+  setSaleProducts((prev) =>
+    prev.map((p) => ({
+      ...p,
+      fromDate: bulkFromDate,
+      toDate: bulkToDate,
+    }))
+  );
 
-    setShowStartModal(false);
-  };
+  setShowStartModal(false);
+};
 
 
   /** Open edit modal */
@@ -201,23 +130,27 @@ export default function Sales({ products }) {
 
   /** Publish edit */
   const handlePublishEdit = async () => {
-    const p = selectedEditProduct;
+  const p = selectedEditProduct;
 
-    if (p.fromDate && p.toDate) {
-      if (new Date(p.fromDate) >= new Date(p.toDate)) {
-        return alert("End date must be after start date");
-      }
+  if (p.fromDate && p.toDate) {
+    if (new Date(p.fromDate) >= new Date(p.toDate)) {
+      return alert("End date must be after start date");
     }
+  }
 
-    // 🔥 SAVE TO API
-    await saveSaleToApi(p);
+  // 🔥 SAVE TO API
+  await saveSaleToApi(p);
 
-    // 🔄 REFRESH FROM API
-    await fetchSales();
+  // 🔄 Update UI
+  setSaleProducts((prev) =>
+    prev.map((item) =>
+      item.id === p.id ? { ...p } : item
+    )
+  );
 
-    setShowEditModal(false);
-    setSelectedEditProduct(null);
-  };
+  setShowEditModal(false);
+  setSelectedEditProduct(null);
+};
 
 
   return (
@@ -338,25 +271,17 @@ export default function Sales({ products }) {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => handleToggleSelect(item.id)}
-                    className={`border rounded-lg p-2 relative bg-white shadow cursor-pointer transition-all ${item.selected ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'}`}
+                    className="border rounded-lg p-2 relative bg-white shadow"
                   >
-                    <input
-                      type="checkbox"
-                      checked={item.selected}
-                      onChange={() => { }} // Handled by div onClick
-                      className="absolute top-1 left-1 z-10 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-
                     <span className={`absolute top-1 right-1 px-2 py-0.5 text-[9px] rounded ${statusColor[status]}`}>
                       {statusText[status]}
                     </span>
 
-                    <img src={item.image} className="w-full h-20 object-cover rounded mt-4" />
+                    <img src={item.image} className="w-full h-20 object-cover rounded" />
 
                     <p className="text-xs font-semibold mt-1 truncate">{item.name}</p>
 
-                    <div className="flex items-center gap-1 text-xs mt-1" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1 text-xs mt-1">
                       <label>Rate:</label>
                       <input
                         type="number"

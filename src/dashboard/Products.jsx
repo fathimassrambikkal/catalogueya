@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { getCompany, deleteProduct } from "../api";
-import { addCompanyProduct, editCompanyProduct } from "../companyApi";
+import { addProduct, editProduct, getCompany, deleteProduct } from "../api";
 import Cookies from "js-cookie";
 import {
   FaPlus,
@@ -18,7 +17,7 @@ const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 export default function Products({
   products = [],
-  setProducts = () => { },
+  setProducts = () => {},
   editingProduct,
   companyId,
   setEditingProduct,
@@ -43,7 +42,7 @@ export default function Products({
   // ✅ FIXED: Category mapping with IDs
   const categoryMap = {
     "Lights": "1",
-    "Plumbing": "2",
+    "Plumbing": "2", 
     "Swimming pool": "3",
     "carpentry": "4",
     "paints": "5",
@@ -58,39 +57,6 @@ export default function Products({
     "Upholstery": "14",
     "Air Conditioner": "15",
     "Doors & Windows": "16",
-  };
-
-  // ✅ New Tag mapping for special_mark (using IDs from API)
-  const tagMap = {
-    "Limited Edition": "2",
-    "Best Seller": "3",
-    "Low in Stock": "4",
-    "Out in Stock": "5",
-    "New Arrival": "1", // Added fallback for New Arrival just in case
-  };
-
-  const [availableTags, setAvailableTags] = useState([
-    "Limited Edition",
-    "Best Seller",
-    "Low in Stock",
-    "Out in Stock"
-  ]);
-
-  // ✅ Helper to get tag name from ID or name
-  const getTagName = (tag) => {
-    if (!tag) return "";
-
-    // Check our map
-    const entry = Object.entries(tagMap).find(([name, id]) =>
-      String(id) === String(tag) || name.toLowerCase() === String(tag).toLowerCase()
-    );
-    if (entry) return entry[0];
-
-    // Otherwise format it nicely
-    return String(tag)
-      .split(/[\s_]+/)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
   };
 
   // ✅ FIXED: Updated categories with IDs
@@ -116,108 +82,50 @@ export default function Products({
     []
   );
 
-  // ✅ Fetch special marks from API on mount
-  useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        const { getSpecialMarks } = await import("../companyApi");
-        const res = await getSpecialMarks();
-        // The endpoint is /en/api/company/special_marks (get method, no token)
-        const tagsData = res.data?.data || res.data;
-        if (Array.isArray(tagsData)) {
-          const names = tagsData.map(t => t.name);
-          setAvailableTags(names);
-
-          // Update tagMap dynamically
-          tagsData.forEach(t => {
-            tagMap[t.name] = String(t.id);
-          });
-        }
-      } catch (err) {
-        console.error("❌ Failed to fetch special marks:", err);
-      }
-    };
-    fetchTags();
-  }, []);
+  const availableTags = useMemo(
+    () => [
+      "New Arrival",
+      "Limited Edition",
+      "Best Seller",
+      "Low in Stock",
+      "Out of Stock",
+    ],
+    []
+  );
 
   // ✅ Helper function to get category ID by name
   const getCategoryIdByName = (categoryName) => {
     return categoryMap[categoryName] || null;
   };
 
-  // ✅ Helper to normalize product data from API
-  const normalizeProducts = (apiProducts) => {
-    if (!Array.isArray(apiProducts)) return [];
-    const lang = Cookies.get("lang") || "en";
-
-    return apiProducts.map(p => {
-      // Parse special_marks if stringified JSON
-      let tags = [];
-      try {
-        if (p.special_marks && typeof p.special_marks === 'string' && p.special_marks !== "null") {
-          tags = JSON.parse(p.special_marks);
-        } else if (Array.isArray(p.special_marks)) {
-          tags = p.special_marks;
-        } else if (p.tags) {
-          tags = Array.isArray(p.tags) ? p.tags : [p.tags];
-        }
-      } catch (e) {
-        console.warn("Failed to parse special_marks for product", p.id, e);
-      }
-
-      // Parse albums if stringified JSON
-      let albums = [];
-      try {
-        if (p.albums && typeof p.albums === 'string') {
-          albums = JSON.parse(p.albums);
-        } else if (Array.isArray(p.albums)) {
-          albums = p.albums;
-        }
-      } catch (e) {
-        console.warn("Failed to parse albums for product", p.id, e);
-      }
-
-      return {
-        ...p,
-        name: lang === 'ar' ? (p.name_ar || p.name) : (p.name_en || p.name),
-        description: lang === 'ar' ? (p.description_ar || p.description) : (p.description_en || p.description),
-        stock: p.quantity !== undefined ? p.quantity : p.stock,
-        tags: tags,
-        albums: albums,
-        hidden: p.status === "0" || p.status === "hidden"
-      };
-    });
-  };
-
   // Function to refresh company data and notify other components
   const refreshCompanyData = async () => {
     if (!companyId) return;
-
+    
     try {
       console.log("🔄 Refreshing company data...");
       const companyRes = await getCompany(companyId);
-
-      const companyData =
+      
+      const companyData = 
         companyRes?.data?.data?.company ||
         companyRes?.data?.company ||
         companyRes?.data;
-
+      
       if (companyData && Array.isArray(companyData.products)) {
-        // Update local state with normalized data
-        const normalized = normalizeProducts(companyData.products);
-        setProducts(normalized);
-        console.log("✅ Products refreshed:", normalized.length);
-
+        // Update local state
+        setProducts(companyData.products);
+        console.log("✅ Products refreshed:", companyData.products.length);
+        
         // Dispatch event to notify CompanyPage and ProductProfile
         window.dispatchEvent(new CustomEvent('productsUpdated', {
-          detail: {
-            companyId,
-            products: normalized,
+          detail: { 
+            companyId, 
+            products: companyData.products,
             timestamp: Date.now()
           }
         }));
-
-        return normalized;
+        
+        return companyData.products;
       }
     } catch (error) {
       console.error("❌ Failed to refresh company data:", error);
@@ -231,38 +139,38 @@ export default function Products({
       alert("Missing company ID or product ID!");
       return;
     }
-
+    
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this product?\n\n" +
       "This action cannot be undone and will permanently remove the product from your catalogue."
     );
-
+    
     if (!confirmDelete) return;
-
+    
     setIsSubmitting(true);
-
+    
     try {
       console.log(`🗑️ Deleting product ${productId} from company ${companyId}...`);
-
+      
       // Call API to delete from server
       await deleteProduct(companyId, productId);
-
+      
       // Update local state
       setProducts((prev) => prev.filter((p) => p.id !== productId));
-
+      
       // Close modal if this product was being edited
       if (editingProduct && editingProduct.id === productId) {
         setEditingProduct(null);
       }
-
+      
       // Refresh company data
       await refreshCompanyData();
-
+      
       alert("✅ Product deleted successfully!");
-
+      
     } catch (err) {
       console.error("❌ Delete failed:", err);
-
+      
       if (err.response?.status === 404) {
         alert("Product not found. It may have already been deleted.");
       } else {
@@ -300,20 +208,18 @@ export default function Products({
       price: editingProduct.price ?? "",
       stock: editingProduct.stock ?? "",
       description: editingProduct.description ?? "",
-      tags: Array.isArray(editingProduct.tags)
-        ? editingProduct.tags.map(t => getTagName(t)).filter(t => t !== "")
-        : [],
+      tags: Array.isArray(editingProduct.tags) ? [...editingProduct.tags] : [],
       image: editingProduct.image ?? "",
       media: Array.isArray(editingProduct.media)
         ? editingProduct.media.map((m, idx) => ({
-          id: m.id ?? `m-${Date.now()}-${idx}`,
-          title: m.title ?? m.name ?? `Media ${idx + 1}`,
-          type: m.type ?? "image",
-          status: "ok",
-          file: m.file ?? null,
-          url: m.url ?? m.preview ?? m,
-          isExisting: !m.file, // ✅ ADDED: Flag to identify existing vs new media
-        }))
+            id: m.id ?? `m-${Date.now()}-${idx}`,
+            title: m.title ?? m.name ?? `Media ${idx + 1}`,
+            type: m.type ?? "image",
+            status: "ok",
+            file: m.file ?? null,
+            url: m.url ?? m.preview ?? m,
+            isExisting: !m.file, // ✅ ADDED: Flag to identify existing vs new media
+          }))
         : [],
       category_id: editingProduct.category_id ?? null,
       category_name: editingProduct.category_name ?? "",
@@ -326,7 +232,7 @@ export default function Products({
       for (const url of objectUrlRefs.current.values()) {
         try {
           URL.revokeObjectURL(url);
-        } catch { }
+        } catch {}
       }
       objectUrlRefs.current.clear();
     };
@@ -372,7 +278,7 @@ export default function Products({
           if (url) {
             try {
               URL.revokeObjectURL(url);
-            } catch { }
+            } catch {}
             objectUrlRefs.current.delete(m.file);
           }
         }
@@ -396,7 +302,7 @@ export default function Products({
         if (url) {
           try {
             URL.revokeObjectURL(url);
-          } catch { }
+          } catch {}
           objectUrlRefs.current.delete(m.file);
         }
       }
@@ -411,83 +317,97 @@ export default function Products({
       prev.map((p) => (p.id === productId ? { ...p, hidden: !p.hidden } : p))
     );
 
-  // ✅ FIXED: Improved getImageUrl function to handle JSON objects/strings and construct proper URLs
+  // ✅ FIXED: Improved getImageUrl function to handle JSON objects and construct proper URLs
   const getImageUrl = (path) => {
-    if (!path || path === "null") return "";
-
-    let finalPath = path;
-
-    // Handle stringified JSON
-    if (typeof finalPath === 'string' && finalPath.trim().startsWith('{')) {
-      try {
-        const parsed = JSON.parse(finalPath);
-        finalPath = parsed.webp || parsed.avif || parsed[Object.keys(parsed)[0]];
-      } catch (e) {
-        console.error("❌ Failed to parse image path JSON:", e);
+    if (!path) return "";
+    
+    console.log("🖼️ getImageUrl called with:", path, "type:", typeof path);
+    
+    // If path is a JSON object (like {"webp":"products/...", "avif":"products/..."})
+    if (typeof path === 'object' && path !== null) {
+      console.log("📦 Path is an object, extracting image path...");
+      // Try to get webp first, then avif, then any first property
+      const imagePath = path.webp || path.avif || path[Object.keys(path)[0]];
+      if (!imagePath) {
+        console.log("❌ No valid image path found in object");
+        return "";
       }
+      console.log("✅ Extracted image path from object:", imagePath);
+      path = imagePath;
     }
-
-    // Handle objects
-    if (typeof finalPath === 'object' && finalPath !== null) {
-      finalPath = finalPath.webp || finalPath.avif || finalPath[Object.keys(finalPath)[0]];
-    }
-
-    if (!finalPath || typeof finalPath !== 'string') return "";
-
+    
     // If it's already a full URL
-    if (finalPath.startsWith("http")) {
-      return finalPath;
+    if (path.startsWith("http")) {
+      console.log("✅ Already a full URL:", path);
+      return path;
     }
-
+    
     // Construct the full URL
     const lang = Cookies.get("lang") || "en";
-    // Remove leading slash if any
-    const cleanPath = finalPath.startsWith('/') ? finalPath.substring(1) : finalPath;
-
-    return `${API_BASE_URL}/${lang}/storage/${cleanPath}`;
+    let fullUrl = "";
+    
+    if (path.startsWith("/storage")) {
+      fullUrl = `${API_BASE_URL}${path}`;
+    } else if (path.startsWith("/")) {
+      fullUrl = `${API_BASE_URL}/${lang}${path}`;
+    } else if (path.startsWith("products/") || path.startsWith("storage/")) {
+      fullUrl = `${API_BASE_URL}/${lang}/storage/${path}`;
+    } else {
+      fullUrl = `${API_BASE_URL}/${lang}/storage/${path}`;
+    }
+    
+    console.log("🔗 Constructed URL:", fullUrl);
+    return fullUrl;
   };
 
-  // ✅ FIXED: Improved product image extraction logic to handle JSON objects and strings
+  // ✅ FIXED: Improved product image extraction logic to handle JSON objects
   const getProductImage = (product) => {
-    if (!product) return "";
-
-    let imageSrc = product.image;
-
-    // Handle stringified JSON in product.image
-    if (typeof imageSrc === 'string' && imageSrc.trim().startsWith('{')) {
-      try {
-        const parsed = JSON.parse(imageSrc);
-        imageSrc = parsed.webp || parsed.avif || parsed[Object.keys(parsed)[0]];
-      } catch (e) { }
-    } else if (typeof imageSrc === 'object' && imageSrc !== null) {
-      imageSrc = imageSrc.webp || imageSrc.avif || imageSrc[Object.keys(imageSrc)[0]];
-    }
-
-    if (imageSrc && imageSrc !== "null" && imageSrc !== "") {
-      return imageSrc;
-    }
-
-    // Fallback to albums array
-    const albums = Array.isArray(product.albums)
-      ? product.albums
-      : (typeof product.albums === 'string' ? JSON.parse(product.albums || '[]') : []);
-
-    if (albums.length > 0) {
-      let firstAlbum = albums[0];
-      if (typeof firstAlbum === 'string' && firstAlbum.trim().startsWith('{')) {
-        try {
-          const parsed = JSON.parse(firstAlbum);
-          firstAlbum = parsed.webp || parsed.avif || parsed[Object.keys(parsed)[0]];
-        } catch (e) { }
-      } else if (typeof firstAlbum === 'object' && firstAlbum !== null) {
-        firstAlbum = firstAlbum.webp || firstAlbum.avif || firstAlbum[Object.keys(firstAlbum)[0]];
+    console.log("🔍 Getting image for product:", product.name);
+    console.log("📦 Product image data:", product.image);
+    console.log("🎞️ Product albums:", product.albums);
+    
+    // First, check if product.image is a JSON object
+    if (product.image && typeof product.image === 'object') {
+      console.log("🎯 Image is an object, extracting path...");
+      // Extract webp or avif path from the object
+      const imagePath = product.image.webp || product.image.avif;
+      if (imagePath) {
+        console.log("✅ Extracted image path from object:", imagePath);
+        return imagePath;
       }
-      return firstAlbum || "";
     }
-
+    
+    // If product.image is a string, use it
+    if (typeof product.image === 'string' && product.image.trim() !== "") {
+      console.log("✅ Using string image:", product.image);
+      return product.image;
+    }
+    
+    // Fallback to albums array
+    if (Array.isArray(product.albums) && product.albums.length > 0) {
+      console.log("🔄 Falling back to albums...");
+      // Check first album
+      const firstAlbum = product.albums[0];
+      
+      // If first album is an object with webp/avif
+      if (firstAlbum && typeof firstAlbum === 'object') {
+        const albumPath = firstAlbum.webp || firstAlbum.avif || firstAlbum.url || firstAlbum.image || firstAlbum.path;
+        if (albumPath) {
+          console.log("✅ Using album path:", albumPath);
+          return albumPath;
+        }
+      }
+      
+      // If first album is a string
+      if (typeof firstAlbum === 'string' && firstAlbum.trim() !== "") {
+        console.log("✅ Using album string:", firstAlbum);
+        return firstAlbum;
+      }
+    }
+    
+    console.log("❌ No image found for product");
     return "";
   };
-
 
   // ✅ FIXED: handleSave function with correct FormData format
   const handleSave = async (e) => {
@@ -528,7 +448,6 @@ export default function Products({
       formDataToSend.append("quantity", Number(formData.stock) || 0);
       formDataToSend.append("description", formData.description || "");
       formDataToSend.append("category_id", categoryId);
-      formDataToSend.append("status", "1"); // Forced status 1 as per requirement
       formDataToSend.append("hidden", formData.hidden ? "1" : "0");
 
       // =============================
@@ -536,10 +455,7 @@ export default function Products({
       // =============================
       if (formData.tags.length > 0) {
         formData.tags.forEach((tag) => {
-          const tagId = tagMap[tag];
-          if (tagId) {
-            formDataToSend.append("special_mark[]", tagId);
-          }
+          formDataToSend.append("special_mark[]", tag);
         });
       }
 
@@ -548,7 +464,7 @@ export default function Products({
       // =============================
       // Get all image media
       const imageMedia = formData.media.filter((m) => m.type === "image");
-
+      
       if (imageMedia.length === 0) {
         alert("Please upload at least one product image!");
         setIsSubmitting(false);
@@ -592,41 +508,31 @@ export default function Products({
       // =============================
       let response;
 
-      try {
-        if (formData.id) {
-          console.log("🔄 Editing existing product...");
-          response = await editCompanyProduct(formData.id, formDataToSend);
-        } else {
-          console.log("➕ Adding new product...");
-          response = await addCompanyProduct(formDataToSend);
-        }
-      } catch (apiErr) {
-        console.warn("⚠️ companyApi failed, falling back to local api.js functions...", apiErr);
-        // Fallback to locally defined functions in api.js context (imported as default or named)
-        const { addProduct, editProduct } = await import("../api");
-        if (formData.id) {
-          response = await editProduct(formData.id, formDataToSend);
-        } else {
-          response = await addProduct(formDataToSend);
-        }
+      if (formData.id) {
+        console.log("🔄 Editing existing product...");
+        response = await editProduct(companyId, formData.id, formDataToSend);
+        alert("✅ Product updated successfully!");
+      } else {
+        console.log("➕ Adding new product...");
+        response = await addProduct(companyId, formDataToSend);
+        alert("✅ Product added successfully!");
       }
 
-      alert(`✅ Product ${formData.id ? "updated" : "added"} successfully!`);
       console.log("📥 API Response:", response?.data);
 
       // =============================
       // REFRESH DATA
       // =============================
       await refreshCompanyData();
-
+      
       // Close modal
       setEditingProduct(null);
-
+      
     } catch (err) {
       console.error("❌ Save failed:", err);
       console.error("Error status:", err.response?.status);
       console.error("Error data:", err.response?.data);
-
+      
       // Show detailed error message
       if (err.response?.status === 422) {
         const errors = err.response.data?.errors;
@@ -638,7 +544,7 @@ export default function Products({
               errorMessages.push(`${field}: ${messages.join(', ')}`);
             }
           }
-
+          
           if (errorMessages.length > 0) {
             alert(`Validation Errors:\n\n${errorMessages.join('\n')}\n\nPlease check your data.`);
           } else {
@@ -649,7 +555,7 @@ export default function Products({
         }
       } else if (err.response?.status === 500) {
         const message = err.response?.data?.message || "Unknown server error";
-
+        
         if (message.includes('foreach') && message.includes('special_mark')) {
           alert(
             "Server Error: Tags format is incorrect.\n\n" +
@@ -682,7 +588,7 @@ export default function Products({
         </h2>
 
         <div className="flex items-center gap-2">
-
+     
 
           {/* ✅ Add Product Button */}
           <button
@@ -703,12 +609,12 @@ export default function Products({
         {products.map((p) => {
           const productImage = getProductImage(p);
           const imageUrl = productImage ? getImageUrl(productImage) : "";
-
+          
           console.log(`🎯 Product: ${p.name}`);
           console.log(`   Raw image: ${JSON.stringify(p.image)}`);
           console.log(`   Processed image: ${productImage}`);
           console.log(`   Image URL: ${imageUrl}`);
-
+          
           return (
             <article
               key={p.id}
@@ -717,10 +623,11 @@ export default function Products({
               {/* Visibility toggle */}
               <button
                 onClick={() => toggleProductVisibility(p.id)}
-                className={`absolute bottom-2 right-2 p-2 rounded-full border ${p.hidden
-                  ? "bg-yellow-100 text-yellow-600 border-yellow-200"
-                  : "bg-gray-100 text-gray-600 border-gray-200"
-                  }`}
+                className={`absolute bottom-2 right-2 p-2 rounded-full border ${
+                  p.hidden
+                    ? "bg-yellow-100 text-yellow-600 border-yellow-200"
+                    : "bg-gray-100 text-gray-600 border-gray-200"
+                }`}
                 disabled={isSubmitting}
               >
                 {p.hidden ? <FaEyeSlash /> : <FaEye />}
@@ -739,7 +646,7 @@ export default function Products({
                       key={i}
                       className="px-2 py-1 text-xs font-semibold bg-blue-500/10 text-blue-600 rounded border border-blue-200 truncate max-w-full sm:max-w-[80px]"
                     >
-                      {getTagName(tag)}
+                      {tag}
                     </div>
                   ))}
                 </div>
@@ -801,8 +708,9 @@ export default function Products({
         {/* Add Card */}
         <div
           onClick={() => !isSubmitting && setEditingProduct({})}
-          className={`bg-white/80 backdrop-blur-lg shadow rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:shadow-lg border border-dashed border-gray-300 transition-all min-w-0 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+          className={`bg-white/80 backdrop-blur-lg shadow rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:shadow-lg border border-dashed border-gray-300 transition-all min-w-0 ${
+            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
           <FaPlus className="text-2xl text-gray-400 mb-2" />
           <span className="text-gray-600 font-medium text-sm">Add Product</span>
@@ -855,8 +763,9 @@ export default function Products({
                   Upload Images / Videos
                 </h3>
 
-                <label className={`border-2 border-dashed p-4 rounded-xl flex flex-col items-center cursor-pointer mt-3 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'text-gray-500'
-                  }`}>
+                <label className={`border-2 border-dashed p-4 rounded-xl flex flex-col items-center cursor-pointer mt-3 ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'text-gray-500'
+                }`}>
                   <FaUpload className="text-2xl mb-2" />
                   Upload from Files
                   <input
@@ -873,10 +782,11 @@ export default function Products({
                   {formData.media.map((m) => (
                     <div
                       key={m.id}
-                      className={`flex justify-between items-center p-3 rounded-lg border ${m.status === "error"
-                        ? "bg-red-100/60 border-red-300"
-                        : "bg-blue-100/60 border-blue-300"
-                        }`}
+                      className={`flex justify-between items-center p-3 rounded-lg border ${
+                        m.status === "error"
+                          ? "bg-red-100/60 border-red-300"
+                          : "bg-blue-100/60 border-blue-300"
+                      }`}
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {m.type === "image" ? (
@@ -1030,10 +940,11 @@ export default function Products({
                     {availableCategories.map((category) => (
                       <div
                         key={category.id}
-                        className={`p-2 rounded-lg cursor-pointer ${formData.category_name === category.name
-                          ? "bg-blue-500/10 text-blue-600 border border-blue-200"
-                          : "bg-gray-50 hover:bg-gray-100"
-                          } ${isSubmitting ? 'cursor-not-allowed opacity-50' : ''}`}
+                        className={`p-2 rounded-lg cursor-pointer ${
+                          formData.category_name === category.name
+                            ? "bg-blue-500/10 text-blue-600 border border-blue-200"
+                            : "bg-gray-50 hover:bg-gray-100"
+                        } ${isSubmitting ? 'cursor-not-allowed opacity-50' : ''}`}
                         onClick={() => !isSubmitting && setFormData((prev) => ({
                           ...prev,
                           category_id: category.id, // ✅ Store ID
@@ -1064,8 +975,9 @@ export default function Products({
                   {availableTags.map((tag) => (
                     <label
                       key={tag}
-                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer ${isSubmitting ? 'cursor-not-allowed opacity-50' : 'bg-gray-50 hover:bg-gray-100'
-                        }`}
+                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer ${
+                        isSubmitting ? 'cursor-not-allowed opacity-50' : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
                     >
                       <input
                         type="checkbox"
@@ -1103,8 +1015,9 @@ export default function Products({
                       ...prev,
                       hidden: !prev.hidden,
                     }))}
-                    className={`px-3 py-2 rounded-lg text-white ${formData.hidden ? "bg-yellow-500" : "bg-green-500"
-                      } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`px-3 py-2 rounded-lg text-white ${
+                      formData.hidden ? "bg-yellow-500" : "bg-green-500"
+                    } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={isSubmitting}
                   >
                     {formData.hidden ? (

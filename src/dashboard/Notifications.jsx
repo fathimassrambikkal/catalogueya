@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   FaBell,
   FaCheck,
@@ -7,98 +7,78 @@ import {
   FaInfoCircle,
   FaCheckCircle,
   FaTimes,
-  FaEnvelopeOpenText
 } from "react-icons/fa";
-import { getCustomerNotifications, markNotificationRead, markAllNotificationsRead } from "../api";
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-
-  /* -----------------------------------------------------
-      FETCH DATA
-  -------------------------------------------------------*/
-  const fetchNotifications = async (pageNumber = 1) => {
-    try {
-      setLoading(true);
-      const res = await getCustomerNotifications(pageNumber);
-
-      console.log("🔔 Notifications API Response:", res.data);
-
-      const data = res.data?.data || [];
-      const meta = res.data; // Top level has pagination info like last_page
-
-      if (pageNumber === 1) {
-        setNotifications(data);
-      } else {
-        setNotifications(prev => [...prev, ...data]);
-      }
-
-      // Check if more pages exist
-      setHasMore(meta.current_page < meta.last_page);
-
-    } catch (err) {
-      console.error("❌ Failed to fetch notifications:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: "New Follower",
+      message: "John Doe started following your company",
+      type: "info",
+      time: "2 min ago",
+      read: false,
+    },
+    {
+      id: 2,
+      title: "Product Update",
+      message: "Your product 'Office Chair' has been updated successfully",
+      type: "success",
+      time: "1 hour ago",
+      read: false,
+    },
+    {
+      id: 3,
+      title: "Low Stock Alert",
+      message: "Product 'Desk Lamp' is running low on stock",
+      type: "warning",
+      time: "3 hours ago",
+      read: true,
+    },
+    {
+      id: 4,
+      title: "New Message",
+      message: "You have a new message from Sarah Johnson",
+      type: "info",
+      time: "5 hours ago",
+      read: true,
+    },
+    {
+      id: 5,
+      title: "System Maintenance",
+      message: "Scheduled maintenance tonight at 2:00 AM",
+      type: "warning",
+      time: "1 day ago",
+      read: true,
+    },
+  ]);
 
   /* -----------------------------------------------------
       Derived value (memoized)
   -------------------------------------------------------*/
   const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read_at).length,
+    () => notifications.filter((n) => !n.read).length,
     [notifications]
   );
 
   /* -----------------------------------------------------
       Handlers
   -------------------------------------------------------*/
-  const markAsRead = async (id) => {
-    // Optimistic update
+  const markAsRead = (id) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
-
-    try {
-      await markNotificationRead(id);
-      console.log("✅ Mark read success:", id);
-      // Refresh count in sidebar? Typically requires context or event.
-      window.dispatchEvent(new Event("notificationsUpdated"));
-    } catch (err) {
-      console.error("❌ Failed to mark read:", err);
-      // Revert if needed, but usually fine to ignore
-    }
   };
 
-  const markAllAsRead = async () => {
-    // Optimistic
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
-    );
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
 
-    try {
-      await markAllNotificationsRead();
-      console.log("✅ Mark ALL read success");
-      window.dispatchEvent(new Event("notificationsUpdated"));
-    } catch (err) {
-      console.error("❌ Failed to mark all read:", err);
-    }
+  const deleteNotification = (id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   const clearAll = () => {
-    // User requested "single read" and "all read". 
-    // Usually "Clear" implies delete, but we don't have DELETE endpoint.
-    // For now, we will just clear LOCAL view.
-    // Or we could trigger "Mark All Read" + Empty List?
-    // Let's just empty the list locally.
     setNotifications([]);
   };
 
@@ -107,8 +87,6 @@ export default function Notifications() {
   -------------------------------------------------------*/
   const getIcon = (type) => {
     switch (type) {
-      case "message":
-        return <FaEnvelopeOpenText className="text-blue-500" />;
       case "success":
         return <FaCheckCircle className="text-green-500" />;
       case "warning":
@@ -116,35 +94,35 @@ export default function Notifications() {
       case "error":
         return <FaTimes className="text-red-500" />;
       default:
-        // Default based on title analysis if type is missing?
         return <FaInfoCircle className="text-blue-500" />;
     }
   };
 
-  const getStyle = (isRead) => {
+  const getStyle = (type, read) => {
     const base = "p-4 rounded-xl border-l-4 transition-all duration-200 min-w-0";
-    // Check if read_at is not null
-    const readStyle = isRead ? "bg-gray-50/50 border-l-gray-300" : "bg-white shadow-lg border-l-blue-500";
-    return `${base} ${readStyle}`;
+    const readStyle = read ? "bg-gray-50/50" : "bg-white shadow-lg";
+
+    switch (type) {
+      case "success":
+        return `${base} ${readStyle} border-l-green-500`;
+      case "warning":
+        return `${base} ${readStyle} border-l-yellow-500`;
+      case "error":
+        return `${base} ${readStyle} border-l-red-500`;
+      default:
+        return `${base} ${readStyle} border-l-blue-500`;
+    }
   };
 
   /* -----------------------------------------------------
       JSX
   -------------------------------------------------------*/
-  if (loading && notifications.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-full bg-gradient-to-br from-gray-50 to-blue-50/30 p-1 sm:p-2 overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-6 overflow-x-hidden">
       <div className="max-w-4xl mx-auto min-w-0">
-
+        
         {/* HEADER */}
-        <div className="flex flex-row items-center  justify-between gap-2 mb-8 min-w-0">
+        <div className="flex flex-row items-center justify-between gap-2 mb-8 min-w-0">
           <div className="flex gap-2 sm:gap-4 items-center min-w-0 overflow-hidden">
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
@@ -152,8 +130,9 @@ export default function Notifications() {
               </h1>
               <p className="text-gray-600 text-xs sm:text-sm truncate">
                 {unreadCount > 0
-                  ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""
-                  }`
+                  ? `${unreadCount} unread notification${
+                      unreadCount > 1 ? "s" : ""
+                    }`
                   : "All caught up!"}
               </p>
             </div>
@@ -176,20 +155,18 @@ export default function Notifications() {
               </button>
             )}
 
-            {notifications.length > 0 && (
-              <button
-                onClick={clearAll}
-                className="
-                  bg-red-500 hover:bg-red-600 text-white px-2 py-1 sm:px-3 sm:py-2 
-                  rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium shadow-lg 
-                  shadow-red-400/30 whitespace-nowrap
-                "
-              >
-                <div className="flex items-center gap-1">
-                  <FaTrash className="text-xs" /> Clear View
-                </div>
-              </button>
-            )}
+            <button
+              onClick={clearAll}
+              className="
+                bg-red-500 hover:bg-red-600 text-white px-2 py-1 sm:px-3 sm:py-2 
+                rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium shadow-lg 
+                shadow-red-400/30 whitespace-nowrap
+              "
+            >
+              <div className="flex items-center gap-1">
+                <FaTrash className="text-xs" /> Clear
+              </div>
+            </button>
           </div>
         </div>
 
@@ -208,84 +185,76 @@ export default function Notifications() {
               </p>
             </div>
           ) : (
-            notifications.map((n) => {
-              // Extract data safely
-              const isRead = !!n.read_at;
-              const title = n.notification?.title || "Notification";
-              const body = n.notification?.body || "";
-              const type = n.data?.type || "info";
-              const time = n.created_at ? new Date(n.created_at).toLocaleString() : "";
+            notifications.map((n) => (
+              <div key={n.id} className={getStyle(n.type, n.read)}>
+                <div className="flex gap-3 sm:gap-4 items-start min-w-0">
+                  
+                  {/* ICON */}
+                  <div className="flex-shrink-0 mt-1">{getIcon(n.type)}</div>
 
-              return (
-                <div key={n.id || Math.random()} className={getStyle(isRead)}>
-                  <div className="flex gap-3 sm:gap-4 items-start min-w-0">
+                  {/* TEXT */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between gap-2 min-w-0">
+                      <div className="min-w-0">
+                        <h3
+                          className={`font-semibold text-sm sm:text-base truncate ${
+                            n.read ? "text-gray-700" : "text-gray-900"
+                          }`}
+                        >
+                          {n.title}
+                        </h3>
+                        <p
+                          className={`text-xs sm:text-sm mt-1 break-words ${
+                            n.read ? "text-gray-600" : "text-gray-700"
+                          }`}
+                        >
+                          {n.message}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {n.time}
+                        </p>
+                      </div>
 
-                    {/* ICON */}
-                    <div className="flex-shrink-0 mt-1">{getIcon(type)}</div>
-
-                    {/* TEXT */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between gap-2 min-w-0">
-                        <div className="min-w-0">
-                          <h3
-                            className={`font-semibold text-sm sm:text-base truncate ${isRead ? "text-gray-700" : "text-gray-900"
-                              }`}
+                      {/* ACTION ICONS */}
+                      <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                        {!n.read && (
+                          <button
+                            onClick={() => markAsRead(n.id)}
+                            className="p-1 sm:p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg"
                           >
-                            {title}
-                          </h3>
-                          <p
-                            className={`text-xs sm:text-sm mt-1 break-words ${isRead ? "text-gray-600" : "text-gray-700"
-                              }`}
-                          >
-                            {body}
-                          </p>
-                          {n.data?.message && (
-                            <p className="text-xs text-gray-500 mt-1 italic">
-                              "{n.data.message}"
-                            </p>
-                          )}
-                          <p className="text-[10px] text-gray-400 mt-2">
-                            {time}
-                          </p>
-                        </div>
+                            <FaCheck className="text-xs sm:text-sm" />
+                          </button>
+                        )}
 
-                        {/* ACTION ICONS */}
-                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                          {!isRead && (
-                            <button
-                              onClick={() => markAsRead(n.id)}
-                              className="p-1 sm:p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg"
-                              title="Mark as read"
-                            >
-                              <FaCheck className="text-xs sm:text-sm" />
-                            </button>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => deleteNotification(n.id)}
+                          className="p-1 sm:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <FaTrash className="text-xs sm:text-sm" />
+                        </button>
                       </div>
                     </div>
                   </div>
-
-                  {/* UNREAD DOT */}
-                  {!isRead && <div className="w-2 h-2 bg-blue-500 rounded-full mt-3" />}
                 </div>
-              );
-            })
+
+                {/* UNREAD DOT */}
+                {!n.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-3" />}
+              </div>
+            ))
           )}
         </div>
 
-        {/* LOAD MORE */}
-        {hasMore && (
-          <div className="mt-6 text-center">
+        {/* CLEAR ALL BOTTOM */}
+        {notifications.length > 0 && (
+          <div className="text-center mt-8">
             <button
-              onClick={() => fetchNotifications(page + 1)}
-              disabled={loading}
-              className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-sm font-medium"
+              onClick={clearAll}
+              className="text-gray-500 hover:text-red-500 text-xs sm:text-sm px-4 py-2 rounded-lg hover:bg-red-50 transition"
             >
-              {loading ? "Loading..." : "Load More"}
+              Clear all notifications
             </button>
           </div>
         )}
-
       </div>
     </div>
   );

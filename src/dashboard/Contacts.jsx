@@ -1,97 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FaUsers, FaBell } from 'react-icons/fa';
 import AddCustomerModal from './AddCustomerModal';
 import SendNotificationModal from './SendNotificationModal';
 import CustomerManagement from './CustomerManagement';
-import {
-  getCompanyConversations,
-  getCompanyConversationMessages,
-  sendCompanyMessage,
-  markCompanyConversationRead
-} from '../companyApi';
 
 function Contacts({ companyInfo, products }) {
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [loyalCustomers, setLoyalCustomers] = useState([]);
-  const [messages, setMessages] = useState([]);
 
-  // Fetch conversations on mount
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
-  const fetchConversations = async () => {
-    try {
-      const response = await getCompanyConversations();
-      if (response.data && response.data.data) {
-        // Map API response to the format expected by CustomerManagement
-        const mappedCustomers = response.data.data.map(conv => {
-          const participant = conv.other_participant || {};
-          return {
-            id: conv.id, // Conversation ID
-            customerId: participant.id,
-            name: participant.name_en || 'Unknown', // Show User's Name
-            phone: participant.phone || '',       // Show Phone Number
-            image: participant.image,
-            orders: 0, // Not provided in API
-            online: participant.status === 'active',
-            unread_count: conv.unread_count
-          };
-        });
-        setLoyalCustomers(mappedCustomers);
-      }
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-    }
-  };
+  // Sample data - replace with your actual API data
+  const loyalCustomers = [
+    { id: 1, name: 'Sara', phone: '66070009', orders: 3, online: true },
+    { id: 2, name: 'Fathima', phone: '66070009', orders: 3, online: false },
+    { id: 3, name: 'Fatma', phone: '66070009', orders: 3, online: true },
+    { id: 4, name: 'Reseeeem', phone: '66070009', orders: 0, online: false },
+    { id: 5, name: 'Twennjiree', phone: '66070009', orders: 0, online: true },
+    { id: 6, name: 'Tolga', phone: '66070009', orders: 0, online: false }
+  ];
 
   // Handlers
   const handleRemoveCustomer = (customer) => console.log('Removing:', customer.name);
-
   const handleSendNotification = (customer, type) =>
     console.log('Sending notification:', type, 'to', customer.name);
-
   const handleRequestPayment = (customer) =>
     console.log('Requesting payment from:', customer.name);
-
   const handleRequestReview = (customer, reviewType) =>
     console.log('Review request from:', customer.name, 'for', reviewType);
-
-  // Fetch messages when entering chat
-  const handleChatEnter = async (customer) => {
-    if (!customer?.id) return;
-    try {
-      setMessages([]); // Clear previous messages
-      const response = await getCompanyConversationMessages(customer.id);
-      if (response.data && response.data.messages) {
-        setMessages(response.data.messages);
-      }
-
-      // Mark as read
-      await markCompanyConversationRead(customer.id);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
-  };
-
-  const handleSendMessage = async (customer, messageText) => {
-    if (!customer?.id || !messageText.trim()) return;
-
-    try {
-      // optimistic update or just fetch after send?
-      // For now, fetch after send for simplicity and accuracy
-      await sendCompanyMessage(customer.id, { body: messageText, attachments: [] });
-
-      // Refresh messages
-      const response = await getCompanyConversationMessages(customer.id);
-      if (response.data && response.data.messages) {
-        setMessages(response.data.messages);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
+  const handleSendMessage = (customer, message) =>
+    console.log('Message to', customer.name, ':', message);
 
   return (
     <>
@@ -104,7 +40,7 @@ function Contacts({ companyInfo, products }) {
 
           {/* HEADER */}
           <div className="flex flex-row justify-between items-center gap-3 mb-4 sm:mb-6 min-w-0 w-full overflow-x-hidden">
-
+            
             {/* Left */}
             <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-hidden">
               <div className="flex items-center gap-2 min-w-0 overflow-x-hidden">
@@ -135,10 +71,6 @@ function Contacts({ companyInfo, products }) {
               onRequestPayment={handleRequestPayment}
               onRequestReview={handleRequestReview}
               onSendMessage={handleSendMessage}
-              onChatEnter={handleChatEnter}
-              messages={messages}
-              companyId={companyInfo?.id}
-              products={products}
             />
           </div>
 

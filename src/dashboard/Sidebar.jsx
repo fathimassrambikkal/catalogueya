@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import { performLogout } from "../lib/authUtils";
-import { getCompanyBarcode } from "../companyApi";
+import { getBarcode } from "../api";
 
 
 
@@ -21,24 +21,23 @@ import {
   FaChevronDown,
   FaChevronRight,
   FaUserFriends,
-  FaBell,
-  FaRegStar
+  FaBell
 } from "react-icons/fa";
-
+ 
 const Sidebar = ({ activeTab, setActiveTab }) => {
 
   const { user } = useSelector((state) => state.auth);
-  const companyId = user?.id;
-  const [barcode, setBarcode] = useState(null);
-  const [loadingBarcode, setLoadingBarcode] = useState(false);
+const companyId = user?.id;
+const [barcode, setBarcode] = useState(null);
+const [loadingBarcode, setLoadingBarcode] = useState(false);
 
   const [showBarcode, setShowBarcode] = useState(false);
-  const dispatch = useDispatch();
-  const { userType } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
-  const handleSignOut = () => {
-    performLogout(dispatch, navigate, userType);
-  };
+    const dispatch = useDispatch();
+    const { userType } = useSelector((state) => state.auth);
+    const navigate = useNavigate();
+    const handleSignOut = () => {
+  performLogout(dispatch, navigate, userType);
+};
 
 
 
@@ -48,25 +47,24 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { label: "Analytics", icon: <FaChartLine className="text-[10px]" /> },
     { label: "Contacts", icon: <FaUsers className="text-[10px]" /> },
     { label: "Followers", icon: <FaUserFriends className="text-[10px]" /> },
-    { label: "Reviews", icon: <FaRegStar className="text-[10px]" /> },
     { label: "Notifications", icon: <FaBell className="text-[10px]" /> },
     { label: "Fatora", icon: <img src={fatoraLogo} alt="Fatora" className="w-3 h-3 object-contain" /> },
     { label: "Settings", icon: <FaCog className="text-[10px]" /> },
   ];
 
-  // Removed duplicate helper functions
-
+  const getFollowersCount = () => 0;
+  const getUnreadNotificationsCount = () => 3;
 
 
 
   const handleDownloadBarcode = () => {
-    if (!barcode) return;
+  if (!barcode) return;
 
-    const link = document.createElement("a");
-    link.href = barcode;
-    link.download = "company-barcode.png";
-    link.click();
-  };
+  const link = document.createElement("a");
+  link.href = barcode;
+  link.download = "company-barcode.png";
+  link.click();
+};
 
 
 
@@ -74,80 +72,37 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
   const fatoraActiveTabStyles = "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm";
   const fatoraActiveIconStyles = "bg-white text-white shadow-sm";
   const fatoraHoverStyles = "hover:text-blue-600 hover:border-blue-200";
-
+  
   // REGULAR STYLES
   const activeTabStyles = "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm";
   const inactiveTabStyles = "bg-white/60 text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300";
 
   const activeIconStyles = "bg-blue-500 text-white shadow-sm";
   const inactiveIconStyles = "bg-gray-100 text-gray-600 group-hover:bg-gray-200";
-  useEffect(() => {
-    if (!showBarcode || !companyId) return;
+   useEffect(() => {
+  if (!showBarcode || !companyId) return;
 
-    const fetchBarcode = async () => {
-      try {
-        setLoadingBarcode(true);
-        const res = await getCompanyBarcode();
-
-        // The API returns { paths: { png: "http...", ... } }
-        let barcodeData = res.data?.paths?.png || res.data?.paths?.webp || res.data?.barcode || res.data;
-
-        // If it's the full response object, try to find the path
-        if (typeof barcodeData === 'object' && barcodeData !== null) {
-          barcodeData = barcodeData.png || barcodeData.webp || barcodeData.avif;
-        }
-
-        // Handle potential HTTP/HTTPS mixed content issues
-        if (typeof barcodeData === 'string' && barcodeData.startsWith("http://")) {
-          // If the current window is HTTPS, we should try to use HTTPS for the barcode too
-          if (window.location.protocol === "https:") {
-            barcodeData = barcodeData.replace("http://", "https://");
-          }
-        }
-
-        setBarcode(barcodeData);
-      } catch (err) {
-        console.error("❌ Failed to load barcode", err);
-      } finally {
-        setLoadingBarcode(false);
-      }
-    };
-
-    fetchBarcode();
-  }, [showBarcode, companyId]);
-
-  /* ✅ NOTIFICATIONS COUNT */
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const fetchUnreadCount = async () => {
+  const fetchBarcode = async () => {
     try {
-      const res = await import("../api").then(m => m.getUnreadNotificationCount());
-      // Response: { unread: 11 }
-      const count = res.data?.unread || 0;
-      setUnreadCount(count);
+      setLoadingBarcode(true);
+      const res = await getBarcode(companyId);
+
+      // Backend usually returns image path or base64
+      const barcodeData =
+        res.data?.data?.barcode ||
+        res.data?.barcode ||
+        res.data;
+
+      setBarcode(barcodeData);
     } catch (err) {
-      console.error("❌ Failed to fetch unread count", err);
+      console.error("❌ Failed to load barcode", err);
+    } finally {
+      setLoadingBarcode(false);
     }
   };
 
-  useEffect(() => {
-    if (!user) return;
-    fetchUnreadCount();
-
-    // Listen for updates from Notifications page
-    const handleUpdate = () => fetchUnreadCount();
-    window.addEventListener("notificationsUpdated", handleUpdate);
-
-    return () => {
-      window.removeEventListener("notificationsUpdated", handleUpdate);
-    };
-  }, [user]);
-
-  /* -----------------------------------------------------
-      Helpers
-  -------------------------------------------------------*/
-  const getFollowersCount = () => 0; // Placeholder for now
-  const getUnreadNotificationsCount = () => unreadCount;
+  fetchBarcode();
+}, [showBarcode, companyId]);
 
 
 
@@ -187,27 +142,30 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         {tabs.map((t) => {
           const isActive = activeTab === t.label;
           const isFatora = t.label === "Fatora";
-
+          
           return (
             <button
               key={t.label}
               onClick={() => setActiveTab(t.label)}
-              className={`group flex items-center gap-1.5 px-2.5 py-2 rounded-lg transition-all w-full min-w-0 ${isActive
-                ? (isFatora ? fatoraActiveTabStyles : activeTabStyles)
-                : `${inactiveTabStyles} ${isFatora ? fatoraHoverStyles : ""}`
-                }`}
+              className={`group flex items-center gap-1.5 px-2.5 py-2 rounded-lg transition-all w-full min-w-0 ${
+                isActive 
+                  ? (isFatora ? fatoraActiveTabStyles : activeTabStyles)
+                  : `${inactiveTabStyles} ${isFatora ? fatoraHoverStyles : ""}`
+              }`}
             >
               <div
-                className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${isActive
-                  ? (isFatora ? fatoraActiveIconStyles : activeIconStyles)
-                  : (isFatora ? 'bg-gray-100 text-gray-600 group-hover:bg-blue-100' : inactiveIconStyles)
-                  }`}
+                className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isActive 
+                    ? (isFatora ? fatoraActiveIconStyles : activeIconStyles)
+                    : (isFatora ? 'bg-gray-100 text-gray-600 group-hover:bg-blue-100' : inactiveIconStyles)
+                }`}
               >
                 {t.icon}
               </div>
 
-              <span className={`text-[13px] font-medium truncate flex-none max-w-fit text-left ${isActive && isFatora ? "text-blue-600" : ""
-                }`}>
+              <span className={`text-[13px] font-medium truncate flex-none max-w-fit text-left ${
+                isActive && isFatora ? "text-blue-600" : ""
+              }`}>
                 {t.label}
               </span>
 
@@ -225,8 +183,9 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
                 )}
 
               {isActive && (
-                <FaChevronRight className={`ml-auto text-[10px] flex-shrink-0 ${isFatora ? "text-blue-500" : "text-blue-500"
-                  }`} />
+                <FaChevronRight className={`ml-auto text-[10px] flex-shrink-0 ${
+                  isFatora ? "text-blue-500" : "text-blue-500"
+                }`} />
               )}
             </button>
           );
@@ -236,12 +195,14 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
         <div className="relative w-full overflow-x-hidden min-w-0 mt-1">
           <button
             onClick={() => setShowBarcode(!showBarcode)}
-            className={`group flex items-center gap-1.5 px-2.5 py-2 rounded-lg w-full min-w-0 ${showBarcode ? activeTabStyles : inactiveTabStyles
-              }`}
+            className={`group flex items-center gap-1.5 px-2.5 py-2 rounded-lg w-full min-w-0 ${
+              showBarcode ? activeTabStyles : inactiveTabStyles
+            }`}
           >
             <div
-              className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${showBarcode ? activeIconStyles : inactiveIconStyles
-                }`}
+              className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
+                showBarcode ? activeIconStyles : inactiveIconStyles
+              }`}
             >
               <FaDownload className="text-[10px]" />
             </div>
@@ -251,47 +212,50 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             </span>
 
             <FaChevronDown
-              className={`ml-auto text-[10px] transition-transform flex-shrink-0 text-gray-400 ${showBarcode ? "rotate-180" : ""
-                }`}
+              className={`ml-auto text-[10px] transition-transform flex-shrink-0 text-gray-400 ${
+                showBarcode ? "rotate-180" : ""
+              }`}
             />
           </button>
 
           <div
-            className={`transition-all duration-300 overflow-hidden w-full max-w-full min-w-0 ${showBarcode ? "max-h-48 mt-2" : "max-h-0"
-              }`}
-          >
-            <div className="p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm w-full max-w-full overflow-x-hidden min-w-0">
+  className={`transition-all duration-300 overflow-hidden w-full max-w-full min-w-0 ${
+    showBarcode ? "max-h-48 mt-2" : "max-h-0"
+  }`}
+>
+  <div className="p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm w-full max-w-full overflow-x-hidden min-w-0">
 
-              {loadingBarcode ? (
-                <p className="text-xs text-center text-gray-500">
-                  Loading barcode...
-                </p>
-              ) : barcode ? (
-                <img
-                  src={barcode}
-                  alt="Company Barcode"
-                  className="w-full max-w-[90px] mx-auto h-20 object-contain rounded mb-2 border border-gray-200"
-                />
-              ) : (
-                <p className="text-xs text-center text-red-500">
-                  Barcode not available
-                </p>
-              )}
+    {loadingBarcode ? (
+      <p className="text-xs text-center text-gray-500">
+        Loading barcode...
+      </p>
+    ) : barcode ? (
+      <img
+        src={barcode}
+        alt="Company Barcode"
+        className="w-full max-w-[90px] mx-auto h-20 object-contain rounded mb-2 border border-gray-200"
+      />
+    ) : (
+      <p className="text-xs text-center text-red-500">
+        Barcode not available
+      </p>
+    )}
 
-              <button
-                onClick={handleDownloadBarcode}
-                disabled={!barcode}
-                className={`w-full px-3 py-2 rounded-lg font-medium shadow-sm transition text-sm flex items-center justify-center ${barcode
-                  ? "bg-blue-500 text-white hover:bg-blue-600"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-              >
-                <FaDownload className="text-xs mr-2" />
-                Download
-              </button>
+    <button
+      onClick={handleDownloadBarcode}
+      disabled={!barcode}
+      className={`w-full px-3 py-2 rounded-lg font-medium shadow-sm transition text-sm flex items-center justify-center ${
+        barcode
+          ? "bg-blue-500 text-white hover:bg-blue-600"
+          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+      }`}
+    >
+      <FaDownload className="text-xs mr-2" />
+      Download
+    </button>
 
-            </div>
-          </div>
+  </div>
+</div>
 
         </div>
       </nav>
