@@ -296,21 +296,67 @@ useEffect(() => {
         {/* ✅ FIX 3: Customer Account Dropdown (now has access to accountOpen and displayName) */}
        {isAuthenticated && userType === "customer" ? (
   <div className="relative customer-account-container">
-  <button
+<button
   onMouseEnter={preloadDashboard}
   onClick={() => setAccountOpen((prev) => !prev)}
   className="
-    border border-gray-300 text-gray-900 hover:text-blue-500
-    px-2 sm:px-3 py-1 sm:py-2 rounded-lg md:rounded-xl
-    transition text-xs sm:text-sm flex flex-col md:flex-row items-center justify-center
-    bg-white/30 hover:bg-white/50
+    group
+    flex items-center gap-[4px]
+    p-0.5
+    rounded-full
+    transition
+    focus:outline-none
   "
+  aria-haspopup="menu"
+  aria-expanded={accountOpen}
 >
-  <span className="text-gray-700">{fw.welcome}</span>
-  <span className=" ml-0 md:ml-1 font-semibold text-blue-500 text-[10px] md:text-sm">
-    {displayName}
-  </span>
+  {/* Avatar */}
+  <div
+    className="
+      w-6 h-6 sm:w-7 sm:h-7
+      rounded-full
+      bg-blue-600
+      flex items-center justify-center
+      text-white
+      text-[11px] sm:text-xs
+      font-medium
+      leading-none
+      select-none
+      ring-1 ring-transparent
+      group-hover:ring-blue-400/40
+      group-focus:ring-blue-500/50
+      transition
+    "
+  >
+    {displayName.charAt(0).toUpperCase()}
+  </div>
+
+  {/* Caret – balanced size */}
+  <svg
+    viewBox="0 0 20 20"
+    className={`
+      w-[15px] h-[15px]
+      text-gray-400
+      transition-transform duration-200
+      ${accountOpen ? "rotate-180" : ""}
+      group-hover:text-gray-500
+    `}
+    aria-hidden="true"
+  >
+    <path
+      d="M6 8l4 4 4-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.65"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
 </button>
+
+
+
+
 
 
     {accountOpen && (

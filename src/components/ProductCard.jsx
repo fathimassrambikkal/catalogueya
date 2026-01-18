@@ -90,7 +90,7 @@ export const ProductCard = memo(({
     shadow-[0_8px_24px_rgba(0,0,0,0.18)]
     hover:bg-white/55
     transition-all
-    duration-300
+    duration-300 
   "
 >
   <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/70 via-white/10 to-transparent opacity-40 pointer-events-none" />
@@ -100,10 +100,10 @@ export const ProductCard = memo(({
   <ChatIcon
     className="
       relative z-10
-      w-[clamp(11px,1.1vw,16px)]
-      h-[clamp(11px,1.1vw,16px)]
-      text-[rgba(18,18,18,0.88)]
-      drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
+          w-[clamp(12px,1.1vw,16px)]
+        h-[clamp(12px,1.1vw,16px)]
+        text-[rgba(18,18,18,0.88)]
+        drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
     "
   />
 </button>
@@ -185,14 +185,14 @@ export const ProductCard = memo(({
         <div className="flex flex-col w-[99%] z-10">
           {/* Product Name - Fixed for 350px screens */}
           <h3 className="font-semibold text-gray-900 mb-1 truncate
-                         text-[9px] xs:text-[10px] sm:text-[14px] md:text-xs">
+                         text-[11px] xs:text-[10px] sm:text-[14px] md:text-xs">
             {product.name}
           </h3>
           
           {/* Price Section - Fixed for 350px screens */}
           <div className="flex items-center gap-1">
             <span className="font-bold text-gray-900
-                            text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs">
+                            text-[10px] xs:text-[10px] sm:text-[11px] md:text-xs">
               {i18n.language === "ar" ? `${currency} ${product.price}` : `${product.price} ${currency}`}
             </span>
             {product.oldPrice && (

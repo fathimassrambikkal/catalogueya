@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
+import BackButton from "../components/BackButton";
 // Navigation Icons
 const CloseIcon = ({ className = "" }) => (
   <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -8,21 +8,7 @@ const CloseIcon = ({ className = "" }) => (
   </svg>
 );
 
-const ArrowLeftIcon = ({ className = "" }) => (
-  <svg
-    className={className}
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
+
 
 // Star Icon with the exact requested shape
 const StarIcon = ({ filled, className = "" }) => (
@@ -318,34 +304,14 @@ export default function CompanyReviewsPage() {
         </div>
       )}
 
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300 transform-gpu active:scale-95"
-        aria-label="Go back"
-      >
-        <ArrowLeftIcon className="text-gray-700 transform-gpu" />
-      </button>
+  <BackButton   variant="absolute" className="top-16"/>
 
       {/* Main Content */}
-      <div className="max-w-[1920px] mx-auto animate-fade-in">
+      <div className="max-w-[1920px] mx-auto animate-fade-in mt-20">
         {/* Header Stats */}
         <section className="mb-8 md:mb-12 pt-2">
           <div className="flex flex-col gap-4">
-            {/* Back arrow WITH text BELOW it */}
-            <button
-              onClick={() => navigate(-1)}
-              className="
-                inline-flex items-center gap-2
-                text-sm font-medium
-                text-gray-600
-                hover:text-gray-900
-                transition
-                self-start
-              "
-            >
-              <ArrowLeftIcon className="w-4 h-4" />
-            </button>
+       
             
             {/* Heading - Now below the arrow */}
             <div>

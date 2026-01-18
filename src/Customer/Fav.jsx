@@ -14,6 +14,7 @@ import {
   removeFromFavorite,
 } from "../api";
 
+
 function Fav() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -579,9 +580,15 @@ function Fav() {
 
   // ================= RENDER CREATE LIST FORM =================
   const renderCreateListForm = () => (
-    <div className="p-3 sm:p-4 md:p-6 rounded-2xl mb-3 sm:mb-4 transition-all duration-200
-      bg-white/80 backdrop-blur-lg border border-blue-200/60
-      shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)] w-full overflow-hidden max-w-full">
+    <div className="p-3 sm:p-4 md:p-6  mb-3 sm:mb-4 
+     bg-white/95 backdrop-blur-xl
+            rounded-xl sm:rounded-2xl
+            border border-white/80
+            shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_4px_24px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.02)]
+            
+            transition-all duration-300
+            hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_8px_32px_rgba(0,0,0,0.06)]
+            glass-effect w-full overflow-hidden max-w-full">
       <h3 className="font-semibold text-gray-900 text-sm sm:text-base md:text-lg mb-3 sm:mb-4 break-words">
         Create New List
       </h3>
@@ -631,51 +638,51 @@ function Fav() {
       
       <div className="min-h-full p-3 sm:p-4 md:p-6 overflow-x-hidden w-full max-w-full">
         <div className="w-full max-w-full mx-auto mt-10 overflow-hidden">
-          <div className="flex flex-col items-center mb-4 sm:mb-6 gap-2">
-            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 text-center">
-              My Favorites Lists
-            </h1>
-          </div>
+          {/* ✅ UPDATED HEADER: Apple-style header with top-right button */}
+      <div className="relative mb-4 sm:mb-6 mt-10">
+  {/* Centered title */}
+  <h1 className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 text-center">
+    My Favorites Lists
+  </h1>
+
+  {/* Right-aligned action */}
+<button
+  onClick={() => setIsCreating(true)}
+  className="
+    absolute right-0 top-1/2 -translate-y-1/2
+    flex items-center gap-2
+    px-3  md:px-4 py-1.5 md:py-2.5
+    rounded-lg
+
+    bg-blue-500/90
+    backdrop-blur-xl
+    text-white font-semibold text-sm sm:text-base
+
+    shadow-[0_8px_24px_rgba(59,130,246,0.35)]
+    hover:bg-blue-500
+
+    transition-all duration-200
+    active:scale-95
+  "
+>
+  <span className="text-lg leading-none">+</span>
+  <span className=" hidden md:inline">New List</span>
+</button>
+
+
+</div>
+
+
+          {/* ✅ Create form under header (only when active) */}
+          {isCreating && renderCreateListForm()}
 
           <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-hidden">
             {/* Always show the default list first */}
             {defaultList && renderListCard(defaultList)}
             
-            {/* Create New List Button or Form - placed right after default list */}
-            {isCreating ? (
-              renderCreateListForm()
-            ) : (
-              <button
-                onClick={() => setIsCreating(true)}
-                className="w-full p-3 sm:p-4 md:p-6 rounded-2xl cursor-pointer bg-white/60 backdrop-blur-lg border 
-                border-gray-200/50 border-dashed hover:border-blue-200/60 hover:scale-[1.01] sm:hover:scale-[1.02] transition-all
-                shadow-[inset_1px_1px_2px rgba(255,255,255,0.8)] max-w-full overflow-hidden"
-              >
-                <div className="flex items-center justify-center">
-                  <div className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 6v12" />
-                      <path d="M6 12h12" />
-                    </svg>
-                  </div>
-
-                  <span className="text-blue-500 font-semibold text-sm sm:text-base md:text-lg whitespace-nowrap">
-                    Create a New List
-                  </span>
-                </div>
-              </button>
-            )}
-
-            {/* Then show user-created lists below the create button */}
+            {/* ✅ REMOVED: The dashed "Create a New List" box */}
+            
+            {/* Then show user-created lists */}
             {userLists.map(renderListCard)}
           </div>
 

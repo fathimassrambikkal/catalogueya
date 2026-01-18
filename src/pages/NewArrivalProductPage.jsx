@@ -8,7 +8,7 @@ import { useFixedWords } from "../hooks/useFixedWords";
 
 import CallToAction from "../components/CallToAction";
 import { getArrivalsProducts } from "../api"; 
-
+import BackButton from "../components/BackButton";
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 // SVG Icons - Same as other components
@@ -42,23 +42,7 @@ const HeartIcon = ({ filled = false, className = "" }) => (
   </svg>
 );
 
-const ArrowLeftIcon = ({ className = "" }) => (
-  <svg
-    className={className}
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
-const backButtonClass =
-  "absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300 transform-gpu active:scale-95";
+
 
 const ChatIcon = ({ className = "" }) => (
   <svg 
@@ -308,14 +292,9 @@ const sortedProducts = useMemo(() => {
       )}
 
       <section className="relative min-h-screen pt-24 pb-16 sm:pt-28 sm:pb-20 px-4 sm:px-8 md:px-12 lg:px-16 bg-gray-50">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className={backButtonClass}
-          aria-label="Go back"
-        >
-          <ArrowLeftIcon className="text-gray-700 transform-gpu" />
-        </button>
+       
+      <BackButton   variant="absolute" className="top-16"/>
+  
 
         {/* Page Title */}
         <h1 className="text-2xl sm:text-3xl md:text-5xl font-light tracking-tight text-gray-900 mb-10 text-center ">
@@ -532,12 +511,12 @@ const sortedProducts = useMemo(() => {
                     <div className="relative w-full rounded-b-3xl p-3 sm:p-4 border-t border-white/20 bg-white/10 backdrop-blur-xl flex items-center justify-between ">
                       <div className="flex flex-col w-[80%] z-10 ">
                         <h3 className="font-semibold text-gray-900 mb-1 
-                           text-[10px] xs:text-[10px] sm:text-[14px] md:text-xs ">
+                           text-[11px] xs:text-[10px] sm:text-[14px] md:text-xs ">
                           {product.name_en || product.name}
                         </h3>
                         <div className="flex items-center gap-1 ">
                           <span className="font-bold text-gray-900
-                              text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs  ">
+                              text-[10px] xs:text-[10px] sm:text-[11px] md:text-xs  ">
                             {fw.qar} {product.price}
                           </span>
                           {product.old_price && (

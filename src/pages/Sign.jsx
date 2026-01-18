@@ -11,7 +11,7 @@ export default function Sign() {
   const dispatch = useDispatch();
   const auth = useSelector((state) => state.auth);
   const [showPassword, setShowPassword] = useState(false);
-  const [showCompanyPassword, setShowCompanyPassword] = useState(false);
+ 
   const [isRegistered, setIsRegistered] = useState(false);
   const [loginType, setLoginType] = useState("customer");
   const [email, setEmail] = useState("");
@@ -20,6 +20,8 @@ export default function Sign() {
   const [companyPassword, setCompanyPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showCompanyPassword, setShowCompanyPassword] = useState(false);
+
   const location = useLocation();
 const params = new URLSearchParams(location.search);
 const redirectPath = params.get("redirect");
@@ -301,124 +303,287 @@ if (!user || !user.name) {
 
           {/* Login Forms */}
           {loginType === "customer" ? (
-            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-              {error && (
-                <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-700 rounded-2xl text-sm text-center backdrop-blur-sm">
-                  <div className="flex items-center justify-center">
-                    <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mr-2">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
-                    </div>
-                    {error}
-                  </div>
-                </div>
-              )}
+     <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+  {error && (
+    <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-700 rounded-2xl text-sm text-center backdrop-blur-sm">
+      <div className="flex items-center justify-center">
+        <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mr-2">
+          <svg
+            className="w-3 h-3 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </div>
+        {error}
+      </div>
+    </div>
+  )}
 
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
-                  required
-                />
+  <div className="space-y-4">
+    {/* Email */}
+    <input
+      type="email"
+      placeholder="Email address"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50
+                 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+                 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+      required
+    />
 
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
-                  required
-                />
-              </div>
+    {/* Password with SVG eye */}
+    <div className="relative">
+      <input
+        type={showPassword ? "text" : "password"}
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="w-full px-4 py-4 pr-12 rounded-2xl bg-white/50
+                   border border-gray-200/50 text-sm
+                   focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+                   transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+        required
+      />
 
-              <div className="flex justify-end items-center text-sm">
-                <Link
-                  to="/forgot-password"
-                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
+      <button
+        type="button"
+        onClick={() => setShowPassword(v => !v)}
+        className="absolute right-4 top-1/2 -translate-y-1/2
+                   text-gray-400 hover:text-gray-700 transition"
+        aria-label="Toggle password visibility"
+      >
+        {showPassword ? (
+          /* Eye OFF */
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 3l18 18M10.584 10.586a2 2 0 002.83 2.83
+                 M9.88 5.08A9.94 9.94 0 0112 5
+                 c4.478 0 8.268 2.943 9.543 7
+                 a9.96 9.96 0 01-4.093 5.063
+                 M6.1 6.1A9.957 9.957 0 002.458 12
+                 c1.274 4.057 5.064 7 9.542 7
+                 a9.94 9.94 0 004.31-.98"
+            />
+          </svg>
+        ) : (
+          /* Eye ON */
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5
+                 c4.478 0 8.268 2.943 9.542 7
+                 -1.274 4.057-5.064 7-9.542 7
+                 -4.477 0-8.268-2.943-9.542-7z"
+            />
+          </svg>
+        )}
+      </button>
+    </div>
+  </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-2xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none shadow-lg hover:shadow-xl"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                    Signing In...
-                  </div>
-                ) : (
-                  "Sign In"
-                )}
-              </button>
-            </form>
+  <div className="flex justify-end items-center text-sm">
+    <Link
+      to="/forgot-password"
+      className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
+    >
+      Forgot Password?
+    </Link>
+  </div>
+
+  <button
+    type="submit"
+    disabled={loading}
+    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white
+               py-4 rounded-2xl text-sm font-semibold
+               hover:from-blue-600 hover:to-cyan-600
+               transition-all duration-300 transform hover:scale-[1.02]
+               disabled:opacity-50 disabled:transform-none
+               shadow-lg hover:shadow-xl"
+  >
+    {loading ? (
+      <div className="flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+        Signing In...
+      </div>
+    ) : (
+      "Sign In"
+    )}
+  </button>
+</form>
+
           ) : (
             /* Company Login Form */
-            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-              {error && (
-                <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-700 rounded-2xl text-sm text-center backdrop-blur-sm">
-                  <div className="flex items-center justify-center">
-                    <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mr-2">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
-                    </div>
-                    {error}
-                  </div>
-                </div>
-              )}
+          <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+  {error && (
+    <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-700 rounded-2xl text-sm text-center backdrop-blur-sm">
+      <div className="flex items-center justify-center">
+        <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mr-2">
+          <svg
+            className="w-3 h-3 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </div>
+        {error}
+      </div>
+    </div>
+  )}
 
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  placeholder="Company email address"
-                  value={companyEmail}
-                  onChange={(e) => setCompanyEmail(e.target.value)}
-                  className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
-                  required
-                />
+  <div className="space-y-4">
+    {/* Company Email */}
+    <input
+      type="email"
+      placeholder="Company email address"
+      value={companyEmail}
+      onChange={(e) => setCompanyEmail(e.target.value)}
+      className="w-full px-4 py-4 rounded-2xl bg-white/50
+                 border border-gray-200/50 text-sm
+                 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+                 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+      required
+    />
 
-                <input
-                  type="password"
-                  placeholder="Company password"
-                  value={companyPassword}
-                  onChange={(e) => setCompanyPassword(e.target.value)}
-                  className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
-                  required
-                />
-              </div>
+    {/* Company Password with SVG eye */}
+    <div className="relative">
+      <input
+        type={showCompanyPassword ? "text" : "password"}
+        placeholder="Company password"
+        value={companyPassword}
+        onChange={(e) => setCompanyPassword(e.target.value)}
+        className="w-full px-4 py-4 pr-12 rounded-2xl bg-white/50
+                   border border-gray-200/50 text-sm
+                   focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+                   transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+        required
+      />
 
-              <div className="flex justify-end items-center text-sm">
-                <Link
-                  to="/company-forgot-password"
-                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
+      <button
+        type="button"
+        onClick={() => setShowCompanyPassword(v => !v)}
+        className="absolute right-4 top-1/2 -translate-y-1/2
+                   text-gray-400 hover:text-gray-700 transition"
+        aria-label="Toggle password visibility"
+      >
+        {showCompanyPassword ? (
+          /* Eye OFF */
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 3l18 18M10.584 10.586a2 2 0 002.83 2.83
+                 M9.88 5.08A9.94 9.94 0 0112 5
+                 c4.478 0 8.268 2.943 9.543 7
+                 a9.96 9.96 0 01-4.093 5.063
+                 M6.1 6.1A9.957 9.957 0 002.458 12
+                 c1.274 4.057 5.064 7 9.542 7
+                 a9.94 9.94 0 004.31-.98"
+            />
+          </svg>
+        ) : (
+          /* Eye ON */
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5
+                 c4.478 0 8.268 2.943 9.542 7
+                 -1.274 4.057-5.064 7-9.542 7
+                 -4.477 0-8.268-2.943-9.542-7z"
+            />
+          </svg>
+        )}
+      </button>
+    </div>
+  </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-2xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none shadow-lg hover:shadow-xl"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                    Signing In...
-                  </div>
-                ) : (
-                  "Sign In"
-                )}
-              </button>
-            </form>
+  <div className="flex justify-end items-center text-sm">
+    <Link
+      to="/company-forgot-password"
+      className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
+    >
+      Forgot Password?
+    </Link>
+  </div>
+
+  <button
+    type="submit"
+    disabled={loading}
+    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500
+               text-white py-4 rounded-2xl text-sm font-semibold
+               hover:from-blue-600 hover:to-cyan-600
+               transition-all duration-300 transform hover:scale-[1.02]
+               disabled:opacity-50 disabled:transform-none
+               shadow-lg hover:shadow-xl"
+  >
+    {loading ? (
+      <div className="flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+        Signing In...
+      </div>
+    ) : (
+      "Sign In"
+    )}
+  </button>
+</form>
+
           )}
 
           {/* Registration link */}

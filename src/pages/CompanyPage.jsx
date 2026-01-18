@@ -5,7 +5,7 @@ import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { getCompany, getSettings } from "../api";
 import { addFollowCompany, unfollowCompany, getCustomerFollowUps, createCustomerConversation } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
-
+import BackButton from "../components/BackButton";
 
 // =================== Skeleton Components ===================
 const BannerSkeleton = () => (
@@ -42,21 +42,7 @@ const LoadingSpinner = () => (
 );
 
 // =================== SVG Icons ===================
-const ArrowLeftIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} transform-gpu`}
-    width="18" 
-    height="18" 
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
+
 
 const HeartIcon = ({ filled = false, className = "" }) => (
   <svg
@@ -673,13 +659,10 @@ const handleToggleFavourite = useCallback(
             willChange: "transform, opacity",
           }}
         >
-          {/* Back Button */}
-          <button
-            onClick={() => navigate(-1)}
-            className={backButtonClass}
-          >
-            <ArrowLeftIcon className="text-gray-700 text-sm sm:text-md md:text-lg transform-gpu" />
-          </button>
+            <BackButton
+ 
+      variant="absolute" className="top-16"
+  />
 
           {/* Share Button */}
           <button
@@ -701,7 +684,7 @@ const handleToggleFavourite = useCallback(
                 w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32
                 object-cover
                 rounded-xl
-                border
+                border 
                
                 shadow-xl
                 transform-gpu

@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FaFacebook, FaInstagram, FaYoutube, FaLinkedin,
   FaPinterest, FaSnapchat, FaWhatsapp, FaGooglePlusG,
   FaTrash, FaChevronDown, FaChevronUp,
-  FaCheckCircle, FaTwitter
+  FaCheckCircle, FaTwitter, FaLock
 } from "react-icons/fa";
-import { editCompanyPost } from "../api";
+import { editCompanyPost, changeCompanyPassword } from "../companyApi";
 
 export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }) {
   // Track previous company ID to detect changes
   const prevCompanyIdRef = useRef(null);
-  
+
   // Initialize with empty values
   const emptyForm = {
     companyName: "",
@@ -37,6 +38,39 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
   const [showAlert, setShowAlert] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false); // false | "confirm" | "success"
   const [isLoading, setIsLoading] = useState(true);
+  const [specialtiesList, setSpecialtiesList] = useState([
+    "Carpenter",
+    "Curtains & Blind",
+    "Lighting",
+    "Paint",
+    "Carpet",
+  ]);
+
+  /* ✅ PASSWORD CHANGE STATE */
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    old_password: "",
+    new_password: "",
+    new_password_confirmation: "",
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // ✅ Fetch specialties from API
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const { getSpecialMarks } = await import("../companyApi");
+        const res = await getSpecialMarks();
+        const data = res.data?.data || res.data;
+        if (Array.isArray(data)) {
+          setSpecialtiesList(data.map(item => item.name));
+        }
+      } catch (err) {
+        console.error("❌ Failed to fetch specialties:", err);
+      }
+    };
+    fetchSpecialties();
+  }, []);
 
   /* ---------- RESET FORM WHEN COMPANY CHANGES ---------- */
   useEffect(() => {
@@ -49,11 +83,11 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
     // Check if company has actually changed
     if (companyId !== prevCompanyIdRef.current) {
       console.log("🔄 Company ID changed, resetting form data");
-      
+
       // Reset form to empty first
       setForm(emptyForm);
       setIsLoading(true);
-      
+
       // Update previous company ID
       prevCompanyIdRef.current = companyId;
     }
@@ -67,11 +101,11 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
     }
 
     // Better check: compare the entire form data to prevent stale updates
-    const hasDataChanged = 
+    const hasDataChanged =
       form.companyName !== (companyInfo.companyName || companyInfo.name || "") ||
       form.companyDescription !== (companyInfo.companyDescription || companyInfo.description || "") ||
       form.contactMobile !== (companyInfo.contactMobile || companyInfo.mobile || companyInfo.phone || "");
-    
+
     if (!hasDataChanged && form.companyName !== "") {
       console.log("📋 Same company data, skipping update");
       setIsLoading(false);
@@ -100,17 +134,10 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       google: companyInfo.google || "",
       tweeter: companyInfo.tweeter || "", // Added missing field
     });
-    
+
     setIsLoading(false);
   }, [companyId, companyInfo]);
 
-  const specialtiesList = [
-    "Carpenter",
-    "Curtains & Blind",
-    "Lighting",
-    "Paint",
-    "Carpet",
-  ];
 
   /* ---------- INPUTS ---------- */
   const handleChange = (e) => {
@@ -154,10 +181,11 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
 
     try {
       setIsLoading(true);
-      
+
       // Prepare data according to backend API requirements
       const apiData = new FormData();
-      
+      apiData.append("_method", "PUT"); // ✅ REQUIREMENT: Add spoofing for PUT request
+
       // ✅ FIXED: Only send files if they exist as File objects
       if (form.logo && form.logo instanceof File) {
         apiData.append("logo", form.logo);
@@ -165,30 +193,30 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
         // Send empty string only if explicitly cleared (not undefined)
         apiData.append("logo", "");
       }
-      
+
       if (form.coverPhoto && form.coverPhoto instanceof File) {
         apiData.append("cover_photo", form.coverPhoto);
       } else if (form.coverPhoto === null) {
         // Send empty string only if explicitly cleared (not undefined)
         apiData.append("cover_photo", "");
       }
-      
+
       // Add basic info
       apiData.append("name", form.companyName || "");
       apiData.append("address", form.address || "");
       apiData.append("phone", form.contactMobile || "");
       apiData.append("description", form.companyDescription || "");
-      
+
       // ✅ FIXED: Added specialties to API data
       if (Array.isArray(form.specialties) && form.specialties.length > 0) {
-        form.specialties.forEach((specialty, index) => {
-          apiData.append(`specialties[${index}]`, specialty);
+        form.specialties.forEach((specialty) => {
+          apiData.append("specialties[]", specialty);
         });
-      } else {
-        // Send empty array if no specialties
-        apiData.append("specialties[]", "");
       }
-      
+      // If empty, we don't append anything or we could append an empty string if backend requires it, 
+      // but usually not appending is safer or appending "specialties[]" once if needed.
+      // Based on 422 error, let's try not appending if empty.
+
       // Add social media - FIXED: tweeter uses its own field, not facebook
       apiData.append("whatsapp", form.whatsapp || "");
       apiData.append("snapchat", form.snapchat || "");
@@ -210,7 +238,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       });
 
       // Send to API
-      await editCompanyPost(companyId, apiData);
+      await editCompanyPost(apiData);
 
       // Update local state
       const updatedCompanyInfo = {
@@ -219,9 +247,9 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
         contactMobile: form.contactMobile,
         cover_photo: form.coverPhoto, // Keep both for consistency
       };
-      
+
       setCompanyInfo(updatedCompanyInfo);
-      
+
       // Also update localStorage - FIXED: Proper file handling
       const currentCompany = JSON.parse(localStorage.getItem('company') || '{}');
       const updatedLocalCompany = {
@@ -250,10 +278,10 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
 
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
-      
+
     } catch (err) {
       console.error('❌ Save error:', err);
-      
+
       if (err.response) {
         console.error('Server error:', err.response.status, err.response.data);
         alert(`Server error: ${err.response.status} - ${err.response.data?.message || 'Unknown error'}`);
@@ -277,7 +305,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
 
     try {
       setIsLoading(true);
-      
+
       const apiData = new FormData();
       apiData.append("name", "");
       apiData.append("description", "");
@@ -299,7 +327,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       // Reset form - ONLY CLEAR THE FORM, NO NAVIGATION
       setForm(emptyForm);
       setCompanyInfo(emptyForm);
-      
+
       // Clear localStorage for this company
       const currentCompany = JSON.parse(localStorage.getItem('company') || '{}');
       if (currentCompany.id === companyId) {
@@ -326,12 +354,44 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
 
       setShowDeleteAlert("success");
       setTimeout(() => setShowDeleteAlert(false), 3000);
-      
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete settings");
+
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  /* ---------- PASSWORD CHANGE ---------- */
+  const handlePasswordSubmit = async (e) => {
+    if (e?.preventDefault) e.preventDefault();
+
+    if (!passwordForm.old_password || !passwordForm.new_password || !passwordForm.new_password_confirmation) {
+      alert("Please fill all password fields");
+      return;
+    }
+
+    if (passwordForm.new_password !== passwordForm.new_password_confirmation) {
+      alert("New passwords do not match");
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+      // Backend expects customerId even for company
+      await changeCompanyPassword({
+        customerId: companyId,
+        old_password: passwordForm.old_password,
+        new_password: passwordForm.new_password,
+        new_password_confirmation: passwordForm.new_password_confirmation,
+      });
+
+      alert("Password changed successfully!");
+      setShowPasswordModal(false);
+      setPasswordForm({ old_password: "", new_password: "", new_password_confirmation: "" });
+    } catch (err) {
+      console.error("❌ Password change error:", err);
+      alert(err.response?.data?.message || "Failed to change password. check old password.");
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -359,21 +419,21 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
             This will clear all settings but keep you on this page. Continue?
           </p>
           <div className="flex gap-3">
-          <button
-          type="button"
-          onClick={handleSave}
-          className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold"
-        >
-          Save Settings
-        </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold"
+            >
+              Save Settings
+            </button>
 
-        <button
-          type="button"
-          onClick={() => setShowDeleteAlert('confirm')}
-          className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold"
-        >
-          Delete All
-        </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteAlert('confirm')}
+              className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold"
+            >
+              Delete All
+            </button>
 
 
 
@@ -387,10 +447,10 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
   const handleForceClearCache = () => {
     if (window.confirm("Clear all cached company data from this form only?")) {
       // ✅ FIXED: Only clear the form, NO PAGE RELOAD OR NAVIGATION
-      
+
       // Reset form to empty
       setForm(emptyForm);
-      
+
       // Clear image previews
       if (form.logo && form.logo instanceof File) {
         URL.revokeObjectURL(form.logo);
@@ -398,11 +458,11 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
       if (form.coverPhoto && form.coverPhoto instanceof File) {
         URL.revokeObjectURL(form.coverPhoto);
       }
-      
+
       // Show success message
       setShowDeleteAlert("success");
       setTimeout(() => setShowDeleteAlert(false), 3000);
-      
+
       console.log("✅ Form cache cleared (no page reload)");
     }
   };
@@ -749,7 +809,7 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
                 <button
                   type="button"
                   onClick={handleSave}
-                  
+
                   className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isLoading ? (
@@ -764,8 +824,19 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
 
                 <button
                   type="button"
+                  onClick={() => setShowPasswordModal(true)}
+                  className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-gray-700 to-gray-800 text-white font-semibold text-sm sm:text-base hover:from-gray-800 hover:to-gray-900 transition-all duration-200 transform shadow-lg shadow-gray-500/30 hover:shadow-gray-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <FaLock />
+                    Change Password
+                  </span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setShowDeleteAlert("confirm")}
-                  
+
                   className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold text-sm sm:text-base hover:from-red-600 hover:to-red-700 transition-all duration-200 transform shadow-lg shadow-red-500/30 hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   Delete All
@@ -775,6 +846,102 @@ export default function Settings({ companyId, companyInfo = {}, setCompanyInfo }
           </div>
         </div>
       </div>
+
+      {/* CHANGE PASSWORD MODAL */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white/90 backdrop-blur-xl border border-blue-200/50 rounded-2xl sm:rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl overflow-hidden relative"
+          >
+            {/* Background Accent */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
+                  <FaLock className="text-lg" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Change Password</h2>
+              </div>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                disabled={passwordLoading}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Current Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter current password"
+                  value={passwordForm.old_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, old_password: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200/60 bg-white/50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                  required
+                  disabled={passwordLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">New Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter new password"
+                  value={passwordForm.new_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200/60 bg-white/50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                  required
+                  disabled={passwordLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  placeholder="Confirm your new password"
+                  value={passwordForm.new_password_confirmation}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, new_password_confirmation: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200/60 bg-white/50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                  required
+                  disabled={passwordLoading}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 py-3.5 rounded-xl border border-gray-200 font-semibold text-gray-600 hover:bg-gray-50 transition-all active:scale-[0.98]"
+                  disabled={passwordLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Updating...</span>
+                    </div>
+                  ) : (
+                    "Update"
+                  )}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -124,8 +124,8 @@ export default function Messages() {
         <div>
           {conversations.length === 0 ? (
             // Premium Empty State
-            <div className="flex flex-col items-center justify-center h-[50vh] rounded-3xl bg-white/50 border border-white/40 backdrop-blur-sm p-8">
-              <div className="w-24 h-24 mb-6 rounded-3xl bg-gradient-to-br from-gray-100/80 to-gray-50/80 border border-white/60 flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+            <div className="flex flex-col items-center justify-center h-[50vh] rounded-3xl  p-8">
+              <div className="w-24 h-24 mb-6 rounded-3xl  flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
                
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No messages yet</h3>

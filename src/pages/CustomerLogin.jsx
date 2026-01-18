@@ -49,21 +49,22 @@ function CustomerLogin() {
   };
 
   return (
-    <div className="flex w-full h-[calc(100vh-64px)] overflow-hidden  bg-gradient-to-br from-blue-50/50 via-white to-blue-50/30
-        backdrop-blur-[2px]
-       
-        border border-white/80
-        shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02),inset_0_1px_0_rgba(255,255,255,0.8)]
-       
+    <div className="flex w-full h-[calc(100vh-64px)] overflow-hidden  /* 🌊 Apple-style soft blue gradient */
+    bg-[radial-gradient(1200px_circle_at_20%_10%,rgba(56,189,248,0.18),transparent_40%),radial-gradient(900px_circle_at_80%_20%,rgba(99,102,241,0.14),transparent_45%),linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.96))]
+
+    /* 🧊 Glass feel */
+    backdrop-blur-xl
+
+    /* ✨ Depth without visible borders */
+    shadow-[0_20px_60px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.6)]
     
         ">
       {/* ================= Sidebar ================= */}
       <aside
         className={`
           ${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"}
-          h-full
-          bg-white
-          border-r border-gray-200/80
+        
+bg-gradient-to-br from-blue-500 to-sky-400
           transform transition-transform duration-300 ease-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:relative
@@ -72,7 +73,7 @@ function CustomerLogin() {
         `}
       >
         {/* Sidebar Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 ">
           <Sidebar
             activeTab={activeTab}
             setActiveTab={handleTabChange}
@@ -100,28 +101,33 @@ function CustomerLogin() {
 
       {/* ================= Mobile Menu Button ================= */}
       {isMobile && !sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open menu"
-          className="
-            fixed left-2 top-12 z-50
-            p-2
-            flex items-center justify-center
-            rounded-xl
-            bg-white/90 backdrop-blur
-            border border-gray-200
-            shadow-sm
-            hover:shadow-md hover:bg-white
-            active:scale-95
-            transition-all duration-200
-          "
-        >
-          <RiMenu2Fill size={18} className="text-gray-700" />
-        </button>
+      <button
+  onClick={() => setSidebarOpen(true)}
+  aria-label="Open menu"
+  className="
+    fixed top-14 left-6 z-50
+    h-10 w-10
+    flex items-center justify-center
+    rounded-2xl
+
+    bg-white/60
+    backdrop-blur-xl
+
+    shadow-[0_10px_30px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)]
+    hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)]
+    
+    transition-all duration-300 ease-out
+    active:scale-95
+  "
+>
+  <RiMenu2Fill className="w-4 h-4 text-slate-600" />
+</button>
+
       )}
 
       {/* ================= Main Content ================= */}
-      <main className="flex-1 h-full w-full bg-gray-50 overflow-hidden">
+      <main className="flex-1 h-full w-full  bg-white/60
+    backdrop-blur-xl overflow-hidden">
         {/* ✅ FIX 2: SINGLE SCROLL CONTAINER */}
         <div className="h-full overflow-y-auto">
           {activeTab === "messages" && <Messages />}
