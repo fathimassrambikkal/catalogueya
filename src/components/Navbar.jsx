@@ -130,7 +130,7 @@ const LanguageToggle = memo(function LanguageToggle({
   return (
     <button
       onClick={handleClick}
-      className="h-8 px-2 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[60px]"
+      className="h-8 px-1 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[45px]"
     >
       {language === "en" ? "عربي" : "EN"}
     </button>
@@ -278,7 +278,7 @@ export default function Navbar() {
     <div className="relative customer-account-container">
       <button
         onClick={() => setAccountOpen((p) => !p)}
-        className="flex items-center gap-2 h-9 px-2 rounded-full hover:bg-gray-100/60 transition focus:outline-none"
+        className="flex items-center gap-2 h-8 px-1 rounded-full hover:bg-gray-100/60 transition focus:outline-none"
         aria-haspopup="menu"
         aria-expanded={accountOpen}
       >
@@ -303,7 +303,7 @@ export default function Navbar() {
   ) : (
     <button
       onClick={() => navigate("/sign")}
-      className="h-8 px-3 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
+      className="h-8 px-2 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
     >
       {fw.login}
     </button>
