@@ -28,15 +28,14 @@ const DropdownMenu = memo(function DropdownMenu({
   const links = [
     { path: "/", label: fw.home },
     { path: "/about", label: fw.aboute },
-   
     { path: "/contact", label: fw.contact_us },
   ];
 
   return (
     <div
-      className={`dropdown-apple absolute mt-3 bg-white/70 backdrop-blur-md
-      shadow-lg rounded-xl w-52 sm:w-60 border border-white/30 z-50
-      ${language === "ar" ? "left-0" : "right-0"}`}
+      className={`absolute mt-3 bg-white/70 backdrop-blur-md shadow-lg rounded-xl w-52 sm:w-60 border border-white/30 z-50 ${
+        language === "ar" ? "left-0" : "right-0"
+      }`}
     >
       <ul
         className={`flex flex-col text-gray-700 text-center text-sm ${
@@ -46,7 +45,7 @@ const DropdownMenu = memo(function DropdownMenu({
         {links.map((item) => (
           <li
             key={item.path}
-            className="px-4 py-2 hover:bg-white/50 hover:rounded-full transition"
+            className="px-4 py-2 hover:bg-white/50   hover:rounded-full transition"
           >
             <Link to={item.path} onClick={closeMenu}>
               {item.label}
@@ -68,26 +67,22 @@ const DropdownMenu = memo(function DropdownMenu({
 });
 
 /* =============================
-   MENU BUTTON (UNCHANGED)
+   MENU BUTTON (ENTERPRISE)
 ============================= */
 const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
   return (
     <button
       onClick={toggleMenu}
-      className="border border-gray-300 text-xs sm:text-sm flex items-center
-      bg-white/30 text-gray-900 px-2 py-1 sm:px-2 sm:py-2
-      rounded-lg md:rounded-xl hover:bg-white/50 transition backdrop-blur-md"
+      className="h-9 w-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white/40 hover:bg-white/70 transition-all"
+      aria-label="Menu"
     >
-      <HiDotsVertical className=" text-gray-700
-    text-sm sm:text-xs md:text-lg lg:text-lg xl:text-xl
-    
-    " />
+      <HiDotsVertical className="text-gray-700 text-base" />
     </button>
   );
 });
 
 /* =============================
-   FAVOURITES COUNTER (FIXED - NO AUTH LOGIC)
+   FAVOURITES COUNTER
 ============================= */
 const FavouritesCounter = memo(function FavouritesCounter() {
   const favourites = useSelector((state) => state.favourites.items);
@@ -97,10 +92,12 @@ const FavouritesCounter = memo(function FavouritesCounter() {
   return (
     <Link
       to="/favourite"
-      className={`relative ${i18n.language === "ar" ? "ml-2" : ""}`}
+      className={`relative flex items-center justify-center ${
+        i18n.language === "ar" ? "ml-2" : ""
+      }`}
     >
       <AiOutlineHeart
-        className={` cursor-pointer transition text-base sm:text-xl md:text-2xl lg:text-2xl xl:text-2xl ${
+        className={`cursor-pointer transition text-lg sm:text-xl ${
           count > 0
             ? "text-red-500 hover:text-red-600"
             : "text-gray-600 hover:text-red-400"
@@ -108,16 +105,7 @@ const FavouritesCounter = memo(function FavouritesCounter() {
       />
       {count > 0 && (
         <span
-          className=" absolute
-        -top-1.5 sm:-top-2
-        -right-1.5 sm:-right-2
-        bg-red-500 text-white
-        text-[9px] sm:text-[10px] md:text-xs
-        rounded-full
-        px-1 sm:px-1.5
-        py-0.5
-        shadow-md
-        leading-none"
+          className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center shadow-md leading-none"
         >
           {count}
         </span>
@@ -142,9 +130,7 @@ const LanguageToggle = memo(function LanguageToggle({
   return (
     <button
       onClick={handleClick}
-      className="border border-gray-300 text-gray-900
-      px-2 py-1 sm:px-3 sm:py-1 rounded-lg md:rounded-xl
-      hover:bg-white/50 transition text-[10px] sm:text-xs md:text-sm lg:text-sm xl:text-base backdrop-blur-md"
+      className="h-9 px-3 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[60px]"
     >
       {language === "en" ? "عربي" : "EN"}
     </button>
@@ -152,23 +138,19 @@ const LanguageToggle = memo(function LanguageToggle({
 });
 
 /* =============================
-   NAVBAR (MAIN)
+   NAVBAR (ENTERPRISE)
 ============================= */
 export default function Navbar() {
-  // ✅ FIX 1 & 2: Declare auth state and accountOpen in Navbar
   const { isAuthenticated, userType, user } = useSelector((state) => state.auth);
   const [accountOpen, setAccountOpen] = useState(false);
 
-  // ✅ FIX 3: Calculate displayName in Navbar
- const displayName =
-  user?.name ||
-  [user?.first_name].filter(Boolean).join(" ") ||
-  "Customer";
-
+  const displayName =
+    user?.name ||
+    [user?.first_name].filter(Boolean).join(" ") ||
+    "Customer";
 
   const { settings } = useSettings();
   const { fixedWords } = useFixedWords();
-
   const fw = fixedWords?.fixed_words || {};
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -231,19 +213,6 @@ export default function Navbar() {
 
   const navigate = useNavigate();
 
-  const handleAccountClick = () => {
-    if (!isAuthenticated) {
-      navigate("/sign");
-      return;
-    }
-
-    if (userType === "customer") {
-      navigate("/customer-login");
-    } else if (userType === "company") {
-      navigate("/company-dashboard");
-    }
-  };
-
   const preloadDashboard = () => {
     if (userType === "customer") {
       import("../pages/CustomerLogin");
@@ -251,34 +220,37 @@ export default function Navbar() {
       import("../pages/CompanyDashboard");
     }
   };
-useEffect(() => {
-  setAccountOpen(false);
-}, [isAuthenticated, userType]);
-useEffect(() => {
-  if (!accountOpen) return;
 
-  const handleClickOutside = (e) => {
-    if (!e.target.closest(".customer-account-container")) {
-      setAccountOpen(false);
-    }
-  };
+  useEffect(() => {
+    setAccountOpen(false);
+  }, [isAuthenticated, userType]);
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, [accountOpen]);
+  useEffect(() => {
+    if (!accountOpen) return;
+
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".customer-account-container")) {
+        setAccountOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [accountOpen]);
 
   return (
     <nav
-      dir={i18n.language === "ar" ? "rtl" : "ltr"}
-      className={`fixed left-1/2 -translate-x-1/2 z-50 font-inter transition-all duration-500
-      ${
+      className={`fixed inset-x-0 top-0 z-50 font-inter transition-all duration-300 ${
         scrolled && isGlassPage
           ? "backdrop-blur-lg bg-white/30 shadow-xl border border-white/20"
           : "bg-white shadow-md"
-      }
-      w-full flex justify-between items-center px-6 sm:px-10 py-3 sm:py-2`}
+      }`}
     >
-      {/* Logo */}
+      {/* Container */}
+      <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          
+         {/* Logo */}
       <div className="flex-shrink-0">
         <Link to="/">
           <img
@@ -289,110 +261,79 @@ useEffect(() => {
         </Link>
       </div>
 
-      {/* Right Section */}
-      <div className="flex items-center space-x-1 sm:space-x-4  md:mr-20 min-w-0">
-        <FavouritesCounter />
+          {/* RIGHT: Actions (Enterprise Structure) */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            
+            {/* Secondary Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <FavouritesCounter />
+              <LanguageToggle
+                toggleLanguage={toggleLanguage}
+                language={i18n.language}
+              />
+            </div>
 
-        {/* ✅ FIX 3: Customer Account Dropdown (now has access to accountOpen and displayName) */}
-       {isAuthenticated && userType === "customer" ? (
-  <div className="relative customer-account-container">
-<button
-  onMouseEnter={preloadDashboard}
-  onClick={() => setAccountOpen((prev) => !prev)}
-  className="
-    group
-    flex items-center gap-1
-    min-w-0 flex-shrink
-    p-0.5
-    rounded-full
-    transition
-    focus:outline-none
-  "
-  aria-haspopup="menu"
-  aria-expanded={accountOpen}
->
+           
 
+            {/* Primary Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              
+              {/* Account */}
+              {isAuthenticated && userType === "customer" ? (
+                <div className="relative customer-account-container">
+                  <button
+                    onClick={() => setAccountOpen((p) => !p)}
+                    className="flex items-center gap-2 h-9 px-2 rounded-full hover:bg-gray-100/60 transition focus:outline-none"
+                    aria-haspopup="menu"
+                    aria-expanded={accountOpen}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <svg
+                      className={`hidden sm:block w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
+                        accountOpen ? "rotate-180" : ""
+                      }`}
+                      viewBox="0 0 20 20"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M6 8l4 4 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.65"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
 
+                  {accountOpen && (
+                    <CustomerAccountDropdown onClose={() => setAccountOpen(false)} />
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => navigate("/sign")}
+                  className="h-9 px-3 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
+                >
+                  {fw.login}
+                </button>
+              )}
 
-  {/* Avatar */}
-<div
-  className="
-    w-5 h-5 sm:w-7 sm:h-7
-    rounded-full
-    bg-blue-600
-    flex items-center justify-center
-    text-white
-    text-[10px] sm:text-xs
-    font-medium
-  "
->
-
-    {displayName.charAt(0).toUpperCase()}
-  </div>
-
-  {/* Caret – balanced size */}
-  <svg
-  viewBox="0 0 20 20"
-  className={`
-    hidden sm:block
-    w-[14px] h-[14px]
-    text-gray-400
-    transition-transform duration-200
-    ${accountOpen ? "rotate-180" : ""}
-  `}
-
-      aria-hidden="true"
->
-
-
-
-    <path
-      d="M6 8l4 4 4-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.65"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-</button>
-
-
-
-
-
-
-    {accountOpen && (
-      <CustomerAccountDropdown onClose={() => setAccountOpen(false)} />
-    )}
-  </div>
-) : (
-  <button
-    onClick={() => navigate("/sign")}
-    className="border border-gray-300 text-gray-900
-    px-2 sm:px-3 py-1 sm:py-2 rounded-lg md:rounded-xl
-    bg-white/30 hover:bg-white/50 transition text-xs sm:text-sm"
-  >
-    {fw.login}
-  </button>
-)}
-
-
-        <LanguageToggle
-          toggleLanguage={toggleLanguage}
-          language={i18n.language}
-        />
-
-        <div className="relative menu-container">
-          <MenuButton menuOpen={menuOpen} toggleMenu={toggleMenu} />
-
-          <DropdownMenu
-            isOpen={menuOpen}
-            language={i18n.language}
-            fixedWords={fixedWords}
-            t={t}
-            closeMenu={() => setMenuOpen(false)}
-          />
+              {/* Menu */}
+              <div className="relative menu-container">
+                <MenuButton menuOpen={menuOpen} toggleMenu={toggleMenu} />
+                <DropdownMenu
+                  isOpen={menuOpen}
+                  language={i18n.language}
+                  fixedWords={fixedWords}
+                  t={t}
+                  closeMenu={() => setMenuOpen(false)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </nav>

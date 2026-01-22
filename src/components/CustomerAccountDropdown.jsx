@@ -34,7 +34,17 @@ export default function CustomerAccountDropdown({ onClose }) {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-44 xs:w-52 sm:w-60 md:w-72 bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+   <div
+  className="
+    absolute mt-2 z-50
+    w-44 xs:w-52 sm:w-60 md:w-72
+    bg-white rounded-xl sm:rounded-2xl
+    shadow-lg border border-gray-200
+    overflow-hidden
+    ltr:right-0 rtl:left-0
+  "
+>
+
       
       {/* Header */}
       <div className="px-3 xs:px-4 sm:px-5 py-2 xs:py-2.5 sm:py-3 border-b border-gray-200">
