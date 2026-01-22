@@ -1,4 +1,4 @@
-// src/utils/favouriteUtils.js
+
 
 // Get favourites from localStorage
 export function getFavourites() {

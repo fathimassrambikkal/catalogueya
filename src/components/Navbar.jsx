@@ -290,7 +290,7 @@ useEffect(() => {
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center space-x-3 sm:space-x-5 md:mr-20">
+      <div className="flex items-center space-x-1 sm:space-x-4 rtl:space-x-reverse md:mr-20 min-w-0">
         <FavouritesCounter />
 
         {/* ✅ FIX 3: Customer Account Dropdown (now has access to accountOpen and displayName) */}
@@ -301,7 +301,8 @@ useEffect(() => {
   onClick={() => setAccountOpen((prev) => !prev)}
   className="
     group
-    flex items-center gap-[4px]
+    flex items-center gap-1
+    min-w-0 flex-shrink
     p-0.5
     rounded-full
     transition
@@ -310,39 +311,41 @@ useEffect(() => {
   aria-haspopup="menu"
   aria-expanded={accountOpen}
 >
+
+
+
   {/* Avatar */}
-  <div
-    className="
-      w-6 h-6 sm:w-7 sm:h-7
-      rounded-full
-      bg-blue-600
-      flex items-center justify-center
-      text-white
-      text-[11px] sm:text-xs
-      font-medium
-      leading-none
-      select-none
-      ring-1 ring-transparent
-      group-hover:ring-blue-400/40
-      group-focus:ring-blue-500/50
-      transition
-    "
-  >
+<div
+  className="
+    w-5 h-5 sm:w-7 sm:h-7
+    rounded-full
+    bg-blue-600
+    flex items-center justify-center
+    text-white
+    text-[10px] sm:text-xs
+    font-medium
+  "
+>
+
     {displayName.charAt(0).toUpperCase()}
   </div>
 
   {/* Caret – balanced size */}
   <svg
-    viewBox="0 0 20 20"
-    className={`
-      w-[15px] h-[15px]
-      text-gray-400
-      transition-transform duration-200
-      ${accountOpen ? "rotate-180" : ""}
-      group-hover:text-gray-500
-    `}
-    aria-hidden="true"
-  >
+  viewBox="0 0 20 20"
+  className={`
+    hidden sm:block
+    w-[14px] h-[14px]
+    text-gray-400
+    transition-transform duration-200
+    ${accountOpen ? "rotate-180" : ""}
+  `}
+
+      aria-hidden="true"
+>
+
+
+
     <path
       d="M6 8l4 4 4-4"
       fill="none"

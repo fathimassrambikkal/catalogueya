@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getSubscribeDetails } from "../api";
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
+import { useNavigate } from "react-router-dom";
 
 const ChevronIcon = ({ isRTL = false }) => (
   <svg
@@ -23,15 +24,44 @@ const Pricing = () => {
   const { i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
 
-  const [tabs, setTabs] = useState([]);
-  const [pricing, setPricing] = useState({}); 
-  const [activeTab, setActiveTab] = useState(null);
-  const [currentFeatures, setCurrentFeatures] = useState([]);
-  const [billingCycle, setBillingCycle] = useState("monthly");
-  const [isLoading, setIsLoading] = useState(true);
-  const [tabDimensions, setTabDimensions] = useState({});
-  const tabRefs = useRef([]);
-  const containerRef = useRef(null);
+const [tabs, setTabs] = useState([]);
+const [pricing, setPricing] = useState({});
+const [activeTab, setActiveTab] = useState(null);
+const [currentFeatures, setCurrentFeatures] = useState([]);
+const [billingCycle, setBillingCycle] = useState("monthly");
+const [isLoading, setIsLoading] = useState(true);
+const [tabDimensions, setTabDimensions] = useState({});
+const tabRefs = useRef([]);
+const containerRef = useRef(null);
+const navigate = useNavigate();
+
+
+
+const activeTabData = tabs.find(t => t.key === activeTab);
+
+
+const monthlyPrice = pricing.monthly;
+const yearlyPrice = pricing.yearly;
+const yearlySavings =
+  monthlyPrice && yearlyPrice ? monthlyPrice * 12 - yearlyPrice : 0;
+
+
+
+  const handleSubscribe = useCallback(() => {
+  if (!activeTabData) return;
+
+  navigate("/company-register", {
+    state: {
+      planKey: activeTabData.key,
+      billingCycle,
+      price:
+        billingCycle === "monthly"
+          ? monthlyPrice
+          : yearlyPrice,
+      currency: fw.qar,
+    },
+  });
+}, [activeTabData, billingCycle, monthlyPrice, yearlyPrice, fw, navigate]);
 
   // ================= FETCH DATA =================
   useEffect(() => {
@@ -108,7 +138,7 @@ const Pricing = () => {
   }, [tabs, activeTab]);
 
   // ================= ACTIVE TAB DATA =================
-  const activeTabData = tabs.find(t => t.key === activeTab);
+
 
   useEffect(() => {
     if (activeTabData?.benefits?.length) {
@@ -124,9 +154,7 @@ const Pricing = () => {
   }, [activeTabData]);
 
   // ================= PRICING =================
-  const monthlyPrice = pricing.monthly;
-  const yearlyPrice = pricing.yearly;
-  const yearlySavings = monthlyPrice && yearlyPrice ? monthlyPrice * 12 - yearlyPrice : 0;
+
 
   const handleBillingToggle = useCallback(() => {
     setBillingCycle(p => (p === "monthly" ? "yearly" : "monthly"));
@@ -265,6 +293,23 @@ const Pricing = () => {
           Pricing information not available
         </div>
       )}
+
+
+
+{/* SUBSCRIBE BUTTON */}
+<div className="mb-6 xs:mb-8 flex justify-center">
+  <button
+    onClick={handleSubscribe}
+    className="
+      px-6 xs:px-8
+      py-2.5 xs:py-3
+      rounded-xl
+        bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
+    "
+  >
+    {fw.subscribe || "Subscribe"}
+  </button>
+</div>
 
       {/* Benefits Section */}
       <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 text-center mb-3 xs:mb-4">

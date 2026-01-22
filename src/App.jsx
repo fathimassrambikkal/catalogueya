@@ -40,6 +40,7 @@ const Chat = React.lazy(() => import("./Customer/Chat"));
 const Messages = React.lazy(() => import("./Customer/Messages"));
 const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
 const ProductReviews = React.lazy(() => import("./pages/ProductReviews"));
+const MoreDetails = React.lazy(() => import("./dashboard/MoreDetails"));
 
 function AppContent() {
   const location = useLocation();
@@ -146,6 +147,12 @@ useEffect(() => {
             <Route path="/company-register" element={<CompanyRegister />} />
 
             <Route path="/company-dashboard" element={<CompanyDashboard />} />
+           <Route
+  path="/dashboard/products/:id"
+  element={<MoreDetails />}
+/>
+
+
             <Route path="/customer-login" element={<CustomerLogin />} />
             <Route path="/company-forgot-password" element={<CompanyForgotPassword />} />
             <Route path="/terms" element={<Terms />} />

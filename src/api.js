@@ -337,7 +337,6 @@ export const getCustomerPendingReviews = (customerId) => {
 
 //  Add review to a company
 // POST /{lang}/api/customer/addReviewCompany/{companyId}
-// Body: { rating, comment }
 export const addCompanyReview = (
   companyId,
   rating,
@@ -347,9 +346,12 @@ export const addCompanyReview = (
   return api.post(`/customer/addReviewCompany/${companyId}`, {
     rating,
     comment,
-    service_name, 
+    service_name,
   });
 };
+
+
+
 
 
 //  Add review to a product
@@ -449,6 +451,20 @@ export const markCustomerConversationRead = (conversationId) => {
 export const getCustomerNotifications = (page = 1) => {
   return api.get(`/customer/notifications?page=${page}`);
 };
+
+
+
+
+
+
+// ==================== COMPANY REVIEWS (PUBLIC) ====================
+
+// ✅ Get all reviews for a company (public – no token required)
+// POST /{lang}/api/ShowCompanyReviews/{companyId}/customer
+export const getCompanyReviewsPublic = (companyId) => {
+  return api.post(`/ShowCompanyReviews/${companyId}/customer`);
+};
+
 
 
 

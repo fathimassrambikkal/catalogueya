@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../dashboard/Sidebar.jsx";
 import Products from "../dashboard/Products.jsx";
 import Sales from "../dashboard/Sales.jsx";
@@ -9,21 +10,33 @@ import Contacts from "../dashboard/Contacts.jsx";
 import Followers from "../dashboard/Followers.jsx";
 import Notifications from "../dashboard/Notifications.jsx";
 import Fatora from "../dashboard/Fatora.jsx";
-import { TbLayoutSidebarRightFilled } from "react-icons/tb";
+import { RiMenu2Fill } from "react-icons/ri";
 import { FollowersProvider } from "../context/FollowersContext";
 import { getCompany } from "../api";
 
+/* ================= Utilities ================= */
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return isMobile;
+};
+
 export default function CompanyDashboard() {
+  const location = useLocation();
+  const isMobile = useIsMobile();
+
   const [activeTab, setActiveTab] = useState("Products");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [companyId, setCompanyId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* ✅ PRODUCTS STATE */
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  /* ✅ COMPANY INFO */
   const [companyInfo, setCompanyInfo] = useState({
     companyName: "",
     companyDescription: "",
@@ -32,197 +45,125 @@ export default function CompanyDashboard() {
     specialties: [],
     logo: null,
     coverPhoto: null,
-    facebook: "",
-    instagram: "",
-    youtube: "",
-    linkedin: "",
-    pinterest: "",
-    snapchat: "",
-    whatsapp: "",
-    google: "",
   });
 
-  /* ✅ Load companyId from localStorage */
+  /* Restore tab when coming back from details */
   useEffect(() => {
-    try {
-      const companyData = localStorage.getItem("company");
-      
-      if (!companyData) {
-        console.log("No company data in localStorage");
-        setLoading(false);
-        return;
-      }
-
-      const company = JSON.parse(companyData);
-      
-      if (!company?.id) {
-        console.log("Invalid company data structure");
-        setLoading(false);
-        return;
-      }
-
-      const newCompanyId = company.id.toString();
-      setCompanyId(newCompanyId);
-      localStorage.setItem("companyId", newCompanyId);
-    } catch (error) {
-      console.error("Error parsing company data:", error);
-      setLoading(false);
+    if (location.state?.restoreTab) {
+      setActiveTab(location.state.restoreTab);
     }
-  }, []);
+  }, [location.state]);
 
-  /* ✅ Fetch company from API - No fallback */
+  /* Load companyId */
   useEffect(() => {
-    if (!companyId) {
+    const company = JSON.parse(localStorage.getItem("company") || "null");
+    if (!company?.id) {
       setLoading(false);
       return;
     }
+    setCompanyId(String(company.id));
+  }, []);
+
+  /* Fetch company */
+  useEffect(() => {
+    if (!companyId) return;
 
     let mounted = true;
     setLoading(true);
 
-    console.log("🔄 Fetching company data for ID:", companyId);
-
     getCompany(companyId)
       .then((res) => {
         if (!mounted) return;
-
         const company =
-          res?.data?.data?.company ||
-          res?.data?.company ||
-          res?.data;
+          res?.data?.data?.company || res?.data?.company || res?.data;
+        if (!company) return;
 
-        if (!company) {
-          console.log("❌ No company data received from API");
-          // Leave all fields empty - no fallback
-          return;
-        }
-
-        console.log("✅ Company data received:", company.name);
-
-        if (Array.isArray(company.products)) {
-          setProducts(company.products);
-          console.log("📦 Products loaded:", company.products.length);
-        }
-
-        // Only set data from API - no localStorage fallback
+        setProducts(company.products || []);
         setCompanyInfo({
           companyName: company.name || "",
           companyDescription: company.description || "",
-          contactMobile: company.mobile || company.phone || "",
-          address: company.address || "",
-          specialties: Array.isArray(company.specialties) ? company.specialties : [],
-          logo: company.logo || null,
           coverPhoto: company.cover_photo || null,
-          facebook: company.facebook || company.tweeter || "",
-          instagram: company.instagram || "",
-          youtube: company.youtube || "",
-          linkedin: company.linkedin || "",
-          pinterest: company.pinterest || "",
-          snapchat: company.snapchat || "",
-          whatsapp: company.whatsapp || "",
-          google: company.google || "",
+          logo: company.logo || null,
         });
       })
-      .catch((err) => {
-        if (!mounted) return;
-        console.error("❌ Failed to fetch company:", err);
-        // No error handling - just leave fields empty
-      })
-      .finally(() => {
-        if (mounted) {
-          setLoading(false);
-        }
-      });
+      .finally(() => mounted && setLoading(false));
 
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, [companyId]);
 
-  /* ✅ Handle sign out */
-  const handleSignOut = () => {
-    localStorage.removeItem("company");
-    localStorage.removeItem("companyId");
-    // No navigation since company-login doesn't exist
-  };
-
-  /* ✅ LISTEN FOR PRODUCT UPDATES */
-  useEffect(() => {
-    const handleProductsUpdated = (event) => {
-      if (event.detail?.companyId !== companyId) return;
-
-      if (Array.isArray(event.detail.products)) {
-        console.log("✅ Dashboard received product updates");
-        setProducts(event.detail.products);
-      }
-    };
-
-    window.addEventListener("productsUpdated", handleProductsUpdated);
-
-    return () => {
-      window.removeEventListener("productsUpdated", handleProductsUpdated);
-    };
-  }, [companyId]);
-
-  /* ✅ Scroll to top when tab changes */
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [activeTab]);
-
-  /* ✅ Loading state */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
+      <div className="h-screen flex items-center justify-center bg-gray-100">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
     <FollowersProvider>
-      <div className="flex bg-gray-100 min-h-screen w-full overflow-x-hidden">
-        {/* SIDEBAR */}
-        <div
-          className={`fixed lg:static top-0 left-0 z-50 h-screen w-60 lg:w-48
-            transition-transform duration-300
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            lg:translate-x-0`}
-        >
-          <Sidebar 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-            onSignOut={handleSignOut}
-          />
-        </div>
+      {/* 🔒 LOCK VIEWPORT */}
+      <div className="relative flex w-full h-[calc(100vh-64px)] overflow-hidden bg-gray-100">
 
-        {/* MOBILE OVERLAY */}
-        {sidebarOpen && (
+        {/* ================= Sidebar ================= */}
+        <aside
+          className={`
+            ${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"}
+           
+            bg-white
+            transform transition-transform duration-300 ease-out
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+            lg:translate-x-0
+            shadow-lg
+          `}
+        >
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={(tab) => {
+              setActiveTab(tab);
+              if (isMobile) setSidebarOpen(false);
+            }}
+            onCloseSidebar={() => setSidebarOpen(false)}
+            isMobile={isMobile}
+          />
+        </aside>
+
+        {/* ================= Overlay (mobile) ================= */}
+        {isMobile && sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/40 z-30"
           />
         )}
 
-        {/* MAIN CONTENT */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          {/* MOBILE TOGGLE */}
+        {/* ================= Mobile Menu Button ================= */}
+        {isMobile && !sidebarOpen && (
           <button
-            onClick={() => setSidebarOpen((v) => !v)}
-            className="fixed top-4 left-4 z-50 p-2 bg-white rounded-xl shadow lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+            className="
+              fixed top-20 left-3 z-50
+              h-10 w-10
+              flex items-center justify-center
+              rounded-2xl
+              bg-white/70 backdrop-blur-xl
+              shadow-lg
+              active:scale-95
+            "
           >
-            <TbLayoutSidebarRightFilled size={18} />
+            <RiMenu2Fill className="w-4 h-4 text-gray-700" />
           </button>
+        )}
 
-          {/* COVER */}
+        {/* ================= Main ================= */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden">
+
+          {/* Fixed header / cover */}
           {activeTab === "Products" && (
             <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
           )}
 
-          {/* TABS */}
-          <div className="flex-1">
+          {/* 🔥 ONLY SCROLL AREA */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
             {activeTab === "Products" && (
               <Products
                 products={products}
@@ -233,22 +174,13 @@ export default function CompanyDashboard() {
               />
             )}
 
-            {activeTab === "Sales" && (
-              <Sales products={products} setProducts={setProducts} />
-            )}
-
-            {activeTab === "Analytics" && (
-              <Analytics products={products} />
-            )}
-
+            {activeTab === "Sales" && <Sales products={products} />}
+            {activeTab === "Analytics" && <Analytics products={products} />}
             {activeTab === "Contacts" && (
               <Contacts companyInfo={companyInfo} products={products} />
             )}
-
             {activeTab === "Followers" && <Followers />}
-
             {activeTab === "Notifications" && <Notifications />}
-
             {activeTab === "Fatora" && (
               <Fatora
                 companyId={companyId}
@@ -256,7 +188,6 @@ export default function CompanyDashboard() {
                 products={products}
               />
             )}
-
             {activeTab === "Settings" && (
               <Settings
                 companyId={companyId}
@@ -265,7 +196,7 @@ export default function CompanyDashboard() {
               />
             )}
           </div>
-        </div>
+        </main>
       </div>
     </FollowersProvider>
   );

@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
+import {
+  getCompanyReviewsPublic,
+  addCompanyReview,
+} from "../api";
+
+
 // Navigation Icons
 const CloseIcon = ({ className = "" }) => (
   <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -108,9 +114,16 @@ export default function CompanyReviewsPage() {
   const { companyId } = useParams();
   const navigate = useNavigate();
 
-  const storageKey = useMemo(() => `reviews_${companyId}`, [companyId]);
+const [reviews, setReviews] = useState([]);
+const [stats, setStats] = useState({
+  average: "0.0",
+  total: 0,
+  distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+});
+const [loading, setLoading] = useState(true);
+
   
-  const [reviews, setReviews] = useState([]);
+
   const [newReview, setNewReview] = useState({
     name: "",
     rating: 0,
@@ -119,39 +132,56 @@ export default function CompanyReviewsPage() {
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
-  const [loading, setLoading] = useState(false);
 
-  // Load reviews on mount
-  useEffect(() => {
-    setLoading(true);
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        setReviews(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse reviews:", e);
-      }
+useEffect(() => {
+  const fetchCompanyReviews = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getCompanyReviewsPublic(companyId);
+      const data = res?.data?.data;
+
+      const serviceReviews = data?.services?.reviews || [];
+
+      // Normalize reviews for UI
+      const normalizedReviews = serviceReviews.map((r) => ({
+        id: r.review_id,
+        name: r.user?.name || "Anonymous",
+        avatar: r.user?.image || null,
+        rating: Number(r.rating),
+        comment: r.comment || "No comment provided",
+        date: new Date(r.created_at).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+      }));
+
+      // Rating distribution
+      const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      normalizedReviews.forEach((r) => {
+        distribution[r.rating]++;
+      });
+
+      setReviews(normalizedReviews);
+      setStats({
+        average: Number(data.company_rating).toFixed(1),
+        total: data.total_reviews_count,
+        distribution,
+      });
+    } catch (error) {
+      console.error("Failed to load company reviews", error);
+      setReviews([]);
+    } finally {
+      setLoading(false);
     }
-    setTimeout(() => setLoading(false), 300);
-  }, [storageKey]);
+  };
 
-  // Calculate statistics
-  const stats = useMemo(() => {
-    if (!reviews.length) return { average: "0.0", distribution: {5:0,4:0,3:0,2:0,1:0} };
-    
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
-    const distribution = {5:0,4:0,3:0,2:0,1:0};
-    
-    reviews.forEach(review => {
-      distribution[review.rating]++;
-    });
-    
-    return {
-      average: (sum / reviews.length).toFixed(1),
-      distribution,
-      total: reviews.length,
-    };
-  }, [reviews]);
+  fetchCompanyReviews();
+}, [companyId]);
+
+
+ 
 
   // Filter reviews by rating
   const filteredReviews = useMemo(() => {
@@ -160,48 +190,70 @@ export default function CompanyReviewsPage() {
   }, [reviews, activeTab]);
 
   // Handle form submission
-  const handleSubmit = useCallback(async (e) => {
+const handleSubmit = useCallback(
+  async (e) => {
     e.preventDefault();
-    
-    if (!newReview.name.trim() || !newReview.comment.trim() || !newReview.rating) {
-      return;
+
+    if (!newReview.rating || !newReview.comment.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // 🔥 Call backend API
+      await addCompanyReview(
+        companyId,
+        newReview.rating,
+        newReview.comment,
+        "General Service" // or dynamic service name
+      );
+
+      // 🔄 Re-fetch reviews from backend
+      const res = await getCompanyReviewsPublic(companyId);
+      const data = res?.data?.data;
+
+      const serviceReviews = data?.services?.reviews || [];
+
+      const normalizedReviews = serviceReviews.map((r) => ({
+        id: r.review_id,
+        name: r.user?.name || "Anonymous",
+        avatar: r.user?.image || null,
+        rating: Number(r.rating),
+        comment: r.comment || "No comment provided",
+        date: new Date(r.created_at).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+      }));
+
+      // Update state
+      const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      normalizedReviews.forEach((r) => {
+        distribution[r.rating]++;
+      });
+
+      setReviews(normalizedReviews);
+      setStats({
+        average: Number(data.company_rating).toFixed(1),
+        total: data.total_reviews_count,
+        distribution,
+      });
+
+      // Reset form
+      setNewReview({ name: "", rating: 0, comment: "" });
+      setHoverRating(0);
+    } catch (error) {
+      console.error("Failed to submit review", error);
+    } finally {
+      setIsSubmitting(false);
     }
+  },
+  [companyId, newReview]
+);
 
-    setIsSubmitting(true);
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+  
 
-    const review = {
-      ...newReview,
-      id: Date.now(),
-      date: new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
-      timestamp: Date.now()
-    };
-
-    const updated = [...reviews, review];
-    
-    setReviews(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-
-    // Reset form with success feedback
-    setNewReview({ name: "", rating: 0, comment: "" });
-    setHoverRating(0);
-    setIsSubmitting(false);
-
-    // Success microinteraction
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.classList.add('submit-success');
-      setTimeout(() => submitBtn.classList.remove('submit-success'), 600);
-    }
-
-  }, [newReview, reviews, storageKey]);
 
   // Update form state
   const updateForm = useCallback((field, value) => {

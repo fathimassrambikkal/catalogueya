@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { registerCompany } from "../api";
 import { useNavigate } from "react-router-dom";
-
+import { useLocation } from "react-router-dom";
+ 
 export default function CompanyRegister() {
   const [companyData, setCompanyData] = useState({
     name_en: "",
@@ -24,11 +25,28 @@ export default function CompanyRegister() {
     youtube: "",
   });
 
+
+  const location = useLocation();
+const navigate = useNavigate();
+const {
+  planKey,
+  billingCycle,
+  price,
+  currency,
+} = location.state || {};
+
+useEffect(() => {
+  if (!planKey || !billingCycle || !price) {
+    navigate("/pricing");
+  }
+}, [planKey, billingCycle, price, navigate]);
+
+
   const [companyErrors, setCompanyErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [coordinates, setCoordinates] = useState("");
   
-  const navigate = useNavigate();
+
 
   const handleCompanyChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -109,6 +127,10 @@ export default function CompanyRegister() {
     }
 
     // 🚀 API CALL
+  formData.append("subscription_plan", planKey);
+formData.append("billing_cycle", billingCycle);
+formData.append("subscription_price", price);
+
     const response = await registerCompany(formData);
 
     // ✅ SUCCESS LOG
@@ -218,7 +240,30 @@ export default function CompanyRegister() {
   return (
     <div className="w-full max-w-6xl bg-white border border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)] rounded-3xl p-8">
       <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Company Registration</h2>
-      
+      {/* PLAN SUMMARY */}
+<div className="mb-6 p-5 rounded-2xl bg-blue-50 border border-blue-100">
+  <h3 className="text-lg font-semibold text-gray-800 mb-3">
+    Selected Subscription
+  </h3>
+
+  <div className="flex justify-between text-sm text-gray-700">
+    <span>Plan</span>
+    <span className="font-medium">{planKey}</span>
+  </div>
+
+  <div className="flex justify-between text-sm text-gray-700 mt-1">
+    <span>Billing</span>
+    <span className="capitalize">{billingCycle}</span>
+  </div>
+
+  <div className="flex justify-between text-sm text-gray-900 font-semibold mt-2">
+    <span>Total</span>
+    <span>
+      {price} {currency}
+    </span>
+  </div>
+</div>
+
       <form className="flex flex-col gap-6" onSubmit={handleCompanySubmit}>
         <div className="flex flex-col lg:flex-row gap-6">
           {/* LEFT COLUMN */}
