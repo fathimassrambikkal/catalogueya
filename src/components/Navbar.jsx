@@ -73,7 +73,7 @@ const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
   return (
     <button
       onClick={toggleMenu}
-      className="h-9 w-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white/40 hover:bg-white/70 transition-all"
+      className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white/40 hover:bg-white/70 transition-all"
       aria-label="Menu"
     >
       <HiDotsVertical className="text-gray-700 text-base" />
@@ -130,7 +130,7 @@ const LanguageToggle = memo(function LanguageToggle({
   return (
     <button
       onClick={handleClick}
-      className="h-9 px-3 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[60px]"
+      className="h-8 px-2 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[60px]"
     >
       {language === "en" ? "عربي" : "EN"}
     </button>
@@ -247,8 +247,13 @@ export default function Navbar() {
       }`}
     >
       {/* Container */}
-      <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+      <div className="mx-auto w-full max-w-[1440px] pl-6 pr-4 sm:pl-8 sm:pr-6">
+        <div
+  className={`flex items-center justify-between transition-all duration-300 ${
+    scrolled ? "h-14" : "h-16"
+  }`}
+>
+
           
          {/* Logo */}
       <div className="flex-shrink-0">
@@ -256,86 +261,76 @@ export default function Navbar() {
           <img
             src={`${import.meta.env.VITE_ASSET_BASE_URL}/${settings?.logo}`}
             alt="Catalogueya Logo"
-            className="h-12 sm:h-14 object-contain ml-3 lg:ml-16"
+            className="h-12 sm:h-14 object-contain "
           />
         </Link>
       </div>
 
-          {/* RIGHT: Actions (Enterprise Structure) */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            
-            {/* Secondary Actions */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <FavouritesCounter />
-              <LanguageToggle
-                toggleLanguage={toggleLanguage}
-                language={i18n.language}
-              />
-            </div>
+        
+          {/* RIGHT: Actions */}
+<div className="flex items-center gap-1 sm:gap-3 ltr:ml-auto rtl:mr-auto">
+  
+  {/* ❤️ Heart */}
+  <FavouritesCounter />
 
-           
+  {/* 🔐 Login / Avatar */}
+  {isAuthenticated && userType === "customer" ? (
+    <div className="relative customer-account-container">
+      <button
+        onClick={() => setAccountOpen((p) => !p)}
+        className="flex items-center gap-2 h-9 px-2 rounded-full hover:bg-gray-100/60 transition focus:outline-none"
+        aria-haspopup="menu"
+        aria-expanded={accountOpen}
+      >
+        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
+          {displayName.charAt(0).toUpperCase()}
+        </div>
 
-            {/* Primary Actions */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              
-              {/* Account */}
-              {isAuthenticated && userType === "customer" ? (
-                <div className="relative customer-account-container">
-                  <button
-                    onClick={() => setAccountOpen((p) => !p)}
-                    className="flex items-center gap-2 h-9 px-2 rounded-full hover:bg-gray-100/60 transition focus:outline-none"
-                    aria-haspopup="menu"
-                    aria-expanded={accountOpen}
-                  >
-                    <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
-                    <svg
-                      className={`hidden sm:block w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
-                        accountOpen ? "rotate-180" : ""
-                      }`}
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M6 8l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.65"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
+        <svg
+          className={`hidden sm:block w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
+            accountOpen ? "rotate-180" : ""
+          }`}
+          viewBox="0 0 20 20"
+        >
+          <path d="M6 8l4 4 4-4" stroke="currentColor" fill="none" />
+        </svg>
+      </button>
 
-                  {accountOpen && (
-                    <CustomerAccountDropdown onClose={() => setAccountOpen(false)} />
-                  )}
-                </div>
-              ) : (
-                <button
-                  onClick={() => navigate("/sign")}
-                  className="h-9 px-3 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
-                >
-                  {fw.login}
-                </button>
-              )}
+      {accountOpen && (
+        <CustomerAccountDropdown onClose={() => setAccountOpen(false)} />
+      )}
+    </div>
+  ) : (
+    <button
+      onClick={() => navigate("/sign")}
+      className="h-8 px-3 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
+    >
+      {fw.login}
+    </button>
+  )}
 
-              {/* Menu */}
-              <div className="relative menu-container">
-                <MenuButton menuOpen={menuOpen} toggleMenu={toggleMenu} />
-                <DropdownMenu
-                  isOpen={menuOpen}
-                  language={i18n.language}
-                  fixedWords={fixedWords}
-                  t={t}
-                  closeMenu={() => setMenuOpen(false)}
-                />
-              </div>
-            </div>
+  {/* 🌐 Language */}
+  <LanguageToggle
+    toggleLanguage={toggleLanguage}
+    language={i18n.language}
+  />
+
+  {/* ☰ Menu */}
+  <div className="relative menu-container">
+    <MenuButton menuOpen={menuOpen} toggleMenu={toggleMenu} />
+    <DropdownMenu
+      isOpen={menuOpen}
+      language={i18n.language}
+      fixedWords={fixedWords}
+      t={t}
+      closeMenu={() => setMenuOpen(false)}
+    />
+  </div>
+</div>
+
           </div>
         </div>
-      </div>
+      
     </nav>
   );
 }
