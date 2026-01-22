@@ -290,7 +290,7 @@ useEffect(() => {
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center space-x-1 sm:space-x-4 rtl:space-x-reverse md:mr-20 min-w-0">
+      <div className="flex items-center space-x-1 sm:space-x-4  md:mr-20 min-w-0">
         <FavouritesCounter />
 
         {/* ✅ FIX 3: Customer Account Dropdown (now has access to accountOpen and displayName) */}
