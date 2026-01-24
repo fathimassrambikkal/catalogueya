@@ -5,6 +5,7 @@ import SimilarProducts from "../components/SimilarProducts";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { createCustomerConversation,getProductReviews  } from "../api";
+import { addProductReview } from "../api";
 
 import { getProduct, getCompany } from "../api";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,70 +13,51 @@ import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
 import BackButton from "../components/BackButton";
+import SmartImage from "../components/SmartImage"; // ✅ Import SmartImage
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+import {
+  HeartIcon,
+  StarIcon,
+  ShareIcon,
+  ChatIcon,
+} from "../components/SvgIcon";
 
+// ✅ Helper to normalize image data
+const normalizeImage = (image) => {
+  if (!image) return null;
+  
+  // If image is an object with avif/webp, return as-is
+  if (typeof image === 'object' && !Array.isArray(image)) {
+    return image;
+  }
+  
+  // If it's already a string, return as-is
+  if (typeof image === 'string') return image;
+  
+  return null;
+};
 
-
-const HeartIcon = ({ filled = false, className = "" }) => (
-  <svg
-    viewBox="0 0 24 24"
-    className={className}
-    fill={filled ? "currentColor" : "none"}
-    stroke={filled ? "none" : "currentColor"}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-);
-
-const StarIcon = ({ filled, className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="16" 
-    height="16" 
-    viewBox="0 0 576 512"
-    fill={filled ? "currentColor" : "none"}
-    stroke={filled ? "currentColor" : "#9CA3AF"}
-    strokeWidth="30"
-  >
-    <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
-  </svg>
-);
-
-const ShareIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="16" 
-    height="16" 
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
-  </svg>
-);
-
-const ChatIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="17" 
-    height="17" 
-    viewBox="0 0 16 16"
-    fill="currentColor"
-  >
-    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.520.263-1.639.742-3.468 1.105z" />
-    <circle cx="4" cy="8" r="1" />
-    <circle cx="8" cy="8" r="1" />
-    <circle cx="12" cy="8" r="1" />
-  </svg>
-);
+// ✅ Helper to get fallback URL for error handling
+const getFallbackUrl = (imgData) => {
+  if (!imgData) return "/api/placeholder/400/400";
+  
+  if (typeof imgData === 'string') {
+    return imgData.startsWith("http") 
+      ? imgData 
+      : `${API_BASE_URL}/${imgData.replace(/^\//, "")}`;
+  }
+  
+  if (typeof imgData === 'object') {
+    const webp = imgData.webp || imgData.url || imgData.path;
+    if (webp) {
+      return webp.startsWith("http") 
+        ? webp 
+        : `${API_BASE_URL}/${webp.replace(/^\//, "")}`;
+    }
+  }
+  
+  return "/api/placeholder/400/400";
+};
 
 // ✅ Reusable VisionOS-style glass / titanium icon button
 const PremiumIconButton = ({ onClick, title, children, disabled = false }) => (
@@ -216,7 +198,7 @@ const fw = fixedWords?.fixed_words || {};
 
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
-  const [selectedImage, setSelectedImage] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null); // ✅ Changed to store image object
   const [reviews, setReviews] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewName, setReviewName] = useState("");
@@ -226,14 +208,6 @@ const fw = fixedWords?.fixed_words || {};
   const [error, setError] = useState(null);
 
   const isFavourite = product ? favourites.some((f) => f.id === product.id) : false;
-
-  // ✅ Convert relative image path to absolute URL
-  const getImageUrl = (imgPath) => {
-    if (!imgPath) return "/api/placeholder/400/400";
-    if (imgPath.startsWith("http")) return imgPath;
-    const cleanPath = imgPath.startsWith("/") ? imgPath.slice(1) : imgPath;
-    return `${API_BASE_URL}/${cleanPath}`;
-  };
 
   // ✅ Function to refresh product data
   const refreshProductData = useCallback(async () => {
@@ -263,7 +237,7 @@ const fw = fixedWords?.fixed_words || {};
         name: productData.name,
         price: productData.price,
         oldPrice: productData.old_price || null,
-        image: getImageUrl(productData.image),
+        image: normalizeImage(productData.image), // ✅ Store object format
         rating: parseFloat(productData.rating) || 0,
         description: productData.description,
         company_id: productData.company_id,
@@ -273,15 +247,15 @@ const fw = fixedWords?.fixed_words || {};
         discount_percent: productData.discount_percent || null,
         albums: Array.isArray(productData.albums)
           ? productData.albums
-              .map(a => a?.path || a?.image || a)
+              .map(a => normalizeImage(a)) // ✅ Normalize album images
               .filter(Boolean)
           : [],
       };
 
       setProduct(transformedProduct);
       
-      const mainImage = productData.image || productData.albums?.[0]?.path || productData.albums?.[0]?.image || "";
-      setSelectedImage(getImageUrl(mainImage));
+      const mainImage = normalizeImage(productData.image) || transformedProduct.albums?.[0] || null;
+      setSelectedImage(mainImage);
 
       // Reload similar products
       if (productData.company_id) {
@@ -293,7 +267,7 @@ const fw = fixedWords?.fixed_words || {};
           list = list.filter((p) => p.id !== productData.id);
           list = list.map((p) => ({
             ...p,
-            image: p.image?.startsWith("http") ? p.image : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
+            image: normalizeImage(p.image), // ✅ Normalize similar product images
             company_name: p.company_name || productData.company_name || "Company",
             company_id: p.company_id || productData.company_id,
           }));
@@ -368,7 +342,7 @@ const fw = fixedWords?.fixed_words || {};
           name: productData.name,
           price: productData.price,
           oldPrice: productData.old_price || null,
-          image: getImageUrl(productData.image),
+          image: normalizeImage(productData.image), // ✅ Store object format
           rating: parseFloat(productData.rating) || 0,
           description: productData.description,
           company_id: productData.company_id,
@@ -378,7 +352,7 @@ const fw = fixedWords?.fixed_words || {};
           discount_percent: productData.discount_percent || null,
           albums: Array.isArray(productData.albums)
             ? productData.albums
-                .map(a => a?.path || a?.image || a)
+                .map(a => normalizeImage(a)) // ✅ Normalize album images
                 .filter(Boolean)
             : [],
         };
@@ -388,10 +362,8 @@ const fw = fixedWords?.fixed_words || {};
         // Set product IMMEDIATELY for instant rendering
         setProduct(transformedProduct);
         
-        const mainImage = productData.image || productData.albums?.[0]?.path || productData.albums?.[0]?.image || "";
-        setSelectedImage(getImageUrl(mainImage));
-
-     
+        const mainImage = normalizeImage(productData.image) || transformedProduct.albums?.[0] || null;
+        setSelectedImage(mainImage);
 
         // Fetch similar products IN BACKGROUND (non-blocking)
         if (productData.company_id) {
@@ -404,7 +376,7 @@ const fw = fixedWords?.fixed_words || {};
               list = list.filter((p) => p.id !== productData.id);
               list = list.map((p) => ({
                 ...p,
-                image: p.image?.startsWith("http") ? p.image : `${API_BASE_URL}/${p.image?.replace(/^\//, "")}`,
+                image: normalizeImage(p.image), // ✅ Normalize similar product images
                 company_name: p.company_name || productData.company_name || "Company",
                 company_id: p.company_id || productData.company_id,
               }));
@@ -441,12 +413,6 @@ const fw = fixedWords?.fixed_words || {};
       mounted = false;
     };
   }, [resolvedProductId]);
-
-
-
-
-
-
 
   // ✅ Fetch product reviews from backend (Product Page)
 useEffect(() => {
@@ -545,7 +511,6 @@ useEffect(() => {
   [product, navigate]
 );
 
-
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum, r) => sum + getSafeRating(r.rating), 0) /
@@ -572,33 +537,47 @@ useEffect(() => {
     }
   };
 
-  const handleReviewSubmit = () => {
+const handleReviewSubmit = async () => {
   if (!reviewText || reviewRating === 0) {
     alert("Please add rating and comment.");
     return;
   }
 
-  const newReview = {
-    id: Date.now(),
-    name: auth?.user?.name || "You",
-    rating: reviewRating,
-    comment: reviewText,
-    date: new Date().toLocaleDateString(),
-  };
+  try {
+    // 🔥 SAVE TO BACKEND
+    await addProductReview(
+      resolvedProductId,
+      reviewRating,
+      reviewText.trim()
+    );
 
-  // Add review to UI instantly
-  setReviews((prev) => [newReview, ...prev]);
+    // ✅ Optimistic UI update
+    const newReview = {
+      id: Date.now(),
+      name: auth?.user?.name || "You",
+      rating: reviewRating,
+      comment: reviewText,
+      date: new Date().toLocaleDateString(),
+    };
 
-  setShowReviewModal(false);
-  setReviewText("");
-  setReviewRating(0);
+    setReviews((prev) => [newReview, ...prev]);
+
+    setShowReviewModal(false);
+    setReviewText("");
+    setReviewRating(0);
+
+  } catch (error) {
+    console.error("Failed to submit review", error);
+    alert(
+      error?.response?.data?.message ||
+      "Failed to submit review. Please try again."
+    );
+  }
 };
 
-
-  const handleImageClick = (src) => {
-    setSelectedImage(getImageUrl(src));
+  const handleImageClick = (imgData) => {
+    setSelectedImage(imgData);
   };
-
 
   // Only show error if we have no product AND an error occurred
   if (error && !product) {
@@ -632,7 +611,6 @@ useEffect(() => {
     ...(product?.albums || []),
   ].filter(Boolean);
 
-
   useEffect(() => {
   if (!auth?.user) return;
   if (!product) return;
@@ -647,7 +625,6 @@ useEffect(() => {
     navigate(location.pathname, { replace: true });
   }
 }, [auth?.user, product]);
-
 
   return (
     <>
@@ -671,14 +648,19 @@ useEffect(() => {
           {/* MAIN IMAGE WRAPPER */}
           <div className="relative w-full h-[520px] md:h-[620px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm ">
             
-            {/* MAIN IMAGE with Apple-style placeholder */}
+            {/* ✅ MAIN IMAGE with SmartImage */}
             {product ? (
-              <img
-                key={selectedImage}
-                src={selectedImage}
+              <SmartImage
+                key={selectedImage ? JSON.stringify(selectedImage) : 'fallback'}
+                image={selectedImage}
                 alt={product.name}
-                className="w-full h-full object-cover  animate-image-fade"
-                onError={(e) => (e.target.src = "/api/placeholder/500/500")}
+                className="w-full h-full object-cover animate-image-fade"
+                loading="eager"
+                fetchPriority="high"
+                onError={(e) => {
+                  console.error("Failed to load main image:", selectedImage);
+                  e.target.src = "/api/placeholder/500/500";
+                }}
               />
             ) : (
               <div className="w-full h-full bg-gray-100 animate-pulse rounded-2xl" />
@@ -717,7 +699,6 @@ useEffect(() => {
   }}
 >
 
-
                 <HeartIcon
                   filled={isFavourite}
                   className={`w-[clamp(12px,1.1vw,16px)]
@@ -751,14 +732,13 @@ useEffect(() => {
                   
                 "
               >
-                {productImages.slice(0, 5).map((src, idx) => {
-                  const img = getImageUrl(src);
-                  const isActive = selectedImage === img;
+                {productImages.slice(0, 5).map((imgData, idx) => {
+                  const isActive = selectedImage === imgData;
 
                   return (
                     <button
                       key={idx}
-                      onClick={() => handleImageClick(src)}
+                      onClick={() => handleImageClick(imgData)}
                       className={`
                         relative
                         w-14 h-14 md:w-16 md:h-16
@@ -780,11 +760,16 @@ useEffect(() => {
                         />
                       )}
 
-                      {/* Thumbnail image */}
-                      <img
-                        src={img}
-                        className={`w-full h-full object-cover  ${isActive ? 'scale-110' : 'scale-100'}`}
-                        onError={(e) => (e.target.src = "/api/placeholder/200/200")}
+                      {/* ✅ Thumbnail image with SmartImage */}
+                      <SmartImage
+                        image={imgData}
+                        className={`w-full h-full object-cover ${isActive ? 'scale-110' : 'scale-100'}`}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          console.error("Failed to load thumbnail:", imgData);
+                          e.target.src = "/api/placeholder/200/200";
+                        }}
                       />
                     </button>
                   );
@@ -914,7 +899,7 @@ useEffect(() => {
   onClick={(e) => {
     e.stopPropagation();
 
-    // 🚫 Guest → redirect to login with intent
+    // 🚫 Guest user → redirect to login with intent
     if (!auth?.user) {
       navigate(
         `/sign?redirect=/product/${resolvedProductId}&action=review`
@@ -922,7 +907,7 @@ useEffect(() => {
       return;
     }
 
-    // ✅ Logged-in customer → open modal
+    // ✅ Logged-in customer → open review modal
     setShowReviewModal(true);
   }}
   disabled={!product}
@@ -932,10 +917,8 @@ useEffect(() => {
       : "bg-gray-200 text-gray-400 cursor-not-allowed"
   }`}
 >
-  {product ? fw.write_review : "Loading..."}
+  {product ? (fw.write_review || "Write a Review") : "Loading..."}
 </button>
-
-
 
          {/* Customer Reviews */}
 <div className="space-y-3 transform-gpu">
@@ -1052,7 +1035,6 @@ useEffect(() => {
     }
   }}
 />
-
 
       <Faq />
       <CallToAction />

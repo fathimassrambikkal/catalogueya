@@ -130,10 +130,68 @@ const LanguageToggle = memo(function LanguageToggle({
   return (
     <button
       onClick={handleClick}
-      className="h-8 px-1 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[45px]"
+      className="h-8 px-1 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[0px]"
     >
       {language === "en" ? "عربي" : "EN"}
     </button>
+  );
+});
+
+/* =============================
+   LOGO COMPONENT
+============================= */
+const Logo = memo(function Logo({ settings }) {
+  // Get the logo URL from settings
+  const getLogoUrl = () => {
+    if (!settings?.logo) return null;
+    
+    // If logo is a string (already processed URL)
+    if (typeof settings.logo === 'string') {
+      return settings.logo;
+    }
+    
+    // If logo is an object with webp/avif properties
+    if (settings.logo && typeof settings.logo === 'object') {
+      // Use webp first (better compression), fallback to avif
+      const logoPath = settings.logo.webp || settings.logo.avif;
+      if (!logoPath) return null;
+      
+      // Check if it already has a full URL
+      const cleanPath = String(logoPath).trim();
+      if (cleanPath.startsWith("http")) {
+        return cleanPath;
+      }
+      
+      // Add base URL if it's a relative path
+      return `${import.meta.env.VITE_ASSET_BASE_URL || ''}/${cleanPath}`;
+    }
+    
+    return null;
+  };
+
+  const logoUrl = getLogoUrl();
+
+  if (!logoUrl) {
+    return (
+      <div className="flex-shrink-0">
+        <Link to="/">
+          <div className="h-12 sm:h-14 w-32 bg-gray-200 animate-pulse rounded" />
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-shrink-0">
+      <Link to="/">
+        <img
+          src={logoUrl}
+          alt="Catalogueya Logo"
+          className=" h-8 xs:h-9 sm:h-11 md:h-12 lg:h-14
+    w-auto object-contain"
+        />
+      </Link>
+    </div>
   );
 });
 
@@ -249,88 +307,74 @@ export default function Navbar() {
       {/* Container */}
       <div className="mx-auto w-full max-w-[1440px] pl-6 pr-4 sm:pl-8 sm:pr-6">
         <div
-  className={`flex items-center justify-between transition-all duration-300 ${
-    scrolled ? "h-14" : "h-16"
-  }`}
->
-
-          
-         {/* Logo */}
-      <div className="flex-shrink-0">
-        <Link to="/">
-          <img
-            src={`${import.meta.env.VITE_ASSET_BASE_URL}/${settings?.logo}`}
-            alt="Catalogueya Logo"
-            className="h-12 sm:h-14 object-contain "
-          />
-        </Link>
-      </div>
-
-        
-          {/* RIGHT: Actions */}
-<div className="flex items-center gap-1 sm:gap-3 ltr:ml-auto rtl:mr-auto">
-  
-  {/* ❤️ Heart */}
-  <FavouritesCounter />
-
-  {/* 🔐 Login / Avatar */}
-  {isAuthenticated && userType === "customer" ? (
-    <div className="relative customer-account-container">
-      <button
-        onClick={() => setAccountOpen((p) => !p)}
-        className="flex items-center gap-2 h-8 px-1 rounded-full hover:bg-gray-100/60 transition focus:outline-none"
-        aria-haspopup="menu"
-        aria-expanded={accountOpen}
-      >
-        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
-          {displayName.charAt(0).toUpperCase()}
-        </div>
-
-        <svg
-          className={`hidden sm:block w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
-            accountOpen ? "rotate-180" : ""
+          className={`flex items-center justify-between transition-all duration-300 ${
+            scrolled ? "h-14" : "h-16"
           }`}
-          viewBox="0 0 20 20"
         >
-          <path d="M6 8l4 4 4-4" stroke="currentColor" fill="none" />
-        </svg>
-      </button>
+          {/* Logo */}
+          <Logo settings={settings} />
 
-      {accountOpen && (
-        <CustomerAccountDropdown onClose={() => setAccountOpen(false)} />
-      )}
-    </div>
-  ) : (
-    <button
-      onClick={() => navigate("/sign")}
-      className="h-8 px-2 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
-    >
-      {fw.login}
-    </button>
-  )}
+          {/* RIGHT: Actions */}
+          <div className="flex items-center gap-1 sm:gap-3 ltr:ml-auto rtl:mr-auto">
+            {/* ❤️ Heart */}
+            <FavouritesCounter />
 
-  {/* 🌐 Language */}
-  <LanguageToggle
-    toggleLanguage={toggleLanguage}
-    language={i18n.language}
-  />
+            {/* 🔐 Login / Avatar */}
+            {isAuthenticated && userType === "customer" ? (
+              <div className="relative customer-account-container">
+                <button
+                  onClick={() => setAccountOpen((p) => !p)}
+                  className="flex items-center gap-2 h-8 px-1 rounded-full hover:bg-gray-100/60 transition focus:outline-none"
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
 
-  {/* ☰ Menu */}
-  <div className="relative menu-container">
-    <MenuButton menuOpen={menuOpen} toggleMenu={toggleMenu} />
-    <DropdownMenu
-      isOpen={menuOpen}
-      language={i18n.language}
-      fixedWords={fixedWords}
-      t={t}
-      closeMenu={() => setMenuOpen(false)}
-    />
-  </div>
-</div>
+                  <svg
+                    className={`hidden sm:block w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
+                      accountOpen ? "rotate-180" : ""
+                    }`}
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M6 8l4 4 4-4" stroke="currentColor" fill="none" />
+                  </svg>
+                </button>
 
+                {accountOpen && (
+                  <CustomerAccountDropdown onClose={() => setAccountOpen(false)} />
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/sign")}
+                className="h-8 px-2 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
+              >
+                {fw.login}
+              </button>
+            )}
+
+            {/* 🌐 Language */}
+            <LanguageToggle
+              toggleLanguage={toggleLanguage}
+              language={i18n.language}
+            />
+
+            {/* ☰ Menu */}
+            <div className="relative menu-container">
+              <MenuButton menuOpen={menuOpen} toggleMenu={toggleMenu} />
+              <DropdownMenu
+                isOpen={menuOpen}
+                language={i18n.language}
+                fixedWords={fixedWords}
+                t={t}
+                closeMenu={() => setMenuOpen(false)}
+              />
+            </div>
           </div>
         </div>
-      
+      </div>
     </nav>
   );
 }

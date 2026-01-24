@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { useNavigate } from "react-router-dom";
 import { getCategories } from "../api";
 import { useSettings } from "../hooks/useSettings";
+import SmartImage from "../components/SmartImage";
 
 const ChevronLeft = ({ size = 16 }) => (
   <svg
@@ -71,34 +72,7 @@ const useIsInViewport = (ref) => {
 };
 
 // Optimized image loader
-const useImageLoader = (src, priority = false) => {
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    if (!src) return;
-
-    const img = new Image();
-    img.src = src;
-    
-    if (priority) {
-      img.fetchPriority = 'high';
-      img.loading = 'eager';
-    } else {
-      img.loading = 'lazy';
-    }
-    
-    img.onload = () => setLoaded(true);
-    img.onerror = () => setError(true);
-
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
-  }, [src, priority]);
-
-  return { loaded, error };
-};
 
 // ==================== DATA MANAGEMENT ====================
 
@@ -127,20 +101,23 @@ if (typeof window !== 'undefined' && !preloadedData.loading) {
 
 // Optimized image preloader
 const preloadImages = (categories, limit = 6) => {
-  if (!categories || !Array.isArray(categories)) return;
-  
-  // Only preload first N images (critical above-the-fold)
-  categories.slice(0, limit).forEach(category => {
-    if (category?.image) {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = category.image;
-      link.fetchPriority = 'high';
-      document.head.appendChild(link);
-    }
+  if (!Array.isArray(categories)) return;
+
+  categories.slice(0, limit).forEach((category) => {
+    const src = category?.image?.avif || category?.image?.webp;
+    if (!src) return;
+
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = src.startsWith("http")
+      ? src
+      : `https://catalogueyanew.com.awu.zxu.temporary.site/${src.replace(/^\//, "")}`;
+    link.fetchPriority = "high";
+    document.head.appendChild(link);
   });
 };
+
 
 // ==================== MAIN COMPONENT ====================
 
@@ -416,66 +393,45 @@ export default function HomeServices() {
   }, [cardsPerView, circleSize]);
 
   // 10. OPTIMIZED CATEGORY CARD COMPONENT
-  const CategoryCard = useCallback(({ service, index, cardsPerView }) => {
-    const { loaded, error } = useImageLoader(service?.image, index < 6);
-    
-    return (
+const CategoryCard = useCallback(({ service, index, cardsPerView }) => {
+  return (
+    <div
+      key={`${service?.id}-${index}`}
+      className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center"
+      style={{ flexBasis: `${100 / cardsPerView}%` }}
+    >
       <div
-        key={`${service?.id}-${index}`}
-        className="flex-shrink-0 px-1 sm:px-2 flex flex-col items-center"
-        style={{ 
-          flexBasis: `${100 / cardsPerView}%`
-        }}
-      >
-        <button
-          onClick={() => navigate(`/category/${service?.id}`)}
-          className={`relative group aspect-square ${circleSize} p-[2px]
-                      bg-gradient-to-br from-white/40 via-white/10 to-transparent
-                      shadow-lg border border-white/30 hover:scale-105 transition-transform duration-300
-                      cursor-pointer`}
-          aria-label={`Browse ${service?.title_en || service?.title}`}
-        >
-          <div className="relative w-full h-full rounded-full overflow-hidden">
-            {error ? (
-              <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-xs text-gray-500">Image</span>
-              </div>
-            ) : (
-              <img
-                src={service?.image}
-                alt={service?.title_en || service?.title}
-                loading={index < 12 ? "eager" : "lazy"}
-                fetchpriority={index < 6 ? "high" : "low"}
-                decoding={index < 12 ? "sync" : "async"}
-                width={160}
-                height={160}
-                className={`w-full h-full object-cover rounded-full transition-opacity duration-300 ${
-                  loaded ? 'opacity-100' : 'opacity-0'
-                }`}
-                style={{ 
-                  contentVisibility: 'auto'
-                }}
-                onLoad={(e) => {
-                  e.target.classList.add('opacity-100');
-                  e.target.classList.remove('opacity-0');
-                }}
-                onError={(e) => {
-                  console.warn('Failed to load image:', service?.image);
-                  e.target.style.display = 'none';
-                }}
-              />
-            )}
-            {!loaded && !error && (
-              <div className="absolute inset-0 bg-gray-200 rounded-full animate-pulse" />
-            )}
-          </div>
-        </button>
-        <h3 className="text-gray-900 text-[13px] sm:text-base md:text-[15px] font-medium text-center mt-5 px-2 leading-tight max-w-full truncate">
-          {service?.title_en || service?.title}
-        </h3>
-      </div>
-    );
-  }, [circleSize, navigate]);
+  role="button"
+  tabIndex={0}
+  onClick={() => navigate(`/category/${service?.id}`)}
+  onKeyDown={(e) => e.key === "Enter" && navigate(`/category/${service?.id}`)}
+  className={`relative group aspect-square ${circleSize} p-[2px]
+              bg-gradient-to-br from-white/40 via-white/10 to-transparent
+              shadow-lg border border-white/30 hover:scale-105
+              transition-transform duration-300 cursor-pointer`}
+  aria-label={`Browse ${service?.title_en || service?.title}`}
+>
+  <div className="relative w-full h-full rounded-full overflow-hidden">
+    <SmartImage
+      image={service.image}
+      alt={service?.title_en || service?.title}
+      loading={index < 12 ? "eager" : "lazy"}
+      fetchPriority={index < 6 ? "high" : "low"}
+      decoding={index < 12 ? "sync" : "async"}
+      className="w-full h-full object-cover rounded-full"
+    />
+  </div>
+</div>
+
+
+      <h3 className="text-gray-900 text-[13px] sm:text-base md:text-[15px] font-medium text-center mt-5 px-2 leading-tight max-w-full truncate">
+        {service?.title_en || service?.title}
+      </h3>
+    </div>
+  );
+}, [circleSize, navigate]);
+
+
 
   // 11. OPTIMIZED RENDER CATEGORY CARDS
   const renderCategoryCards = useMemo(() => {

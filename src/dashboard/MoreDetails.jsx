@@ -71,7 +71,7 @@ function MoreDetails() {
         />
 
         {/* ===== Top Header ===== */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 sm:items-center">
+        <div className="mb-6 flex flex-row gap-4 sm:items-center">
           {/* Product Info */}
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 bg-white shrink-0">

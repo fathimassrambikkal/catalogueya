@@ -13,6 +13,7 @@ import {
   editFavoriteGroup,
   removeFromFavorite,
 } from "../api";
+import SmartImage from "../components/SmartImage"; // ✅ Import SmartImage
 
 
 function Fav() {
@@ -37,8 +38,22 @@ function Fav() {
     list: null,
   });
 
-  // Base URL for images
-  const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+  // ✅ Helper function to get image for SmartImage
+  const getImageForSmartImage = (imageData) => {
+    if (!imageData) return null;
+    
+    // If it's already an object with webp/avif, return as-is
+    if (typeof imageData === 'object' && !Array.isArray(imageData)) {
+      return imageData;
+    }
+    
+    // If it's a string URL, return as string
+    if (typeof imageData === 'string') {
+      return imageData;
+    }
+    
+    return null;
+  };
 
   // Default favorites list - defined as constant
   const DEFAULT_FAVORITES_LIST = {
@@ -355,20 +370,22 @@ function Fav() {
     fetchAllFavourites();
   };
 
-  // ================= GET IMAGE URL =================
-  const getImageUrl = (imgPath) => {
-    if (!imgPath) return null;
-    if (imgPath.startsWith('http')) return imgPath;
-    return `${API_BASE_URL}/${imgPath}`;
-  };
-
-  const handleNavigate = (product) => {
-    navigate(
-      resolveProductRoute({
-        ...product,
-        source: product.source || "favourites",
-      })
-    );
+  // ================= HANDLE PRODUCT NAVIGATION =================
+  const handleProductClick = (product) => {
+    console.log("📍 Navigating to product:", product);
+    
+    // Ensure product has required properties
+    const productToNavigate = {
+      ...product,
+      source: product.source || "favourites",
+      id: product.id || product.productId,
+      slug: product.slug || product.name?.toLowerCase().replace(/\s+/g, '-')
+    };
+    
+    const route = resolveProductRoute(productToNavigate);
+    console.log("📍 Resolved route:", route);
+    
+    navigate(route);
   };
 
   // ================= ERROR NOTIFICATION =================
@@ -491,23 +508,26 @@ function Fav() {
                 // When 4 or fewer products: show in a row
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   {list.products.map((product, index) => {
-                    const imageUrl = getImageUrl(product.image);
+                    const imageForSmartImage = getImageForSmartImage(product.image);
                     return (
                       <div key={index} className="relative group">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={product.name}
-                            onClick={() => handleNavigate(product)}
-                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover cursor-pointer
-                                     hover:scale-105 transition-transform"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 border border-gray-200 
-                                          flex items-center justify-center">
-                            <span className="text-gray-400 text-xs">📷</span>
-                          </div>
-                        )}
+                        <div onClick={() => handleProductClick(product)} className="cursor-pointer">
+                          {imageForSmartImage ? (
+                            <SmartImage
+                              image={imageForSmartImage}
+                              alt={product.name}
+                              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover
+                                       hover:scale-105 transition-transform"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 border border-gray-200 
+                                            flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">📷</span>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Remove button */}
                         <button
@@ -516,7 +536,7 @@ function Fav() {
                             handleRemoveProduct(product.id, list.id);
                           }}
                           className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white rounded-full 
-                                   flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                                   flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm z-10"
                           title="Remove from list"
                         >
                           <SmallDeleteIcon />
@@ -529,25 +549,28 @@ function Fav() {
                 // When more than 4 products: show ALL in wrapped rows
                 <div className="flex flex-wrap gap-2">
                   {list.products.map((product, index) => {
-                    const imageUrl = getImageUrl(product.image);
+                    const imageForSmartImage = getImageForSmartImage(product.image);
                     return (
                       <div key={index} className="relative">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={product.name}
-                            onClick={() => handleNavigate(product)}
-                            className="
-                              w-14 h-14 sm:w-16 sm:h-16
-                              rounded-lg object-cover cursor-pointer
-                              hover:scale-105 transition-transform
-                            "
-                          />
-                        ) : (
-                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
-                            <span className="text-gray-400 text-xs">📷</span>
-                          </div>
-                        )}
+                        <div onClick={() => handleProductClick(product)} className="cursor-pointer">
+                          {imageForSmartImage ? (
+                            <SmartImage
+                              image={imageForSmartImage}
+                              alt={product.name}
+                              className="
+                                w-14 h-14 sm:w-16 sm:h-16
+                                rounded-lg object-cover
+                                hover:scale-105 transition-transform
+                              "
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">📷</span>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Delete button */}
                         <button
@@ -561,7 +584,7 @@ function Fav() {
                             bg-red-500 text-white rounded-full
                             flex items-center justify-center
                             hover:bg-red-600 transition-colors
-                            shadow-sm
+                            shadow-sm z-10
                           "
                         >
                           <SmallDeleteIcon />
@@ -639,39 +662,36 @@ function Fav() {
       <div className="min-h-full p-3 sm:p-4 md:p-6 overflow-x-hidden w-full max-w-full">
         <div className="w-full max-w-full mx-auto mt-10 overflow-hidden">
           {/* ✅ UPDATED HEADER: Apple-style header with top-right button */}
-      <div className="relative mb-4 sm:mb-6 mt-10">
-  {/* Centered title */}
-  <h1 className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 text-center">
-    My Favorites Lists
-  </h1>
+          <div className="relative mb-4 sm:mb-6 mt-10">
+            {/* Centered title */}
+            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 text-center">
+              My Favorites Lists
+            </h1>
 
-  {/* Right-aligned action */}
-<button
-  onClick={() => setIsCreating(true)}
-  className="
-    absolute right-0 top-1/2 -translate-y-1/2
-    flex items-center gap-2
-    px-3  md:px-4 py-1.5 md:py-2.5
-    rounded-lg
+            {/* Right-aligned action */}
+            <button
+              onClick={() => setIsCreating(true)}
+              className="
+                absolute right-0 top-1/2 -translate-y-1/2
+                flex items-center gap-2
+                px-3  md:px-4 py-1.5 md:py-2.5
+                rounded-lg
 
-    bg-blue-500/90
-    backdrop-blur-xl
-    text-white font-semibold text-sm sm:text-base
+                bg-blue-500/90
+                backdrop-blur-xl
+                text-white font-semibold text-sm sm:text-base
 
-    shadow-[0_8px_24px_rgba(59,130,246,0.35)]
-    hover:bg-blue-500
+                shadow-[0_8px_24px_rgba(59,130,246,0.35)]
+                hover:bg-blue-500
 
-    transition-all duration-200
-    active:scale-95
-  "
->
-  <span className="text-lg leading-none">+</span>
-  <span className=" hidden md:inline">New List</span>
-</button>
-
-
-</div>
-
+                transition-all duration-200
+                active:scale-95
+              "
+            >
+              <span className="text-lg leading-none">+</span>
+              <span className="hidden md:inline">New List</span>
+            </button>
+          </div>
 
           {/* ✅ Create form under header (only when active) */}
           {isCreating && renderCreateListForm()}
@@ -679,8 +699,6 @@ function Fav() {
           <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-hidden">
             {/* Always show the default list first */}
             {defaultList && renderListCard(defaultList)}
-            
-            {/* ✅ REMOVED: The dashed "Create a New List" box */}
             
             {/* Then show user-created lists */}
             {userLists.map(renderListCard)}

@@ -32,26 +32,37 @@ const useIsInViewport = (ref) => {
 };
 
 /* -----------------------------------
-   Normalize hero images
+   Normalize hero images ONCE
 ----------------------------------- */
 const normalizeHeroImages = (apiImages) => {
   if (!apiImages) return [];
 
   try {
+    // If it's already an array of objects (from useSettings)
     if (Array.isArray(apiImages)) {
-      return apiImages
-        .map((item, i) => {
+      // Check if items are strings or objects
+      if (apiImages.length > 0 && typeof apiImages[0] === 'object') {
+        const result = apiImages.map((item, i) => {
           if (!item) return null;
-
-          let src = "";
-          if (typeof item === "object") {
-            src = item.avif || item.webp || item.src || item.url || "";
-          } else if (typeof item === "string") {
+          
+          // Extract image source from object
+          let src = '';
+          
+          // Check for webp or avif properties
+          if (item.webp || item.avif) {
+            src = item.webp || item.avif;
+          }
+          // If it's a direct image URL (fallback)
+          else if (typeof item === 'string') {
             src = item;
           }
-
+          // If it's an object with nested structure
+          else if (item.src || item.url) {
+            src = item.src || item.url;
+          }
+          
           if (!src) return null;
-
+          
           const clean = String(src).trim();
           const finalSrc = clean.startsWith("http")
             ? clean
@@ -62,11 +73,60 @@ const normalizeHeroImages = (apiImages) => {
             alt: `Hero image ${i + 1}`,
             id: `api-banner-${i}`,
           };
-        })
-        .filter(Boolean);
+        }).filter(Boolean);
+        
+        return result;
+      }
+      // If it's an array of strings (already processed by useSettings)
+      else if (apiImages.length > 0 && typeof apiImages[0] === 'string') {
+        const result = apiImages.map((src, i) => {
+          if (!src) return null;
+          
+          const clean = String(src).trim();
+          const finalSrc = clean.startsWith("http")
+            ? clean
+            : `https://catalogueyanew.com.awu.zxu.temporary.site/${clean}`;
+
+          return {
+            src: finalSrc,
+            alt: `Hero image ${i + 1}`,
+            id: `api-banner-${i}`,
+          };
+        }).filter(Boolean);
+        
+        return result;
+      }
     }
+
+    // String with embedded JSON (legacy format - shouldn't happen with useSettings)
+    if (typeof apiImages === "string") {
+      const cleanStr = apiImages
+        .replace(/\\\//g, "/")
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, "\\");
+
+      const match = cleanStr.match(/\[.*\]/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        return parsed.map((src, i) => {
+          const clean = String(src).trim();
+          const finalSrc = clean.startsWith("http")
+            ? clean
+            : `https://catalogueyanew.com.awu.zxu.temporary.site/${clean}`;
+
+          return {
+            src: finalSrc,
+            alt: `Hero image ${i + 1}`,
+            id: `api-banner-${i}`,
+          };
+        });
+      }
+      return [];
+    }
+    
   } catch (err) {
-    console.error("normalizeHeroImages error:", err);
+    console.error("Error in normalizeHeroImages:", err);
+    return [];
   }
 
   return [];
@@ -74,7 +134,7 @@ const normalizeHeroImages = (apiImages) => {
 
 export default function Banner() {
   const { settings } = useSettings();
-  useFixedWords();
+  useFixedWords(); // used elsewhere, keep hook call
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState({});
@@ -85,7 +145,7 @@ export default function Banner() {
   const isInView = useIsInViewport(sectionRef);
 
   /* -----------------------------------
-     HERO IMAGES (MEMOIZED)
+     HERO IMAGES (PURE + MEMOIZED)
   ----------------------------------- */
   const responsiveImages = useMemo(
     () => normalizeHeroImages(settings?.hero_backgrounds),
@@ -136,7 +196,8 @@ export default function Banner() {
   return (
     <section
       ref={sectionRef}
-      className={`relative isolate z-0 w-full ${sectionHeight} overflow-hidden flex items-center justify-center`}
+      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center`}
+      style={{ contain: "layout paint" }}
     >
       {/* Preload first image */}
       {responsiveImages[0]?.src && (
@@ -157,7 +218,7 @@ export default function Banner() {
             setLoadedImages((p) => ({ ...p, [img.id]: true }))
           }
           onError={() => handleImageError(img.id)}
-          className={`absolute inset-0 z-0 w-full h-full object-cover
+          className={`absolute inset-0 w-full h-full object-cover
             transition-opacity duration-[800ms] ease-out
             ${i === currentIndex ? "opacity-100" : "opacity-0"}
             ${imageErrors[img.id] ? "hidden" : ""}`}
@@ -168,12 +229,12 @@ export default function Banner() {
       {!loadedImages[responsiveImages[0]?.id] &&
         responsiveImages.length > 0 &&
         !imageErrors[responsiveImages[0]?.id] && (
-          <div className="absolute inset-0 z-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
         )}
 
       {/* Content */}
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 px-4">
-        <div className="w-full max-w-2xl mt-16">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4 z-10">
+        <div className="w-full max-w-2xl z-30 mt-16">
           <SearchBar />
         </div>
 
@@ -188,7 +249,7 @@ export default function Banner() {
 
       {/* Pagination */}
       {responsiveImages.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-0  ">
           <div className="flex gap-2 p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
             {responsiveImages.map((_, idx) => (
               <button key={idx} onClick={() => handleDotClick(idx)}>

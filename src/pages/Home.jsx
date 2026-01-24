@@ -8,6 +8,8 @@ import Sales from "../components/Sales";
 import Pricing from "../components/Pricing";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
+
+
 export default function Home() {
   return (
     <div>
@@ -18,7 +20,7 @@ export default function Home() {
       <Sales />
       <Pricing />
       <Faq />
-     
+  
       <CallToAction />
     </div>
   );

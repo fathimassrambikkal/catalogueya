@@ -1,10 +1,16 @@
-import React from "react";
-import { useFollowers } from "../context/FollowersContext";
+import React, { useState } from "react";
 import { FaUser, FaEnvelope, FaCalendar, FaTrash } from "react-icons/fa";
 
 export default function Followers() {
-  // USE REAL FOLLOWERS CONTEXT
-  const { followers, removeFollower, getFollowersCount } = useFollowers();
+  // ⛔ REMOVED FollowersContext
+  // ✅ Local state instead (replace with API later if needed)
+  const [followers, setFollowers] = useState([]);
+
+  const getFollowersCount = () => followers.length;
+
+  const removeFollower = (customerId) => {
+    setFollowers((prev) => prev.filter((f) => f.id !== customerId));
+  };
 
   /* REMOVE FOLLOWER HANDLER */
   const handleRemoveFollower = (customerId) => {
@@ -44,7 +50,9 @@ export default function Followers() {
   return (
     <div className="w-full max-w-6xl mx-auto p-3 sm:p-4 md:p-6 overflow-x-hidden">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Followers</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          Followers
+        </h1>
         <p className="text-gray-600 text-sm sm:text-base">
           You have {getFollowersCount()} follower
           {getFollowersCount() === 1 ? "" : "s"}

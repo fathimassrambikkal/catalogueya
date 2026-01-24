@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, loginCustomer, loginCompany, createCustomerConversation } from "../api";
+import { api, loginCustomer, createCustomerConversation } from "../api";
 import { useDispatch, useSelector } from "react-redux";
 import { loginSuccess } from "../store/authSlice";
 import logo from "../assets/logo.png";

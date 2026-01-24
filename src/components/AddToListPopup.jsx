@@ -20,87 +20,18 @@ const normalizeGroups = (response) => {
     : [];
 };
 
-// ✅ Blue + White Success Toast (theme-safe)
-const BlueSuccessToast = ({ message, onClose }) => {
-  const [isMounted, setIsMounted] = useState(true);
-  const { i18n } = useTranslation();
-
-  const isRTL = i18n.language === "ar";
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsMounted(false);
-      setTimeout(onClose, 300);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div
-      dir={isRTL ? "rtl" : "ltr"}
-      className="fixed top-4 sm:top-6 inset-x-0 flex justify-center z-[1000] pointer-events-none px-4"
-    >
-      <div
-        className={`
-          bg-white/80
-          text-gray-900
-          rounded-xl
-          border border-gray-200/60
-          shadow-[0_4px_16px_rgba(0,0,0,0.08)]
-          sm:rounded-2xl
-        
-          px-4 py-3 sm:px-5 sm:py-3.5
-          backdrop-blur-xl
-          flex items-center gap-3
-          transition-all duration-300 ease-out
-          ${isRTL ? "flex-row-reverse text-right" : "flex-row text-left"}
-          ${isMounted
-            ? "translate-y-0 opacity-100 scale-100"
-            : "translate-y-[-12px] opacity-0 scale-95"}
-        `}
-      >
-        {/* Icon */}
-        <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
-          <svg
-            className="w-3.5 h-3.5 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            dir="ltr"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </div>
-
-        {/* Text */}
-        <span className="text-sm font-semibold tracking-tight truncate">
-          {message}
-        </span>
-      </div>
-    </div>
-  );
-};
-
-
-
 export default function AddToListPopup() {
   const dispatch = useDispatch();
+  const { i18n } = useTranslation();
 
   const { showListPopup, pendingProduct, lists } = useSelector(
     (state) => state.favourites
   );
   const isLoggedIn = useSelector((state) => !!state.auth.user);
-const { i18n } = useTranslation();
 
   const [selectedList, setSelectedList] = useState(null);
   const [sending, setSending] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
+
   const [isClosing, setIsClosing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newListName, setNewListName] = useState("");
@@ -115,78 +46,58 @@ const { i18n } = useTranslation();
     return [];
   }, [lists]);
 
-  // ================= LOAD GROUPS FROM API =================
+  // ================= LOAD GROUPS =================
   useEffect(() => {
     if (!showListPopup || !isLoggedIn) return;
 
-    // reset states every popup open
     setSelectedList(null);
     setIsClosing(false);
-    setShowSuccessToast(false);
     setIsCreating(false);
     setNewListName("");
     setDeleteError(null);
 
     getFavoriteGroups()
       .then((res) => {
-        const groups = normalizeGroups(res);
-        dispatch(setFavouriteLists(groups));
+        dispatch(setFavouriteLists(normalizeGroups(res)));
       })
       .catch((err) =>
         console.error("❌ Failed to load favourite groups", err)
       );
   }, [showListPopup, isLoggedIn, dispatch]);
 
-  // Handle escape key to close popup
+  // ================= ESC KEY =================
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === 'Escape' && showListPopup) {
-        if (isCreating) {
-          setIsCreating(false);
-          setNewListName("");
-        } else {
-          handleClose();
-        }
+      if (e.key === "Escape" && showListPopup) {
+        isCreating ? setIsCreating(false) : handleClose();
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [showListPopup, isCreating]);
 
-  // ================= CLOSE HANDLER =================
+  // ================= CLOSE =================
   const handleClose = useCallback(() => {
     setIsClosing(true);
-    setTimeout(() => {
-      dispatch(closeListPopup());
-    }, 200);
+    setTimeout(() => dispatch(closeListPopup()), 200);
   }, [dispatch]);
 
-  // ================= CREATE NEW LIST =================
+  // ================= CREATE LIST =================
   const handleCreateList = async () => {
     if (!newListName.trim() || creatingList) return;
 
     try {
       setCreatingList(true);
-
       await createFavoriteGroup(newListName.trim());
-      
-      // Refresh lists
+
       const res = await getFavoriteGroups();
-      const groups = normalizeGroups(res);
-      dispatch(setFavouriteLists(groups));
-      
-      // Reset creation state
+      dispatch(setFavouriteLists(normalizeGroups(res)));
+
       setNewListName("");
       setIsCreating(false);
-      
-      // Show success message
-      setShowSuccessToast(true);
-      setTimeout(() => setShowSuccessToast(false), 1500);
-
     } catch (err) {
       console.error("❌ Create list failed", err);
-      // Only show alert for sending (as requested)
     } finally {
       setCreatingList(false);
     }
@@ -200,35 +111,25 @@ const { i18n } = useTranslation();
       setDeletingList(true);
       setDeleteError(null);
 
-      // Show immediate UI update
-      const updatedLists = safeLists.filter(l => l.id !== list.id);
-      dispatch(setFavouriteLists(updatedLists));
-      
-      // Make API call
-      await deleteFavoriteGroup(list.id);
-      
-      // If the deleted list was selected, clear selection
-      if (selectedList?.id === list.id) {
-        setSelectedList(null);
-      }
-      
-      // Show success message
-      setShowSuccessToast(true);
-      setTimeout(() => setShowSuccessToast(false), 1500);
+      dispatch(
+        setFavouriteLists(safeLists.filter((l) => l.id !== list.id))
+      );
 
+      await deleteFavoriteGroup(list.id);
+
+      if (selectedList?.id === list.id) setSelectedList(null);
     } catch (err) {
       console.error("❌ Delete list failed:", err);
       setDeleteError(err?.response?.data?.message || "Failed to delete list");
-      // Refresh lists from server on error
+
       const res = await getFavoriteGroups();
-      const groups = normalizeGroups(res);
-      dispatch(setFavouriteLists(groups));
+      dispatch(setFavouriteLists(normalizeGroups(res)));
     } finally {
       setDeletingList(false);
     }
   };
 
-  // ================= SEND PRODUCT =================
+  // ================= ADD PRODUCT =================
   const handleSend = async () => {
     if (!selectedList) return;
 
@@ -240,41 +141,27 @@ const { i18n } = useTranslation();
         selectedList.id
       );
 
-      // Show success toast with the list name
-      setShowSuccessToast(true);
-      
-      // 🔁 re-fetch groups so Redux stays in sync
       const res = await getFavoriteGroups();
-      const groups = normalizeGroups(res);
-      dispatch(setFavouriteLists(groups));
-      
-      // Close popup after a short delay
-      setTimeout(() => {
-        handleClose();
-      }, 100);
+      dispatch(setFavouriteLists(normalizeGroups(res)));
 
+      setTimeout(handleClose, 100);
     } catch (err) {
       console.error("❌ Add to favourite failed", err);
-      // Show alert only for sending (as requested)
-      alert(`Failed to add to list: ${err?.response?.data?.message || err.message}`);
+      alert(
+        `Failed to add to list: ${
+          err?.response?.data?.message || err.message
+        }`
+      );
     } finally {
       setSending(false);
     }
   };
 
-  // Prevent backdrop click from closing when in create mode
   const handleBackdropClick = (e) => {
-    if (isCreating) {
-      // Don't close on backdrop click when in create mode
-      e.stopPropagation();
-    } else {
-      handleClose();
-    }
+    isCreating ? e.stopPropagation() : handleClose();
   };
 
-  // 🚫 render guard AFTER hooks
   if (!isLoggedIn || !showListPopup || !pendingProduct) return null;
-
 
   
 
@@ -286,17 +173,6 @@ const { i18n } = useTranslation();
         onClick={handleBackdropClick}
       />
 
-      {/* Success Toast */}
-      {showSuccessToast && (
-  <BlueSuccessToast
-    message={
-      selectedList
-        ? `Added to "${selectedList.name}"`
-        : "List deleted successfully"
-    }
-    onClose={() => setShowSuccessToast(false)}
-  />
-)}
 
 
       {/* Popup - Responsive positioning */}

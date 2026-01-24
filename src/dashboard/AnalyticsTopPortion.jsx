@@ -63,7 +63,7 @@ function AnalyticsTopPortion({ range, setRange }) {
   return (
     <div className="space-y-6">
       {/* ================= TOP SECTION ================= */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mt-20">
+      <div className="flex  gap-4 flex-row lg:items-center lg:justify-between mt-20">
         {/* LEFT */}
         <div className="relative">
           <div className="p-4 sm:p-6">
@@ -139,13 +139,16 @@ function AnalyticsTopPortion({ range, setRange }) {
 /* ================= METRIC ================= */
 function Metric({ Icon, value }) {
   return (
-    <div className="flex  items-center gap-2">
-      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 shrink-0">
+    <div className="flex flex-col items-center gap-1 text-center">
+      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50">
         <Icon className="w-3.5 h-3.5 text-blue-600" />
       </span>
-      <span className="font-medium">{value}</span>
+      <span className="font-semibold text-[12px] leading-none">
+        {value}
+      </span>
     </div>
   );
 }
+
 
 export default AnalyticsTopPortion;

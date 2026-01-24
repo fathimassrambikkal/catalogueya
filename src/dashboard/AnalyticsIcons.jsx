@@ -88,13 +88,30 @@ export const LikeIcon = (props) => (
 /* ===================== SOLD ===================== */
 
 
-export const SoldIcon = (props) => (
-  <svg {...baseProps} {...props}>
-    <path d="M6 8V6a6 6 0 0 1 12 0v2" />
-    <rect x="4" y="8" width="16" height="13" rx="2" />
-    <path d="M9 12h6" />
+export const SoldIcon = ({ className = "" }) => (
+  <svg
+    className={className}
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    {/* Handle */}
+    <path d="M7 8V6a5 5 0 0 1 10 0v2" />
+
+    {/* Bag */}
+    <rect x="4" y="8" width="16" height="12" rx="2" />
+
+    {/* Item line */}
+    <path d="M9 13h6" />
   </svg>
 );
+
 /* ===================== INFO ===================== */
 /* Clean info circle */
 

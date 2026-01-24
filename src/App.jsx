@@ -9,6 +9,8 @@ import { useDispatch } from "react-redux";
 import { loginSuccess } from "./store/authSlice";
 import { Toaster } from "react-hot-toast";
 import { showToast } from "./utils/showToast.jsx";
+import { fetchFavourites } from "./store/favouritesSlice";
+
 
 
 
@@ -52,21 +54,34 @@ function AppContent() {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  // ✅ AUTH REHYDRATION (CRITICAL)
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-    const userType = localStorage.getItem("userType");
+// 1️⃣ AUTH REHYDRATION (MUST BE FIRST)
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
+  const userType = localStorage.getItem("userType");
 
-    if (token && user && userType) {
-      dispatch(
-        loginSuccess({
-          user: JSON.parse(user),
-          userType,
-        })
-      );
-    }
-  }, [dispatch]);
+  if (token && user && userType) {
+    dispatch(
+      loginSuccess({
+        user: JSON.parse(user),
+        userType,
+      })
+    );
+  }
+}, [dispatch]);
+
+// 2️⃣ FETCH FAVOURITES (AFTER AUTH EXISTS)
+useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    dispatch(fetchFavourites());
+  }
+}, [dispatch]);
+
+
+
+
 const hideNavbar = [
   "/customer-login/chat",
 ].some(path => location.pathname.startsWith(path));

@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
+import SmartImage from "../components/SmartImage";
+
 
 // Import shared components
 import { 
@@ -17,7 +19,9 @@ import { ProductCardSkeleton } from "../components/Skeletons";
 import { useIsInViewport } from "../hooks/useIsInViewport";
 import { useCardWidth } from "../hooks/useCardWidth";
 
-const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+
+
+
 
 // MAIN SALES COMPONENT
 function SalesComponent() {
@@ -52,29 +56,30 @@ function SalesComponent() {
         if (!mounted || !paginated?.data) return;
 
         const mapped = paginated.data.map(product => ({
-          id: product.id,
-          name: product.name,
-          price: product.discount_price || product.price,
-          oldPrice: product.discount_price ? product.price : null,
-          img: product.image,
-          rating: parseFloat(product.rating) || 0,
-          description: product.description,
-          company_id: product.company_id?.id,
-          company_name: product.company_name || "Company",
-          category_id: product.category_id,
-        }));
+  id: product.id,
+  name: product.name,
+
+  // ✅ unified pricing model
+  price: product.discount_price || product.price,
+  old_price: product.discount_price ? product.price : null,
+
+  hasDiscount: !!product.discount_price && product.discount_price < product.price,
+  discountPercentage: product.discount_price
+    ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+    : 0,
+
+  image: product.image,
+  description: product.description,
+  company_id: product.company_id?.id,
+  company_name: product.company_name || "Company",
+  category_id: product.category_id,
+  rating: parseFloat(product.rating) || 0,
+}));
+
 
         setApiProducts(mapped);
         
-        // Preload images in background
-        mapped.forEach(product => {
-          if (product?.img) {
-            const img = new Image();
-            const imageUrl = product.img.startsWith('http') ? product.img : `${API_BASE_URL}/${product.img}`;
-            img.src = imageUrl;
-            img.fetchPriority = 'high';
-          }
-        });
+        
       } catch (err) {
         console.error("Failed to load sales products", err);
       } finally {
@@ -207,13 +212,17 @@ function SalesComponent() {
       <div className="relative">
         <div 
           ref={scrollContainerRef}
-          className="flex overflow-x-auto pb-8 -mx-3 sm:-mx-6 md:-mx-10 lg:-mx-16 xl:-mx-24 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24
-                     scrollbar-hide scroll-smooth
-                     [scrollbar-width:none] [-ms-overflow-style:none]
-                     [&::-webkit-scrollbar]:hidden"
+         className="flex overflow-x-auto pb-8
+             -mx-3 sm:-mx-6 md:-mx-10 lg:-mx-16 xl:-mx-24
+             px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24
+             scroll-pl-3 scroll-pr-0 sm:scroll-pr-0
+             scrollbar-hide scroll-smooth
+             [scrollbar-width:none] [-ms-overflow-style:none]
+             [&::-webkit-scrollbar]:hidden"
           style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}
         >
           <div className="flex gap-3 sm:gap-4 items-stretch">
+            <div className="shrink-0 w-px" />
             {showSkeleton ? (
               // ✅ Show shimmering skeletons immediately (4 cards)
               Array.from({ length: 4 }).map((_, index) => (
@@ -242,6 +251,32 @@ function SalesComponent() {
                       onNavigate={() => handleNavigate(product)}
                       onChat={handleChatClick}
                       currency={fw.qar}
+priceSlot={
+  <div className="flex items-center gap-2 mt-1">
+    <span className="font-bold text-gray-900   text-[11px] sm:text-[14px] md:text-xs">
+      {fw.qar} {product.price}
+    </span>
+
+    {product.old_price && (
+      <span className="line-through  text-gray-500  text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs ">
+        {product.old_price}
+      </span>
+    )}
+  </div>
+}
+
+
+
+                     
+                      imageSlot={
+                        <SmartImage
+                          image={product.image} 
+                          alt={product.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover rounded-t-2xl
+                                   transition-transform duration-300 group-hover:scale-105"
+                        />
+                      }
                     />
                   </div>
                 );

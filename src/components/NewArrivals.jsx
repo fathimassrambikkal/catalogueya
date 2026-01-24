@@ -6,22 +6,23 @@ import { getArrivalsProducts, createCustomerConversation } from "../api";
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { resolveProductRoute } from "../utils/productNavigation";
+import SmartImage from "../components/SmartImage";
 
 // Import shared components
 import { 
-  StarIcon, 
-  HeartIcon, 
   ChevronLeft, 
   ChevronRight, 
-  ArrowOutwardIcon, 
-  ChatIcon 
+  ArrowOutwardIcon 
 } from "../components/SvgIcon";
+
 import { ProductCard } from "../components/ProductCard";
 import { ProductCardSkeleton } from "../components/Skeletons";
 import { useIsInViewport } from "../hooks/useIsInViewport";
 import { useCardWidth } from "../hooks/useCardWidth";
 
-const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
+
+
+
 
 function NewArrivalsComponent() {
   const navigate = useNavigate();
@@ -57,31 +58,27 @@ function NewArrivalsComponent() {
 
         if (!mounted || !paginated?.data) return;
 
-        const mapped = paginated.data.map(product => ({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          oldPrice: null,
-          img: product.image,
-          rating: parseFloat(product.rating) || 0,
-          description: product.description,
-          isNewArrival: true,
-          company_id: product.company_id?.id,
-          company_name: product.company_name?.name || "Company",
-          category_id: product.category_id,
-        }));
+      const mapped = paginated.data.map(product => ({
+  id: product.id,
+  name: product.name,
+  price: product.price,
+  oldPrice: null,
+
+  // ✅ keep raw backend image object
+  image: product.image,
+
+  description: product.description,
+  isNewArrival: true,
+  company_id: product.company_id?.id,
+  company_name: product.company_name?.name || "Company",
+  category_id: product.category_id,
+}));
+
 
         setApiProducts(mapped);
         
-        // Preload images in background
-        mapped.forEach(product => {
-          if (product?.img) {
-            const img = new Image();
-            const imageUrl = product.img.startsWith('http') ? product.img : `${API_BASE_URL}/${product.img}`;
-            img.src = imageUrl;
-            img.fetchPriority = 'high';
-          }
-        });
+      
+    
       } catch (err) {
         console.error("Failed to load new arrivals", err);
       } finally {
@@ -190,6 +187,14 @@ function NewArrivalsComponent() {
   // ✅ Always show skeleton initially, then replace with products
   const displayProducts = apiProducts.length > 0 ? apiProducts : [];
   const showSkeleton = apiProducts.length === 0;
+ 
+
+
+  document.querySelectorAll("img").forEach(img => {
+  if (img.src.includes("object")) {
+    console.log("❌ Broken image:", img);
+  }
+});
 
   return (
     <section 
@@ -225,12 +230,15 @@ function NewArrivalsComponent() {
         <div 
           ref={scrollContainerRef}
           className="flex overflow-x-auto pb-8 -mx-3 sm:-mx-6 md:-mx-10 lg:-mx-16 xl:-mx-24 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24
+          scroll-pl-3 scroll-pr-0 sm:scroll-pr-0
+
                      scrollbar-hide scroll-smooth
                      [scrollbar-width:none] [-ms-overflow-style:none]
                      [&::-webkit-scrollbar]:hidden"
           style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}
         >
           <div className="flex gap-3 sm:gap-4">
+            <div className="shrink-0 w-px" />
             {showSkeleton ? (
               // ✅ Show shimmering skeletons immediately (4 cards)
               Array.from({ length: 4 }).map((_, index) => (
@@ -244,15 +252,25 @@ function NewArrivalsComponent() {
                   className="flex-none"
                   style={{ width: cardWidth, minWidth: cardWidth }}
                 >
-                  <ProductCard
-                    product={product}
-                    isFav={isProductFav(product.id)}
-                    onToggleFavourite={handleToggleFav}
-                    onNavigate={handleNavigate}
-                    onChat={handleChatClick}
-                    currency={fw.qar}
-                    showDiscount={false}
-                  />
+              <ProductCard
+  product={product}
+  isFav={isProductFav(product.id)}
+  onToggleFavourite={handleToggleFav}
+  onNavigate={handleNavigate}
+  onChat={handleChatClick}
+  currency={fw.qar}
+
+  imageSlot={
+    <SmartImage
+      image={product.image}   // 👈 raw { avif, webp }
+      alt={product.name}
+      loading="lazy"
+      className="w-full h-full object-cover rounded-t-2xl
+                 transition-transform duration-300 group-hover:scale-105"
+    />
+  }
+/>
+
                 </div>
               ))
             )}

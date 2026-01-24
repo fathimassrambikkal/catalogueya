@@ -8,7 +8,7 @@ import { store } from "./store";
 
 
 
-import { FollowersProvider } from "./context/FollowersContext";
+
 
 import ErrorBoundary from "./components/ErrorBoundary";
 import { getGoogleMap } from "./api";
@@ -67,11 +67,11 @@ const Main = () => {
         <HashRouter>
           
           
-              <FollowersProvider>
+            
                 <LenisProvider>
                   <App />
                 </LenisProvider>
-              </FollowersProvider>
+              
            
           
         </HashRouter>

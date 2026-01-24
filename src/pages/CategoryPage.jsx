@@ -11,72 +11,39 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { useFixedWords } from "../hooks/useFixedWords";
 import BackButton from "../components/BackButton";
-
+import {
+  HeartIcon,
+  StarIcon,
+   ArrowOutward
+} from "../components/SvgIcon";
+import SmartImage from "../components/SmartImage";
 
 import { getCategory} from "../api";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
-// =================== SVG ICONS ===================
-
-
-const HeartIcon = ({ filled, className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="14" 
-    height="14" 
-    viewBox="0 0 24 24"
-    fill={filled ? "currentColor" : "none"}
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-);
-
-const StarIcon = ({ filled, className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="12" 
-    height="12" 
-    viewBox="0 0 576 512"
-    fill={filled ? "currentColor" : "none"}
-    stroke={filled ? "currentColor" : "#9CA3AF"}
-    strokeWidth="30"
-  >
-    <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
-  </svg>
-);
-
-const ArrowOutwardIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="16" 
-    height="16" 
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M7 17L17 7M17 7H7M17 7V17" />
-  </svg>
-);
-
 // =================== IMAGE UTILITY FUNCTIONS ===================
-const formatImageUrl = (imgPath) => {
-  if (!imgPath) return "/api/placeholder/300/200";
-  if (imgPath.startsWith("http")) return imgPath;
+const formatImageUrl = (imgData) => {
+  if (!imgData) return null;
   
-  // Clean the path - remove leading slash if present
-  const cleanPath = imgPath.startsWith('/') ? imgPath.slice(1) : imgPath;
-  return `${API_BASE_URL}/${cleanPath}`;
+  // Handle new backend format (object with webp/avif)
+  if (typeof imgData === 'object' && imgData !== null) {
+    // Return the object as-is, SmartImage will handle it
+    return imgData;
+  }
+  
+  // Handle old backend format (string)
+  if (typeof imgData === 'string') {
+    if (imgData.startsWith("http")) return imgData;
+    // Clean the path - remove leading slash if present
+    const cleanPath = imgData.startsWith('/') ? imgData.slice(1) : imgData;
+    return `${API_BASE_URL}/${cleanPath}`;
+  }
+  
+  return null;
 };
 
-// =================== OPTIMIZED IMAGE COMPONENT ===================
+// =================== OPTIMIZED IMAGE COMPONENT (UPDATED) ===================
 const OptimizedImage = memo(({ 
   src, 
   alt, 
@@ -89,28 +56,59 @@ const OptimizedImage = memo(({
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef(null);
 
-  // Format the image URL properly
+  // Check if src is object (new format) or string (old format)
+  const isNewFormat = useMemo(() => 
+    src && typeof src === 'object' && (src.webp || src.avif), 
+    [src]
+  );
+
+  // Handle click
+  const handleClick = (e) => {
+    if (onClick) onClick(e);
+  };
+
+  // If it's new format (object), use SmartImage
+  if (isNewFormat) {
+    return (
+      <div className="relative w-full h-full overflow-hidden">
+       
+        <SmartImage
+          image={src}
+          alt={alt}
+          className={`${className} transition-opacity duration-300`}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          onLoad={() => setIsLoaded(true)}
+          onError={() => {
+            setHasError(true);
+            if (onError) onError();
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Old format (string URL) - fallback to regular img
   const formattedSrc = useMemo(() => {
-    return formatImageUrl(src);
+    if (typeof src === 'string') {
+      if (src.startsWith("http")) return src;
+      if (src.startsWith('/')) return src.slice(1);
+      return `${API_BASE_URL}/${src}`;
+    }
+    return src;
   }, [src]);
 
   useEffect(() => {
+    if (!formattedSrc || !imgRef.current) return;
+    
     const img = imgRef.current;
-    if (!img || !formattedSrc) return;
 
-    const handleLoad = () => {
-      setIsLoaded(true);
-    };
-
+    const handleLoad = () => setIsLoaded(true);
     const handleError = () => {
       setHasError(true);
-      if (onError) {
-        const syntheticEvent = { target: { src: "/api/placeholder/400/400" } };
-        onError(syntheticEvent);
-      }
+      if (onError) onError();
     };
 
-    img.src = formattedSrc;
     img.addEventListener('load', handleLoad);
     img.addEventListener('error', handleError);
 
@@ -120,25 +118,22 @@ const OptimizedImage = memo(({
     };
   }, [formattedSrc, onError]);
 
-  const handleClick = (e) => {
-    if (onClick) onClick(e);
-  };
-
   return (
-    <div className="relative w-full h-full overflow-hidden ">
+    <div className="relative w-full h-full overflow-hidden">
       {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse " />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse" />
       )}
-      <img
-        ref={imgRef}
-        alt={alt}
-        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 `}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
-        onClick={handleClick}
-        style={{ willChange: 'transform, opacity' }}
-        fetchPriority={priority ? "high" : "auto"}
-      />
+      {formattedSrc && (
+       <img
+  ref={imgRef}
+  src={formattedSrc}
+  alt={alt}
+  className={`${className}`}
+  loading={priority ? "eager" : "lazy"}
+  decoding="async"
+/>
+
+      )}
     </div>
   );
 });
@@ -168,9 +163,9 @@ const CompanyCard = memo(({ company, navigate }) => {
     navigate(`/company/${company.id}`);
   }, [company.id, navigate]);
 
-  // Get image URL - defined inside component
-  const getImageUrl = useCallback((imgPath) => {
-    return formatImageUrl(imgPath);
+  // Get image URL - properly handle both formats
+  const getImageUrl = useCallback((imgData) => {
+    return formatImageUrl(imgData);
   }, []);
 
   // Memoize expensive calculations
@@ -181,12 +176,12 @@ const CompanyCard = memo(({ company, navigate }) => {
   }), [company.name, company.title, company.logo, company.image, formatRating, rating, getImageUrl]);
 
   const ratingDisplay = useMemo(() => (
-    <div className="flex items-center gap-1 rtl:flex-row-reverse ">
+    <div className="flex items-center gap-1 rtl:flex-row-reverse">
       <StarIcon
         filled={rating > 0}
-        className="w-3 h-3 "
+        className="w-3 h-3"
       />
-      <span className="text-xs text-gray-600 font-medium ">
+      <span className="text-xs text-gray-600 font-medium">
         {companyData.rating}
       </span>
     </div>
@@ -195,15 +190,15 @@ const CompanyCard = memo(({ company, navigate }) => {
   return (
     <div
       onClick={handleClick}
-      className="relative group cursor-pointer bg-white rounded-xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden w-full max-w-[220px] mx-auto  hover:scale-[1.03]"
+      className="relative group cursor-pointer bg-white rounded-xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden w-full max-w-[220px] mx-auto hover:scale-[1.03]"
       style={{ willChange: 'transform' }}
     >
-      <div className="relative w-full h-[120px] overflow-hidden rounded-t-xl ">
+      <div className="relative w-full h-[120px] overflow-hidden rounded-t-xl">
         {companyData.logo ? (
           <OptimizedImage
             src={companyData.logo}
             alt={companyData.name}
-            className="object-cover w-[88%] h-[92%] m-auto rounded-xl transition-transform duration-300 group-hover:scale-105 mt-2 "
+            className="object-cover w-[88%] h-[92%] m-auto rounded-xl transition-transform duration-300 group-hover:scale-105 mt-2"
             priority={false}
             onError={() => {}}
           />
@@ -212,10 +207,10 @@ const CompanyCard = memo(({ company, navigate }) => {
         )}
       </div>
       
-      <div className="flex items-start justify-between p-3 pt-2 gap-2 ">
-        <div className="flex flex-col min-w-0 flex-1 ">
+      <div className="flex items-start justify-between p-3 pt-2 gap-2">
+        <div className="flex flex-col min-w-0 flex-1">
           {companyData.name ? (
-            <h3 className="text-gray-900 font-medium text-sm sm:text-base line-clamp-2 mb-1 leading-tight break-words text-start rtl:text-right ">
+            <h3 className="text-gray-900 font-medium text-sm sm:text-base line-clamp-2 mb-1 leading-tight break-words text-start rtl:text-right">
               {companyData.name}
             </h3>
           ) : (
@@ -223,8 +218,8 @@ const CompanyCard = memo(({ company, navigate }) => {
           )}
           {ratingDisplay}
         </div>
-        <div className="flex-shrink-0 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300 mt-1 ">
-          <ArrowOutwardIcon className="text-gray-700 text-sm " />
+        <div className="flex-shrink-0 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300 mt-1">
+          <ArrowOutward className="text-gray-700 text-sm" />
         </div>
       </div>
     </div>
@@ -242,9 +237,9 @@ const ProductCard = memo(({
 }) => {
   const { getSafeRating, formatRating } = useRatingHelpers();
   
-  // Get image URL - defined inside component
-  const getImageUrl = useCallback((imgPath) => {
-    return formatImageUrl(imgPath);
+  // Get image URL - handle both formats
+  const getImageUrl = useCallback((imgData) => {
+    return formatImageUrl(imgData);
   }, []);
   
   // Memoize all derived data
@@ -302,16 +297,16 @@ const ProductCard = memo(({
       <StarIcon
         key={i}
         filled={i < Math.floor(productData.rating)}
-        className={`w-3 h-3  ${i < Math.floor(productData.rating) ? "text-white" : "text-gray-400"}`}
+        className={`w-3 h-3 ${i < Math.floor(productData.rating) ? "text-white" : "text-gray-400"}`}
       />
     ))
   ), [productData.rating]);
 
   const ratingBadge = useMemo(() => (
     productData.rating > 0 && (
-      <div className="absolute bottom-3 left-3 rtl:left-auto rtl:right-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg ">
+      <div className="absolute bottom-3 left-3 rtl:left-auto rtl:right-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
         {ratingStars}
-        <span className="text-[10px] text-white ml-1 rtl:ml-0 rtl:mr-1 ">
+        <span className="text-[10px] text-white ml-1 rtl:ml-0 rtl:mr-1">
           {productData.formattedRating}
         </span>
       </div>
@@ -319,131 +314,128 @@ const ProductCard = memo(({
   ), [productData.rating, productData.formattedRating, ratingStars]);
 
   const favouriteButton = useMemo(() => (
-<button
-  onClick={handleFavouriteClick}
-  className={`
-    absolute top-[clamp(6px,1.2vw,8px)] right-[clamp(6px,1.2vw,8px)]
-    z-20
-    flex items-center justify-center
-    w-[clamp(28px,3vw,34px)]
-    h-[clamp(28px,3vw,34px)]
-    rounded-full
-    backdrop-blur-md
-    border
-    shadow-md
-    transition
-    hover:scale-105 active:scale-90
-    ${isFav
-      ? "bg-red-100 text-red-600 border-red-200"
-      : "bg-white text-gray-600 border-white hover:bg-red-50"}
-  `}
->
-  <HeartIcon
-    filled={isFav}
-    className={`
-      w-[clamp(11px,1.2vw,15px)]
-      h-[clamp(11px,1.2vw,15px)]
-      transition-colors
-      ${isFav ? "text-red-500" : "hover:text-red-400"}
-    `}
-  />
-</button>
-
-
+    <button
+      onClick={handleFavouriteClick}
+      className={`
+        absolute top-[clamp(6px,1.2vw,8px)] right-[clamp(6px,1.2vw,8px)]
+        z-20
+        flex items-center justify-center
+        w-[clamp(28px,3vw,34px)]
+        h-[clamp(28px,3vw,34px)]
+        rounded-full
+        backdrop-blur-md
+        border
+        shadow-md
+        transition
+        hover:scale-105 active:scale-90
+        ${isFav
+          ? "bg-red-100 text-red-600 border-red-200"
+          : "bg-white text-gray-600 border-white hover:bg-red-50"}
+      `}
+    >
+      <HeartIcon
+        filled={isFav}
+        className={`
+          w-[clamp(11px,1.2vw,15px)]
+          h-[clamp(11px,1.2vw,15px)]
+          transition-colors
+          ${isFav ? "text-red-500" : "hover:text-red-400"}
+        `}
+      />
+    </button>
   ), [isFav, handleFavouriteClick]);
 
   return (
-<div
-  onClick={handleCardClick}
-  className="
-    relative
-    flex-none
-    w-full
-    max-w-[220px]
-    rounded-3xl
-    overflow-hidden
-    group
-    cursor-pointer
-    bg-white
-    border border-gray-200
-    transition-transform duration-300
-    hover:scale-[1.03]
-    mx-auto
-  "
-  style={{ willChange: "transform" }}
->
-  {favouriteButton}
+    <div
+      onClick={handleCardClick}
+      className="
+        relative
+        flex-none
+        w-full
+        max-w-[220px]
+        rounded-3xl
+        overflow-hidden
+        group
+        cursor-pointer
+        bg-white
+        border border-gray-200
+        transition-transform duration-300
+        hover:scale-[1.03]
+        mx-auto
+      "
+      style={{ willChange: "transform" }}
+    >
+      {favouriteButton}
 
-  {/* Product Image */}
-  <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
-    {productData.image ? (
-      <OptimizedImage
-        src={productData.image}
-        alt={productData.name}
-        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        priority={false}
-        onError={() => {}}
-      />
-    ) : (
-      <div className="w-full h-full bg-gray-100 animate-pulse" />
-    )}
+      {/* Product Image */}
+      <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
+        {productData.image ? (
+          <OptimizedImage
+            src={productData.image}
+            alt={productData.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            priority={false}
+            onError={() => {}}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 animate-pulse" />
+        )}
 
-    {ratingBadge}
-  </div>
+        {ratingBadge}
+      </div>
 
-  {/* Product Info */}
-  <div className="p-3 border-t border-gray-100">
-    <div className="flex-1">
-      {productData.name ? (
-        <>
-          <h3
-            className="
-              font-semibold
-              text-gray-900
-              mb-1
-              truncate
-              text-[11px]
-              xs:text-[10px]
-              sm:text-[14px]
-              md:text-xs
-              rtl:text-right
-            "
-          >
-            {productData.name}
-          </h3>
+      {/* Product Info */}
+      <div className="p-3 border-t border-gray-100">
+        <div className="flex-1">
+          {productData.name ? (
+            <>
+              <h3
+                className="
+                  font-semibold
+                  text-gray-900
+                  mb-1
+                  truncate
+                  text-[11px]
+                  xs:text-[10px]
+                  sm:text-[14px]
+                  md:text-xs
+                  rtl:text-right
+                "
+              >
+                {productData.name}
+              </h3>
 
-          <div className="flex items-center gap-1">
-            <span
-              className="
-                font-bold
-                text-gray-900
-                text-[10px]
-                xs:text-[10px]
-                sm:text-[11px]
-                md:text-xs
-              "
-            >
-              {productData.formattedPrice}
-            </span>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="h-3.5 bg-gray-200 rounded-full w-3/4 mb-2 animate-pulse" />
-          <div className="h-3 bg-gray-200 rounded-full w-1/2 animate-pulse" />
-        </>
-      )}
+              <div className="flex items-center gap-1">
+                <span
+                  className="
+                    font-bold
+                    text-gray-900
+                    text-[10px]
+                    xs:text-[10px]
+                    sm:text-[11px]
+                    md:text-xs
+                  "
+                >
+                  {productData.formattedPrice}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="h-3.5 bg-gray-200 rounded-full w-3/4 mb-2 animate-pulse" />
+              <div className="h-3 bg-gray-200 rounded-full w-1/2 animate-pulse" />
+            </>
+          )}
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-
   );
 });
 ProductCard.displayName = 'ProductCard';
 
 // =================== SKELETON LOADERS ===================
 const CompanyCardSkeleton = memo(() => (
-  <div className="relative bg-white rounded-xl border border-gray-100 overflow-hidden w-full max-w-[220px] mx-auto ">
+  <div className="relative bg-white rounded-xl border border-gray-100 overflow-hidden w-full max-w-[220px] mx-auto">
     <div className="w-full h-[120px] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-t-xl animate-shimmer bg-[length:200%_100%]" />
     <div className="p-3 space-y-2.5">
       <div className="h-3.5 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-[85%]"></div>
@@ -454,7 +446,7 @@ const CompanyCardSkeleton = memo(() => (
 CompanyCardSkeleton.displayName = 'CompanyCardSkeleton';
 
 const ProductCardSkeleton = memo(() => (
-  <div className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden bg-white border border-gray-100 mx-auto ">
+  <div className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden bg-white border border-gray-100 mx-auto">
     <div className="w-full h-[200px] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-shimmer bg-[length:200%_100%]" />
     <div className="p-4 space-y-2.5">
       <div className="h-4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-[90%]"></div>
@@ -493,34 +485,32 @@ const CategoryPage = memo(() => {
     [favourites]
   );
 
-const handleToggleFavourite = useCallback(
-  (product) => {
-    const isAlreadyFav = favourites.some(
-      (item) => item.id === product.id
-    );
+  const handleToggleFavourite = useCallback(
+    (product) => {
+      const isAlreadyFav = favourites.some(
+        (item) => item.id === product.id
+      );
 
-    // ✅ 1. IMMEDIATE UI UPDATE (guest + logged-in)
-    dispatch(
-      toggleFavourite({
-        ...product,
-        source: "category",
-      })
-    );
-
-    // ✅ 2. LOGGED-IN → open popup for backend sync
-    if (auth.user && !isAlreadyFav) {
+      // ✅ 1. IMMEDIATE UI UPDATE (guest + logged-in)
       dispatch(
-        openListPopup({
+        toggleFavourite({
           ...product,
           source: "category",
         })
       );
-    }
-  },
-  [dispatch, favourites, auth.user]
-);
 
-
+      // ✅ 2. LOGGED-IN → open popup for backend sync
+      if (auth.user && !isAlreadyFav) {
+        dispatch(
+          openListPopup({
+            ...product,
+            source: "category",
+          })
+        );
+      }
+    },
+    [dispatch, favourites, auth.user]
+  );
 
   // =================== INITIAL FETCH ===================
   useEffect(() => {
@@ -596,7 +586,7 @@ const handleToggleFavourite = useCallback(
       mounted = false;
       abortController.abort();
     };
-  }, [categoryId, productPage]); // ✅ Re-fetch when productPage changes
+  }, [categoryId]); // Remove productPage dependency to avoid double fetch
 
   // =================== LOAD MORE PRODUCTS ===================
   const loadMoreProducts = useCallback(async () => {
@@ -702,16 +692,36 @@ const handleToggleFavourite = useCallback(
     setSortBy(e.target.value);
   }, []);
 
-  // Get image URL function for category
-  const getCategoryImageUrl = useCallback((imgPath) => {
-    return formatImageUrl(imgPath);
+  // Get category header image - SPECIAL HANDLING for category image
+  const getCategoryHeaderImage = useCallback((imgData) => {
+    if (!imgData) return null;
+    
+    // If it's the new format (object with webp/avif)
+    if (typeof imgData === 'object' && imgData.webp) {
+      // For category header, we need a string URL, so use webp as fallback
+      const webpPath = imgData.webp;
+      if (webpPath.startsWith("http")) return webpPath;
+      return `${API_BASE_URL}/${webpPath.replace(/^\//, '')}`;
+    }
+    
+    // If it's a string
+    if (typeof imgData === 'string') {
+      if (imgData.startsWith("http")) return imgData;
+      return `${API_BASE_URL}/${imgData.replace(/^\//, '')}`;
+    }
+    
+    return null;
   }, []);
 
   // Memoize category data
-  const categoryData = useMemo(() => ({
-    name: category?.title || category?.name || "Category",
-    image: getCategoryImageUrl(category?.image)
-  }), [category, getCategoryImageUrl]);
+  const categoryData = useMemo(() => {
+    const imageUrl = getCategoryHeaderImage(category?.image);
+    
+    return {
+      name: category?.title || category?.name || "Category",
+      image: imageUrl
+    };
+  }, [category, getCategoryHeaderImage]);
 
   // =================== RENDER PRODUCTS IN SINGLE GRID ===================
   const renderProductsGrid = useMemo(() => {
@@ -814,9 +824,8 @@ const handleToggleFavourite = useCallback(
 
   return (
     <section className="min-h-screen w-full py-10 sm:py-14 px-4 sm:px-8 md:px-12 relative overflow-hidden">
-
-
-       <BackButton   variant="absolute" className="top-16"/>
+      <BackButton variant="absolute" className="top-16"/>
+      
       {/* Loading indicator */}
       {loading && (
         <div className="fixed top-4 right-4 z-50">
@@ -827,13 +836,11 @@ const handleToggleFavourite = useCallback(
         </div>
       )}
 
-
-
       <div className="relative max-w-7xl mx-auto flex flex-col gap-10 mt-24 sm:mt-14 md:mt-16">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
           <div className="flex items-center gap-4 ml-0 sm:ml-4 md:ml-0">
-            {categoryData.image && categoryData.image !== "/api/placeholder/300/200" ? (
+            {categoryData.image ? (
               <img
                 src={categoryData.image}
                 alt={categoryData.name}

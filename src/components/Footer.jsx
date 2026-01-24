@@ -143,30 +143,37 @@ const Footer = React.memo(() => {
 
       {/* APP STORE BUTTONS */}
       <div className="absolute bottom-20 w-full flex justify-center gap-6 z-20">
-        {settings?.app_store_url && (
+       {settings?.app_store_url && (
+  <a
+    href="https://apps.apple.com/qa/app/catalogueya/id6757309240"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="hover:opacity-90 transition"
+  >
+    <img
+      src={ios}
+      loading="lazy"
+      className="w-32 md:w-20"
+      alt="Download on the App Store"
+    />
+  </a>
+)}
+
+        {settings?.google_play_url && (
           <a
-            href={settings.app_store_url}
+            href={settings.google_play_url}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:opacity-90 transition"
           >
-            <img src={ios} loading="lazy" className="w-32 md:w-20" alt="iOS App" />
+            <img
+              src={android}
+              loading="lazy"
+              className="w-32 md:w-20"
+              alt="Android App"
+            />
           </a>
         )}
-        <a
-  href="https://apps.apple.com/qa/app/catalogueya/id6757309240"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="hover:opacity-90 transition"
->
-  <img
-    src={ios}
-    loading="lazy"
-    className="w-32 md:w-20"
-    alt="Download on the App Store"
-  />
-</a>
-
       </div>
 
       {/* FOOTER BOTTOM */}

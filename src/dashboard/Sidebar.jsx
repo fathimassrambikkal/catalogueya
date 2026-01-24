@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { performLogout } from "../lib/authUtils";
 import { getBarcode } from "../api";
+import { FaEnvelope } from "react-icons/fa";
 
 import {
   FaTags,
@@ -56,9 +57,10 @@ const Sidebar = ({ activeTab, setActiveTab, onCloseSidebar, isMobile }) => {
     { label: "Contacts", icon: <FaUsers className="text-[10px]" /> },
     { label: "Followers", icon: <FaUserFriends className="text-[10px]" /> },
     { label: "Notifications", icon: <FaBell className="text-[10px]" /> },
+    
     {
-      label: "Fatora",
-      icon: <img src={fatoraLogo} alt="Fatora" className="w-3 h-3" />,
+      label: "Bills",
+      icon: <img src={fatoraLogo} alt="Bills" className="w-3 h-3" />,
     },
     { label: "Settings", icon: <FaCog className="text-[10px]" /> },
   ];
@@ -148,7 +150,7 @@ const Sidebar = ({ activeTab, setActiveTab, onCloseSidebar, isMobile }) => {
         <nav className="flex flex-col gap-2 pt-4">
           {tabs.map((t) => {
             const isActive = activeTab === t.label;
-            const isFatora = t.label === "Fatora";
+            const isBills = t.label === "Bills";
 
             return (
               <button
@@ -156,18 +158,18 @@ const Sidebar = ({ activeTab, setActiveTab, onCloseSidebar, isMobile }) => {
                 onClick={() => setActiveTab(t.label)}
                 className={`group flex items-center gap-1.5 px-2.5 py-2.5 rounded-lg transition-all w-full ${
                   isActive
-                    ? isFatora
+                    ? isBills
                       ? fatoraActiveTabStyles
                       : activeTabStyles
                     : `${inactiveTabStyles} ${
-                        isFatora ? fatoraHoverStyles : ""
+                        isBills ? fatoraHoverStyles : ""
                       }`
                 }`}
               >
                 <div
                   className={`w-5 h-5 rounded-md flex items-center justify-center ${
                     isActive
-                      ? isFatora
+                      ? isBills
                         ? fatoraActiveIconStyles
                         : activeIconStyles
                       : inactiveIconStyles

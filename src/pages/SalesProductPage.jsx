@@ -1,63 +1,20 @@
-import React, { useState, useEffect, useRef, memo, useMemo } from "react";
+import React, { useState, useEffect, useRef, memo, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useFixedWords } from "../hooks/useFixedWords";
-
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import BackButton from "../components/BackButton";
 import CallToAction from "../components/CallToAction";
 import { getSalesProducts } from "../api"; 
 import { createCustomerConversation } from "../api";
+import SmartImage from "../components/SmartImage";
+import {
+  HeartIcon,
+  StarIcon,
+  ChatIcon,
+} from "../components/SvgIcon";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
-
-// SVG Icons - Same as other components
-const StarIcon = ({ filled, className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="12" 
-    height="12" 
-    viewBox="0 0 576 512"
-    fill={filled ? "currentColor" : "none"}
-    stroke={filled ? "currentColor" : "#9CA3AF"}
-    strokeWidth="30"
-  >
-    <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
-  </svg>
-);
-
-const HeartIcon = ({ filled = false, className = "" }) => (
-  <svg
-    viewBox="0 0 24 24"
-    className={className}
-    fill={filled ? "currentColor" : "none"}
-    stroke={filled ? "none" : "currentColor"}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-);
-
-
-
-const ChatIcon = ({ className = "" }) => (
-  <svg 
-    className={`${className} `}
-    width="17" 
-    height="17" 
-    viewBox="0 0 16 16"
-    fill="currentColor"
-  >
-    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.520.263-1.639.742-3.468 1.105z" />
-    <circle cx="4" cy="8" r="1" />
-    <circle cx="8" cy="8" r="1" />
-    <circle cx="12" cy="8" r="1" />
-  </svg>
-);
 
 function SalesProductPageComponent() {
   const navigate = useNavigate();
@@ -76,6 +33,7 @@ function SalesProductPageComponent() {
   // ✅ Mobile detection
   const [isMobile, setIsMobile] = useState(false);
   const loadMoreRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   // Initialize mobile detection
   useEffect(() => {
@@ -93,11 +51,18 @@ function SalesProductPageComponent() {
     const fetchProducts = async () => {
       if (page > lastPage) return;
       
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      abortControllerRef.current = new AbortController();
+      
       try {
         setLoading(true);
         setError(null);
 
-        const res = await getSalesProducts(page);
+        const res = await getSalesProducts(page, abortControllerRef.current.signal);
         const paginated = res?.data?.data?.products;
 
         if (!paginated?.data) {
@@ -111,20 +76,15 @@ function SalesProductPageComponent() {
           name_en: product.name,
           price: product.discount_price || product.price,
           old_price: product.discount_price ? product.price : null,
-          img: product.image,
-          image: product.image,
+          image: product.image, // ✅ Use image for SmartImage
           rating: parseFloat(product.rating) || 0,
           description: product.description,
           company_id: product.company_id?.id ?? product.company_id,
-          company_name:
-            product.company_name ||
-            product.company_id?.name ||
-            "Company",
+          company_name: product.company_name || product.company_id?.name || "Company",
           category_id: product.category_id,
           category_name: product.category_name || "Sale",
         }));
 
-        // ✅ Mobile: Append products, Desktop: Replace products
         setProducts(prev => {
           const merged = 
             page === 1 ? mapped : 
@@ -140,6 +100,10 @@ function SalesProductPageComponent() {
 
         setLastPage(paginated.last_page);
       } catch (err) {
+        if (err.name === 'AbortError') {
+          console.log('Request was aborted');
+          return;
+        }
         console.error(err);
         setError("Failed to load sales products");
       } finally {
@@ -148,9 +112,15 @@ function SalesProductPageComponent() {
     };
 
     fetchProducts();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [page, isMobile]);
 
-  const handleChatClick = async (product) => {
+  const handleChatClick = useCallback(async (product) => {
     const token = localStorage.getItem("token");
     const userType = localStorage.getItem("userType");
     const companyId = Number(product.company_id);
@@ -188,7 +158,7 @@ function SalesProductPageComponent() {
     } catch (err) {
       console.error("Chat creation failed", err);
     }
-  };
+  }, [navigate]);
 
   // ✅ Desktop-only scroll to top
   useEffect(() => {
@@ -224,13 +194,6 @@ function SalesProductPageComponent() {
     };
   }, [isMobile, page, lastPage, loading]);
 
-  // ✅ Convert relative image path to absolute URL (same as sales component)
-  const getImageUrl = (imgPath) => {
-    if (!imgPath) return '/placeholder-image.jpg';
-    if (imgPath.startsWith('http')) return imgPath;
-    return `${API_BASE_URL}/${imgPath}`;
-  };
-
   // ✅ Sorting logic with useMemo
   const sortedProducts = useMemo(() => {
     return [...products].sort((a, b) => {
@@ -247,62 +210,79 @@ function SalesProductPageComponent() {
     });
   }, [products, sortBy]);
 
-  // Loading skeleton — SAME STYLE AS SalesProductProfile
-  const skeletonLoader = Array.from({ length: 8 }).map((_, index) => (
-    <div
-      key={`skeleton-${index}`}
-      className="
-        relative w-full max-w-[280px] sm:max-w-[300px]
-        rounded-3xl overflow-hidden
-        bg-white border border-gray-100
-        shadow-sm
-        animate-pulse
-        
-      "
-    >
-      {/* Image skeleton - same style as profile page */}
-      <div className="w-full h-[180px] sm:h-[220px] bg-gray-100 rounded-t-3xl" />
+  const handleToggleFavourite = useCallback((e, product) => {
+    e.stopPropagation();
+    
+    const isAlreadyFav = favourites.some(
+      (item) => item.id === product.id
+    );
 
-      {/* Content skeleton - same structure as profile page */}
-      <div className="p-3 sm:p-4 space-y-2">
-        {/* Product name skeleton - 2 lines like profile page */}
-        <div className="h-3 w-3/4 bg-gray-100 rounded" />
-        <div className="h-3 w-1/2 bg-gray-100 rounded" />
-        
-        {/* Price skeleton - like profile page */}
-        <div className="h-4 w-20 bg-gray-100 rounded mt-2" />
-        
-        {/* Rating and button skeleton - same layout as profile page */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="w-3 h-3 bg-gray-100 rounded" />
-            ))}
+    dispatch(
+      toggleFavourite({
+        ...product,
+        source: "sales",
+      })
+    );
+
+    if (auth.user && !isAlreadyFav) {
+      dispatch(
+        openListPopup({
+          ...product,
+          source: "sales",
+        })
+      );
+    }
+  }, [auth.user, favourites, dispatch]);
+
+  const handleProductClick = useCallback((productId) => {
+    navigate(`/salesproduct/${productId}`);
+  }, [navigate]);
+
+  // Loading skeleton
+  const skeletonLoader = useMemo(() => 
+    Array.from({ length: 8 }).map((_, index) => (
+      <div
+        key={`skeleton-${index}`}
+        className="
+          relative w-full max-w-[280px] sm:max-w-[300px]
+          rounded-3xl overflow-hidden
+          bg-white border border-gray-100
+          shadow-sm
+          animate-pulse
+        "
+      >
+        <div className="w-full h-[180px] sm:h-[220px] bg-gray-100 rounded-t-3xl" />
+        <div className="p-3 sm:p-4 space-y-2">
+          <div className="h-3 w-3/4 bg-gray-100 rounded" />
+          <div className="h-3 w-1/2 bg-gray-100 rounded" />
+          <div className="h-4 w-20 bg-gray-100 rounded mt-2" />
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="w-3 h-3 bg-gray-100 rounded" />
+              ))}
+            </div>
+            <div className="w-8 h-8 bg-gray-100 rounded-lg" />
           </div>
-          <div className="w-8 h-8 bg-gray-100 rounded-lg" />
         </div>
       </div>
-    </div>
-  ));
+    )), []);
 
   return (
     <>
-      {/* Fixed top loading indicator - SAME AS SalesProductProfile */}
-      {loading && (
+      {/* Fixed top loading indicator */}
+      {loading && page === 1 && (
         <div className="fixed top-4 right-4 z-50">
           <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
         </div>
       )}
 
       <section className="relative min-h-screen pt-24 pb-16 sm:pt-28 sm:pb-20 px-4 sm:px-8 md:px-12 lg:px-16 bg-gray-50">
-        {/* Back Button - Only show when not loading */}
-        {!loading && (
-       
-        <BackButton   variant="absolute" className="top-16"/>
-        )}
+        {/* Back Button */}
+        {!loading && <BackButton variant="absolute" className="top-16" />}
 
-        {/* Page Title with skeleton when loading */}
-        <div className="mb-10 text-center ">
+        {/* Page Title */}
+        <div className="mb-10 text-center">
           {loading && page === 1 ? (
             <div className="h-10 w-64 mx-auto bg-gray-100 rounded-lg animate-pulse" />
           ) : (
@@ -314,12 +294,12 @@ function SalesProductPageComponent() {
 
         {/* Error Message */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm ">
+          <div className="max-w-2xl mx-auto mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
             {error}
           </div>
         )}
 
-        {/* Sort Dropdown with skeleton when loading */}
+        {/* Sort Dropdown */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 text-gray-600 space-y-4">
           {loading && page === 1 ? (
             <>
@@ -331,12 +311,14 @@ function SalesProductPageComponent() {
               <p className="text-[15px] sm:text-base md:text-lg">
                 {loading ? "Loading..." : `${sortedProducts.length} ${fw.products_found}`}
               </p>
-              <div className="flex items-center gap-3 text-sm sm:text-base ">
-                <span className="font-medium  text-sm sm:text-base md:text-base text-gray-700 ">{fw.store_by}:</span>
+              <div className="flex items-center gap-3 text-sm sm:text-base">
+                <span className="font-medium text-sm sm:text-base md:text-base text-gray-700">
+                  {fw.store_by}:
+                </span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-white/60 backdrop-blur-md border border-gray-200  text-sm sm:text-base md:text-base rounded-full px-1 py-1 sm:px-2 sm:py-2 md:px-4 md:py-2 focus:outline-none text-gray-700"
+                  className="bg-white/60 backdrop-blur-md border border-gray-200 text-sm sm:text-base md:text-base rounded-full px-1 py-1 sm:px-2 sm:py-2 md:px-4 md:py-2 focus:outline-none text-gray-700"
                 >
                   <option value="relevance">{fw.name}</option>
                   <option value="low_to_high">{fw.low_to_hight}</option>
@@ -350,192 +332,166 @@ function SalesProductPageComponent() {
 
         {/* Product Grid */}
         {loading && page === 1 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center ">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center">
             {skeletonLoader}
           </div>
         ) : sortedProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center w-full ">
-            <h3 className="text-xl font-semibold text-gray-600 mb-2 ">{fw.no_products || "No Products Available"}</h3>
+          <div className="flex flex-col items-center justify-center py-20 text-center w-full">
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+              {fw.no_products || "No Products Available"}
+            </h3>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center ">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center">
               {sortedProducts.map((product) => {
                 const isFav = favourites.some((item) => item.id === product.id);
-                const imageUrl = getImageUrl(product.image || product.img);
                 
                 return (
                   <div
                     key={product.id}
-                    className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
-                             bg-white/10 border border-white/30 backdrop-blur-2xl 
-                             shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-                             hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
-                             transition-all duration-700 "
-                    onClick={() => navigate(`/salesproduct/${product.id}`)}
+                    className="relative w-full max-w-[280px] sm:max-w-[300px]
+             rounded-2xl overflow-hidden group cursor-pointer
+             bg-white border border-gray-100
+             shadow-[0_8px_30px_rgba(0,0,0,0.08)]
+             hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)]
+             transition-all duration-300"
+                    onClick={() => handleProductClick(product.id)}
                   >
                     {/* ❤️ Favourite Button */}
-                    {/* TOP RIGHT ACTIONS */}
-                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-20 flex flex-col gap-2">
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-20 flex flex-col gap-2">
+                      <button
+                        onClick={(e) => handleToggleFavourite(e, product)}
+                        className={`
+                          p-[clamp(6px,0.8vw,9px)]
+                          rounded-full
+                          shadow-md
+                          transition-all duration-200
+                          backdrop-blur-md
+                          border
+                          ${isFav
+                            ? "bg-red-100 border-red-200 hover:bg-red-200"
+                            : "bg-white/80 border-white/50 hover:bg-gray-50"
+                          }
+                        `}
+                      >
+                        <HeartIcon
+                          filled={isFav}
+                          className={`
+                            w-[clamp(12px,1.1vw,16px)]
+                            h-[clamp(12px,1.1vw,16px)]
+                            ${isFav ? "text-red-500" : "text-gray-600"}
+                          `}
+                        />
+                      </button>
 
-  {/* ❤️ HEART */}
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-
-      const isAlreadyFav = favourites.some(
-        (item) => item.id === product.id
-      );
-
-      dispatch(
-        toggleFavourite({
-          ...product,
-          source: "sales",
-        })
-      );
-
-      if (auth.user && !isAlreadyFav) {
-        dispatch(
-          openListPopup({
-            ...product,
-            source: "sales",
-          })
-        );
-      }
-    }}
-    className={`
-      p-[clamp(6px,0.8vw,9px)]
-      rounded-full
-      shadow-md
-      transition
-      backdrop-blur-md
-      border
-      ${
-        isFav
-          ? "bg-red-100 border-red-200"
-          : "bg-white/80 border-white/50 hover:bg-red-50"
-      }
-    `}
-  >
-    <HeartIcon
-      filled={isFav}
-      className={`
-        w-[clamp(12px,1.1vw,16px)]
-        h-[clamp(12px,1.1vw,16px)]
-        ${isFav ? "text-red-500" : "text-gray-600 hover:text-red-400"}
-      `}
-    />
-  </button>
-
-  {/* 💬 CHAT — BELOW HEART */}
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-      handleChatClick(product);
-    }}
-    title="Chat"
-    className="
-      relative
-      p-[clamp(6px,0.8vw,9px)]
-      rounded-full
-      bg-white/40
-      backdrop-blur-2xl
-      border border-[rgba(255,255,255,0.28)]
-      shadow-[0_8px_24px_rgba(0,0,0,0.18)]
-      hover:bg-white/55
-      transition-all duration-300
-    "
-  >
-    {/* glass effects */}
-    <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/70 via-white/10 to-transparent opacity-40 pointer-events-none" />
-    <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-20 pointer-events-none" />
-
-    <ChatIcon
-      className="
-        relative z-10
-        w-[clamp(12px,1.1vw,16px)]
-        h-[clamp(12px,1.1vw,16px)]
-        text-[rgba(18,18,18,0.88)]
-      "
-    />
-  </button>
-
-</div>
-
+                      {/* 💬 CHAT */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleChatClick(product);
+                        }}
+                        title="Chat"
+                        className="
+                          p-[clamp(6px,0.8vw,9px)]
+                          rounded-full
+                          bg-white/80
+                          backdrop-blur-md
+                          border border-gray-200
+                          shadow-md
+                          hover:bg-white
+                          transition-all duration-200
+                        "
+                      >
+                        <ChatIcon
+                          className="
+                            w-[clamp(12px,1.1vw,16px)]
+                            h-[clamp(12px,1.1vw,16px)]
+                            text-gray-600
+                          "
+                        />
+                      </button>
+                    </div>
 
                     {/* 🖼️ Product Image */}
-                    <div className="relative w-full h-[180px] sm:h-[220px] overflow-hidden rounded-t-3xl ">
-                      <img
-                        src={imageUrl}
-                        alt={product.name_en || product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover object-top rounded-t-3xl transition-transform duration-500 group-hover:scale-105 border-b border-white/20 "
-                        onError={(e) => {
-                          e.target.src = '/placeholder-image.jpg';
-                        }}
-                      />
+                    <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
+                   <SmartImage
+    image={product.image}
+    alt={product.name_en || product.name}
+    loading="lazy"
+    className="w-full h-full object-cover
+               transition-transform duration-300 group-hover:scale-105"
+  />
 
                       {/* ⭐ Rating */}
-                     <div
-  className="
-    absolute bottom-3 left-3
-    flex items-center
-    gap-[clamp(3px,0.4vw,5px)]
-    bg-black/40
-    backdrop-blur-md
-    px-[clamp(7px,0.8vw,9px)]
-    py-[clamp(4px,0.6vw,6px)]
-    rounded-lg
-  "
->
-  {Array.from({ length: 5 }).map((_, i) => (
-    <StarIcon
-      key={i}
-      filled={i < Math.floor(product.rating || 0)}
-      className={`
-        w-[clamp(10px,1vw,13px)]
-        h-[clamp(10px,1vw,13px)]
-        ${i < Math.floor(product.rating || 0) ? "text-white" : "text-white/40"}
-      `}
-    />
-  ))}
-
-  <span
-    className="
-      ml-[clamp(3px,0.4vw,5px)]
-      text-[clamp(9px,1vw,11px)]
-      text-white/90
-      leading-none
-    "
-  >
-    ({(product.rating || 0).toFixed(1)})
-  </span>
-</div>
-
+                      <div
+                        className="
+                          absolute bottom-3 left-3
+                          flex items-center
+                          gap-[clamp(3px,0.4vw,5px)]
+                          bg-black/60
+                          backdrop-blur-sm
+                          px-[clamp(7px,0.8vw,9px)]
+                          py-[clamp(4px,0.6vw,6px)]
+                          rounded-lg
+                        "
+                      >
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <StarIcon
+                            key={i}
+                            filled={i < Math.floor(product.rating || 0)}
+                            className={`
+                              w-[clamp(10px,1vw,13px)]
+                              h-[clamp(10px,1vw,13px)]
+                              ${i < Math.floor(product.rating || 0) ? "text-yellow-400" : "text-gray-300"}
+                            `}
+                          />
+                        ))}
+                        <span
+                          className="
+                            ml-[clamp(3px,0.4vw,5px)]
+                            text-[clamp(9px,1vw,11px)]
+                            text-white
+                            leading-none
+                            font-medium
+                          "
+                        >
+                          {(product.rating || 0).toFixed(1)}
+                        </span>
+                      </div>
                     </div>
 
                     {/* 💬 Info Section */}
-                    <div className="relative w-full rounded-b-3xl p-3 sm:p-4 border-t border-white/20 bg-white/10 backdrop-blur-xl flex items-center justify-between ">
-                      <div className="flex flex-col w-[80%] z-10 ">
-                        <h3 className="font-semibold text-gray-900 mb-1 
-                           text-[11px] xs:text-[10px] sm:text-[14px] md:text-xs ">
-                          {product.name_en || product.name}
-                        </h3>
-                        <div className="flex items-center gap-1 ">
-                          <span className="font-bold text-gray-900
-                              text-[10px] xs:text-[10px] sm:text-[11px] md:text-xs  ">
-                             {fw.qar} {product.price}
-                          </span>
-                          {product.old_price && (
-                            <span className="line-through text-gray-500
-                                text-[7px] xs:text-[9px] sm:text-[10px] md:text-[11px] ">
-                               {product.old_price}
-                            </span>
-                          )}
-                        </div>
+{/* 💬 Info Section — SAME AS Sales.jsx + old price */}
+<div
+  className="w-full rounded-b-2xl p-3
+             border-t border-white/20
+             bg-white/70 backdrop-blur-xl
+             flex flex-col"
+>
+  <h3
+    className="font-semibold text-gray-900
+               text-[11px] sm:text-[14px]"
+  >
+    {product.name_en || product.name}
+  </h3>
+
+  <div className="flex items-center gap-2 mt-1">
+    <span className="font-bold text-gray-900   text-[11px] sm:text-[14px] md:text-xs">
+      {fw.qar} {product.price}
+    </span>
+
+    {product.old_price && (
+      <span className="line-through text-gray-500   text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs  ">
+        {product.old_price}
+      </span>
+    )}
+  </div>
+</div>
+
+
                       </div>
-                    </div>
-                  </div>
+                 
                 );
               })}
 
@@ -553,23 +509,25 @@ function SalesProductPageComponent() {
                 <button
                   disabled={page === 1}
                   onClick={() => setPage(p => p - 1)}
-                  className="px-4 py-2 rounded-full border border-gray-300 
+                  className="px-6 py-2 rounded-full border border-gray-300 bg-white
                              disabled:opacity-40 disabled:cursor-not-allowed
-                             hover:bg-gray-100 transition"
+                             hover:bg-gray-50 transition duration-200
+                             text-sm sm:text-base"
                 >
                   {fw.previous}
                 </button>
 
-                <span className="text-sm text-gray-600">
+                <span className="text-sm sm:text-base text-gray-600">
                   {fw.page} {page} {fw.of} {lastPage}
                 </span>
 
                 <button
                   disabled={page === lastPage}
                   onClick={() => setPage(p => p + 1)}
-                  className="px-4 py-2 rounded-full border border-gray-300 
+                  className="px-6 py-2 rounded-full border border-gray-300 bg-white
                              disabled:opacity-40 disabled:cursor-not-allowed
-                             hover:bg-gray-100 transition"
+                             hover:bg-gray-50 transition duration-200
+                             text-sm sm:text-base"
                 >
                   {fw.next}
                 </button>

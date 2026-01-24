@@ -10,7 +10,22 @@ export const fetchFavourites = createAsyncThunk(
   }
 );
 
-// ==================== SOURCE MAP (NEW) ====================
+// ==================== GUEST LOCAL STORAGE ====================
+const GUEST_KEY = "guest_favourites";
+
+const loadGuestFavourites = () => {
+  try {
+    return JSON.parse(localStorage.getItem(GUEST_KEY)) || [];
+  } catch {
+    return [];
+  }
+};
+
+const saveGuestFavourites = (items) => {
+  localStorage.setItem(GUEST_KEY, JSON.stringify(items));
+};
+
+// ==================== SOURCE MAP ====================
 // Stores productId -> source
 const sourceMap = {};
 
@@ -18,11 +33,11 @@ const favouritesSlice = createSlice({
   name: "favourites",
 
   initialState: {
-    // 👇 EXISTING (DO NOT TOUCH)
-    items: [],            // guest favourites
+    // 👇 GUEST (LOCAL)
+    items: loadGuestFavourites(), // ✅ persisted guest favourites
     loading: false,
 
-    // 👇 LOGIN + POPUP FLOW
+    // 👇 LOGIN + POPUP FLOW (API)
     lists: [],            // lists from API (Fav.jsx)
     pendingProduct: null, // product clicked from ❤️
     showListPopup: false, // popup visibility
@@ -42,17 +57,25 @@ const favouritesSlice = createSlice({
       } else {
         state.items.push(item);
       }
+
+      // ✅ persist to localStorage
+      saveGuestFavourites(state.items);
     },
 
     clearFavourites: (state) => {
       state.items = [];
+      localStorage.removeItem(GUEST_KEY);
     },
 
-    // ==================== LOGIN FLOW ====================
+    // ✅ ADD THIS (CRITICAL FIX)
+    rehydrateGuest: (state, action) => {
+      state.items = action.payload || [];
+    },
+
+    // ==================== LOGIN / API FLOW ====================
 
     // 🔹 Sync lists from API
     setFavouriteLists: (state, action) => {
-      // 🔥 RESTORE SOURCE INTO PRODUCTS
       state.lists = (action.payload || []).map((group) => ({
         ...group,
         products: (group.products || []).map((p) => ({
@@ -72,7 +95,7 @@ const favouritesSlice = createSlice({
       state.pendingProduct = action.payload;
       state.showListPopup = true;
 
-      // 🔥 REMEMBER SOURCE
+      // 🔥 Remember source
       if (action.payload?.id && action.payload?.source) {
         sourceMap[action.payload.id] = action.payload.source;
       }
@@ -113,7 +136,7 @@ const favouritesSlice = createSlice({
 export const {
   toggleFavourite,
   clearFavourites,
-
+  rehydrateGuest, // ✅ EXPORT THIS
   setFavouriteLists,
   setActiveFavouriteList,
   openListPopup,

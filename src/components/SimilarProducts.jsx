@@ -2,6 +2,7 @@
 import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { useFixedWords } from "../hooks/useFixedWords";
+import SmartImage from "./SmartImage"; // ✅ Import SmartImage
 
 const HeartIcon = ({ filled, className = "" }) => (
   <svg
@@ -83,30 +84,34 @@ const SimilarProducts = memo(function SimilarProducts({
       `} />
               </button>
 
-              {/* Image */}
+              {/* ✅ Image with SmartImage */}
               <div className="relative w-full h-[180px] sm:h-[220px] overflow-hidden rounded-t-3xl">
-                <img
-                  src={sp.image}
+                <SmartImage
+                  image={sp.image}
                   alt={sp.name}
-                  loading="lazy"
-                  decoding="async"
                   className="
                      w-full h-full object-cover 
       transition-transform duration-500
       group-hover:scale-105
       border-b border-white/20
                   "
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    console.error("Failed to load similar product image:", sp.image);
+                    e.target.src = "/api/placeholder/400/400";
+                  }}
                 />
               </div>
 
               {/* Content */}
               <div className="p-4">
                 <h3 className="font-semibold text-gray-900 mb-1 truncate
-                         text-[9px] xs:text-[10px] sm:text-[14px] md:text-xs">
+                         text-[11px] xs:text-[10px] sm:text-[14px] md:text-xs">
                   {sp.name}
                 </h3>
                 <span className="font-bold text-gray-900
-                            text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs">
+                            text-[10px] xs:text-[10px] sm:text-[11px] md:text-xs">
                   {fw.qar} {sp.price}
                 </span>
               </div>

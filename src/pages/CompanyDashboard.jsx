@@ -9,19 +9,22 @@ import Cover from "../dashboard/Cover.jsx";
 import Contacts from "../dashboard/Contacts.jsx";
 import Followers from "../dashboard/Followers.jsx";
 import Notifications from "../dashboard/Notifications.jsx";
-import Fatora from "../dashboard/Fatora.jsx";
+import Bills from "../dashboard/Bills.jsx";
 import { RiMenu2Fill } from "react-icons/ri";
-import { FollowersProvider } from "../context/FollowersContext";
+import Messages from "../dashboard/Messages.jsx";
+
 import { getCompany } from "../api";
 
 /* ================= Utilities ================= */
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
   return isMobile;
 };
 
@@ -74,8 +77,10 @@ export default function CompanyDashboard() {
     getCompany(companyId)
       .then((res) => {
         if (!mounted) return;
+
         const company =
           res?.data?.data?.company || res?.data?.company || res?.data;
+
         if (!company) return;
 
         setProducts(company.products || []);
@@ -88,7 +93,9 @@ export default function CompanyDashboard() {
       })
       .finally(() => mounted && setLoading(false));
 
-    return () => (mounted = false);
+    return () => {
+      mounted = false;
+    };
   }, [companyId]);
 
   if (loading) {
@@ -100,15 +107,13 @@ export default function CompanyDashboard() {
   }
 
   return (
-    <FollowersProvider>
+    <>
       {/* 🔒 LOCK VIEWPORT */}
       <div className="relative flex w-full h-[calc(100vh-64px)] overflow-hidden bg-gray-100">
-
         {/* ================= Sidebar ================= */}
         <aside
           className={`
             ${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"}
-           
             bg-white
             transform transition-transform duration-300 ease-out
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
@@ -156,7 +161,6 @@ export default function CompanyDashboard() {
 
         {/* ================= Main ================= */}
         <main className="flex-1 flex flex-col h-full overflow-hidden">
-
           {/* Fixed header / cover */}
           {activeTab === "Products" && (
             <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
@@ -181,8 +185,9 @@ export default function CompanyDashboard() {
             )}
             {activeTab === "Followers" && <Followers />}
             {activeTab === "Notifications" && <Notifications />}
-            {activeTab === "Fatora" && (
-              <Fatora
+            {activeTab === "Messages" && <Messages />}
+            {activeTab === "Bills" && (
+              <Bills
                 companyId={companyId}
                 companyInfo={companyInfo}
                 products={products}
@@ -198,6 +203,6 @@ export default function CompanyDashboard() {
           </div>
         </main>
       </div>
-    </FollowersProvider>
+    </>
   );
 }

@@ -6,40 +6,31 @@ import { useFixedWords } from "../hooks/useFixedWords";
 // Import LogoMarquee component
 import LogoMarquee from "../components/LogoMarquee";
 
-// Base URL from your API response
+// ✅ Base URL from your API response
 const BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
-// Regular function (not a hook)
-const resolveImageUrl = (img) => {
+// ✅ Import SmartImage component
+import SmartImage from "../components/SmartImage";
+
+// ✅ Helper to normalize image for SmartImage
+const normalizeImageForSmartImage = (img) => {
   if (!img) return null;
   
+  // If it's already a full URL, return as string
   if (img.startsWith('http') || img.startsWith('//') || img.startsWith('data:')) {
     return img;
   }
   
-  return `${BASE_URL}/${img.replace(/^\//, '')}`;
+  // For relative paths, create full URL
+  const cleanPath = img.startsWith('/') ? img.slice(1) : img;
+  return `${BASE_URL}/${cleanPath}`;
 };
 
-// Regular function (not a hook)
-const safeParseArrayWithBaseUrl = (value) => {
-  if (!value) return [];
+// ✅ Helper to normalize multiple images for SmartImage
+const normalizeImagesForSmartImage = (imagesArray) => {
+  if (!imagesArray || !Array.isArray(imagesArray)) return [];
   
-  let result = [];
-  
-  try {
-    if (Array.isArray(value)) {
-      result = value.map(img => resolveImageUrl(img)).filter(Boolean);
-    } else if (typeof value === 'string') {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        result = parsed.map(img => resolveImageUrl(img)).filter(Boolean);
-      }
-    }
-  } catch (err) {
-    console.error('Failed to parse value:', err);
-  }
-  
-  return result;
+  return imagesArray.map(img => normalizeImageForSmartImage(img)).filter(Boolean);
 };
 
 // Lazy-load heavy components
@@ -109,10 +100,11 @@ const Column = memo(({ images, y }) => {
   );
 });
 
-// Lazy Image
+// ✅ Updated LazyImage component with SmartImage
 const LazyImage = memo(({ src, index }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const ref = useRef();
 
   useEffect(() => {
@@ -137,14 +129,19 @@ const LazyImage = memo(({ src, index }) => {
     setIsLoaded(true);
   };
 
+  const handleImageError = (e) => {
+    console.error(`Image ${index} failed: ${src}`);
+    setHasError(true);
+  };
+
   return (
     <div 
       ref={ref} 
       className="relative h-full w-full overflow-hidden rounded-2xl shadow-lg bg-gray-100"
     >
-      {isVisible && (
-        <img
-          src={src}
+      {isVisible && !hasError && (
+        <SmartImage
+          image={src}
           alt={`gallery-image-${index}`}
           className={`pointer-events-none object-cover w-full h-full transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -152,11 +149,13 @@ const LazyImage = memo(({ src, index }) => {
           loading="lazy"
           decoding="async"
           onLoad={handleImageLoad}
-          onError={(e) => {
-            console.error(`Image ${index} failed: ${src}`);
-            e.target.style.display = 'none';
-          }}
+          onError={handleImageError}
         />
+      )}
+      {hasError && (
+        <div className="flex items-center justify-center w-full h-full bg-gray-200">
+          <span className="text-gray-400 text-sm">Image failed to load</span>
+        </div>
       )}
     </div>
   );
@@ -171,14 +170,28 @@ export default function About() {
   
   // Use useMemo properly inside component
   const fw = useMemo(() => fixedWords?.fixed_words || {}, [fixedWords]);
+  
+  // ✅ Directly use settings from useSettings hook (it already processes images)
   const galleryImages = useMemo(() => 
-    safeParseArrayWithBaseUrl(settings?.about_imgs), 
+    Array.isArray(settings?.about_imgs) ? settings.about_imgs : [], 
     [settings?.about_imgs]
   );
+  
   const clientLogos = useMemo(() => 
-    safeParseArrayWithBaseUrl(settings?.partners_imgs), 
+    Array.isArray(settings?.partners_imgs) ? settings.partners_imgs : [], 
     [settings?.partners_imgs]
   );
+  
+  // ✅ Debug logging
+  useEffect(() => {
+    console.log("About Page Settings Debug:", {
+      galleryImages: galleryImages,
+      clientLogos: clientLogos,
+      galleryImagesLength: galleryImages.length,
+      clientLogosLength: clientLogos.length,
+      hasGalleryImages: galleryImages.length >= 8
+    });
+  }, [galleryImages, clientLogos]);
   
   const hasGalleryImages = galleryImages.length >= 8;
 
@@ -259,6 +272,22 @@ export default function About() {
               ? 'Gallery images will appear here' 
               : `Need at least 8 images for gallery. Currently have ${galleryImages.length}.`}
           </p>
+          {galleryImages.length > 0 && (
+            <div className="mt-4 text-sm text-gray-500">
+              <p>Sample images available:</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {galleryImages.slice(0, 3).map((img, idx) => (
+                  <div key={idx} className="w-16 h-16">
+                    <SmartImage
+                      image={img}
+                      alt={`sample-${idx}`}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -281,12 +310,25 @@ export default function About() {
         </div>
 
         {isClient && clientLogos.length > 0 && (
-  <LogoMarquee 
-    logos={clientLogos} 
-    isRTL={isRTL}
-    duration={30} // 30 seconds for one complete loop
-  />
-)}
+          <LogoMarquee 
+            logos={clientLogos} 
+            isRTL={isRTL}
+            duration={30} // 30 seconds for one complete loop
+            useSmartImage={true} // ✅ Enable SmartImage in LogoMarquee
+          />
+        )}
+        
+        {/* ✅ Debug info for client logos */}
+        {clientLogos.length === 0 && isClient && (
+          <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-700 text-sm">
+              No client logos found. Check settings API response.
+            </p>
+            <pre className="mt-2 text-xs text-gray-600 overflow-auto">
+              {JSON.stringify(settings?.partners_imgs || 'No partners_imgs', null, 2)}
+            </pre>
+          </div>
+        )}
       </section>
 
       <Suspense fallback={<div className="h-64 bg-gray-50 animate-pulse" />}>
