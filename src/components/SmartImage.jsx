@@ -1,270 +1,129 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  useCallback
-} from "react";
+// SmartImage.jsx - CORRECT VERSION
+import React, { useState, useRef, useEffect, useMemo } from "react";
 
-import SearchBar from "../components/SearchBar";
-import { useSettings } from "../hooks/useSettings";
-import { useFixedWords } from "../hooks/useFixedWords";
+const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
-/* -----------------------------------
-   Stable Intersection Observer
------------------------------------ */
-const useIsInViewport = (ref) => {
-  const [isVisible, setIsVisible] = useState(false);
+const SmartImage = ({
+  image,
+  alt = "",
+  className = "",
+  loading = "lazy",
+  fetchPriority = "auto",
+  decoding = "async",
+  onLoad,
+  onError,
+  ...props
+}) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef(null);
 
-  useEffect(() => {
-    if (!ref.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.1 }
-    );
-
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return isVisible;
-};
-
-/* -----------------------------------
-   Normalize hero images ONCE
------------------------------------ */
-const normalizeHeroImages = (apiImages) => {
-  if (!apiImages) return [];
-
-  try {
-    // If it's already an array of objects (from useSettings)
-    if (Array.isArray(apiImages)) {
-      // Check if items are strings or objects
-      if (apiImages.length > 0 && typeof apiImages[0] === 'object') {
-        const result = apiImages.map((item, i) => {
-          if (!item) return null;
-          
-          // Extract image source from object
-          let src = '';
-          
-          // Check for webp or avif properties
-          if (item.webp || item.avif) {
-            src = item.webp || item.avif;
-          }
-          // If it's a direct image URL (fallback)
-          else if (typeof item === 'string') {
-            src = item;
-          }
-          // If it's an object with nested structure
-          else if (item.src || item.url) {
-            src = item.src || item.url;
-          }
-          
-          if (!src) return null;
-          
-          const clean = String(src).trim();
-          const finalSrc = clean.startsWith("http")
-            ? clean
-            : `https://catalogueyanew.com.awu.zxu.temporary.site/${clean}`;
-
-          return {
-            src: finalSrc,
-            alt: `Hero image ${i + 1}`,
-            id: `api-banner-${i}`,
-          };
-        }).filter(Boolean);
-        
-        return result;
-      }
-      // If it's an array of strings (already processed by useSettings)
-      else if (apiImages.length > 0 && typeof apiImages[0] === 'string') {
-        const result = apiImages.map((src, i) => {
-          if (!src) return null;
-          
-          const clean = String(src).trim();
-          const finalSrc = clean.startsWith("http")
-            ? clean
-            : `https://catalogueyanew.com.awu.zxu.temporary.site/${clean}`;
-
-          return {
-            src: finalSrc,
-            alt: `Hero image ${i + 1}`,
-            id: `api-banner-${i}`,
-          };
-        }).filter(Boolean);
-        
-        return result;
-      }
-    }
-
-    // String with embedded JSON (legacy format - shouldn't happen with useSettings)
-    if (typeof apiImages === "string") {
-      const cleanStr = apiImages
-        .replace(/\\\//g, "/")
-        .replace(/\\"/g, '"')
-        .replace(/\\\\/g, "\\");
-
-      const match = cleanStr.match(/\[.*\]/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        return parsed.map((src, i) => {
-          const clean = String(src).trim();
-          const finalSrc = clean.startsWith("http")
-            ? clean
-            : `https://catalogueyanew.com.awu.zxu.temporary.site/${clean}`;
-
-          return {
-            src: finalSrc,
-            alt: `Hero image ${i + 1}`,
-            id: `api-banner-${i}`,
-          };
-        });
-      }
-      return [];
+  // ✅ Normalize image data
+  const normalizedImage = useMemo(() => {
+    if (!image) return null;
+    
+    // If image is an object with avif/webp
+    if (typeof image === 'object' && !Array.isArray(image)) {
+      return {
+        avif: image.avif,
+        webp: image.webp,
+        fallback: image.url || image.src || image.path || null,
+      };
     }
     
-  } catch (err) {
-    console.error("Error in normalizeHeroImages:", err);
-    return [];
+    // If it's a string
+    if (typeof image === 'string') {
+      return { fallback: image };
+    }
+    
+    return null;
+  }, [image]);
+
+  // ✅ Get the actual URL to load
+  const getImageUrl = (imgData) => {
+    if (!imgData) return null;
+    
+    // Try avif first, then webp, then fallback
+    const src = imgData.avif || imgData.webp || imgData.fallback;
+    
+    if (!src) return null;
+    
+    // Format URL if needed
+    if (typeof src === 'string') {
+      if (src.startsWith("http") || src.startsWith("blob:") || src.startsWith("data:")) {
+        return src;
+      }
+      return `${API_BASE_URL}/${src.replace(/^\//, "")}`;
+    }
+    
+    return null;
+  };
+
+  const imageUrl = useMemo(() => {
+    return getImageUrl(normalizedImage);
+  }, [normalizedImage]);
+
+  // ✅ Handle image load
+  const handleLoad = (e) => {
+    setIsLoaded(true);
+    if (onLoad) onLoad(e);
+  };
+
+  // ✅ Handle image error
+  const handleError = (e) => {
+    setHasError(true);
+    
+    // Try fallback if available
+    if (normalizedImage?.fallback && normalizedImage.fallback !== imageUrl) {
+      // Don't infinite loop
+      const fallbackUrl = getImageUrl({ fallback: normalizedImage.fallback });
+      if (fallbackUrl && imgRef.current && fallbackUrl !== imageUrl) {
+        imgRef.current.src = fallbackUrl;
+        return;
+      }
+    }
+    
+    if (onError) onError(e);
+  };
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+
+    const loadHandler = () => handleLoad({ target: img });
+    const errorHandler = () => handleError({ target: img });
+
+    img.addEventListener('load', loadHandler);
+    img.addEventListener('error', errorHandler);
+
+    return () => {
+      img.removeEventListener('load', loadHandler);
+      img.removeEventListener('error', errorHandler);
+    };
+  }, [imageUrl]);
+
+  if (!imageUrl || hasError) {
+    return (
+      <div className={`bg-gray-100 flex items-center justify-center ${className}`}>
+        <span className="text-gray-400 text-xs">Image unavailable</span>
+      </div>
+    );
   }
 
-  return [];
+  return (
+    <img
+      ref={imgRef}
+      src={imageUrl}
+      alt={alt}
+      className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+      loading={loading}
+      decoding={decoding}
+      fetchPriority={fetchPriority}
+      onLoad={handleLoad}
+      onError={handleError}
+      {...props}
+    />
+  );
 };
 
-export default function Banner() {
-  const { settings } = useSettings();
-  useFixedWords(); // used elsewhere, keep hook call
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [loadedImages, setLoadedImages] = useState({});
-  const [imageErrors, setImageErrors] = useState({});
-
-  const sectionRef = useRef(null);
-  const timerRef = useRef(null);
-  const isInView = useIsInViewport(sectionRef);
-
-  /* -----------------------------------
-     HERO IMAGES (PURE + MEMOIZED)
-  ----------------------------------- */
-  const responsiveImages = useMemo(
-    () => normalizeHeroImages(settings?.hero_backgrounds),
-    [settings?.hero_backgrounds]
-  );
-
-  /* -----------------------------------
-     Preload first image
-  ----------------------------------- */
-  useEffect(() => {
-    const first = responsiveImages[0];
-    if (!first?.src) return;
-
-    const img = new Image();
-    img.src = first.src;
-    img.onload = () =>
-      setLoadedImages((p) => ({ ...p, [first.id]: true }));
-    img.onerror = () =>
-      setImageErrors((p) => ({ ...p, [first.id]: true }));
-  }, [responsiveImages]);
-
-  /* -----------------------------------
-     Auto-slide (battery-safe)
-  ----------------------------------- */
-  useEffect(() => {
-    if (!isInView || responsiveImages.length <= 1) return;
-
-    const SLIDE_TIME = 5000;
-
-    timerRef.current = setTimeout(() => {
-      setCurrentIndex((p) => (p + 1) % responsiveImages.length);
-    }, SLIDE_TIME);
-
-    return () => clearTimeout(timerRef.current);
-  }, [isInView, currentIndex, responsiveImages.length]);
-
-  const handleDotClick = useCallback((i) => {
-    clearTimeout(timerRef.current);
-    setCurrentIndex(i);
-  }, []);
-
-  const handleImageError = useCallback((id) => {
-    setImageErrors((p) => ({ ...p, [id]: true }));
-  }, []);
-
-  const sectionHeight = "h-[60vh] sm:h-[80vh] md:h-[90vh] lg:h-screen";
-
-  return (
-    <section
-      ref={sectionRef}
-      className={`relative w-full ${sectionHeight} overflow-hidden flex items-center justify-center`}
-      style={{ contain: "layout paint" }}
-    >
-      {/* Preload first image */}
-      {responsiveImages[0]?.src && (
-        <link rel="preload" as="image" href={responsiveImages[0].src} />
-      )}
-
-      {/* Background images */}
-      {responsiveImages.map((img, i) => (
-        <img
-          key={img.id}
-          src={img.src}
-          alt={img.alt}
-          width="1920"
-          height="1080"
-          loading={i === 0 ? "eager" : "lazy"}
-          decoding="async"
-          onLoad={() =>
-            setLoadedImages((p) => ({ ...p, [img.id]: true }))
-          }
-          onError={() => handleImageError(img.id)}
-          className={`absolute inset-0 w-full h-full object-cover
-            transition-opacity duration-[800ms] ease-out
-            ${i === currentIndex ? "opacity-100" : "opacity-0"}
-            ${imageErrors[img.id] ? "hidden" : ""}`}
-        />
-      ))}
-
-      {/* Skeleton */}
-      {!loadedImages[responsiveImages[0]?.id] &&
-        responsiveImages.length > 0 &&
-        !imageErrors[responsiveImages[0]?.id] && (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
-        )}
-
-      {/* Content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4 z-10">
-        <div className="w-full max-w-2xl z-30 mt-16">
-          <SearchBar />
-        </div>
-
-        <h1 className="font-semibold text-center text-white drop-shadow-lg text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight px-4">
-          {settings?.hero_title ?? ""}
-        </h1>
-
-        <p className="text-white/90 text-md md:text-xl lg:text-2xl font-normal text-center max-w-2xl -mt-4">
-          {settings?.hero_sub_title ?? ""}
-        </p>
-      </div>
-
-      {/* Pagination */}
-      {responsiveImages.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-0  ">
-          <div className="flex gap-2 p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
-            {responsiveImages.map((_, idx) => (
-              <button key={idx} onClick={() => handleDotClick(idx)}>
-                <div
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    idx === currentIndex
-                      ? "bg-white scale-125"
-                      : "bg-white/40"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
+export default SmartImage;
