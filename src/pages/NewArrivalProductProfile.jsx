@@ -11,17 +11,19 @@ import { useFixedWords } from "../hooks/useFixedWords";
 import { addProductReview } from "../api";
 import { useLocation } from "react-router-dom";
 import BackButton from "../components/BackButton";
-import SmartImage from "../components/SmartImage"; // ✅ Import SmartImage
+import SmartImage from "../components/SmartImage";
 import {
   HeartIcon,
   StarIcon,
   ShareIcon,
   ChatIcon,
 } from "../components/SvgIcon";
+import { error as logError } from "../utils/logger";
+import { showToast } from "../utils/showToast";
+
 
 import { getProduct, getCompany } from "../api";
 
-const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 // ✅ ADD THIS HELPER FUNCTION (same as other components)
 const normalizeImage = (image) => {
@@ -187,54 +189,13 @@ export default function NewArrivalProductProfile() {
   const [reviewRating, setReviewRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [showAllReviews, setShowAllReviews] = useState(false);
+
 
   const isFavourite = product ? favourites.some((f) => f.id === product.id) : false;
 
-  // ✅ UPDATED: Image URL function that preserves object format
-  const getImageObject = (imgData) => {
-    if (!imgData) return null;
-    
-    // If it's already an object (webp/avif), return as-is
-    if (typeof imgData === 'object' && !Array.isArray(imgData)) {
-      return imgData;
-    }
-    
-    // If it's a string, convert to object format for SmartImage
-    if (typeof imgData === 'string') {
-      // Check if it's already a full URL
-      if (imgData.startsWith("http")) {
-        return imgData;
-      }
-      // For relative paths, create object with proper paths
-      return imgData;
-    }
-    
-    return null;
-  };
 
-  // ✅ Helper to get fallback URL for error handling
-  const getFallbackUrl = (imgData) => {
-    if (!imgData) return "/api/placeholder/400/400";
-    
-    if (typeof imgData === 'string') {
-      return imgData.startsWith("http") 
-        ? imgData 
-        : `${API_BASE_URL}/${imgData.replace(/^\//, "")}`;
-    }
-    
-    if (typeof imgData === 'object') {
-      const webp = imgData.webp || imgData.url || imgData.path;
-      if (webp) {
-        return webp.startsWith("http") 
-          ? webp 
-          : `${API_BASE_URL}/${webp.replace(/^\//, "")}`;
-      }
-    }
-    
-    return "/api/placeholder/400/400";
-  };
+
+  
 
   useEffect(() => {
     if (!auth?.user) return;
@@ -271,7 +232,7 @@ export default function NewArrivalProductProfile() {
 
         if (mounted) setReviews(mappedReviews);
       } catch (err) {
-        console.error("Failed to load product reviews", err);
+        logError("ProductProfile: failed to load reviews", err);
         if (mounted) setReviews([]);
       }
     };
@@ -283,10 +244,7 @@ export default function NewArrivalProductProfile() {
     };
   }, [resolvedProductId]);
 
-  useEffect(() => {
-    console.log("fw:", fw);
-    console.log("write_review:", fw.write_review);
-  }, [fw]);
+
 
   useEffect(() => {
     let mounted = true;
@@ -429,10 +387,12 @@ export default function NewArrivalProductProfile() {
     async (e) => {
       e.stopPropagation();
 
-      if (!product?.company_id) {
-        console.error("Invalid company ID for chat", product);
-        return;
-      }
+     if (!product?.company_id) {
+  logError("Chat: invalid company ID", product);
+  showToast(fw.chat_unavailable || "Chat unavailable");
+  return;
+}
+
 
       const token = localStorage.getItem("token");
       const userType = localStorage.getItem("userType");
@@ -454,15 +414,18 @@ export default function NewArrivalProductProfile() {
           res.data?.conversation?.id ||
           res.data?.id;
 
-        if (!conversationId) {
-          console.error("Conversation ID missing");
-          return;
-        }
+       if (!conversationId) {
+  logError("Chat: conversation ID missing", res);
+  showToast(fw.chat_failed || "Unable to start chat");
+  return;
+}
+
 
         navigate(`/customer-login/chat/${conversationId}`);
       } catch (err) {
-        console.error("Chat creation failed", err);
-      }
+  logError("Chat creation failed", err);
+  showToast(fw.chat_failed || "Unable to start chat");
+}
     },
     [product, navigate]
   );
@@ -486,7 +449,7 @@ export default function NewArrivalProductProfile() {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert("🔗 Link copied to clipboard!");
+        showToast(fw.link_copied || "Link copied to clipboard");
       }
     } catch (err) {
     }
@@ -494,8 +457,12 @@ export default function NewArrivalProductProfile() {
 
   const handleReviewSubmit = async () => {
     if (!reviewName || !reviewText || reviewRating === 0) {
-      alert("Please enter your name, rating, and comment.");
-      return;
+      showToast(
+  fw.fill_all_fields || "Please enter name, rating and comment",
+  { type: "warning" }
+);
+return;
+
     }
 
     try {
@@ -519,13 +486,20 @@ export default function NewArrivalProductProfile() {
       setReviewText("");
       setReviewRating(0);
 
-      alert(`⭐ ${newRev.rating}-star review submitted!`);
+      showToast(
+  fw.review_submitted || `⭐ ${newRev.rating}-star review submitted!`,
+  { type: "success" }
+);
+
     } catch (error) {
-      console.error("❌ Failed to submit review", error);
-      alert(
-        error?.response?.data?.message ||
-        "Failed to submit review. Please try again."
-      );
+      logError("Review submit failed", error);
+showToast(
+  error?.response?.data?.message ||
+  fw.review_failed ||
+  "Failed to submit review",
+  { type: "error" }
+);
+
     }
   };
 
@@ -589,7 +563,7 @@ export default function NewArrivalProductProfile() {
                 loading="eager"
                 fetchPriority="high"
                 onError={(e) => {
-                  console.error("Failed to load main image:", selectedImage);
+                  logError("Image load failed (main)", selectedImage);
                   e.target.src = "/api/placeholder/500/500";
                 }}
               />
@@ -661,7 +635,7 @@ export default function NewArrivalProductProfile() {
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
-                          console.error("Failed to load thumbnail:", imgData);
+                           logError("Image load failed (thumbnail)", imgData);
                           e.target.src = "/api/placeholder/200/200";
                         }}
                       />
@@ -833,10 +807,7 @@ export default function NewArrivalProductProfile() {
                     onClick={() => navigate(`/product/${resolvedProductId}/reviews`)}
                     className="group w-full mt-2 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition flex items-center gap-1.5 text-left"
                   >
-                    <span>
-                      {(fw.view_all_reviews || "View all")} {reviews.length}{" "}
-                      {(fw.reviews || "reviews")}
-                    </span>
+                   {(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"

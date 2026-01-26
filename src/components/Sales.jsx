@@ -7,6 +7,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import SmartImage from "../components/SmartImage";
 
+import { error as logError } from "../utils/logger";
+import { showToast } from "../utils/showToast";
 
 // Import shared components
 import { 
@@ -81,7 +83,8 @@ function SalesComponent() {
         
         
       } catch (err) {
-        console.error("Failed to load sales products", err);
+        logError("Sales: failed to load products", err);
+
       } finally {
         isFetching = false;
       }
@@ -130,7 +133,7 @@ function SalesComponent() {
         navigate(`/customer-login/chat/${conversationId}`);
       }
     } catch (err) {
-      console.error("Chat creation failed", err);
+      logError("Sales: chat creation failed", err);
     }
   };
 

@@ -13,6 +13,8 @@ import {
   StarIcon,
   ChatIcon,
 } from "../components/SvgIcon";
+import { log, warn, error as logError } from "../utils/logger";
+
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
@@ -99,14 +101,16 @@ function SalesProductPageComponent() {
         });
 
         setLastPage(paginated.last_page);
-      } catch (err) {
-        if (err.name === 'AbortError') {
-          console.log('Request was aborted');
-          return;
-        }
-        console.error(err);
-        setError("Failed to load sales products");
-      } finally {
+      }  catch (err) {
+  if (err.name === "AbortError") {
+    log("Request was aborted");
+    return;
+  }
+
+  logError("Failed to load sales products", err);
+  setError("Failed to load sales products");
+}
+ finally {
         setLoading(false);
       }
     };
@@ -127,7 +131,7 @@ function SalesProductPageComponent() {
 
     // 🛑 Safety check
     if (!companyId) {
-      console.error("Invalid company ID for chat", product);
+      logError("Invalid company ID for chat", product);
       return;
     }
 
@@ -150,13 +154,13 @@ function SalesProductPageComponent() {
         res.data?.id;
 
       if (!conversationId) {
-        console.error("Conversation ID missing");
+        logError("Conversation ID missing");
         return;
       }
 
       navigate(`/customer-login/chat/${conversationId}`);
     } catch (err) {
-      console.error("Chat creation failed", err);
+      logError("Chat creation failed", err);
     }
   }, [navigate]);
 

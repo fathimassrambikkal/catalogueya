@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Pusher from "pusher-js";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { log, warn, error as logError } from "../utils/logger";
 
 import {
   getCustomerConversation,
@@ -13,7 +14,11 @@ import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 
-Pusher.logToConsole = true;
+if (import.meta.env.DEV) {
+  Pusher.logToConsole = true;
+}
+
+
 
 const API_BASE = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
@@ -38,8 +43,8 @@ export default function Chat() {
   try {
     currentUser = currentUserRaw ? JSON.parse(currentUserRaw) : null;
   } catch (e) {
-    console.error("❌ Failed to parse currentUser from localStorage:", e);
-  }
+  logError("Chat: failed to parse currentUser from localStorage", e);
+}
 
   const currentUserId = currentUser?.id;
 
@@ -58,27 +63,40 @@ export default function Chat() {
     // Silent background fetch without loading state
     getCustomerConversation(conversationId)
       .then((res) => {
-        setConversation(res.data.conversation);
+        setConversation(prev => {
+  if (!prev) return res.data.conversation;
+
+  return {
+    ...res.data.conversation,
+    participants:
+      res.data.conversation?.participants?.length
+        ? res.data.conversation.participants
+        : prev.participants, // 🔒 preserve logo
+  };
+});
+
         setMessages(res.data.messages || []);
         markCustomerConversationRead(conversationId);
       })
       .catch((err) => {
-        console.error("❌ Conversation sync failed:", err);
-      });
+  logError("Chat: conversation sync failed", err);
+});
+
   }, [conversationId]);
 
   // 🔥 PUSHER DIAGNOSTIC VERSION - OPTIMIZED
   useEffect(() => {
     if (!currentUserId || !token || !channelName) {
-      console.warn("⚠️ Pusher setup skipped: missing auth data");
+      warn("Chat: Pusher setup skipped – missing auth data");
       return;
     }
 
-    console.log("================ PUSHER DEBUG START ================");
-    console.log("currentUser:", currentUser);
-    console.log("computed channelName:", channelName);
-    console.log("route conversationId:", conversationId);
-    console.log("====================================================");
+    log("Chat: Pusher initialized", {
+  userId: currentUserId,
+  channelName,
+  conversationId,
+});
+
 
     const pusher = new Pusher("a613271cbafcf4059d6b", {
       cluster: "ap2",
@@ -128,9 +146,9 @@ export default function Chat() {
         channel.unbind_global(handleGlobalEvent);
         pusher.unsubscribe(channelName);
         pusher.disconnect();
-      } catch (error) {
-        console.warn("Pusher cleanup error:", error);
-      }
+      } catch (err) {
+  warn("Chat: Pusher cleanup error", err);
+}
     };
   }, [currentUserId, channelName, token, conversationId]);
 
@@ -198,7 +216,8 @@ export default function Chat() {
         )
       );
     } catch (err) {
-      console.error("❌ Send failed:", err);
+      logError("Chat: send message failed", err);
+
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === tempId ? { ...msg, pending: false, failed: true } : msg

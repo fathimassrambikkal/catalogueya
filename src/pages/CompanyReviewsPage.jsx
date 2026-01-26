@@ -1,19 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import BackButton from "../components/BackButton";
-import {
-  getCompanyReviewsPublic,
-  addCompanyReview,
-} from "../api";
-
-
+import { getCompanyReviewsPublic, addCompanyReview } from "../api";
+import { useFixedWords } from "../hooks/useFixedWords";
+import { error as logError } from "../utils/logger";
 // Navigation Icons
-const CloseIcon = ({ className = "" }) => (
-  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M18 6L6 18M6 6l12 12" />
-  </svg>
-);
-
 
 
 // Star Icon with the exact requested shape
@@ -32,7 +23,7 @@ const StarIcon = ({ filled, className = "" }) => (
 );
 
 // Star Rating Component with Apple-like microinteractions
-const StarRating = ({ rating, setRating, hoverRating, setHoverRating }) => {
+const StarRating = ({ rating, setRating, hoverRating, setHoverRating, selectYourRatingText }) => {
   const [clickedStar, setClickedStar] = useState(null);
 
   const handleStarClick = useCallback((star) => {
@@ -112,17 +103,17 @@ const StarRating = ({ rating, setRating, hoverRating, setHoverRating }) => {
 
 export default function CompanyReviewsPage() {
   const { companyId } = useParams();
-  const navigate = useNavigate();
-
-const [reviews, setReviews] = useState([]);
-const [stats, setStats] = useState({
-  average: "0.0",
-  total: 0,
-  distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-});
-const [loading, setLoading] = useState(true);
-
   
+  const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
+
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState({
+    average: "0.0",
+    total: 0,
+    distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+  });
+  const [loading, setLoading] = useState(true);
 
   const [newReview, setNewReview] = useState({
     name: "",
@@ -133,55 +124,52 @@ const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
-useEffect(() => {
-  const fetchCompanyReviews = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    const fetchCompanyReviews = async () => {
+      try {
+        setLoading(true);
 
-      const res = await getCompanyReviewsPublic(companyId);
-      const data = res?.data?.data;
+        const res = await getCompanyReviewsPublic(companyId);
+        const data = res?.data?.data;
 
-      const serviceReviews = data?.services?.reviews || [];
+        const serviceReviews = data?.services?.reviews || [];
 
-      // Normalize reviews for UI
-      const normalizedReviews = serviceReviews.map((r) => ({
-        id: r.review_id,
-        name: r.user?.name || "Anonymous",
-        avatar: r.user?.image || null,
-        rating: Number(r.rating),
-        comment: r.comment || "No comment provided",
-        date: new Date(r.created_at).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }),
-      }));
+        // Normalize reviews for UI
+        const normalizedReviews = serviceReviews.map((r) => ({
+          id: r.review_id,
+          name: r.user?.name || "Anonymous",
+          avatar: r.user?.image || null,
+          rating: Number(r.rating),
+          comment: r.comment || fw.no_comment || "No comment provided",
+          date: new Date(r.created_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+        }));
 
-      // Rating distribution
-      const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-      normalizedReviews.forEach((r) => {
-        distribution[r.rating]++;
-      });
+        // Rating distribution
+        const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        normalizedReviews.forEach((r) => {
+          distribution[r.rating]++;
+        });
 
-      setReviews(normalizedReviews);
-      setStats({
-        average: Number(data.company_rating).toFixed(1),
-        total: data.total_reviews_count,
-        distribution,
-      });
-    } catch (error) {
-      console.error("Failed to load company reviews", error);
-      setReviews([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setReviews(normalizedReviews);
+        setStats({
+          average: Number(data.company_rating).toFixed(1),
+          total: data.total_reviews_count,
+          distribution,
+        });
+      } catch (error) {
+         logError("Failed to load company reviews", error);
+        setReviews([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchCompanyReviews();
-}, [companyId]);
-
-
- 
+    fetchCompanyReviews();
+  }, [companyId, fw.no_comment]);
 
   // Filter reviews by rating
   const filteredReviews = useMemo(() => {
@@ -194,66 +182,63 @@ const handleSubmit = useCallback(
   async (e) => {
     e.preventDefault();
 
+    if (isSubmitting) return; 
     if (!newReview.rating || !newReview.comment.trim()) return;
 
-    try {
-      setIsSubmitting(true);
+      try {
+        setIsSubmitting(true);
 
-      // 🔥 Call backend API
-      await addCompanyReview(
-        companyId,
-        newReview.rating,
-        newReview.comment,
-        "General Service" // or dynamic service name
-      );
+        // 🔥 Call backend API
+        await addCompanyReview(
+          companyId,
+          newReview.rating,
+          newReview.comment,
+          "General Service" // or dynamic service name
+        );
 
-      // 🔄 Re-fetch reviews from backend
-      const res = await getCompanyReviewsPublic(companyId);
-      const data = res?.data?.data;
+        // 🔄 Re-fetch reviews from backend
+        const res = await getCompanyReviewsPublic(companyId);
+        const data = res?.data?.data;
 
-      const serviceReviews = data?.services?.reviews || [];
+        const serviceReviews = data?.services?.reviews || [];
 
-      const normalizedReviews = serviceReviews.map((r) => ({
-        id: r.review_id,
-        name: r.user?.name || "Anonymous",
-        avatar: r.user?.image || null,
-        rating: Number(r.rating),
-        comment: r.comment || "No comment provided",
-        date: new Date(r.created_at).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }),
-      }));
+        const normalizedReviews = serviceReviews.map((r) => ({
+          id: r.review_id,
+          name: r.user?.name || "Anonymous",
+          avatar: r.user?.image || null,
+          rating: Number(r.rating),
+          comment: r.comment || fw.no_comment || "No comment provided",
+          date: new Date(r.created_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+        }));
 
-      // Update state
-      const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-      normalizedReviews.forEach((r) => {
-        distribution[r.rating]++;
-      });
+        // Update state
+        const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        normalizedReviews.forEach((r) => {
+          distribution[r.rating]++;
+        });
 
-      setReviews(normalizedReviews);
-      setStats({
-        average: Number(data.company_rating).toFixed(1),
-        total: data.total_reviews_count,
-        distribution,
-      });
+        setReviews(normalizedReviews);
+        setStats({
+          average: Number(data.company_rating).toFixed(1),
+          total: data.total_reviews_count,
+          distribution,
+        });
 
-      // Reset form
-      setNewReview({ name: "", rating: 0, comment: "" });
-      setHoverRating(0);
-    } catch (error) {
-      console.error("Failed to submit review", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  },
-  [companyId, newReview]
-);
-
-
-  
-
+        // Reset form
+        setNewReview({ name: "", rating: 0, comment: "" });
+        setHoverRating(0);
+      } catch (error) {
+        logError("Failed to submit review", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [companyId, newReview, fw.no_comment]
+  );
 
   // Update form state
   const updateForm = useCallback((field, value) => {
@@ -356,22 +341,20 @@ const handleSubmit = useCallback(
         </div>
       )}
 
-  <BackButton   variant="absolute" className="top-16"/>
+      <BackButton variant="absolute" className="top-16" />
 
       {/* Main Content */}
       <div className="max-w-[1920px] mx-auto animate-fade-in mt-20">
         {/* Header Stats */}
         <section className="mb-8 md:mb-12 pt-2">
           <div className="flex flex-col gap-4">
-       
-            
             {/* Heading - Now below the arrow */}
             <div>
               <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-gray-900">
-                Customer Reviews
+                {fw.customer_reviews }
               </h1>
               <p className="text-caption text-gray-600 mt-2">
-                Verified experiences from real customers
+                {fw.experiences_customer || "Verified experiences from real customers"}
               </p>
             </div>
           </div>
@@ -388,7 +371,7 @@ const handleSubmit = useCallback(
                   onClick={() => setActiveTab('all')}
                   className={`px-3 py-1.5 rounded-full text-micro font-medium transition-all ${activeTab === 'all' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
                 >
-                  All ({stats.total})
+                  {fw.all} ({stats.total})
                 </button>
                 {[5,4,3,2,1].map(rating => (
                   <button
@@ -401,7 +384,7 @@ const handleSubmit = useCallback(
                 ))}
               </div>
               <span className="text-micro text-gray-500 hidden sm:block">
-                Most recent first
+                {fw.most_recent_first || "Most recent first"}
               </span>
             </div>
 
@@ -467,7 +450,7 @@ const handleSubmit = useCallback(
                   </h3>
                   <p className="text-caption text-gray-600 max-w-md mx-auto">
                     {activeTab === 'all' 
-                      ? "Be the first to share your experience"
+                      ? fw.no_reviews || "No reviews yet - be the first to share your experience"
                       : `No ${activeTab}-star reviews yet`
                     }
                   </p>
@@ -482,10 +465,10 @@ const handleSubmit = useCallback(
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 md:p-6">
                 <header className="mb-6">
                   <h2 className="text-title font-light text-gray-900 mb-2">
-                    Share Your Experience
+                    {fw.share_experiences || "Share Your Experience"}
                   </h2>
                   <p className="text-caption text-gray-600">
-                    Your feedback helps others make informed decisions
+                    {fw.informed_decisions || "Your feedback helps others make informed decisions"}
                   </p>
                 </header>
 
@@ -493,13 +476,13 @@ const handleSubmit = useCallback(
                   {/* Name Field */}
                   <div>
                     <label className="block text-micro font-medium text-gray-700 mb-2 uppercase tracking-wider">
-                      Your Name
+                      {fw.your_name || "Your Name"}
                     </label>
                     <input
                       type="text"
                       value={newReview.name}
                       onChange={(e) => updateForm('name', e.target.value)}
-                      placeholder="Enter your name"
+                      placeholder={fw.your_name || "Your Name"}
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-1 focus:ring-gray-900/20 text-body placeholder-gray-500 transition-all focus-visible"
                       required
                     />
@@ -508,19 +491,20 @@ const handleSubmit = useCallback(
                   {/* Star Rating */}
                   <div>
                     <label className="block text-micro font-medium text-gray-700 mb-3 uppercase tracking-wider">
-                      Your Rating
+                      {fw.your_rating || "Your Rating"}
                     </label>
                     <StarRating
                       rating={newReview.rating}
                       setRating={(rating) => updateForm('rating', rating)}
                       hoverRating={hoverRating}
                       setHoverRating={setHoverRating}
+                      selectYourRatingText={fw.select_your_rating}
                     />
                     <div className="text-center mt-4">
                       <span className="text-caption text-gray-700">
                         {newReview.rating > 0 
                           ? `${newReview.rating} out of 5 stars`
-                          : "Select your rating"
+                          : fw.select_your_rating || "Select your rating"
                         }
                       </span>
                     </div>
@@ -529,12 +513,12 @@ const handleSubmit = useCallback(
                   {/* Comment Field */}
                   <div>
                     <label className="block text-micro font-medium text-gray-700 mb-2 uppercase tracking-wider">
-                      Your Review
+                      {fw.your_review || "Your Review"}
                     </label>
                     <textarea
                       value={newReview.comment}
                       onChange={(e) => updateForm('comment', e.target.value)}
-                      placeholder="Share your thoughts about your experience..."
+                      placeholder={fw.share_review || "Share your thoughts about this product..."}
                       rows="4"
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-1 focus:ring-gray-900/20 text-body placeholder-gray-500 resize-none transition-all focus-visible"
                       maxLength={500}
@@ -565,14 +549,14 @@ const handleSubmit = useCallback(
                       focus-visible
                     "
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                    {isSubmitting ? 'Submitting...' : (fw.write_review || "Write a Review")}
                   </button>
                 </form>
 
                 {/* Rating Distribution */}
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <h3 className="text-micro font-medium text-gray-900 mb-4 uppercase tracking-wider">
-                    Rating Distribution
+                    {fw.rating || "Rating"}
                   </h3>
                   <div className="space-y-2">
                     {[5,4,3,2,1].map(rating => {
@@ -607,16 +591,16 @@ const handleSubmit = useCallback(
         <div className="mt-8 lg:hidden animate-fade-in">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h3 className="text-micro font-medium text-gray-900 mb-4 uppercase tracking-wider">
-              Rating Summary
+              {fw.rating || "Rating"} Summary
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <div className="text-title font-light text-gray-900">{stats.average}</div>
-                <div className="text-micro text-gray-600 mt-1">Average Rating</div>
+                <div className="text-micro text-gray-600 mt-1">Average {fw.rating || "Rating"}</div>
               </div>
               <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <div className="text-title font-light text-gray-900">{stats.total}</div>
-                <div className="text-micro text-gray-600 mt-1">Total Reviews</div>
+                <div className="text-micro text-gray-600 mt-1">Total {fw.reviews || "Reviews"}</div>
               </div>
             </div>
           </div>

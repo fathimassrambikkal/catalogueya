@@ -6,7 +6,8 @@ import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { createCustomerConversation,getProductReviews  } from "../api";
 import { addProductReview } from "../api";
-
+import { error as logError, warn } from "../utils/logger";
+ import { showToast } from "../utils/showToast";
 import { getProduct, getCompany } from "../api";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
@@ -37,27 +38,7 @@ const normalizeImage = (image) => {
   return null;
 };
 
-// ✅ Helper to get fallback URL for error handling
-const getFallbackUrl = (imgData) => {
-  if (!imgData) return "/api/placeholder/400/400";
-  
-  if (typeof imgData === 'string') {
-    return imgData.startsWith("http") 
-      ? imgData 
-      : `${API_BASE_URL}/${imgData.replace(/^\//, "")}`;
-  }
-  
-  if (typeof imgData === 'object') {
-    const webp = imgData.webp || imgData.url || imgData.path;
-    if (webp) {
-      return webp.startsWith("http") 
-        ? webp 
-        : `${API_BASE_URL}/${webp.replace(/^\//, "")}`;
-    }
-  }
-  
-  return "/api/placeholder/400/400";
-};
+
 
 // ✅ Reusable VisionOS-style glass / titanium icon button
 const PremiumIconButton = ({ onClick, title, children, disabled = false }) => (
@@ -439,7 +420,7 @@ useEffect(() => {
 
       if (mounted) setReviews(mappedReviews);
     } catch (err) {
-      console.error("Failed to load product reviews", err);
+      logError("ProductProfile: failed to load product reviews", err);
       if (mounted) setReviews([]);
     }
   };
@@ -476,7 +457,9 @@ useEffect(() => {
         : product.company_id;
 
     if (!companyId) {
-      console.error("Invalid company ID for chat", product);
+      logError("Chat: invalid company ID", product);
+showToast(fw.chat_unavailable || "Chat unavailable");
+
       return;
     }
 
@@ -499,13 +482,16 @@ useEffect(() => {
         res.data?.id;
 
       if (!conversationId) {
-        console.error("Conversation ID missing");
+        logError("Chat: conversation ID missing");
+showToast(fw.chat_failed || "Unable to start chat");
         return;
       }
 
       navigate(`/customer-login/chat/${conversationId}`);
     } catch (err) {
-      console.error("Chat creation failed", err);
+      logError("Chat creation failed", err);
+showToast(fw.chat_failed || "Unable to start chat");
+
     }
   },
   [product, navigate]
@@ -530,16 +516,20 @@ useEffect(() => {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert("🔗 Link copied to clipboard!");
+        showToast(fw.link_copied || "Link copied to clipboard");
       }
     } catch (err) {
-      console.error("Share failed:", err);
+      warn("Share failed", err);
     }
   };
 
 const handleReviewSubmit = async () => {
   if (!reviewText || reviewRating === 0) {
-    alert("Please add rating and comment.");
+    showToast(
+  fw.fill_all_fields || "Please enter rating and comment",
+  { type: "warning" }
+);
+
     return;
   }
 
@@ -567,11 +557,14 @@ const handleReviewSubmit = async () => {
     setReviewRating(0);
 
   } catch (error) {
-    console.error("Failed to submit review", error);
-    alert(
-      error?.response?.data?.message ||
-      "Failed to submit review. Please try again."
-    );
+    logError("Review submit failed", error);
+showToast(
+  error?.response?.data?.message ||
+  fw.review_failed ||
+  "Failed to submit review",
+  { type: "error" }
+);
+
   }
 };
 
@@ -658,7 +651,7 @@ const handleReviewSubmit = async () => {
                 loading="eager"
                 fetchPriority="high"
                 onError={(e) => {
-                  console.error("Failed to load main image:", selectedImage);
+                  logError("Image load failed (main)", selectedImage);
                   e.target.src = "/api/placeholder/500/500";
                 }}
               />
@@ -767,7 +760,7 @@ const handleReviewSubmit = async () => {
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
-                          console.error("Failed to load thumbnail:", imgData);
+                          logError("Image load failed (thumbnail)", imgData);
                           e.target.src = "/api/placeholder/200/200";
                         }}
                       />
@@ -978,10 +971,7 @@ const handleReviewSubmit = async () => {
   
           "
         >
-         <span>
-     {(fw.view_all_reviews || "View all")} {reviews.length}{" "}
-    {(fw.reviews || "reviews")}
-  </span>
+{(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
   
   <svg
     xmlns="http://www.w3.org/2000/svg"

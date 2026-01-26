@@ -6,7 +6,7 @@ import React, {
   useMemo,
   memo  
 } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { getCompany, getSettings } from "../api";
@@ -235,7 +235,9 @@ export default function CompanyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState({});
-  
+ const location = useLocation();
+
+
   const [isRTL, setIsRTL] = useState(false);
   const [products, setProducts] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -378,39 +380,66 @@ useEffect(() => {
 
 
   // =================== Follow Status Check ===================
-  useEffect(() => {
-    const checkFollowStatus = async () => {
-      try {
-        const res = await getCustomerFollowUps();
-        const companies = res.data?.companies || res.data || [];
-        setIsFollowing(companies.some(c => c.id === Number(companyId)));
-      } catch {
-        // Silent error
-      }
-    };
+useEffect(() => {
+  if (!auth.isAuthenticated) {
+    setIsFollowing(false);
+    return;
+  }
 
-    checkFollowStatus();
-  }, [companyId]);
+  let active = true;
 
-  const handleFollowToggle = async () => {
-    if (followLoading) return;
-    setFollowLoading(true);
-
+  const checkFollowStatus = async () => {
     try {
-      if (isFollowing) {
-        await unfollowCompany(companyId);
-        setIsFollowing(false);
-      } else {
-        await addFollowCompany(companyId);
-        setIsFollowing(true);
+      const res = await getCustomerFollowUps();
+      const companies = res.data?.companies || res.data || [];
+
+      if (active) {
+        setIsFollowing(companies.some(c => c.id === Number(companyId)));
       }
-      window.dispatchEvent(new Event("follow-updated"));
     } catch {
-      // Silent error
-    } finally {
-      setFollowLoading(false);
+      if (active) setIsFollowing(false);
     }
   };
+
+  checkFollowStatus();
+
+  // ✅ IMPORTANT: re-check when page regains focus
+  window.addEventListener("focus", checkFollowStatus);
+
+  return () => {
+    active = false;
+    window.removeEventListener("focus", checkFollowStatus);
+  };
+}, [companyId, auth.isAuthenticated]);
+
+
+
+  const handleFollowToggle = async () => {
+  // 👤 Guest → redirect ONLY
+  if (!auth.isAuthenticated || auth.userType !== "customer") {
+    navigate(
+      `/sign?redirect=${encodeURIComponent(location.pathname)}&action=follow&companyId=${companyId}`
+    );
+    return;
+  }
+
+  // 👤 Logged in
+  if (followLoading) return;
+  setFollowLoading(true);
+
+  try {
+    if (isFollowing) {
+      await unfollowCompany(companyId);
+      setIsFollowing(false);
+    } else {
+      await addFollowCompany(companyId);
+      setIsFollowing(true);
+    }
+  } finally {
+    setFollowLoading(false);
+  }
+};
+
 
   // =================== Check for RTL ===================
   useEffect(() => {
@@ -672,8 +701,8 @@ const handleToggleFavourite = useCallback(
   }
 
   // Safely extract company properties
-  const { name, title, logo, banner, rating = 0, location, address } = company;
-  const displayLocation = location || address;
+  const { name, title, logo, banner, rating = 0, location: companyLocation, address } = company;
+  const displayLocation = companyLocation || address;
   const displayRating = typeof rating === 'number' ? rating : parseFloat(rating) || 0;
   const basePath = getBasePath();
 
@@ -742,7 +771,7 @@ const handleToggleFavourite = useCallback(
           </button>
 
            {/* ===== Company Info ===== */}
-          <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-10 w-full transform-gpu">
+          <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-24 w-full transform-gpu">
             {/* FIXED: Logo with improved styling */}
             <img
               src={logoUrl}

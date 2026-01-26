@@ -1,17 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { error as logError } from "../utils/logger";
 
 export const useProductData = (fetchFunction, transformFunction) => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [err, setErr] = useState(null);
+
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
-    let isFetching = false;
 
     const fetchData = async () => {
-      if (isFetching) return;
-      isFetching = true;
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
       setIsLoading(true);
 
       try {
@@ -20,33 +22,42 @@ export const useProductData = (fetchFunction, transformFunction) => {
 
         if (!mounted || !paginated?.data) return;
 
-        const transformed = transformFunction(paginated.data);
+        let transformed = [];
+        try {
+          transformed = transformFunction(paginated.data);
+        } catch (e) {
+          logError("useProductData: transform failed", e);
+          return;
+        }
+
         setProducts(transformed);
-        
-        // Preload images in background
-        transformed.forEach(product => {
-          if (product?.img) {
-            const img = new Image();
-            const imageUrl = product.img.startsWith('http') ? product.img : `https://catalogueyanew.com.awu.zxu.temporary.site/${product.img}`;
-            img.src = imageUrl;
-            img.fetchPriority = 'high';
-          }
+
+        // 🔹 Background image warm-up (safe)
+        transformed.forEach((product) => {
+          if (!product?.img) return;
+
+          const src = product.img.startsWith("http")
+            ? product.img
+            : `https://catalogueyanew.com.awu.zxu.temporary.site/${product.img}`;
+
+          const img = new Image();
+          img.src = src;
         });
-      } catch (err) {
-        console.error("Failed to load products", err);
-        setError(err.message);
+      } catch (e) {
+        logError("useProductData: fetch failed", e);
+        if (mounted) setErr(e);
       } finally {
-        isFetching = false;
-        setIsLoading(false);
+        isFetchingRef.current = false;
+        if (mounted) setIsLoading(false);
       }
     };
 
     fetchData();
-    
+
     return () => {
       mounted = false;
     };
   }, [fetchFunction, transformFunction]);
 
-  return { products, isLoading, error };
+  return { products, isLoading, error: err };
 };

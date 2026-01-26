@@ -1,4 +1,5 @@
 import React from "react";
+import { error as logError } from "../utils/logger";
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -11,14 +12,16 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("Error caught by ErrorBoundary:", error, info);
+    logError("Error caught by ErrorBoundary", { error, info });
   }
 
   render() {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
-          <h1 className="text-3xl font-bold text-red-600 mb-4">Something went wrong 😢</h1>
+          <h1 className="text-3xl font-bold text-red-600 mb-4">
+            Something went wrong 😢
+          </h1>
           <p className="text-gray-600 mb-6">
             {this.state.error?.message || "An unexpected error occurred."}
           </p>
@@ -31,6 +34,7 @@ export default class ErrorBoundary extends React.Component {
         </div>
       );
     }
+
     return this.props.children;
   }
 }

@@ -2,6 +2,7 @@ import React, { memo, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { getSubscribeNow } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
+import { log, warn, error as logError } from "../utils/logger";
 
 // Card animation variants
 const cardVariant = {
@@ -162,7 +163,7 @@ const SubscribeSection = memo(() => {
         });
       }
     } catch (err) {
-      console.error("Error fetching subscribe now data:", err);
+      logError("Error fetching subscribe now data", err);
       setError("Failed to load subscription information");
       setSubscribeData({
         title: "",

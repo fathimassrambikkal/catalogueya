@@ -1,5 +1,6 @@
 import { logout } from "../store/authSlice";
 import { logoutCustomer, logoutCompany } from "../api";
+import { warn } from "../utils/logger";
 
 export const performLogout = async (dispatch, navigate, userType) => {
   try {
@@ -8,14 +9,16 @@ export const performLogout = async (dispatch, navigate, userType) => {
     } else if (userType === "company") {
       await logoutCompany();
     }
-  } catch (error) {
-    console.warn("Logout API failed, proceeding anyway");
+  } catch (err) {
+    // Silent in prod, visible in dev
+    warn("performLogout: logout API failed, proceeding anyway", err);
   } finally {
+    // 🔐 Always clear local state
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("userType");
 
     dispatch(logout());
-    navigate("/");
+    navigate("/", { replace: true });
   }
 };

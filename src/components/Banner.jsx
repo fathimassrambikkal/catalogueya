@@ -9,6 +9,7 @@ import React, {
 import SearchBar from "../components/SearchBar";
 import { useSettings } from "../hooks/useSettings";
 import { useFixedWords } from "../hooks/useFixedWords";
+import {  warn, error } from "../utils/logger";
 
 /* -----------------------------------
    Stable Intersection Observer
@@ -37,40 +38,43 @@ const useIsInViewport = (ref) => {
 const normalizeHeroImages = (apiImages) => {
   if (!apiImages) return [];
 
-  try {
-    if (Array.isArray(apiImages)) {
-      return apiImages
-        .map((item, i) => {
-          if (!item) return null;
-
-          let src = "";
-          if (typeof item === "object") {
-            src = item.avif || item.webp || item.src || item.url || "";
-          } else if (typeof item === "string") {
-            src = item;
-          }
-
-          if (!src) return null;
-
-          const clean = String(src).trim();
-          const finalSrc = clean.startsWith("http")
-            ? clean
-            : `https://catalogueyanew.com.awu.zxu.temporary.site/${clean}`;
-
-          return {
-            src: finalSrc,
-            alt: `Hero image ${i + 1}`,
-            id: `api-banner-${i}`,
-          };
-        })
-        .filter(Boolean);
-    }
-  } catch (err) {
-    console.error("normalizeHeroImages error:", err);
+  if (!Array.isArray(apiImages)) {
+    warn("hero_backgrounds is not an array", apiImages);
+    return [];
   }
 
-  return [];
+  try {
+    return apiImages
+      .map((item, i) => {
+        if (!item) return null;
+
+        let src = "";
+        if (typeof item === "object") {
+          src = item.avif || item.webp || item.src || item.url || "";
+        } else if (typeof item === "string") {
+          src = item;
+        }
+
+        if (!src) return null;
+
+        const clean = String(src).trim();
+        const finalSrc = clean.startsWith("http")
+          ? clean
+          : `https://catalogueyanew.com.awu.zxu.temporary.site/${clean}`;
+
+        return {
+          src: finalSrc,
+          alt: `Hero image ${i + 1}`,
+          id: `api-banner-${i}`,
+        };
+      })
+      .filter(Boolean);
+  } catch (err) {
+    error("normalizeHeroImages error:", err);
+    return [];
+  }
 };
+
 
 export default function Banner() {
   const { settings } = useSettings();
@@ -173,7 +177,7 @@ export default function Banner() {
 
       {/* Content */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 px-4">
-        <div className="w-full max-w-2xl mt-16">
+        <div className="w-full max-w-2xl z-30 mt-16">
           <SearchBar />
         </div>
 
@@ -188,7 +192,7 @@ export default function Banner() {
 
       {/* Pagination */}
       {responsiveImages.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-0">
           <div className="flex gap-2 p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
             {responsiveImages.map((_, idx) => (
               <button key={idx} onClick={() => handleDotClick(idx)}>

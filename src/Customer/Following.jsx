@@ -1,9 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaStar, FaMapMarkerAlt, FaPhone, FaExternalLinkAlt, FaTimes } from "react-icons/fa";
+import {
+  FaStar,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaExternalLinkAlt,
+  FaTimes
+} from "react-icons/fa";
 import { HiOutlineUserRemove } from "react-icons/hi";
 import { useSelector } from "react-redux";
 import { getCustomerFollowUps, unfollowCompany } from "../api";
+
+/* ----------------------------------
+   IMAGE URL BUILDER (AVIF / WEBP)
+----------------------------------- */
+const buildImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `https://catalogueyanew.com.awu.zxu.temporary.site/${path.replace(/^\/+/, "")}`;
+};
+
+/* ----------------------------------
+   IMAGE COMPONENT (APPLE-LEVEL)
+----------------------------------- */
+const CompanyLogo = ({ image, alt }) => {
+  const avif = image?.avif ? buildImageUrl(image.avif) : null;
+  const webp = image?.webp ? buildImageUrl(image.webp) : null;
+
+  return (
+    <picture>
+      {avif && <source srcSet={avif} type="image/avif" />}
+      {webp && <source srcSet={webp} type="image/webp" />}
+      <img
+        src={webp || "/api/placeholder/80/80"}
+        alt={alt}
+        loading="lazy"
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          e.currentTarget.src = "/api/placeholder/80/80";
+          e.currentTarget.className =
+            "w-full h-full object-contain bg-gradient-to-br from-blue-50 to-gray-100 p-2";
+        }}
+      />
+    </picture>
+  );
+};
 
 export default function Following() {
   const [following, setFollowing] = useState([]);
@@ -12,90 +53,62 @@ export default function Following() {
   const [unfollowLoading, setUnfollowLoading] = useState({});
   const navigate = useNavigate();
 
-  // Get current user from Redux
   const currentUser = useSelector((state) => state.auth.user);
 
-  // Helper function to get proper image URLs
-  const getImageUrl = (imgPath) => {
-    if (!imgPath) return "/api/placeholder/300/300";
-    if (imgPath.startsWith("http")) return imgPath;
-    if (imgPath.startsWith("blob:")) return imgPath;
-    if (imgPath.startsWith("data:")) return imgPath;
-    
-    // Handle relative paths from API
-    const cleanPath = imgPath.startsWith("/") ? imgPath.slice(1) : imgPath;
-    return `https://catalogueyanew.com.awu.zxu.temporary.site/${cleanPath}`;
-  };
-
-  // Fetch followed companies from API
+  /* ----------------------------------
+     FETCH FOLLOWED COMPANIES
+  ----------------------------------- */
   const fetchFollowing = async () => {
-    // Check if user is authenticated
     if (!currentUser?.id) {
-      console.warn("⚠️ No customer ID available");
       setLoading(false);
-      setFollowing([]);
       return;
     }
 
-    // Check for token
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("❌ No auth token found. Please log in.");
       setError("Please log in to view followed companies");
       setLoading(false);
       return;
     }
-
-    console.log("📡 Fetching follow-ups...");
 
     try {
       setLoading(true);
       setError(null);
 
       const res = await getCustomerFollowUps();
-      console.log("✅ Follow-ups API response:", res.data);
 
-      // Handle the nested response format
       let companies = [];
-      
-      if (res.data?.data && Array.isArray(res.data.data)) {
-        // Format: { data: [{ id, company: {...} }] }
-        companies = res.data.data.map(item => ({
-          ...item.company,
-          follow_id: item.id,
-        }));
-      } else if (res.data?.companies && Array.isArray(res.data.companies)) {
+
+      if (Array.isArray(res.data?.companies)) {
         companies = res.data.companies;
-      } else if (Array.isArray(res.data)) {
-        companies = res.data;
+      } else if (Array.isArray(res.data?.data)) {
+        companies = res.data.data.map((item) => ({
+          ...item.company,
+          follow_id: item.id
+        }));
       }
 
-      // Process companies
-      const processedCompanies = companies.map(company => ({
-        ...company,
-        logo: getImageUrl(company.logo),
-        name: company.name_en || company.name_ar || company.name || "Unknown Company",
-        address: company.address_en || company.address_ar || company.address || "",
-        description: company.description_en || company.description_ar || company.description || "",
-        rating: company.rating ? Number(company.rating) : 0,
-        number_of_reviews: company.number_of_reviews || 0,
-        phone: company.phone || ""
-      }));
-      
-      setFollowing(processedCompanies);
-
+      setFollowing(
+        companies.map((company) => ({
+          ...company,
+          name:
+            company.name_en ||
+            company.name_ar ||
+            "Unknown Company",
+          address:
+            company.address_en ||
+            company.address_ar ||
+            "",
+          description:
+            company.description_en ||
+            company.description_ar ||
+            "",
+          rating: company.rating ? Number(company.rating) : 0,
+          number_of_reviews: company.number_of_reviews || 0
+        }))
+      );
     } catch (err) {
-      console.error("❌ Failed to load follow-ups:", err);
-
-      if (err.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("userType");
-      } else {
-        setError(err.response?.data?.message || "Failed to load followed companies");
-      }
-      setFollowing([]);
+      setError("Failed to load followed companies");
     } finally {
       setLoading(false);
     }
@@ -103,291 +116,173 @@ export default function Following() {
 
   useEffect(() => {
     fetchFollowing();
-    
-    const handleFollowUpdated = () => {
-      console.log("🔄 Received follow-updated event, refreshing following list");
-      fetchFollowing();
-    };
 
-    window.addEventListener("follow-updated", handleFollowUpdated);
-    return () => window.removeEventListener("follow-updated", handleFollowUpdated);
+    const refresh = () => fetchFollowing();
+    window.addEventListener("follow-updated", refresh);
+    return () => window.removeEventListener("follow-updated", refresh);
   }, [currentUser?.id]);
 
+  /* ----------------------------------
+     UNFOLLOW
+  ----------------------------------- */
   const handleUnfollow = async (company) => {
-    if (!company?.id) return;
-    
     try {
-      setUnfollowLoading(prev => ({ ...prev, [company.id]: true }));
+      setUnfollowLoading((p) => ({ ...p, [company.id]: true }));
       await unfollowCompany(company.id);
-      setFollowing(prev => prev.filter(c => c.id !== company.id));
-      window.dispatchEvent(new Event("follow-updated"));
-    } catch (err) {
-      console.error("❌ Unfollow failed", err);
-      setError(err.response?.data?.message || "Failed to unfollow company");
+      setFollowing((prev) => prev.filter((c) => c.id !== company.id));
+    } catch {
+      setError("Failed to unfollow company");
     } finally {
-      setUnfollowLoading(prev => ({ ...prev, [company.id]: false }));
+      setUnfollowLoading((p) => ({ ...p, [company.id]: false }));
     }
   };
 
-  const handleCompanyClick = (companyId) => {
-    navigate(`/company/${companyId}`);
-  };
+  if (loading) return null;
 
-  /* -------------------------
-        LOADING STATE - Minimal
-  -------------------------- */
-  if (loading) {
-    return (
-      <div className="min-h-full bg-gradient-to-br from-gray-50 to-white p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-10">
-            <div className="h-9 w-40 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg animate-pulse mb-2"></div>
-            <div className="h-4 w-60 bg-gradient-to-r from-gray-50 to-white rounded animate-pulse"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-4 animate-pulse">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-gray-100 to-gray-50 rounded-lg"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-5 w-3/4 bg-gradient-to-r from-gray-100 to-gray-50 rounded"></div>
-                    <div className="h-3 w-1/2 bg-gradient-to-r from-gray-50 to-white rounded"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* -------------------------
-        ERROR STATE - Minimal
-  -------------------------- */
   if (error) {
     return (
-      <div className=" h-full overflow-y-auto bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-gradient-to-r from-red-50 to-white flex items-center justify-center">
-              <FaTimes className="text-2xl text-red-400" />
-            </div>
-            <h2 className="text-xl font-medium text-gray-800 mb-3">
-              Unable to load
-            </h2>
-            <p className="text-gray-600 text-sm mb-6">
-              {error}
-            </p>
-            {error.includes("expired") || error.includes("401") ? (
-              <button
-                onClick={() => navigate("/sign")}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-sm font-medium"
-              >
-                Sign In Again
-              </button>
-            ) : (
-              <button
-                onClick={fetchFollowing}
-                className="w-full bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-2.5 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-200 text-sm font-medium"
-              >
-                Retry
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-full">
+        <FaTimes className="text-red-500 mr-2" />
+        {error}
       </div>
     );
   }
 
-  /* -------------------------
-        EMPTY STATE - Minimal
-  -------------------------- */
-  if (following.length === 0 && !loading) {
+  if (!following.length) {
     return (
-      <div className=" h-full overflow-y-auto 
-      
-      
-      flex items-center justify-center p-6">
-        <div className="max-w-md w-full">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 p-8 text-center">
-            <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-r from-blue-50 to-white flex items-center justify-center">
-              <HiOutlineUserRemove className="text-3xl text-blue-400" />
-            </div>
-            <h2 className="text-xl font-medium text-gray-800 mb-3">
-              No companies followed
-            </h2>
-            <p className="text-gray-600 text-sm mb-7">
-              Companies you follow will appear here.
-            </p>
-            <button
-              onClick={() => navigate("/")}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-sm font-medium"
+      <div className="flex items-center justify-center h-full">
+        <HiOutlineUserRemove className="text-3xl text-gray-400 mr-2" />
+        No companies followed
+      </div>
+    );
+  }
+
+
+/* ----------------------------------
+   MAIN UI 
+----------------------------------- */
+return (
+  <div className="min-h-full p-3 sm:p-6 lg:p-10  mt-10">
+    
+    {/* Header */}
+    <h1 className="text-center text-[17px] sm:text-xl font-semibold tracking-tight text-gray-900 mb-8">
+      Following
+    </h1>
+
+    {/* Responsive Grid */}
+    <div
+      className="
+        grid gap-4 sm:gap-5
+        grid-cols-[repeat(auto-fill,minmax(280px,1fr))]
+        max-w-[2000px] mx-auto
+      "
+    >
+      {following.map((company) => (
+        <div
+          key={company.id}
+          className="
+            group relative
+            rounded-2xl
+            bg-white/70 backdrop-blur-xl
+            border border-black/[0.04]
+            shadow-[0_8px_24px_-14px_rgba(0,0,0,0.25)]
+            hover:shadow-[0_14px_40px_-18px_rgba(0,0,0,0.35)]
+            transition-all duration-300
+            overflow-hidden
+          "
+        >
+          <div className="relative p-4 sm:p-5">
+            
+            {/* Header */}
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => navigate(`/company/${company.id}`)}
             >
-              Browse Companies
+              <div
+                className="
+                  w-11 h-11 rounded-xl overflow-hidden
+                  border border-black/[0.06]
+                  bg-white
+                  shadow-sm
+                  flex-shrink-0
+                "
+              >
+                <CompanyLogo image={company.logo} alt={company.name} />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-medium text-gray-900 truncate">
+                  {company.name}
+                </h3>
+
+                {company.rating > 0 && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <FaStar className="text-[11px] text-gray-700" />
+                    <span className="text-xs text-gray-600 font-medium">
+                      {company.rating.toFixed(1)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <FaExternalLinkAlt className="text-xs text-gray-400 group-hover:text-gray-700 transition-colors" />
+            </div>
+
+            {/* Description */}
+            {company.description && (
+              <p
+                className="mt-3 text-xs leading-relaxed text-gray-600 line-clamp-2"
+                dangerouslySetInnerHTML={{ __html: company.description }}
+              />
+            )}
+
+            {/* Meta */}
+            <div className="mt-4 space-y-1.5 text-xs text-gray-500">
+              {company.address && (
+                <div className="flex items-center gap-1.5">
+                  <FaMapMarkerAlt className="text-[11px]" />
+                  <span className="truncate">{company.address}</span>
+                </div>
+              )}
+              {company.phone && (
+                <div className="flex items-center gap-1.5">
+                  <FaPhone className="text-[11px]" />
+                  <span>{company.phone}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div
+            className="
+              relative flex items-center justify-between
+              px-4 py-3
+              border-t border-black/[0.04]
+              bg-white/50 backdrop-blur-md
+              text-xs
+            "
+          >
+            <span className="text-gray-400">Followed</span>
+
+            <button
+              onClick={() => handleUnfollow(company)}
+              disabled={unfollowLoading[company.id]}
+              className="
+                font-medium
+                text-red-500 hover:text-red-600
+                transition
+                disabled:opacity-50
+              "
+            >
+              {unfollowLoading[company.id] ? "Removing…" : "Unfollow"}
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  /* -------------------------
-         MAIN UI - Minimal High-End Design
-  -------------------------- */
-  return (
-    <div className="h-full overflow-y-auto  p-4 sm:p-6">
-      <div className=" w-full max-w-full mx-auto overflow-hidden">
-        
-        {/* Minimal Header */}
-        <div className="mb-10 mt-10">
-          
-          <div className="flex justify-center items-center mb-6">
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 break-words">
-              Following
-            </h1>
-        
-          </div>
-       
-        </div>
-
-        {/* Compact Grid - Minimal Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {following.map((company) => {
-            const isLoading = unfollowLoading[company.id];
-            
-            return (
-              <div
-                key={company.id}
-                className="group bg-white/90 backdrop-blur-sm rounded-xl border border-gray-100 hover:border-blue-100 hover:shadow-lg transition-all duration-300 overflow-hidden"
-              >
-                {/* Card Content */}
-                <div className="p-4">
-                  {/* Header with Logo and Actions */}
-                  <div className="flex items-start justify-between mb-3">
-                    {/* Logo and Name */}
-                    <div 
-                      className="flex items-center gap-3 cursor-pointer"
-                      onClick={() => handleCompanyClick(company.id)}
-                    >
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200">
-                        <img
-                          src={company.logo || "/api/placeholder/80/80"}
-                          alt={company.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "/api/placeholder/80/80";
-                            e.target.className = "w-full h-full object-contain bg-gradient-to-br from-blue-50 to-gray-100 p-2";
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900 text-sm line-clamp-1">
-                          {company.name}
-                        </h3>
-                        {/* Rating - Minimal */}
-                        {company.rating > 0 && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <FaStar className="text-xs text-yellow-400 fill-yellow-400" />
-                            <span className="text-xs text-gray-600 font-medium">
-                              {company.rating.toFixed(1)}
-                            </span>
-                            {company.number_of_reviews > 0 && (
-                              <span className="text-xs text-gray-400">
-                                ({company.number_of_reviews})
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-1">
-                      {/* Visit Button */}
-                      <button
-                        onClick={() => handleCompanyClick(company.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200"
-                        title="Visit company"
-                      >
-                        <FaExternalLinkAlt className="text-xs" />
-                      </button>
-                      
-                     
-                  
-                    </div>
-                  </div>
-
-                  {/* Description - Minimal */}
-                  {company.description && (
-                    <p 
-                      className="text-xs text-gray-600 line-clamp-2 mb-3"
-                      dangerouslySetInnerHTML={{ __html: company.description }}
-                    />
-                  )}
-
-                  {/* Contact Info - Minimal */}
-                  <div className="space-y-1.5">
-                    {company.address && (
-                      <div className="flex items-center gap-1.5">
-                        <FaMapMarkerAlt className="text-xs text-gray-400" />
-                        <span className="text-xs text-gray-500 truncate">
-                          {company.address}
-                        </span>
-                      </div>
-                    )}
-
-                    {company.phone && (
-                      <div className="flex items-center gap-1.5">
-                        <FaPhone className="text-xs text-gray-400" />
-                        <span className="text-xs text-gray-500">
-                          {company.phone}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Subtle Footer */}
-                <div className="px-4 py-2.5 border-t border-gray-50 bg-gray-50/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      Followed
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUnfollow(company);
-                      }}
-                      disabled={isLoading}
-                      className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors duration-200 disabled:opacity-50"
-                    >
-                      {isLoading ? "Removing..." : "Unfollow"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Inline Styles */}
-      <style jsx>{`
-        .line-clamp-1 {
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 1;
-          -webkit-box-orient: vertical;
-        }
-        
-        .line-clamp-2 {
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
-      `}</style>
+      ))}
     </div>
-  );
+  </div>
+);
+
+
 }

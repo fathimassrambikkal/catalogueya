@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getCategories } from "../api";
 import { useSettings } from "../hooks/useSettings";
 import SmartImage from "../components/SmartImage";
+import { warn } from "../utils/logger";
 
 const ChevronLeft = ({ size = 16 }) => (
   <svg
@@ -93,7 +94,7 @@ if (typeof window !== 'undefined' && !preloadedData.loading) {
         ? (catRes.value?.data?.data || []) 
         : [];
     } catch (err) {
-      console.warn("Pre-fetch failed:", err);
+      warn("HomeServices pre-fetch failed", err);
       preloadedData.categories = [];
     }
   });
@@ -164,7 +165,7 @@ export default function HomeServices() {
         }
       } catch (err) {
         if (mounted && err.name !== 'AbortError') {
-          console.warn("Failed to fetch home services data:", err);
+           warn("HomeServices fetch failed", err);
           setIsLoading(false);
         }
       }

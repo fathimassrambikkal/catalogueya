@@ -9,6 +9,7 @@ import {
 import AwaitingReviews from './AwaitingReviews'
 import ReviewedItems from './ReviewedItems'
 import LeaveReview from './LeaveReview'
+import { log, warn, error } from "../utils/logger";
 
 function Reviews() {
   const [activeView, setActiveView] = useState('main');
@@ -76,29 +77,31 @@ const handleSubmitReview = async () => {
     setSelectedItem(null);
 
   } catch (err) {
-    console.error("❌ Submit review failed", err);
+    error("Reviews: submit review failed", err);
   }
 };
 
 
 const handleEditReview = async (item, updateReviewedItemCallback) => {
-  if (
-    !selectedItem?.review_id ||
-    typeof selectedItem.review_id !== "number"
-  ) {
-    console.warn("⛔ Cannot edit optimistic review");
-    return;
-  }
+ if (
+  !item?.review_id ||
+  typeof item.review_id !== "number"
+) {
+  warn("Reviews: cannot edit optimistic review");
+  return;
+}
+
 
   try {
-    await editReview(selectedItem.review_id, rating, reviewText);
+    await editReview(item.review_id, rating, reviewText);
 
-    if (updateReviewedItemCallback) {
-      updateReviewedItemCallback(selectedItem.review_id, {
-        rating,
-        comment: reviewText,
-      });
-    }
+  if (updateReviewedItemCallback) {
+  updateReviewedItemCallback(item.review_id, {
+    rating,
+    comment: reviewText,
+  });
+}
+
 
     setActiveView("main");
     setRating(0);
@@ -107,13 +110,14 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
     setHideProfile(false);
 
   } catch (err) {
-    console.error("❌ Edit review failed:", err);
+    error("Reviews: edit review failed", err);
   }
 };
 
 
   const handleDeleteReview = async (reviewId, itemId, removeReviewedItemCallback) => {
-    console.log("🗑 Deleting review:", reviewId);
+    log("Reviews: deleting review", reviewId);
+
     
     try {
       await deleteReview(reviewId);
@@ -122,10 +126,10 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
         removeReviewedItemCallback(reviewId);
       }
       
-      console.log("🎉 Review deleted successfully!");
+      log("Reviews: review deleted successfully");
       
     } catch (err) {
-      console.error("❌ Delete review failed:", err);
+      error("Reviews: delete review failed", err);
     }
   };
 
@@ -175,7 +179,7 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
               {/* Awaiting Reviews Button */}
               <button
                 onClick={() => {
-                  console.log("📁 Switching to awaiting tab");
+                  log("Reviews: switched to awaiting tab");
                   setActiveTab('awaiting');
                 }}
                 className={`
@@ -197,7 +201,8 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
               {/* Reviewed Button */}
               <button
                 onClick={() => {
-                  console.log("📁 Switching to reviewed tab");
+                  log("Reviews: switched to reviewed tab");
+
                   setActiveTab('reviewed');
                 }}
                 className={`
@@ -247,7 +252,7 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
       hideProfile={hideProfile}
       setHideProfile={setHideProfile}
       onCancel={() => {
-        console.log("↩️ Cancelling review/editing, returning to main");
+        log("Reviews: cancelled review, returning to main");
         setActiveView('main');
         setRating(0);
         setReviewText('');
@@ -255,12 +260,12 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
         setHideProfile(false);
       }}
       onSubmit={() => {
-        console.log("💾 Saving review...");
+        log("Reviews: saving review");
         if (selectedItem?.review_id) {
-          console.log("🔄 This is an EDIT operation");
+         log("Reviews: edit operation");
           handleEditReview(selectedItem, selectedItem.updateCallback);
         } else {
-          console.log("🆕 This is a NEW review submission");
+          log("Reviews: new review submission");
           handleSubmitReview(selectedItem, selectedItem?.removeCallback);
         }
       }}

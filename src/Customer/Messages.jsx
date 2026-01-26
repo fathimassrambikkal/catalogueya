@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCustomerConversations } from "../api";
-
+import SmartImage from "../components/SmartImage";
+import { log, warn, error } from "../utils/logger";
 /* ───────── UTILITY FUNCTIONS ───────── */
 const timeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -16,11 +17,6 @@ const timeAgo = (dateString) => {
   if (diffHours < 24) return `${diffHours}h`;
   if (diffDays < 7) return `${diffDays}d`;
   return date.toLocaleDateString([], { month: "short", day: "numeric" });
-};
-
-const fallbackImage = (e) => {
-  e.target.src = "/placeholder.png";
-  e.target.onerror = null;
 };
 
 /* ───────── MESSAGES COMPONENT ───────── */
@@ -54,7 +50,7 @@ export default function Messages() {
         // Ignore storage errors
       }
     } catch (err) {
-      console.error("Failed to refresh conversations", err);
+      error("Messages: failed to refresh conversations", err);
     }
   }, []);
 
@@ -103,33 +99,26 @@ export default function Messages() {
 
   // 🚀 Render
   return (
-    <div className="min-h-full
- w-full p-4 sm:p-6">
+    <div className="min-h-full w-full p-4 sm:p-6">
       
       <div className="w-full ">
         {/* Premium Header - Centered and spread */}
         <div className="mb-8 mt-10">
           <div className="flex justify-center items-center mb-6">
-          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
-            Messages
-          </h1>
-          
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
+              Messages
+            </h1>
           </div>
-
-          
-      
         </div>
 
         {/* Conversations List - Premium Layout */}
         <div>
           {conversations.length === 0 ? (
             // Premium Empty State
-            <div className="flex flex-col items-center justify-center h-[50vh] rounded-3xl  p-8">
-              <div className="w-24 h-24 mb-6 rounded-3xl  flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-               
+            <div className="flex flex-col items-center justify-center h-[50vh] rounded-3xl p-8">
+              <div className="w-24 h-24 mb-6 rounded-3xl flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No messages yet</h3>
-              
             </div>
           ) : (
             <div className="space-y-3">
@@ -140,8 +129,7 @@ export default function Messages() {
 
                 const unread = conv.unread_count || 0;
                 const lastMsg = conv.last_message;
-                const isOnline = conv.is_online;
-                const companyName = company?.name_en || company?.name_ar ;
+                const companyName = company?.name_en || company?.name_ar;
 
                 return (
                   <div
@@ -166,17 +154,13 @@ export default function Messages() {
                     {/* Premium Avatar Container */}
                     <div className="relative flex-shrink-0">
                       <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-white/80 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                        <img
-                          src={company?.logo ? `https://catalogueyanew.com.awu.zxu.temporary.site/${company.logo}` : "/placeholder.png"}
+                        {/* Use SmartImage component for proper logo handling */}
+                        <SmartImage
+                          image={company?.logo} // Pass the logo object directly
                           alt={companyName}
-                          loading="lazy"
-                          className="w-full h-full object-cover "
-                          onError={fallbackImage}
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                      
-                     
-                    
                     </div>
 
                     {/* Content Container - Full Width */}
@@ -186,7 +170,6 @@ export default function Messages() {
                           <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-1">
                             {companyName}
                           </h3>
-                        
                         </div>
                         
                         {/* Time & Badge Container */}
@@ -216,9 +199,8 @@ export default function Messages() {
                       
                       {/* Last Message Preview with Icon */}
                       <div className="flex items-start gap-2">
-                        
                         <p className="text-sm text-gray-600 line-clamp-2 flex-1">
-                          {lastMsg?.body }
+                          {lastMsg?.body}
                         </p>
                       </div>
                     </div>
@@ -228,9 +210,6 @@ export default function Messages() {
             </div>
           )}
         </div>
-
-        {/* Premium Bottom Gradient */}
-        
       </div>
 
       {/* Premium Animations */}
@@ -254,8 +233,6 @@ export default function Messages() {
         .animate-float {
           animation: float 3s ease-in-out infinite;
         }
-        
-      
         
         ::-webkit-scrollbar-track {
           background: rgba(0, 0, 0, 0.02);

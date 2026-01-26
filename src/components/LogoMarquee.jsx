@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import SmartImage from "./SmartImage"; // ✅ Import SmartImage
+import { log, warn, error } from "../utils/logger";
 
 // Simple Logo Item with RTL support and SmartImage
 const LogoItem = memo(({ logo, index, isRTL = false, useSmartImage = false }) => (
@@ -15,25 +16,26 @@ const LogoItem = memo(({ logo, index, isRTL = false, useSmartImage = false }) =>
         loading="lazy"
         decoding="async"
         onError={(e) => {
-          console.error(`SmartImage failed to load logo ${index}:`, logo);
+          error(`LogoMarquee: SmartImage failed`, { index, logo });
           e.target.style.opacity = '0';
         }}
         onLoad={() => {
-          console.log(`SmartImage loaded logo ${index}:`, logo);
+          log(`LogoMarquee: SmartImage loaded`, { index });
         }}
       />
     ) : (
       <img
-        src={logo}
-        alt={`client-logo-${index}`}
-        className="w-full h-full object-contain"
-        loading="lazy"
-        decoding="async"
-        onError={(e) => {
-          console.error(`Image failed to load logo ${index}:`, logo);
-          e.target.style.opacity = '0';
-        }}
-      />
+  src={logo}
+  alt={`client-logo-${index}`}
+  className="w-full h-full object-contain"
+  loading="lazy"
+  decoding="async"
+  onError={(e) => {
+    warn("LogoMarquee: fallback image failed", { index, logo });
+    e.target.style.opacity = "0";
+  }}
+/>
+
     )}
   </div>
 ));
@@ -48,7 +50,7 @@ const LogoMarquee = memo(({
   const safeLogos = Array.isArray(logos) ? logos.slice(0, 20) : [];
   
   if (safeLogos.length === 0) {
-    console.log("LogoMarquee: No logos provided or array is empty");
+    warn("LogoMarquee: No logos provided");
     return (
       <div className="w-full text-center py-8 text-gray-400">
         No logos to display
@@ -56,12 +58,12 @@ const LogoMarquee = memo(({
     );
   }
   
-  console.log("LogoMarquee Debug:", {
-    logoCount: safeLogos.length,
-    firstLogo: safeLogos[0],
-    isRTL,
-    useSmartImage
-  });
+  log("LogoMarquee init", {
+  logoCount: safeLogos.length,
+  isRTL,
+  useSmartImage
+});
+
   
   // Map speed to duration
   const getDuration = () => {
@@ -130,7 +132,7 @@ const LogoMarquee = memo(({
       
    
       {/* RTL-Compatible CSS */}
-      <style jsx global>{`
+      <style  >{`
         /* LTR Animation */
         @keyframes marquee {
           0% { transform: translateX(0); }

@@ -13,7 +13,8 @@ import {
   editFavoriteGroup,
   removeFromFavorite,
 } from "../api";
-import SmartImage from "../components/SmartImage"; // ✅ Import SmartImage
+import SmartImage from "../components/SmartImage";
+import { log, warn, error } from "../utils/logger";
 
 
 function Fav() {
@@ -125,22 +126,25 @@ function Fav() {
   // ================= FETCH ALL FAVOURITES =================
   const fetchAllFavourites = async () => {
     if (!currentUser) {
-      console.log("❌ No current user, skipping fetch");
+      warn("Fav: no current user, skipping fetch");
+
       return;
     }
 
-    console.log("🔄 Fetching favourites for user:", currentUser.id);
+    log("Fav: fetching favourites", { userId: currentUser.id });
+
 
     try {
       const token = localStorage.getItem("token");
-      console.log("🔑 Token exists:", !!token);
+      
       
       if (!token) {
         throw new Error("No authentication token found");
       }
 
       const response = await getCustomerFavourites();
-      console.log("✅ Favourites API Response:", response);
+      log("Fav: favourites API response received");
+
       
       if (!response.data) {
         throw new Error("No data returned from API");
@@ -148,7 +152,7 @@ function Fav() {
 
       // Extract groups from response
       const groups = response.data?.groups || response.data?.data?.groups || [];
-      console.log("📊 Extracted groups:", groups);
+      log("Fav: extracted groups", { count: groups.length });
       
       // Format groups with products count
       const formattedGroups = groups.map(group => ({
@@ -161,7 +165,8 @@ function Fav() {
         isDefault: false
       }));
 
-      console.log("📋 Formatted Groups:", formattedGroups);
+      
+      log("Fav: formatted groups", { count: formattedGroups.length });
       
       // Combine default list with user-created lists
       const currentLists = lists.filter(list => list.isDefault);
@@ -169,12 +174,14 @@ function Fav() {
       dispatch(setFavouriteLists(allLists));
       setError(null);
     } catch (err) {
-      console.error("❌ Fetch favourites failed:", err);
-      console.error("Error details:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status
-      });
+      error("Fav: fetch favourites failed", err);
+
+      error("Fav: favourites error details", {
+  message: err.message,
+  response: err.response?.data,
+  status: err.response?.status
+});
+
       
       const errorMessage = err.response?.data?.message || 
                          err.message || 
@@ -212,7 +219,8 @@ function Fav() {
 
     // Background API call
     try {
-      console.log("🟡 Creating list:", newListName);
+      log("Fav: creating list", { name: newListName });
+
       const response = await createFavoriteGroup(newListName.trim());
       
       // Update with real ID from server
@@ -228,7 +236,7 @@ function Fav() {
       });
       dispatch(setFavouriteLists(finalLists));
     } catch (err) {
-      console.error("❌ Create group failed:", err);
+     error("Fav: create list failed", err);
       // Rollback on error
       const rolledBackLists = updatedLists.filter(list => list.id !== tempId);
       dispatch(setFavouriteLists(rolledBackLists));
@@ -240,7 +248,7 @@ function Fav() {
   const handleDeleteList = async () => {
     if (!deleteModal.list?.id || deleteModal.list?.isDefault) return;
 
-    console.log("🗑 Deleting group id:", deleteModal.list.id);
+    log("Fav: deleting favourite list", { listId: deleteModal.list.id });
 
     // Store deleted list for potential rollback
     const deletedList = deleteModal.list;
@@ -253,9 +261,10 @@ function Fav() {
     // Background API call
     try {
       await deleteFavoriteGroup(deletedList.id);
-      console.log("🗑 Delete successful");
+      log("Fav: list deleted successfully", { listId: deletedList.id });
+
     } catch (err) {
-      console.error("❌ Delete group failed:", err);
+      error("Fav: delete list failed", err);
       // Rollback on error
       dispatch(setFavouriteLists([...updatedLists, deletedList]));
       alert(`Failed to delete: ${err?.response?.data?.message || err.message}`);
@@ -279,7 +288,11 @@ function Fav() {
 
     // Background API call
     try {
-      console.log("✏️ Editing list:", editModal.list.id, "to:", editModal.newName);
+      log("Fav: editing list", {
+  listId: editModal.list.id,
+  newName: editModal.newName
+});
+
       await editFavoriteGroup(editModal.list.id, editModal.newName.trim());
       
       // Remove optimistic flag
@@ -290,7 +303,7 @@ function Fav() {
       );
       dispatch(setFavouriteLists(finalLists));
     } catch (err) {
-      console.error("❌ Edit group failed:", err);
+      error("Fav: edit list failed", err);
       // Rollback on error
       const rolledBackLists = lists.map(list => 
         list.id === editModal.list.id 
@@ -327,9 +340,10 @@ function Fav() {
     // Background API call
     try {
       await removeFromFavorite(productId);
-      console.log("✅ Product removed successfully");
+      log("Fav: product removed successfully", { productId });
+
     } catch (err) {
-      console.error("❌ Remove product failed:", err);
+      error("Fav: remove product failed", err);
       // Rollback on error
       const rolledBackLists = lists.map(list => {
         if (list.id === listId && productToRemove) {
@@ -372,7 +386,8 @@ function Fav() {
 
   // ================= HANDLE PRODUCT NAVIGATION =================
   const handleProductClick = (product) => {
-    console.log("📍 Navigating to product:", product);
+    log("Fav: navigating to product", { productId: product.id });
+
     
     // Ensure product has required properties
     const productToNavigate = {
@@ -383,7 +398,8 @@ function Fav() {
     };
     
     const route = resolveProductRoute(productToNavigate);
-    console.log("📍 Resolved route:", route);
+    log("Fav: resolved product route", { route });
+
     
     navigate(route);
   };

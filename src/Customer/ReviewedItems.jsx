@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { getCustomerCompanyReviews, getCustomerProductReviews } from "../api"
 import { FaCalendarAlt, FaEdit, FaTrash, FaStar, FaChevronRight } from "react-icons/fa"
+import { error } from "../utils/logger";
 
 function ReviewedItems({
   reviewedItems,
@@ -96,8 +97,9 @@ function ReviewedItems({
       });
 
     } catch (err) {
-      console.error("Failed to load reviewed items", err);
-    }
+  error("ReviewedItems: failed to load reviews", err);
+}
+
   };
 
   const updateReviewedItem = (reviewId, updatedData) => {

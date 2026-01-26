@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { resolveProductRoute } from "../utils/productNavigation";
 import SmartImage from "../components/SmartImage";
+import { warn, error } from "../utils/logger";
 
 // Import shared components
 import { 
@@ -27,8 +28,6 @@ import { useCardWidth } from "../hooks/useCardWidth";
 function NewArrivalsComponent() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  const favourites = useSelector((state) => state.favourites.items);
   const favouriteItems = useSelector((state) => state.favourites.items);
   const auth = useSelector((state) => state.auth);
 
@@ -80,7 +79,7 @@ function NewArrivalsComponent() {
       
     
       } catch (err) {
-        console.error("Failed to load new arrivals", err);
+        error("NewArrivals: failed to load products", err);
       } finally {
         isFetching = false;
       }
@@ -178,7 +177,7 @@ function NewArrivalsComponent() {
         navigate(`/customer-login/chat/${conversationId}`);
       }
     } catch (err) {
-      console.error("Chat creation failed", err);
+      warn("NewArrivals: chat creation failed", err);
     }
   };
 
@@ -190,11 +189,6 @@ function NewArrivalsComponent() {
  
 
 
-  document.querySelectorAll("img").forEach(img => {
-  if (img.src.includes("object")) {
-    console.log("❌ Broken image:", img);
-  }
-});
 
   return (
     <section 

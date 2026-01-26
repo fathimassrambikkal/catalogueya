@@ -6,6 +6,9 @@ import { loginSuccess } from "../store/authSlice";
 import logo from "../assets/logo.png";
 import { useLocation } from "react-router-dom";
 
+import { log, error as logError } from "../utils/logger";
+
+
 export default function Sign() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -56,20 +59,20 @@ const action = params.get("action");
     setError("");
 
     try {
-      console.log("📤 Sending login request...", {
+      log(" Sending login request...", {
         email: email.trim(),
         password: password.trim(),
       });
 
-      // 🔐 LOGIN API CALL
+      //  LOGIN API CALL
       const res = await loginCustomer(
         email.trim(),
         password.trim()
       );
 
-      console.log("📥 FULL RESPONSE:", res);
-      console.log("📥 RESPONSE DATA:", res.data);
-      console.log(
+      log(" FULL RESPONSE:", res);
+      log(" RESPONSE DATA:", res.data);
+      log(
         "📥 RESPONSE DATA STRUCTURE:",
         JSON.stringify(res.data, null, 2)
       );
@@ -81,13 +84,13 @@ const action = params.get("action");
         res.data?.data?.token ||
         res.data?.authorization?.token;
 
-      console.log("🔍 Token extracted:", token);
+      log(" Token extracted:", token);
 
       if (!token) {
         throw new Error("Login succeeded but token missing from response");
       }
 
-      // 👤 EXTRACT USER
+      //  EXTRACT USER
      const user = res.data?.data?.user;
 
 if (!user || !user.name) {
@@ -95,13 +98,10 @@ if (!user || !user.name) {
 }
 
 
-      console.log("👤 User extracted:", user);
-
-     
-
-      console.log("✅ Token saved in localStorage:", {
-        tokenInLS: localStorage.getItem("token"),
-      });
+    log("User extracted:", user);
+log("Token saved in localStorage:", {
+  tokenInLS: localStorage.getItem("token"),
+});
 
       // 🧠 STORE USER IN REDUX
       dispatch(
@@ -115,7 +115,7 @@ if (!user || !user.name) {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("userType", "customer");
-      console.log("✅ Redux updated");
+      log("Redux updated");
 
 
       // 🔥 HANDLE CHAT INTENT REDIRECT
@@ -134,14 +134,14 @@ if (!user || !user.name) {
             res.data?.id;
 
           if (!conversationId) {
-            console.error("Conversation ID missing after login", res.data);
+            logError("Conversation ID missing after login", res.data);
             return;
           }
 
           navigate(`/customer-login/chat/${conversationId}`, { replace: true });
           return;
         } catch (err) {
-          console.error("Chat creation after login failed", err);
+          logError("Chat creation after login failed", err);
         }
       }
 
@@ -160,7 +160,7 @@ if (!user || !user.name) {
       navigate("/", { replace: true });
 
     } catch (err) {
-      console.error("❌ LOGIN ERROR:", {
+      logError(" LOGIN ERROR:", {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
@@ -181,67 +181,69 @@ if (!user || !user.name) {
   };
 
   // DEMO COMPANY LOGIN (NO API)
-  const handleCompanyLogin = async (e) => {
-    e.preventDefault();
-    if (loginType !== "company") return;
+ const handleCompanyLogin = async (e) => {
+  e.preventDefault();
 
-    setLoading(true);
-    setError("");
+  //  TEMPORARILY DISABLE COMPANY LOGIN
+  setError("Business sign-in is coming soon ");
 
-    try {
-      console.log("🧪 DEMO Company login:", {
-        email: companyEmail.trim(),
-        password: companyPassword.trim(),
-      });
+  return; //  stop here (nothing below runs)
 
-      // ⛔ Simple demo validation
-      if (!companyEmail.trim() || !companyPassword.trim()) {
-        throw new Error("Email and password are required");
-      }
+  /* 
+  ===== OLD CODE (PRESERVED FOR LATER) =====
 
-      // 🧪 Fake token
-      const demoToken = "demo-company-token-123456";
+  if (loginType !== "company") return;
 
-      // 🧪 Fake company user
-      const demoCompanyUser = {
-        id: "demo-company-id",
-        email: companyEmail.trim(),
-        name: "Demo Company",
-        isDemo: true,
-      };
+  setLoading(true);
+  setError("");
 
-      // 🔐 SAVE TOKEN (same as real login)
-      localStorage.setItem("token", demoToken);
+  try {
+    log(" DEMO Company login:", {
+      email: companyEmail.trim(),
+      password: companyPassword.trim(),
+    });
 
-      console.log("✅ Demo token saved:", demoToken);
-      console.log("👤 Demo company user:", demoCompanyUser);
-
-      // 🧠 UPDATE REDUX
-      dispatch(
-        loginSuccess({
-          user: demoCompanyUser,
-          userType: "company",
-        })
-      );
-
-      // ✅ PRODUCTION redirect
-      navigate("/company-dashboard", { replace: true });
-
-    } catch (err) {
-      console.error("❌ DEMO COMPANY LOGIN ERROR:", err.message);
-      setError(err.message || "Demo login failed");
-    } finally {
-      setLoading(false);
+    if (!companyEmail.trim() || !companyPassword.trim()) {
+      throw new Error("Email and password are required");
     }
-  };
 
-  const handleSubmit = (e) => {
-    if (loginType === "customer") {
-      handleCustomerLogin(e);
-    } else {
-      handleCompanyLogin(e);
-    }
-  };
+    const demoToken = "demo-company-token-123456";
+
+    const demoCompanyUser = {
+      id: "demo-company-id",
+      email: companyEmail.trim(),
+      name: "Demo Company",
+      isDemo: true,
+    };
+
+    localStorage.setItem("token", demoToken);
+
+    dispatch(
+      loginSuccess({
+        user: demoCompanyUser,
+        userType: "company",
+      })
+    );
+
+    navigate("/company-dashboard", { replace: true });
+
+  } catch (err) {
+    setError(err.message || "Demo login failed");
+  } finally {
+    setLoading(false);
+  }
+
+  ===== END OLD CODE =====
+  */
+};
+const handleSubmit = (e) => {
+  if (loginType === "customer") {
+    handleCustomerLogin(e);
+  } else {
+    handleCompanyLogin(e);
+  }
+};
+
 
   return (
     <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/30 py-16 px-4 overflow-x-hidden">

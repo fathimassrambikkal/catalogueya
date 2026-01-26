@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { searchCategories } from "../api";
 import { useTranslation } from "react-i18next"; 
 import qatarflag from "../assets/Qatarflag.jpg";
-
+import { log, warn } from "../utils/logger";
+import { showToast } from "../utils/showToast";
 // SVG Icons 
 const SearchIcon = ({ className = "" }) => (
   <svg 
@@ -91,7 +92,7 @@ useEffect(() => {
       setPlaceholderCategories(combined);
       setCurrentWordIndex(0);
     } catch (e) {
-      console.warn("Placeholder fetch failed", e);
+      warn("Placeholder fetch failed", e);
     }
   };
 
@@ -140,7 +141,12 @@ useEffect(() => {
       setSearchTerm("");
       setIsDropdownVisible(false);
     } else {
-      alert("Category not found!");
+     showToast(
+  i18n.language === "ar"
+    ? "لم يتم العثور على الفئة"
+    : "Category not found",
+  { rtl: i18n.language === "ar" }
+);
     }
   }, [searchTerm, categories, navigate]);
 
@@ -158,7 +164,7 @@ useEffect(() => {
       setCategories(res?.data?.categories || []);
       setIsDropdownVisible(true);
     } catch (err) {
-      console.warn("Category search failed", err);
+      warn("Category search failed", err);
       setCategories([]);
     } finally {
       setIsLoading(false);
@@ -231,7 +237,7 @@ const handleCategorySelect = useCallback(
 
 
 useEffect(() => {
-  console.log("Placeholder categories:", placeholderTitles);
+  log("Placeholder categories:", placeholderTitles);
 }, [placeholderTitles]);
 
   // Handle Enter key press
@@ -245,7 +251,7 @@ useEffect(() => {
     <div ref={searchRef} className="w-full min-w-[280px] relative transform-gpu" style={{ willChange: 'transform' }}>
       {/* Search Input Container - Higher z-index */}
       <div
-        className={`flex items-center px-3 xs:px-4 py-3 xs:py-4 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl relative z-40 transform-gpu
+        className={`flex items-center px-3 xs:px-4 py-3 xs:py-4 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl relative z-50 transform-gpu
           ${i18n.language === "ar" ? "pr-4 xs:pr-6" : "pl-4 xs:pl-6"}
         `}
         style={{ willChange: 'transform' }}

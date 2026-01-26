@@ -1,13 +1,11 @@
-const isDev = process.env.NODE_ENV !== "production";
+export const log = import.meta.env.DEV
+  ? (...args) => console.log(...args)
+  : () => {};
 
-export const log = (...args) => {
-  if (isDev) console.log(...args);
-};
+export const warn = import.meta.env.DEV
+  ? (...args) => console.warn(...args)
+  : () => {};
 
-export const warn = (...args) => {
-  if (isDev) console.warn(...args);
-};
-
-export const error = (...args) => {
-  if (isDev) console.error(...args);
-};
+export const error = import.meta.env.DEV
+  ? (...args) => console.error(...args)
+  : () => {};

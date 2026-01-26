@@ -9,6 +9,8 @@ import {
   ChatIcon,
 } from "../components/SvgIcon";
 
+import { error as logError } from "../utils/logger";
+import { showToast } from "../utils/showToast";
 
 import { useFixedWords } from "../hooks/useFixedWords";
 
@@ -113,8 +115,8 @@ function NewArrivalProductPageComponent() {
 
         setLastPage(paginated.last_page);
       } catch (err) {
-        console.error(err);
-        setError("Failed to load new arrival products");
+         logError("NewArrival: fetch products failed", err);
+        setError(fw.failed_to_load || "Failed to load new arrival products");
       } finally {
         setLoading(false);
       }
@@ -162,11 +164,16 @@ useEffect(() => {
     const userType = localStorage.getItem("userType");
     const companyId = Number(product.company_id);
 
-    // 🔐 Guard (VERY important)
+    //  Guard (VERY important)
     if (!companyId) {
-      console.error("Invalid company ID for chat", product);
-      return;
-    }
+  logError("Chat: invalid company ID", product);
+  showToast(
+    fw.chat_unavailable || "Chat unavailable",
+    { rtl: fw?.direction === "rtl" }
+  );
+  return;
+}
+
 
     // 🚫 Guest → sign-in with intent
     if (!token || userType !== "customer") {
@@ -187,14 +194,24 @@ useEffect(() => {
         res.data?.id;
 
       if (!conversationId) {
-        console.error("Conversation ID missing");
-        return;
-      }
+  logError("Chat: conversation ID missing", res);
+  showToast(
+    fw.chat_failed || "Unable to start chat",
+    { rtl: fw?.direction === "rtl" }
+  );
+  return;
+}
+
 
       navigate(`/customer-login/chat/${conversationId}`);
-    } catch (err) {
-      console.error("Chat creation failed", err);
-    }
+    }  catch (err) {
+  logError("Chat creation failed", err);
+  showToast(
+    fw.chat_failed || "Unable to start chat",
+    { rtl: fw?.direction === "rtl" }
+  );
+}
+
   };
 
   // ✅ FIXED: Convert relative image path to absolute URL (SAFE VERSION)

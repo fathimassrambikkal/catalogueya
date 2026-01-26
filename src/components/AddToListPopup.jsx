@@ -12,7 +12,8 @@ import {
   deleteFavoriteGroup,
 } from "../api";
 import { useTranslation } from "react-i18next";
-
+import { error } from "../utils/logger";
+import { showToast } from "../utils/showToast";
 // ✅ normalize backend response
 const normalizeGroups = (response) => {
   return Array.isArray(response?.data?.groups)
@@ -61,7 +62,7 @@ export default function AddToListPopup() {
         dispatch(setFavouriteLists(normalizeGroups(res)));
       })
       .catch((err) =>
-        console.error("❌ Failed to load favourite groups", err)
+        error("Failed to load favourite groups", err)
       );
   }, [showListPopup, isLoggedIn, dispatch]);
 
@@ -97,7 +98,7 @@ export default function AddToListPopup() {
       setNewListName("");
       setIsCreating(false);
     } catch (err) {
-      console.error("❌ Create list failed", err);
+      error("Create list failed", err);
     } finally {
       setCreatingList(false);
     }
@@ -119,7 +120,7 @@ export default function AddToListPopup() {
 
       if (selectedList?.id === list.id) setSelectedList(null);
     } catch (err) {
-      console.error("❌ Delete list failed:", err);
+      error("Delete list failed", err);
       setDeleteError(err?.response?.data?.message || "Failed to delete list");
 
       const res = await getFavoriteGroups();
@@ -146,12 +147,14 @@ export default function AddToListPopup() {
 
       setTimeout(handleClose, 100);
     } catch (err) {
-      console.error("❌ Add to favourite failed", err);
-      alert(
-        `Failed to add to list: ${
-          err?.response?.data?.message || err.message
-        }`
-      );
+       error("Add to favourite failed", err);
+
+  showToast(
+    i18n.language === "ar"
+      ? "فشل إضافة العنصر إلى القائمة"
+      : "Failed to add item to list",
+    { rtl: i18n.language === "ar" }
+  );
     } finally {
       setSending(false);
     }

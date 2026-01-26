@@ -3,10 +3,11 @@ import Pusher from "pusher-js";
 import { getCustomerNotifications } from "../api";
 import { Link } from "react-router-dom";
 import { useRef } from "react";
+import { log, warn, error } from "../utils/logger";
 
 // FALLBACK IMAGE
 const FALLBACK_IMAGE = "/images/product-placeholder.png";
-const IMAGE_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site/products";
+
 
 function normalizeNotification(raw, index = 0) {
   if (!raw) return null;
@@ -23,7 +24,7 @@ function normalizeNotification(raw, index = 0) {
       : data.type || "main";
 
   return {
-    id: `${type}-${index}-${Date.now()}`,
+    id: raw.id || `${type}-${index}`,
     name: title,
     preview: body,
     unread: 1,
@@ -69,7 +70,7 @@ export default function Notifications() {
 
         setNotifications(normalized);
       } catch (err) {
-        console.error("Notification fetch failed:", err);
+        error("Notifications: initial fetch failed", err);
         setHasMore(false);
       } finally {
         setIsFetching(false);
@@ -138,7 +139,7 @@ export default function Notifications() {
       
       setPage(nextPage);
     } catch (err) {
-      console.error("Load more notifications failed:", err);
+      error("Notifications: load more failed", err);
       setHasMore(false);
     } finally {
       setIsFetching(false);
@@ -180,10 +181,14 @@ export default function Notifications() {
     });
 
     const channel = pusher.subscribe(channelName);
+channel.bind("dashboard.notification", (payload) => {
+  log("Notifications: realtime payload received", payload);
 
-    channel.bind("dashboard.notification", (payload) => {
-      const normalized = normalizeNotification(payload, Date.now());
-      if (!normalized) return;
+  const normalized = normalizeNotification(payload, Date.now());
+  if (!normalized) {
+    warn("Notifications: invalid realtime payload", payload);
+    return;
+  }
 
       // Optimistic UI update
       setNotifications(prev => {

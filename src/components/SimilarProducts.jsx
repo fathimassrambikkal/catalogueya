@@ -2,7 +2,8 @@
 import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { useFixedWords } from "../hooks/useFixedWords";
-import SmartImage from "./SmartImage"; // ✅ Import SmartImage
+import SmartImage from "./SmartImage";
+import { warn } from "../utils/logger";
 
 const HeartIcon = ({ filled, className = "" }) => (
   <svg
@@ -97,10 +98,14 @@ const SimilarProducts = memo(function SimilarProducts({
                   "
                   loading="lazy"
                   decoding="async"
-                  onError={(e) => {
-                    console.error("Failed to load similar product image:", sp.image);
-                    e.target.src = "/api/placeholder/400/400";
-                  }}
+                onError={(e) => {
+                warn("SimilarProducts: image failed to load", {
+                  productId: sp.id,
+                  image: sp.image,
+                });
+                e.target.src = "/api/placeholder/400/400";
+              }}
+
                 />
               </div>
 

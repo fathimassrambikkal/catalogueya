@@ -158,3 +158,4 @@ export const TrashIcon = ({ className = "", size = 16 }) => (
     <path d="M10 11v6M14 11v6" />
   </svg>
 );
+

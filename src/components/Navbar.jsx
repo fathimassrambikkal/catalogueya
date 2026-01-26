@@ -12,6 +12,8 @@ import { changeLanguage as apiChangeLanguage } from "../api";
 import { useSettings } from "../hooks/useSettings";
 import { useFixedWords } from "../hooks/useFixedWords";
 
+
+
 /* =============================
    DROPDOWN MENU (PURE CSS)
 ============================= */
@@ -140,7 +142,7 @@ const LanguageToggle = memo(function LanguageToggle({
 /* =============================
    LOGO COMPONENT
 ============================= */
-const Logo = memo(function Logo({ settings }) {
+const Logo = memo(function Logo({ settings, scrolled }) {
   // Get the logo URL from settings
   const getLogoUrl = () => {
     if (!settings?.logo) return null;
@@ -175,7 +177,7 @@ const Logo = memo(function Logo({ settings }) {
     return (
       <div className="flex-shrink-0">
         <Link to="/">
-          <div className="h-12 sm:h-14 w-32 bg-gray-200 animate-pulse rounded" />
+          <div className="h-14 sm:h-14 w-32 bg-gray-200 animate-pulse rounded" />
         </Link>
       </div>
     );
@@ -185,11 +187,15 @@ const Logo = memo(function Logo({ settings }) {
     <div className="flex-shrink-0">
       <Link to="/">
         <img
-          src={logoUrl}
-          alt="Catalogueya Logo"
-          className=" h-8 xs:h-9 sm:h-11 md:h-12 lg:h-14
-    w-auto object-contain"
-        />
+  src={logoUrl}
+  alt="Catalogueya Logo"
+  className={`
+    w-auto object-contain
+    transition-all duration-300 ease-out
+    ${scrolled ? "h-10 lg:h-12" : "h-12 lg:h-14"}
+  `}
+/>
+
       </Link>
     </div>
   );
@@ -312,7 +318,8 @@ export default function Navbar() {
           }`}
         >
           {/* Logo */}
-          <Logo settings={settings} />
+         <Logo settings={settings} scrolled={scrolled} />
+
 
           {/* RIGHT: Actions */}
           <div className="flex items-center gap-1 sm:gap-3 ltr:ml-auto rtl:mr-auto">

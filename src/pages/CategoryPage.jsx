@@ -17,6 +17,7 @@ import {
    ArrowOutward
 } from "../components/SvgIcon";
 import SmartImage from "../components/SmartImage";
+import { error as logError } from "../utils/logger";
 
 import { getCategory} from "../api";
 
@@ -42,6 +43,9 @@ const formatImageUrl = (imgData) => {
   
   return null;
 };
+
+
+
 
 // =================== OPTIMIZED IMAGE COMPONENT (UPDATED) ===================
 const OptimizedImage = memo(({ 
@@ -139,11 +143,18 @@ const OptimizedImage = memo(({
 });
 OptimizedImage.displayName = 'OptimizedImage';
 
-// =================== RATING HELPERS (MEMOIZED) ===================
+// =================== RATING HELPERS (MEMOIZED) - UPDATED ===================
 const useRatingHelpers = () => {
   const getSafeRating = useCallback((rating) => {
+    // Handle rating object with avg property (new format)
+    if (typeof rating === 'object' && rating !== null && 'avg' in rating) {
+      return Math.min(5, Math.max(0, parseFloat(rating.avg) || 0));
+    }
+    
+    // Handle direct number or string (old format)
     if (typeof rating === 'number') return Math.min(5, Math.max(0, rating));
     if (typeof rating === 'string') return Math.min(5, Math.max(0, parseFloat(rating) || 0));
+    
     return 0;
   }, []);
 
@@ -151,10 +162,22 @@ const useRatingHelpers = () => {
     return getSafeRating(rating).toFixed(1);
   }, [getSafeRating]);
 
-  return { getSafeRating, formatRating };
+  const getRatingValueForSort = useCallback((rating) => {
+    // Extract rating value for sorting
+    if (typeof rating === 'object' && rating !== null && 'avg' in rating) {
+      return parseFloat(rating.avg) || 0;
+    }
+    
+    if (typeof rating === 'number') return rating;
+    if (typeof rating === 'string') return parseFloat(rating) || 0;
+    
+    return 0;
+  }, []);
+
+  return { getSafeRating, formatRating, getRatingValueForSort };
 };
 
-// =================== COMPANY CARD (OPTIMIZED) ===================
+// =================== COMPANY CARD (OPTIMIZED) - UPDATED ===================
 const CompanyCard = memo(({ company, navigate }) => {
   const { getSafeRating, formatRating } = useRatingHelpers();
   const rating = getSafeRating(company.rating);
@@ -172,8 +195,9 @@ const CompanyCard = memo(({ company, navigate }) => {
   const companyData = useMemo(() => ({
     name: company.name || company.title || 'Company',
     logo: getImageUrl(company.logo || company.image),
-    rating: formatRating(rating)
-  }), [company.name, company.title, company.logo, company.image, formatRating, rating, getImageUrl]);
+    rating: formatRating(company.rating), // Pass the full rating object
+    reviewCount: company.rating?.count || 0
+  }), [company.name, company.title, company.logo, company.image, company.rating, formatRating, getImageUrl]);
 
   const ratingDisplay = useMemo(() => (
     <div className="flex items-center gap-1 rtl:flex-row-reverse">
@@ -183,9 +207,10 @@ const CompanyCard = memo(({ company, navigate }) => {
       />
       <span className="text-xs text-gray-600 font-medium">
         {companyData.rating}
+      
       </span>
     </div>
-  ), [companyData.rating, rating]);
+  ), [companyData.rating, companyData.reviewCount, rating]);
 
   return (
     <div
@@ -458,6 +483,7 @@ ProductCardSkeleton.displayName = 'ProductCardSkeleton';
 
 // =================== MAIN CATEGORY PAGE (OPTIMIZED) ===================
 const CategoryPage = memo(() => {
+   const abortRef = useRef(null);
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -467,7 +493,8 @@ const CategoryPage = memo(() => {
   const [companies, setCompanies] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [pageError, setPageError] = useState(null);
+
   const [viewType, setViewType] = useState("companies");
   const [sortBy, setSortBy] = useState("relevance");
   
@@ -478,6 +505,9 @@ const CategoryPage = memo(() => {
   
   const { fixedWords } = useFixedWords();
   const fw = fixedWords?.fixed_words || {};
+
+  // Get rating helpers
+  const { getRatingValueForSort } = useRatingHelpers();
 
   // Memoize expensive calculations
   const isFavourite = useCallback((id) => 
@@ -515,27 +545,28 @@ const CategoryPage = memo(() => {
   // =================== INITIAL FETCH ===================
   useEffect(() => {
     let mounted = true;
-    const abortController = new AbortController();
+    abortRef.current = new AbortController();
+
 
     const fetchData = async () => {
       setLoading(true);
-      setError(null);
+      setPageError(null);
+
 
       try {
-        const catRes = await getCategory(categoryId, {
-          params: {
-            page: productPage,
-            per_page: 20 // Request 20 products per page
-          }
-        });
+       const catRes = await getCategory(categoryId, {
+  signal: abortRef.current.signal,
+  params: { page: 1, per_page: 20 }
+});
 
-        if (!mounted || abortController.signal.aborted) return;
+        if (!mounted || abortRef.current.signal.aborted) return;
+
 
         const categoryData = catRes?.data?.data || null;
         const companiesData = categoryData?.companies || [];
 
         if (!categoryData) {
-          setError("Category not found.");
+          setPageError("Category not found.");
           return;
         }
 
@@ -569,14 +600,18 @@ const CategoryPage = memo(() => {
           setProductPage(currentPage);
           setHasMoreProducts(hasMore);
         }
-      } catch (e) {
-        if (!mounted || abortController.signal.aborted) return;
-        console.error("Failed to fetch category data:", e);
-        setError("Failed to load category.");
-      } finally {
-        if (mounted && !abortController.signal.aborted) {
-          setLoading(false);
-        }
+      }catch (err) {
+  if (!abortRef.current?.signal.aborted) {
+    logError("Failed to fetch category data", err);
+    setPageError("Failed to load category.");
+  }
+}
+
+ finally {
+       if (mounted && !abortRef.current.signal.aborted) {
+  setLoading(false);
+}
+
       }
     };
 
@@ -584,7 +619,8 @@ const CategoryPage = memo(() => {
 
     return () => {
       mounted = false;
-      abortController.abort();
+      abortRef.current?.abort();
+
     };
   }, [categoryId]); // Remove productPage dependency to avoid double fetch
 
@@ -596,12 +632,12 @@ const CategoryPage = memo(() => {
     const nextPage = productPage + 1;
 
     try {
-      const res = await getCategory(categoryId, {
-        params: {
-          page: nextPage,
-          per_page: 20
-        }
-      });
+  const res = await getCategory(categoryId, {
+  signal: abortRef.current?.signal,
+  params: { page: nextPage, per_page: 20 }
+});
+
+
 
       const categoryData = res?.data?.data;
       const companiesData = categoryData?.companies || [];
@@ -633,26 +669,27 @@ const CategoryPage = memo(() => {
       setHasMoreProducts(hasMore);
       
     } catch (error) {
-      console.error("Failed to load more products:", error);
+      logError("Failed to load more products", error);
     } finally {
       setLoadingMoreProducts(false);
     }
   }, [categoryId, productPage, hasMoreProducts, loadingMoreProducts]);
 
-  // =================== MEMOIZED SORTING ===================
+  // =================== MEMOIZED SORTING - UPDATED ===================
   const sortedCompanies = useMemo(() => {
     if (!Array.isArray(companies) || companies.length === 0) return [];
 
     if (sortBy === "rating") {
       return [...companies].sort((a, b) => {
-        const ratingA = parseFloat(a.rating) || 0;
-        const ratingB = parseFloat(b.rating) || 0;
+        // Use getRatingValueForSort to handle both object and number formats
+        const ratingA = getRatingValueForSort(a.rating);
+        const ratingB = getRatingValueForSort(b.rating);
         return ratingB - ratingA;
       });
     }
     
     return companies;
-  }, [companies, sortBy]);
+  }, [companies, sortBy, getRatingValueForSort]);
 
   const sortedProducts = useMemo(() => {
     if (!Array.isArray(products) || products.length === 0) return [];
@@ -670,14 +707,15 @@ const CategoryPage = memo(() => {
         );
       case "rating":
         return productsCopy.sort((a, b) => {
-          const ratingA = parseFloat(a.rating) || 0;
-          const ratingB = parseFloat(b.rating) || 0;
+          // Use getRatingValueForSort for products too (if they also use the new format)
+          const ratingA = getRatingValueForSort(a.rating);
+          const ratingB = getRatingValueForSort(b.rating);
           return ratingB - ratingA;
         });
       default:
         return productsCopy;
     }
-  }, [products, sortBy]);
+  }, [products, sortBy, getRatingValueForSort]);
 
   // Memoize event handlers
   const handleBackClick = useCallback(() => {
@@ -806,11 +844,11 @@ const CategoryPage = memo(() => {
   ), [loading, sortedCompanies, navigate]);
 
   // Error state
-  if (error && !category) {
+  if (pageError && !category) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center py-20">
-          <div className="text-red-500 text-lg mb-4">{error || "Category not found"}</div>
+          <div className="text-red-500 text-lg mb-4">{pageError || "Category not found"}</div>
           <button
             onClick={handleBackClick}
             className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"

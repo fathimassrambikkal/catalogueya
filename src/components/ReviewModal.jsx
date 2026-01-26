@@ -1,5 +1,7 @@
 import React, { memo, useState, useCallback } from "react";
 import { useFixedWords } from "../hooks/useFixedWords";
+import { error as logError } from "../utils/logger";
+import { showToast } from "../utils/showToast";
 
 // Close icon (same SVG)
 const CloseIcon = ({ className = "" }) => (
@@ -50,16 +52,25 @@ const ReviewModal = memo(function ReviewModal({
   // Microinteraction states for stars only
   const [hoveredStar, setHoveredStar] = useState(null);
   const [clickedStar, setClickedStar] = useState(null);
+const [submitting, setSubmitting] = useState(false);
+const handleSubmit = useCallback(async () => {
+  if (!reviewText || !reviewName || !reviewRating || submitting) return;
 
-  const handleSubmit = useCallback(async () => {
-    if (!reviewText || !reviewName || !reviewRating) return;
-    
-    try {
-      await onSubmit();
-    } catch (error) {
-      console.error('Submit error:', error);
-    }
-  }, [reviewText, reviewName, reviewRating, onSubmit]);
+  try {
+    setSubmitting(true);
+    await onSubmit();
+  } catch (err) {
+    logError("ReviewModal: submit failed", err);
+
+    showToast(
+      fw.submit_failed || "Failed to submit review. Please try again.",
+      { rtl: fw?.language === "ar" }
+    );
+  } finally {
+    setSubmitting(false);
+  }
+}, [reviewText, reviewName, reviewRating, onSubmit, submitting, fw]);
+
 
   const handleStarClick = useCallback((rating) => {
     setReviewRating(rating);
@@ -205,24 +216,27 @@ const ReviewModal = memo(function ReviewModal({
 
           {/* Comment */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-700">
-              {fw.your_message || "Your Review"}
-            </label>
-            <textarea
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value)}
-              rows="4"
-              placeholder="Share your thoughts about this product..."
-              className="
-                w-full rounded-xl px-3 py-2.5 text-sm
-                bg-white/60 border border-white/20
-                placeholder:text-gray-400
-                resize-none
-                focus:outline-none focus:ring-2 focus:ring-gray-900/40
-                transition-colors duration-200
-              "
-              maxLength={300}
-            />
+  <label className="text-xs font-medium text-gray-700">
+    {fw.your_message || "Your Review"}
+  </label>
+
+  <textarea
+    value={reviewText}
+    onChange={(e) => setReviewText(e.target.value)}
+    rows="4"
+    placeholder={fw.share_review || "Share your thoughts about this product..."}
+    className="
+      w-full rounded-xl px-3 py-2.5 text-sm
+      bg-white/60 border border-white/20
+      placeholder:text-gray-400
+      resize-none
+      focus:outline-none focus:ring-2 focus:ring-gray-900/40
+      transition-colors duration-200
+    "
+    maxLength={300}
+  />
+
+
             <div className="text-right">
               <span className={`
                 text-xs text-gray-500
@@ -248,22 +262,30 @@ const ReviewModal = memo(function ReviewModal({
             >
               {fw.previous || "Cancel"}
             </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!reviewText || !reviewName || reviewRating === 0}
-              className={`
-                px-4 py-2 text-sm rounded-xl text-white
-                active:scale-95
-                transition-all duration-200
-                ${
-                  reviewText && reviewName && reviewRating
-                    ? "bg-gray-900 hover:bg-gray-800 hover:shadow-lg"
-                    : "bg-gray-400 cursor-not-allowed"
-                }
-              `}
-            >
-              {fw.send_message || "Submit"}
-            </button>
+           <button
+  onClick={handleSubmit}
+  disabled={
+    submitting ||
+    !reviewText ||
+    !reviewName ||
+    reviewRating === 0
+  }
+  className={`
+    px-4 py-2 text-sm rounded-xl text-white
+    active:scale-95
+    transition-all duration-200
+    ${
+      !submitting && reviewText && reviewName && reviewRating
+        ? "bg-gray-900 hover:bg-gray-800 hover:shadow-lg"
+        : "bg-gray-400 cursor-not-allowed"
+    }
+  `}
+>
+  {submitting
+    ? fw.sending || "Submitting..."
+    : fw.send_message || "Submit"}
+</button>
+
           </div>
         </div>
       </div>

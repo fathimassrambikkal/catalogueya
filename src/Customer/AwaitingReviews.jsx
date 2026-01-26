@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { getCustomerPendingReviews } from "../api"
 import { FaClock, FaStar, FaChevronRight } from "react-icons/fa"
+import { log, error } from "../utils/logger";
 
 function AwaitingReviews({ onStartLeaveReview }) {
   const [awaitingReviews, setAwaitingReviews] = useState([]);
@@ -10,7 +11,8 @@ function AwaitingReviews({ onStartLeaveReview }) {
   const fetchAwaitingReviews = async () => {
     try {
       const pendingRes = await getCustomerPendingReviews();
-      console.log("Awaiting reviews response:", pendingRes);
+      log("AwaitingReviews: API response", pendingRes);
+
       
  const reviews = (pendingRes.data?.data || []).map(item => {
   const reviewDate = item.created_at
@@ -53,7 +55,8 @@ function AwaitingReviews({ onStartLeaveReview }) {
       
       setAwaitingReviews(reviews);
     } catch (err) {
-      console.error("Failed to load awaiting reviews", err);
+      error("AwaitingReviews: failed to load pending reviews", err);
+
     }
   };
 

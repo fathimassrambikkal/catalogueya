@@ -5,6 +5,8 @@ import SimilarProducts from "../components/SimilarProducts";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import { createCustomerConversation,getProductReviews,addProductReview} from "../api";
+import { error as logError, warn } from "../utils/logger";
+import { showToast } from "../utils/showToast";
 
 import { getProduct, getCompany } from "../api";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,7 +15,7 @@ import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
 import BackButton from "../components/BackButton";
-import SmartImage from "../components/SmartImage"; // ✅ Import SmartImage
+import SmartImage from "../components/SmartImage";
 import {
   HeartIcon,
   StarIcon,
@@ -198,7 +200,7 @@ const location = useLocation();
 
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null); // ✅ Changed to store image object
+  const [selectedImage, setSelectedImage] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewName, setReviewName] = useState("");
@@ -206,7 +208,8 @@ const location = useLocation();
   const [reviewRating, setReviewRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAllReviews, setShowAllReviews] = useState(false); // ✅ Added state
+ const [showAllReviews, setShowAllReviews] = useState(false);
+
 
   const isFavourite = product ? favourites.some((f) => f.id === product.id) : false;
 
@@ -457,7 +460,9 @@ const location = useLocation();
       e.stopPropagation();
       if (!product) return;
 
-      const token = localStorage.getItem("token");
+      const token =
+   localStorage.getItem("token") ||
+   sessionStorage.getItem("token");
       const userType = localStorage.getItem("userType");
 
       // Normalize company ID (VERY IMPORTANT)
@@ -467,7 +472,8 @@ const location = useLocation();
           : product.company_id;
 
       if (!companyId) {
-        console.error("Invalid company ID for chat", product);
+        logError("SalesProductProfile: invalid company ID", product);
+
         return;
       }
 
@@ -490,13 +496,13 @@ const location = useLocation();
           res.data?.id;
 
         if (!conversationId) {
-          console.error("Conversation ID missing");
+          logError("SalesProductProfile: conversation ID missing", res?.data);
           return;
         }
 
         navigate(`/customer-login/chat/${conversationId}`);
       } catch (err) {
-        console.error("Chat creation failed", err);
+        logError("SalesProductProfile: chat creation failed", err);
       }
     },
     [product, navigate]
@@ -525,7 +531,7 @@ const location = useLocation();
         setReviews(mappedReviews);
 
       } catch (error) {
-        console.error("Failed to load product reviews", error);
+        logError("SalesProductProfile: reviews fetch failed", error);
         setReviews([]);
       }
     };
@@ -533,16 +539,7 @@ const location = useLocation();
     fetchReviews();
   }, [resolvedProductId]);
 
-  useEffect(() => {
-    if (product) {
-      console.log("PRICE DEBUG", {
-        price: product.price,
-        oldPrice: product.oldPrice,
-        discount: product.discount_percent,
-        saleData: product.sale
-      });
-    }
-  }, [product]);
+  
 
   const averageRating =
     reviews.length > 0
@@ -562,16 +559,16 @@ const location = useLocation();
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert("🔗 Link copied to clipboard!");
+        showToast(fw.link_copied || "Link copied");
       }
     } catch (err) {
-      console.error("Share failed:", err);
+      warn("SalesProductProfile: share failed", err);
     }
   };
 
   const handleReviewSubmit = async () => {
   if (!reviewText || reviewRating === 0) {
-    alert("Please enter rating and comment.");
+    showToast(fw.fill_all_fields || "Please enter rating and comment", { type: "warning" });
     return;
   }
 
@@ -596,12 +593,13 @@ const location = useLocation();
     setReviewText("");
     setReviewRating(0);
 
-    alert(` ${newRev.rating}-star review submitted!`);
+    showToast(fw.review_success || "Review submitted", { type: "success" });
+
   } catch (error) {
-    alert(
-      error?.response?.data?.message ||
-      "Failed to submit review. Please try again."
-    );
+   showToast(
+   error?.response?.data?.message || fw.review_failed || "Review failed",
+   { type: "error" }
+ );
   }
 };
 useEffect(() => {
@@ -629,15 +627,8 @@ useEffect(() => {
     ? reviews
     : reviews.slice(0, 2);
 
-  //  Calculate savings amount
-  const calculateSavings = () => {
-    if (!product?.oldPrice || !product?.price) return 0;
-    const oldPrice = parseFloat(product.oldPrice);
-    const currentPrice = parseFloat(product.price);
-    return (oldPrice - currentPrice).toFixed(2);
-  };
+  
 
-  //  Apple-style instant loading - NO BLOCKING LOADER
   // Only show error if we have no product AND an error occurred
   if (error && !product) {
     return (
@@ -704,7 +695,7 @@ useEffect(() => {
                 loading="eager"
                 fetchPriority="high"
                 onError={(e) => {
-                  console.error("Failed to load main image:", selectedImage);
+                  warn("SalesProductProfile: main image load failed", selectedImage);
                   e.target.src = "/api/placeholder/500/500";
                 }}
               />
@@ -816,7 +807,7 @@ useEffect(() => {
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
-                          console.error("Failed to load thumbnail:", imgData);
+                          warn("SalesProductProfile: thumbnail load failed", imgData);
                           e.target.src = "/api/placeholder/200/200";
                         }}
                       />
@@ -986,7 +977,7 @@ useEffect(() => {
   {product && reviews.length > 0 ? (
     <>
       {/* Show only first 2 reviews */}
-      {reviews.slice(0, 2).map((rev) => (
+     {visibleReviews.map((rev) => (
         <div
           key={rev.id}
           className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
@@ -1034,10 +1025,7 @@ useEffect(() => {
   
           "
         >
-         <span>
-     {(fw.view_all_reviews || "View all")} {reviews.length}{" "}
-    {(fw.reviews || "reviews")}
-  </span>
+{(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
   
   <svg
     xmlns="http://www.w3.org/2000/svg"
