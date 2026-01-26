@@ -185,18 +185,25 @@ const Logo = memo(function Logo({ settings, scrolled }) {
 
   return (
     <div className="flex-shrink-0">
-      <Link to="/">
+  <Link to="/" className="block">
+      <div
+        className={`
+          flex items-center
+          transition-[height] duration-300 ease-out
+          ${scrolled ? "h-10 lg:h-12" : "h-12 lg:h-14"}
+        `}
+      >
         <img
-  src={logoUrl}
-  alt="Catalogueya Logo"
-  className={`
-    w-auto object-contain
-    transition-all duration-300 ease-out
-    ${scrolled ? "h-10 lg:h-12" : "h-12 lg:h-14"}
-  `}
-/>
-
-      </Link>
+          src={logoUrl}
+          alt="Catalogueya Logo"
+          className="h-full w-auto object-contain"
+          width="160"
+          height="56"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </div>
+    </Link>
     </div>
   );
 });
