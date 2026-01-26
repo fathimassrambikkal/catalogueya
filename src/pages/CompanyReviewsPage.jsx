@@ -587,24 +587,8 @@ const handleSubmit = useCallback(
           </div>
         </div>
 
-        {/* Mobile Stats */}
-        <div className="mt-8 lg:hidden animate-fade-in">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="text-micro font-medium text-gray-900 mb-4 uppercase tracking-wider">
-              {fw.rating || "Rating"} Summary
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                <div className="text-title font-light text-gray-900">{stats.average}</div>
-                <div className="text-micro text-gray-600 mt-1">Average {fw.rating || "Rating"}</div>
-              </div>
-              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                <div className="text-title font-light text-gray-900">{stats.total}</div>
-                <div className="text-micro text-gray-600 mt-1">Total {fw.reviews || "Reviews"}</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
+      
       </div>
     </div>
   );
