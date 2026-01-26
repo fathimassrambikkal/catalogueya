@@ -142,71 +142,46 @@ const LanguageToggle = memo(function LanguageToggle({
 /* =============================
    LOGO COMPONENT
 ============================= */
-const Logo = memo(function Logo({ settings, scrolled }) {
-  // Get the logo URL from settings
+const Logo = memo(function Logo({ settings }) {
   const getLogoUrl = () => {
     if (!settings?.logo) return null;
-    
-    // If logo is a string (already processed URL)
-    if (typeof settings.logo === 'string') {
-      return settings.logo;
-    }
-    
-    // If logo is an object with webp/avif properties
-    if (settings.logo && typeof settings.logo === 'object') {
-      // Use webp first (better compression), fallback to avif
+
+    if (typeof settings.logo === "string") return settings.logo;
+
+    if (typeof settings.logo === "object") {
       const logoPath = settings.logo.webp || settings.logo.avif;
       if (!logoPath) return null;
-      
-      // Check if it already has a full URL
+
       const cleanPath = String(logoPath).trim();
-      if (cleanPath.startsWith("http")) {
-        return cleanPath;
-      }
-      
-      // Add base URL if it's a relative path
-      return `${import.meta.env.VITE_ASSET_BASE_URL || ''}/${cleanPath}`;
+      return cleanPath.startsWith("http")
+        ? cleanPath
+        : `${import.meta.env.VITE_ASSET_BASE_URL || ""}/${cleanPath}`;
     }
-    
+
     return null;
   };
 
   const logoUrl = getLogoUrl();
 
-  if (!logoUrl) {
-    return (
-      <div className="flex-shrink-0">
-        <Link to="/">
-          <div className="h-14 sm:h-14 w-32 bg-gray-200 animate-pulse rounded" />
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-shrink-0">
-  <Link to="/" className="block">
-      <div
-        className={`
-          flex items-center
-          transition-[height] duration-300 ease-out
-          ${scrolled ? "h-10 lg:h-12" : "h-12 lg:h-14"}
-        `}
-      >
+    <Link to="/" className="flex items-center flex-shrink-0">
+      {logoUrl ? (
         <img
           src={logoUrl}
-          alt="Catalogueya Logo"
-          className="h-full w-auto object-contain"
+          alt="Catalogueya"
+          className="h-12 lg:h-14 w-auto object-contain"
           width="160"
           height="56"
           decoding="async"
           fetchpriority="high"
         />
-      </div>
+      ) : (
+        <div className="h-12 w-32 bg-gray-200 animate-pulse rounded" />
+      )}
     </Link>
-    </div>
   );
 });
+
 
 /* =============================
    NAVBAR (ENTERPRISE)
@@ -214,6 +189,7 @@ const Logo = memo(function Logo({ settings, scrolled }) {
 export default function Navbar() {
   const { isAuthenticated, userType, user } = useSelector((state) => state.auth);
   const [accountOpen, setAccountOpen] = useState(false);
+const [scrolled, setScrolled] = useState(false);
 
   const displayName =
     user?.name ||
@@ -225,7 +201,7 @@ export default function Navbar() {
   const fw = fixedWords?.fixed_words || {};
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  
 
   const { t, i18n } = useTranslation();
   const location = useLocation();
@@ -266,12 +242,7 @@ export default function Navbar() {
     setMenuOpen((prev) => !prev);
   }, []);
 
-  /* Scroll detection */
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+ 
 
   /* Outside click close */
   useEffect(() => {
@@ -309,6 +280,18 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [accountOpen]);
 
+  useEffect(() => {
+  const onScroll = () => {
+    setScrolled(window.scrollY > 10);
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll(); // run once on mount
+
+  return () => window.removeEventListener("scroll", onScroll);
+}, []);
+
+
   return (
     <nav
       className={`fixed inset-x-0 top-0 z-50 font-inter transition-all duration-300 ${
@@ -321,11 +304,11 @@ export default function Navbar() {
       <div className="mx-auto w-full max-w-[1440px] pl-6 pr-4 sm:pl-8 sm:pr-6">
         <div
           className={`flex items-center justify-between transition-all duration-300 ${
-            scrolled ? "h-14" : "h-16"
+            scrolled ? "h-16" : "h-16"
           }`}
         >
           {/* Logo */}
-         <Logo settings={settings} scrolled={scrolled} />
+         <Logo settings={settings}  />
 
 
           {/* RIGHT: Actions */}
