@@ -5,10 +5,10 @@ import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
-import SmartImage from "../components/SmartImage";
+
 
 import { error as logError } from "../utils/logger";
-import { showToast } from "../utils/showToast";
+
 
 // Import shared components
 import { 
@@ -72,10 +72,11 @@ function SalesComponent() {
 
   image: product.image,
   description: product.description,
+    rating: parseFloat(product.rating) || 0,
   company_id: product.company_id?.id,
   company_name: product.company_name || "Company",
   category_id: product.category_id,
-  rating: parseFloat(product.rating) || 0,
+  
 }));
 
 
@@ -255,13 +256,35 @@ function SalesComponent() {
                       onChat={handleChatClick}
                       currency={fw.qar}
 priceSlot={
-  <div className="flex items-center gap-2 mt-1">
-    <span className="font-bold text-gray-900   text-[11px] sm:text-[14px] md:text-xs">
+  <div
+    className="
+      mt-[clamp(2px,0.5vw,4px)]
+      flex items-baseline
+      gap-[clamp(3px,0.2vw,6px)]
+    "
+  >
+    <span
+      className="
+        font-semibold
+        text-gray-900
+        tracking-tight
+        leading-[1.2]
+       text-[clamp(10px,1vw,11px)]
+      "
+    >
       {fw.qar} {product.price}
     </span>
 
     {product.old_price && (
-      <span className="line-through  text-gray-500  text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs ">
+      <span
+        className="
+          text-gray-500
+          line-through
+          tracking-tight
+          leading-[1.1]
+          text-[clamp(7px,0.8vw,10px)]
+        "
+      >
         {product.old_price}
       </span>
     )}
@@ -270,16 +293,35 @@ priceSlot={
 
 
 
-                     
-                      imageSlot={
-                        <SmartImage
-                          image={product.image} 
-                          alt={product.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover rounded-t-2xl
-                                   transition-transform duration-300 group-hover:scale-105"
-                        />
-                      }
+imageSlot={
+  <picture>
+    {product.image?.avif && (
+      <source
+        srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.avif}`}
+        type="image/avif"
+      />
+    )}
+    {product.image?.webp && (
+      <source
+        srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.webp}`}
+        type="image/webp"
+      />
+    )}
+    <img
+      src={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.webp || product.image.avif}`}
+      alt={product.name}
+      width="320"
+      height="260"
+      loading="eager"
+      fetchPriority="high"
+      decoding="sync"
+      draggable="false"
+      className="w-full h-full object-cover rounded-t-2xl
+           "
+    />
+  </picture>
+}
+
                     />
                   </div>
                 );

@@ -4,7 +4,7 @@ import {
   FaShareAlt,
   FaExternalLinkAlt,
   FaHeart,
-  FaArrowLeft,
+ 
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -204,14 +204,8 @@ export default function Favourite() {
 
   // ==================== UI ====================
   return (
-    <div className="max-w-6xl mx-auto px-6 py-16 mt-24 relative">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-6 left-4 sm:-left-6 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-md hover:scale-110 transition"
-      >
-        <FaArrowLeft className="text-gray-700 text-lg" />
-      </button>
+    <div className="max-w-6xl mx-auto px-6 py-16  relative">
+    
 
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         Your Favourites ({normalizedFavourites.length})

@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { FaCalendarAlt, FaChevronRight, FaStar } from "react-icons/fa";
+import FatoraPreviewModal from "./FatoraPreviewModal";
 
 function PastFatora() {
   const [ratings, setRatings] = useState({});
-  const [hoveredStar, setHoveredStar] = useState({ id: null, star: null });
+
+const [selectedInvoice, setSelectedInvoice] = useState(null);
+const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleStarClick = (id, rating) => {
     setRatings(prev => ({ ...prev, [id]: rating }));
@@ -185,6 +188,10 @@ function PastFatora() {
               {/* View Details Button */}
               <div className="w-full sm:w-auto mt-4 sm:mt-0">
                 <button
+                onClick={() => {
+    setSelectedInvoice(item);
+    setPreviewOpen(true);
+  }}
                   className="
                     w-full sm:w-auto
                     px-5 py-3
@@ -231,53 +238,62 @@ function PastFatora() {
                 </span>
               </div>
               
-              {/* Star Rating */}
-              <div 
-                className="flex items-center gap-1"
-                onMouseLeave={() => setHoveredStar({ id: null, star: null })}
-              >
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const isFilled = star <= (hoveredStar.id === item.id ? hoveredStar.star : ratings[item.id] || 0);
-                  return (
-                    <button
-                      key={star}
-                      onClick={() => handleStarClick(item.id, star)}
-                      onMouseEnter={() => setHoveredStar({ id: item.id, star })}
-                      className="
-                        p-1.5
-                        hover:scale-110
-                        active:scale-95
-                        transition-all duration-150
-                        rounded-lg
-                        focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:ring-offset-1
-                      "
-                    >
-                      <div className="relative">
-                        {/* Star glow effect */}
-                        {isFilled && (
-                          <div className="absolute inset-0 bg-blue-400/20 blur-md rounded-full animate-pulse-subtle" />
-                        )}
-                        <FaStar
-                          className={`
-                            w-5 h-5 sm:w-6 sm:h-6
-                            relative z-10
-                            transition-all duration-300
-                            ${isFilled 
-                              ? "text-blue-400 fill-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]" 
-                              : "text-gray-300/60 fill-gray-300/60 hover:text-blue-300/70 hover:fill-blue-300/70"
-                            }
-                          `}
-                        />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Star Rating (Fixed – no hover preview) */}
+<div className="flex items-center gap-1">
+  {[1, 2, 3, 4, 5].map((star) => {
+    const isFilled = star <= (ratings[item.id] || 0);
+
+    return (
+      <button
+        key={star}
+        onClick={() => handleStarClick(item.id, star)}
+        className="
+          p-1.5
+          active:scale-95
+          transition-transform duration-150
+          rounded-lg
+          focus:outline-none
+          focus:ring-2 focus:ring-blue-400/30 focus:ring-offset-1
+        "
+      >
+        <div className="relative">
+          {/* Glow only for selected stars */}
+          {isFilled && (
+            <div className="absolute inset-0 bg-blue-400/20 blur-md rounded-full" />
+          )}
+
+          <FaStar
+            className={`
+              w-5 h-5 sm:w-6 sm:h-6
+              relative z-10
+              transition-colors duration-200
+              ${isFilled
+                ? "text-blue-400 fill-blue-400 drop-shadow-[0_0_6px_rgba(59,130,246,0.3)]"
+                : "text-gray-300/60 fill-gray-300/60"
+              }
+            `}
+          />
+        </div>
+      </button>
+    );
+  })}
+</div>
+
             </div>
           </div>
         </div>
       ))}
+      <FatoraPreviewModal
+  open={previewOpen}
+  invoice={selectedInvoice}
+  onClose={() => {
+    setPreviewOpen(false);
+    setSelectedInvoice(null);
+  }}
+/>
+
     </div>
+    
   );
 }
 

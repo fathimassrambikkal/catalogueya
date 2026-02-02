@@ -6,7 +6,7 @@ import { getArrivalsProducts, createCustomerConversation } from "../api";
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { resolveProductRoute } from "../utils/productNavigation";
-import SmartImage from "../components/SmartImage";
+
 import { warn, error } from "../utils/logger";
 
 // Import shared components
@@ -65,7 +65,7 @@ function NewArrivalsComponent() {
 
   // ✅ keep raw backend image object
   image: product.image,
-
+rating: parseFloat(product.rating) || 0,
   description: product.description,
   isNewArrival: true,
   company_id: product.company_id?.id,
@@ -254,15 +254,34 @@ function NewArrivalsComponent() {
   onChat={handleChatClick}
   currency={fw.qar}
 
-  imageSlot={
-    <SmartImage
-      image={product.image}   // 👈 raw { avif, webp }
-      alt={product.name}
-      loading="lazy"
-      className="w-full h-full object-cover rounded-t-2xl
-                 transition-transform duration-300 group-hover:scale-105"
+imageSlot={
+ <picture>
+  {product.image?.avif && (
+    <source
+      srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.avif}`}
+      type="image/avif"
     />
-  }
+  )}
+  {product.image?.webp && (
+    <source
+      srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.webp}`}
+      type="image/webp"
+    />
+  )}
+  <img
+    src={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.webp}`}
+    alt={product.name}
+    width="320"
+    height="400"
+    loading="eager"
+    fetchPriority="high"
+    decoding="sync"
+    className="w-full h-full object-cover rounded-t-2xl"
+  />
+</picture>
+
+}
+
 />
 
                 </div>

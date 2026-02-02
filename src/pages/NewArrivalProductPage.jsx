@@ -3,11 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { createCustomerConversation } from "../api";
-import {
-  StarIcon,
-  HeartIcon,
-  ChatIcon,
-} from "../components/SvgIcon";
+
+import { ProductCard } from "../components/ProductCard";
 
 import { error as logError } from "../utils/logger";
 import { showToast } from "../utils/showToast";
@@ -16,24 +13,10 @@ import { useFixedWords } from "../hooks/useFixedWords";
 
 import CallToAction from "../components/CallToAction";
 import { getArrivalsProducts } from "../api"; 
-import BackButton from "../components/BackButton";
+
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
-// ✅ ADD THIS HELPER FUNCTION (same as NewArrivals & Sales)
-const normalizeImage = (image) => {
-  if (!image) return null;
-  
-  // If image is an object with avif/webp
-  if (typeof image === 'object' && !Array.isArray(image)) {
-    // Try avif first, then webp, then any other property
-    return image.avif || image.webp || image.url || image.path || null;
-  }
-  
-  // If it's already a string
-  if (typeof image === 'string') return image;
-  
-  return null;
-};
+
 
 function NewArrivalProductPageComponent() {
   const navigate = useNavigate();
@@ -80,24 +63,25 @@ function NewArrivalProductPageComponent() {
           setProducts([]);
           return;
         }
+const mapped = paginated.data.map(product => ({
+  id: product.id,
+  name: product.name,
+  name_en: product.name,
+  price: product.price,
+  old_price: null,
 
-        const mapped = paginated.data.map(product => ({
-          id: product.id,
-          name: product.name,
-          name_en: product.name,
-          price: product.price,
-          old_price: null,
-          // ✅ FIXED: Normalize the image
-          img: normalizeImage(product.image),
-          image: normalizeImage(product.image),
-          rating: parseFloat(product.rating) || 0,
-          description: product.description,
-          isNewArrival: true,
-          company_id: product.company_id?.id,
-          company_name: product.company_name || "Company",
-          category_id: product.category_id,
-          category_name: product.category_name || "New Arrival",
-        }));
+  // ✅ KEEP RAW BACKEND IMAGE OBJECT
+  image: product.image,
+
+  rating: parseFloat(product.rating) || 0,
+  description: product.description,
+  isNewArrival: true,
+  company_id: product.company_id?.id,
+  company_name: product.company_name || "Company",
+  category_id: product.category_id,
+  category_name: product.category_name || "New Arrival",
+}));
+
 
         // ✅ 2. STOP replacing products on mobile (CRITICAL)
        setProducts(prev => {
@@ -214,22 +198,9 @@ useEffect(() => {
 
   };
 
-  // ✅ FIXED: Convert relative image path to absolute URL (SAFE VERSION)
-  const getImageUrl = (imgPath) => {
-    if (!imgPath) return '/placeholder-image.jpg';
-    
-    // ✅ Check if imgPath is a string before calling .startsWith()
-    if (typeof imgPath === 'string') {
-      return imgPath.startsWith('http') 
-        ? imgPath 
-        : `${API_BASE_URL}/${imgPath}`;
-    }
-    
-    // If imgPath is not a string (could be object/null), return fallback
-    return '/placeholder-image.jpg';
-  };
 
-  // ✅ Sorting logic
+
+ 
 
 
 const sortedProducts = useMemo(() => {
@@ -255,7 +226,7 @@ const sortedProducts = useMemo(() => {
       className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-sm "
     >
       {/* Image skeleton with same style as profile page */}
-      <div className="w-full h-[180px] xs:h-[200px] sm:h-[220px] md:h-[240px] bg-gray-100 rounded-t-3xl animate-pulse " />
+      <div className="w-full h-[160px] xs:h-[180px] sm:h-[200px] bg-gray-100 rounded-t-3xl animate-pulse " />
       
       {/* Content skeleton with same structure as profile page */}
       <div className="p-3 sm:p-4 bg-white rounded-b-3xl ">
@@ -280,6 +251,32 @@ const sortedProducts = useMemo(() => {
       </div>
     </div>
   ));
+const handleToggleFavourite = (product) => {
+  const isAlreadyFav = favourites.some((item) => item.id === product.id);
+
+  dispatch(
+    toggleFavourite({
+      ...product,
+      source: "new_arrivals",
+    })
+  );
+
+  if (auth.user && !isAlreadyFav) {
+    dispatch(
+      openListPopup({
+        ...product,
+        source: "new_arrivals",
+      })
+    );
+  }
+};
+
+const handleNavigate = (product) => {
+  navigate(`/newarrivalprofile/${product.id}`);
+};
+
+
+
 
   return (
     <>
@@ -290,9 +287,9 @@ const sortedProducts = useMemo(() => {
         </div>
       )}
 
-      <section className="relative min-h-screen pt-24 pb-16 sm:pt-28 sm:pb-20 px-4 sm:px-8 md:px-12 lg:px-16 bg-gray-50">
+      <section className="relative min-h-screen pt-24 pb-16 sm:pt-28 sm:pb-20 px-4 sm:px-8 md:px-12 lg:px-16 bg-white">
        
-      <BackButton   variant="absolute" className="top-16"/>
+ 
   
 
         {/* Page Title */}
@@ -342,193 +339,49 @@ const sortedProducts = useMemo(() => {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center ">
-              {sortedProducts.map((product) => {
-                const isFav = favourites.some((item) => item.id === product.id);
-                // ✅ FIXED: getImageUrl will now handle both string and object safely
-                const imageUrl = getImageUrl(product.image || product.img);
-                
-                return (
-                  <div
-                    key={product.id}
-                    className="relative w-full max-w-[280px] sm:max-w-[300px] rounded-3xl overflow-hidden group cursor-pointer
-                               bg-white/10 border border-white/30 backdrop-blur-2xl 
-                               shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-                               hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
-                               transition-all duration-700 "
-                    onClick={() => navigate(`/newarrivalprofile/${product.id}`)}
-                  >
-                    {/* TOP RIGHT ACTIONS */}
-                   <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-20 flex flex-col gap-2">
-  {/* ❤️ HEART BUTTON */}
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
+           {sortedProducts.map((product) => {
+  const isFav = favourites.some((item) => item.id === product.id);
 
-      const isAlreadyFav = favourites.some(
-        (item) => item.id === product.id
-      );
-
-      dispatch(
-        toggleFavourite({
-          ...product,
-          source: "new_arrivals",
-        })
-      );
-
-      if (auth.user && !isAlreadyFav) {
-        dispatch(
-          openListPopup({
-            ...product,
-            source: "new_arrivals",
-          })
-        );
+  return (
+    <ProductCard
+      key={product.id}
+      product={product}
+      isFav={isFav}
+      currency={fw.qar}
+      onNavigate={handleNavigate}
+      onToggleFavourite={handleToggleFavourite}
+      onChat={handleChatClick}
+      imageSlot={
+        <picture>
+          {product.image?.avif && (
+            <source
+              srcSet={`${API_BASE_URL}/${product.image.avif}`}
+              type="image/avif"
+            />
+          )}
+          {product.image?.webp && (
+            <source
+              srcSet={`${API_BASE_URL}/${product.image.webp}`}
+              type="image/webp"
+            />
+          )}
+          <img
+            src={
+              product.image?.webp
+                ? `${API_BASE_URL}/${product.image.webp}`
+                : "/placeholder-image.jpg"
+            }
+            alt={product.name_en || product.name}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover "
+          />
+        </picture>
       }
-    }}
-    className={`
-      flex items-center justify-center
-      p-[clamp(6px,0.8vw,9px)]
-      rounded-full
-      shadow-md
-      transition
-      backdrop-blur-md
-      border
-      ${
-        isFav
-          ? "bg-red-100 border-red-200"
-          : "bg-white/80 border-white/50 hover:bg-red-50"
-      }
-    `}
-  >
-    <HeartIcon
-      filled={isFav}
-      className={`
-        block
-        w-[clamp(12px,1.1vw,16px)]
-        h-[clamp(12px,1.1vw,16px)]
-        ${
-          isFav
-            ? "text-red-500"
-            : "text-gray-600 hover:text-red-400"
-        }
-      `}
     />
-  </button>
+  );
+})}
 
-  {/* 💬 CHAT BUTTON — BELOW HEART */}
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-      handleChatClick(product);
-    }}
-    title="Chat"
-    className="
-      relative
-      flex items-center justify-center
-      p-[clamp(6px,0.8vw,9px)]
-      rounded-full
-      bg-white/40
-      backdrop-blur-2xl
-      border border-[rgba(255,255,255,0.28)]
-      shadow-[0_8px_24px_rgba(0,0,0,0.18)]
-      hover:bg-white/55
-      transition-all duration-300
-    "
-  >
-    {/* Chrome liquid highlight */}
-    <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/70 via-white/10 to-transparent opacity-40 pointer-events-none" />
-
-    {/* Glass ribbon streak */}
-    <span className="absolute inset-0 rounded-full bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)] opacity-35 pointer-events-none" />
-
-    {/* Titanium depth */}
-    <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-20 pointer-events-none" />
-
-    <ChatIcon
-      className="
-        relative z-10
-        w-[clamp(12px,1.1vw,16px)]
-        h-[clamp(12px,1.1vw,16px)]
-        text-[rgba(18,18,18,0.88)]
-        drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
-      "
-    />
-  </button>
-</div>
-
-
-                    {/* 🖼️ Product Image */}
-                    <div className="relative w-full h-[180px] sm:h-[220px] overflow-hidden rounded-t-3xl ">
-                      <img
-                        src={imageUrl}
-                        alt={product.name_en || product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover object-top rounded-t-3xl transition-transform duration-500 group-hover:scale-105 border-b border-white/20 "
-                        onError={(e) => {
-                          e.target.src = '/placeholder-image.jpg';
-                        }}
-                      />
-
-                      {/* ⭐ Rating */}
-        <div
-  className="
-    absolute bottom-3 left-3
-    flex items-center
-    gap-[clamp(3px,0.4vw,5px)]
-    bg-black/40
-    backdrop-blur-md
-    px-[clamp(7px,0.8vw,9px)]
-    py-[clamp(4px,0.6vw,6px)]
-    rounded-lg
-  "
->
-  {Array.from({ length: 5 }).map((_, i) => (
-    <StarIcon
-      key={i}
-      filled={i < Math.floor(product.rating || 0)}
-      className={`
-        w-[clamp(10px,1vw,13px)]
-        h-[clamp(10px,1vw,13px)]
-        ${i < Math.floor(product.rating || 0) ? "text-white" : "text-white/40"}
-      `}
-    />
-  ))}
-
-  <span
-    className="
-      ml-[clamp(3px,0.4vw,5px)]
-      text-[clamp(9px,1vw,11px)]
-      text-white/90
-      leading-none
-    "
-  >
-    ({(product.rating || 0).toFixed(1)})
-  </span>
-</div>
-
-                    </div>
-
-                    {/* 💬 Info Section */}
-                    <div className="relative w-full rounded-b-3xl p-3 sm:p-4 border-t border-white/20 bg-white/10 backdrop-blur-xl flex items-center justify-between ">
-                      <div className="flex flex-col w-[80%] z-10 ">
-                        <h3 className="font-semibold text-gray-900 mb-1 
-                           text-[11px] xs:text-[10px] sm:text-[14px] md:text-xs ">
-                          {product.name_en || product.name}
-                        </h3>
-                        <div className="flex items-center gap-1 ">
-                          <span className="font-bold text-gray-900   text-[11px] sm:text-[14px] md:text-xs  ">
-                            {fw.qar} {product.price}
-                          </span>
-                          {product.old_price && (
-                            <span className="text-xs line-through text-gray-500  text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs ">
-                              {fw.qar} {product.old_price}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
 
               {/* ✅ 5. Sentinel element for infinite scroll (Apple-style) */}
               {isMobile && page < lastPage && (

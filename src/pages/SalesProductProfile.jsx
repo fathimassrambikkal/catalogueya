@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
-import BackButton from "../components/BackButton";
+
 import SmartImage from "../components/SmartImage";
 import {
   HeartIcon,
@@ -670,9 +670,8 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Back button */}
-    {/* Back Button – Reusable */}
- <BackButton   variant="absolute" className="top-20"/>
+
+
 
 
       {/* Main layout */}

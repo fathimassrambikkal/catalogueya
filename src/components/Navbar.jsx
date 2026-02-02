@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { HiDotsVertical } from "react-icons/hi";
+
 import { useTranslation } from "react-i18next";
 import Cookies from "js-cookie";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import CustomerAccountDropdown from "./CustomerAccountDropdown";
 
-import { AiOutlineHeart } from "react-icons/ai";
 import { changeLanguage as apiChangeLanguage } from "../api";
 import { useSettings } from "../hooks/useSettings";
 import { useFixedWords } from "../hooks/useFixedWords";
+import { DotsIcon,OutlineHeartIcon } from "../components/SvgIcon";
+
 
 
 
@@ -71,17 +72,18 @@ const DropdownMenu = memo(function DropdownMenu({
 /* =============================
    MENU BUTTON (ENTERPRISE)
 ============================= */
-const MenuButton = memo(function MenuButton({ menuOpen, toggleMenu }) {
+const MenuButton = memo(function MenuButton({ toggleMenu }) {
   return (
     <button
       onClick={toggleMenu}
-      className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white/40 hover:bg-white/70 transition-all"
+      className="h-6 w-6 md:h-7 md:w-7 flex items-center justify-center rounded-md border border-gray-200 bg-white/40 hover:bg-white/70 transition"
       aria-label="Menu"
     >
-      <HiDotsVertical className="text-gray-700 text-base" />
+      <DotsIcon className="text-gray-600 text-[10px]" />
     </button>
   );
 });
+
 
 /* =============================
    FAVOURITES COUNTER
@@ -98,23 +100,25 @@ const FavouritesCounter = memo(function FavouritesCounter() {
         i18n.language === "ar" ? "ml-2" : ""
       }`}
     >
-      <AiOutlineHeart
-        className={`cursor-pointer transition text-lg sm:text-xl ${
+      <OutlineHeartIcon
+        filled={count > 0}
+        size={20}
+        className={`cursor-pointer transition ${
           count > 0
             ? "text-red-500 hover:text-red-600"
             : "text-gray-600 hover:text-red-400"
         }`}
       />
+
       {count > 0 && (
-        <span
-          className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center shadow-md leading-none"
-        >
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
           {count}
         </span>
       )}
     </Link>
   );
 });
+
 
 /* =============================
    LANGUAGE TOGGLE
@@ -132,7 +136,9 @@ const LanguageToggle = memo(function LanguageToggle({
   return (
     <button
       onClick={handleClick}
-      className="h-8 px-1 rounded-lg text-sm border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[0px]"
+      className=" h-7 md:h-8
+        px-1.5 md:px-2
+        text-[11px] md:text-sm  font-medium rounded-lg  border border-gray-200 bg-white/30 hover:bg-white/50 transition text-gray-900 min-w-[0px]"
     >
       {language === "en" ? "عربي" : "EN"}
     </button>
@@ -312,7 +318,7 @@ const [scrolled, setScrolled] = useState(false);
 
 
           {/* RIGHT: Actions */}
-          <div className="flex items-center gap-1 sm:gap-3 ltr:ml-auto rtl:mr-auto">
+          <div className="flex items-center gap-1.5 ltr:ml-auto rtl:mr-auto">
             {/* ❤️ Heart */}
             <FavouritesCounter />
 
@@ -346,7 +352,9 @@ const [scrolled, setScrolled] = useState(false);
             ) : (
               <button
                 onClick={() => navigate("/sign")}
-                className="h-8 px-2 rounded-lg text-sm border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
+                className="h-7 md:h-8
+        px-1.5 md:px-2
+        text-[11px] md:text-sm  font-medium rounded-lg border border-gray-300 bg-white/30 hover:bg-white/50 transition text-gray-900 whitespace-nowrap"
               >
                 {fw.login}
               </button>

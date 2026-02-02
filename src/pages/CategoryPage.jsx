@@ -10,140 +10,36 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { useFixedWords } from "../hooks/useFixedWords";
-import BackButton from "../components/BackButton";
+
 import {
   HeartIcon,
   StarIcon,
-   ArrowOutward
+  ArrowOutward
 } from "../components/SvgIcon";
-import SmartImage from "../components/SmartImage";
 import { error as logError } from "../utils/logger";
 
-import { getCategory} from "../api";
+import { getCategory } from "../api";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
-// =================== IMAGE UTILITY FUNCTIONS ===================
-const formatImageUrl = (imgData) => {
-  if (!imgData) return null;
-  
-  // Handle new backend format (object with webp/avif)
-  if (typeof imgData === 'object' && imgData !== null) {
-    // Return the object as-is, SmartImage will handle it
-    return imgData;
-  }
-  
-  // Handle old backend format (string)
-  if (typeof imgData === 'string') {
-    if (imgData.startsWith("http")) return imgData;
-    // Clean the path - remove leading slash if present
-    const cleanPath = imgData.startsWith('/') ? imgData.slice(1) : imgData;
-    return `${API_BASE_URL}/${cleanPath}`;
-  }
-  
-  return null;
-};
-
-
-
-
-// =================== OPTIMIZED IMAGE COMPONENT (UPDATED) ===================
-const OptimizedImage = memo(({ 
-  src, 
-  alt, 
-  className = "", 
-  priority = false,
-  onError,
-  onClick 
-}) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const imgRef = useRef(null);
-
-  // Check if src is object (new format) or string (old format)
-  const isNewFormat = useMemo(() => 
-    src && typeof src === 'object' && (src.webp || src.avif), 
-    [src]
-  );
-
-  // Handle click
-  const handleClick = (e) => {
-    if (onClick) onClick(e);
-  };
-
-  // If it's new format (object), use SmartImage
-  if (isNewFormat) {
-    return (
-      <div className="relative w-full h-full overflow-hidden">
-       
-        <SmartImage
-          image={src}
-          alt={alt}
-          className={`${className} transition-opacity duration-300`}
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
-          onLoad={() => setIsLoaded(true)}
-          onError={() => {
-            setHasError(true);
-            if (onError) onError();
-          }}
-        />
-      </div>
-    );
-  }
-
-  // Old format (string URL) - fallback to regular img
-  const formattedSrc = useMemo(() => {
-    if (typeof src === 'string') {
-      if (src.startsWith("http")) return src;
-      if (src.startsWith('/')) return src.slice(1);
-      return `${API_BASE_URL}/${src}`;
-    }
-    return src;
-  }, [src]);
+// =================== DETECT MOBILE ===================
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (!formattedSrc || !imgRef.current) return;
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
     
-    const img = imgRef.current;
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-    const handleLoad = () => setIsLoaded(true);
-    const handleError = () => {
-      setHasError(true);
-      if (onError) onError();
-    };
+  return isMobile;
+};
 
-    img.addEventListener('load', handleLoad);
-    img.addEventListener('error', handleError);
-
-    return () => {
-      img.removeEventListener('load', handleLoad);
-      img.removeEventListener('error', handleError);
-    };
-  }, [formattedSrc, onError]);
-
-  return (
-    <div className="relative w-full h-full overflow-hidden">
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse" />
-      )}
-      {formattedSrc && (
-       <img
-  ref={imgRef}
-  src={formattedSrc}
-  alt={alt}
-  className={`${className}`}
-  loading={priority ? "eager" : "lazy"}
-  decoding="async"
-/>
-
-      )}
-    </div>
-  );
-});
-OptimizedImage.displayName = 'OptimizedImage';
-
-// =================== RATING HELPERS (MEMOIZED) - UPDATED ===================
+// =================== RATING HELPERS (MEMOIZED) ===================
 const useRatingHelpers = () => {
   const getSafeRating = useCallback((rating) => {
     // Handle rating object with avg property (new format)
@@ -177,7 +73,15 @@ const useRatingHelpers = () => {
   return { getSafeRating, formatRating, getRatingValueForSort };
 };
 
-// =================== COMPANY CARD (OPTIMIZED) - UPDATED ===================
+// =================== IMAGE HELPERS ===================
+const getFullImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  if (path.startsWith('/')) return `${API_BASE_URL}/${path.slice(1)}`;
+  return `${API_BASE_URL}/${path}`;
+};
+
+// =================== COMPANY CARD (UPDATED WITH PICTURE ELEMENT) ===================
 const CompanyCard = memo(({ company, navigate }) => {
   const { getSafeRating, formatRating } = useRatingHelpers();
   const rating = getSafeRating(company.rating);
@@ -186,63 +90,68 @@ const CompanyCard = memo(({ company, navigate }) => {
     navigate(`/company/${company.id}`);
   }, [company.id, navigate]);
 
-  // Get image URL - properly handle both formats
-  const getImageUrl = useCallback((imgData) => {
-    return formatImageUrl(imgData);
-  }, []);
-
-  // Memoize expensive calculations
-  const companyData = useMemo(() => ({
-    name: company.name || company.title || 'Company',
-    logo: getImageUrl(company.logo || company.image),
-    rating: formatRating(company.rating), // Pass the full rating object
-    reviewCount: company.rating?.count || 0
-  }), [company.name, company.title, company.logo, company.image, company.rating, formatRating, getImageUrl]);
-
-  const ratingDisplay = useMemo(() => (
-    <div className="flex items-center gap-1 rtl:flex-row-reverse">
-      <StarIcon
-        filled={rating > 0}
-        className="w-3 h-3"
-      />
-      <span className="text-xs text-gray-600 font-medium">
-        {companyData.rating}
-      
-      </span>
-    </div>
-  ), [companyData.rating, companyData.reviewCount, rating]);
-
   return (
     <div
       onClick={handleClick}
       className="relative group cursor-pointer bg-white rounded-xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden w-full max-w-[220px] mx-auto hover:scale-[1.03]"
       style={{ willChange: 'transform' }}
     >
+      {/* Company Logo */}
       <div className="relative w-full h-[120px] overflow-hidden rounded-t-xl">
-        {companyData.logo ? (
-          <OptimizedImage
-            src={companyData.logo}
-            alt={companyData.name}
-            className="object-cover w-[88%] h-[92%] m-auto rounded-xl transition-transform duration-300 group-hover:scale-105 mt-2"
-            priority={false}
-            onError={() => {}}
-          />
+        {company.logo && typeof company.logo === 'object' ? (
+          <picture>
+            {company.logo.avif && (
+              <source 
+                srcSet={getFullImageUrl(company.logo.avif)} 
+                type="image/avif" 
+              />
+            )}
+            {company.logo.webp && (
+              <source 
+                srcSet={getFullImageUrl(company.logo.webp)} 
+                type="image/webp" 
+              />
+            )}
+            <img
+              src={getFullImageUrl(company.logo.webp || company.logo.avif)}
+              alt={company.name || 'Company'}
+              className="object-cover w-[88%] h-[92%] m-auto rounded-xl transition-transform duration-300 group-hover:scale-105 mt-2"
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-shimmer bg-[length:200%_100%] rounded-xl" />
         )}
       </div>
       
+      {/* Company Info */}
       <div className="flex items-start justify-between p-3 pt-2 gap-2">
         <div className="flex flex-col min-w-0 flex-1">
-          {companyData.name ? (
+          {company.name ? (
             <h3 className="text-gray-900 font-medium text-sm sm:text-base line-clamp-2 mb-1 leading-tight break-words text-start rtl:text-right">
-              {companyData.name}
+              {company.name}
             </h3>
           ) : (
             <div className="h-4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-3/4 mb-2" />
           )}
-          {ratingDisplay}
+          
+          {/* Rating */}
+          <div className="flex items-center gap-1 rtl:flex-row-reverse">
+            <StarIcon
+              filled={rating > 0}
+              className="w-3 h-3"
+            />
+            <span className="text-xs text-gray-600 font-medium">
+              {formatRating(company.rating)}
+            </span>
+            <span className="text-[11px] text-gray-500">
+              ({company.number_of_reviews || 0})
+            </span>
+          </div>
         </div>
+        
+        {/* Arrow Button */}
         <div className="flex-shrink-0 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full shadow-sm transition-all duration-300 mt-1">
           <ArrowOutward className="text-gray-700 text-sm" />
         </div>
@@ -252,7 +161,7 @@ const CompanyCard = memo(({ company, navigate }) => {
 });
 CompanyCard.displayName = 'CompanyCard';
 
-// =================== PRODUCT CARD (OPTIMIZED) ===================
+// =================== PRODUCT CARD (UPDATED WITH PICTURE ELEMENT) ===================
 const ProductCard = memo(({ 
   product, 
   isFav, 
@@ -261,82 +170,48 @@ const ProductCard = memo(({
   fw
 }) => {
   const { getSafeRating, formatRating } = useRatingHelpers();
+  const rating = getSafeRating(product.rating);
   
-  // Get image URL - handle both formats
-  const getImageUrl = useCallback((imgData) => {
-    return formatImageUrl(imgData);
-  }, []);
-  
-  // Memoize all derived data
-  const productData = useMemo(() => {
-    const imageUrl = getImageUrl(product.image || product.thumbnail);
-    const priceNumber = product.price ? parseFloat(product.price) : 0;
-    
-    return {
-      id: product.id,
-      name: product.name || product.title || 'Product',
-      price: priceNumber,
-      image: imageUrl,
-      img: imageUrl,
-      rating: getSafeRating(product.rating),
-      description: product.description || '',
-      company_name: product.company_name || 'Company',
-      company_id: product.company_id || null,
-      isOnSale: product.isOnSale || false,
-      isNewArrival: product.isNewArrival || false,
-      category_name: product.category_name || '',
-      formattedPrice: product.price 
-        ? `${fw?.qar || "QAR"} ${priceNumber.toLocaleString()}`
-        : fw?.price_not_available || "Price not available",
-      formattedRating: formatRating(product.rating),
-      ...product
-    };
-  }, [product, getSafeRating, formatRating, getImageUrl, fw]);
-
   const handleFavouriteClick = useCallback((e) => {
     e.stopPropagation();
     const productForFavourite = {
-      id: productData.id,
-      name: productData.name,
-      price: productData.price,
-      image: productData.image,
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
       source: "category",
-      img: productData.img,
-      company_name: productData.company_name,
-      company_id: productData.company_id,
-      isOnSale: productData.isOnSale,
-      isNewArrival: productData.isNewArrival,
-      category_name: productData.category_name,
-      rating: productData.rating,
-      description: productData.description
+      company_name: product.company?.name || 'Company',
+      company_id: product.company?.id || null,
+      rating: product.rating,
+      description: product.description
     };
     toggleFavourite(productForFavourite);
-  }, [productData, toggleFavourite]);
+  }, [product, toggleFavourite]);
 
   const handleCardClick = useCallback(() => {
-    navigate(`/product/${productData.id}`);
-  }, [productData.id, navigate]);
+    navigate(`/product/${product.id}`);
+  }, [product.id, navigate]);
 
   const ratingStars = useMemo(() => (
     Array.from({ length: 5 }).map((_, i) => (
       <StarIcon
         key={i}
-        filled={i < Math.floor(productData.rating)}
-        className={`w-3 h-3 ${i < Math.floor(productData.rating) ? "text-white" : "text-gray-400"}`}
+        filled={i < Math.floor(rating)}
+        className={`w-3 h-3 ${i < Math.floor(rating) ? "text-white" : "text-gray-400"}`}
       />
     ))
-  ), [productData.rating]);
+  ), [rating]);
 
   const ratingBadge = useMemo(() => (
-    productData.rating > 0 && (
+    rating > 0 && (
       <div className="absolute bottom-3 left-3 rtl:left-auto rtl:right-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg">
         {ratingStars}
         <span className="text-[10px] text-white ml-1 rtl:ml-0 rtl:mr-1">
-          {productData.formattedRating}
+          {formatRating(product.rating)}
         </span>
       </div>
     )
-  ), [productData.rating, productData.formattedRating, ratingStars]);
+  ), [rating, product.rating, formatRating, ratingStars]);
 
   const favouriteButton = useMemo(() => (
     <button
@@ -394,14 +269,28 @@ const ProductCard = memo(({
 
       {/* Product Image */}
       <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
-        {productData.image ? (
-          <OptimizedImage
-            src={productData.image}
-            alt={productData.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            priority={false}
-            onError={() => {}}
-          />
+        {product.image && typeof product.image === 'object' ? (
+          <picture>
+            {product.image.avif && (
+              <source 
+                srcSet={getFullImageUrl(product.image.avif)} 
+                type="image/avif" 
+              />
+            )}
+            {product.image.webp && (
+              <source 
+                srcSet={getFullImageUrl(product.image.webp)} 
+                type="image/webp" 
+              />
+            )}
+            <img
+              src={getFullImageUrl(product.image.webp || product.image.avif)}
+              alt={product.name || 'Product'}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
         ) : (
           <div className="w-full h-full bg-gray-100 animate-pulse" />
         )}
@@ -412,7 +301,7 @@ const ProductCard = memo(({
       {/* Product Info */}
       <div className="p-3 border-t border-gray-100">
         <div className="flex-1">
-          {productData.name ? (
+          {product.name ? (
             <>
               <h3
                 className="
@@ -427,7 +316,7 @@ const ProductCard = memo(({
                   rtl:text-right
                 "
               >
-                {productData.name}
+                {product.name}
               </h3>
 
               <div className="flex items-center gap-1">
@@ -441,7 +330,7 @@ const ProductCard = memo(({
                     md:text-xs
                   "
                 >
-                  {productData.formattedPrice}
+                  {fw?.qar || "QAR"} {parseFloat(product.price || 0).toLocaleString()}
                 </span>
               </div>
             </>
@@ -481,14 +370,16 @@ const ProductCardSkeleton = memo(() => (
 ));
 ProductCardSkeleton.displayName = 'ProductCardSkeleton';
 
-// =================== MAIN CATEGORY PAGE (OPTIMIZED) ===================
+// =================== MAIN CATEGORY PAGE ===================
 const CategoryPage = memo(() => {
-   const abortRef = useRef(null);
+  
+  const loadMoreRef = useRef(null);
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const favourites = useSelector((state) => state.favourites.items);
   const auth = useSelector((state) => state.auth);
+  
   const [category, setCategory] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [products, setProducts] = useState([]);
@@ -498,15 +389,20 @@ const CategoryPage = memo(() => {
   const [viewType, setViewType] = useState("companies");
   const [sortBy, setSortBy] = useState("relevance");
   
-  // ✅ SIMPLIFIED: Single pagination state for products
-  const [productPage, setProductPage] = useState(1);
-  const [hasMoreProducts, setHasMoreProducts] = useState(false);
-  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
+  // Pagination states - ONLY FOR PRODUCTS
+
+
   
   const { fixedWords } = useFixedWords();
   const fw = fixedWords?.fixed_words || {};
+  const isMobile = useIsMobile();
 
-  // Get rating helpers
+
+
+  const [productPage, setProductPage] = useState(1);
+const [productLastPage, setProductLastPage] = useState(1);
+
+
   const { getRatingValueForSort } = useRatingHelpers();
 
   // Memoize expensive calculations
@@ -521,7 +417,6 @@ const CategoryPage = memo(() => {
         (item) => item.id === product.id
       );
 
-      // ✅ 1. IMMEDIATE UI UPDATE (guest + logged-in)
       dispatch(
         toggleFavourite({
           ...product,
@@ -529,7 +424,6 @@ const CategoryPage = memo(() => {
         })
       );
 
-      // ✅ 2. LOGGED-IN → open popup for backend sync
       if (auth.user && !isAlreadyFav) {
         dispatch(
           openListPopup({
@@ -542,146 +436,78 @@ const CategoryPage = memo(() => {
     [dispatch, favourites, auth.user]
   );
 
+  // =================== FETCH DATA ===================
+ 
+
   // =================== INITIAL FETCH ===================
-  useEffect(() => {
-    let mounted = true;
-    abortRef.current = new AbortController();
-
-
-    const fetchData = async () => {
-      setLoading(true);
-      setPageError(null);
-
-
-      try {
-       const catRes = await getCategory(categoryId, {
-  signal: abortRef.current.signal,
-  params: { page: 1, per_page: 20 }
-});
-
-        if (!mounted || abortRef.current.signal.aborted) return;
-
-
-        const categoryData = catRes?.data?.data || null;
-        const companiesData = categoryData?.companies || [];
-
-        if (!categoryData) {
-          setPageError("Category not found.");
-          return;
-        }
-
-        // ✅ FLATTEN all products from all companies
-        const allProducts = [];
-        
-        companiesData.forEach((company) => {
-          if (Array.isArray(company.products)) {
-            company.products.forEach((product) => {
-              allProducts.push({
-                ...product,
-                company_id: company.id,
-                company_name: company.name,
-                company_logo: company.logo,
-              });
-            });
-          }
-        });
-
-        if (mounted) {
-          setCategory(categoryData);
-          setCompanies(companiesData);
-          setProducts(allProducts);
-          
-          // ✅ Set pagination state based on response
-          // Assuming API returns total pages or has_more flag
-          const totalPages = categoryData?.products_pagination?.last_page || 1;
-          const currentPage = categoryData?.products_pagination?.page || 1;
-          const hasMore = currentPage < totalPages;
-          
-          setProductPage(currentPage);
-          setHasMoreProducts(hasMore);
-        }
-      }catch (err) {
-  if (!abortRef.current?.signal.aborted) {
-    logError("Failed to fetch category data", err);
-    setPageError("Failed to load category.");
-  }
-}
-
- finally {
-       if (mounted && !abortRef.current.signal.aborted) {
-  setLoading(false);
-}
-
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      mounted = false;
-      abortRef.current?.abort();
-
-    };
-  }, [categoryId]); // Remove productPage dependency to avoid double fetch
-
-  // =================== LOAD MORE PRODUCTS ===================
-  const loadMoreProducts = useCallback(async () => {
-    if (loadingMoreProducts || !hasMoreProducts) return;
-    
-    setLoadingMoreProducts(true);
-    const nextPage = productPage + 1;
-
+useEffect(() => {
+  const fetchCategory = async () => {
     try {
-  const res = await getCategory(categoryId, {
-  signal: abortRef.current?.signal,
-  params: { page: nextPage, per_page: 20 }
-});
+      setLoading(true);
 
-
-
-      const categoryData = res?.data?.data;
-      const companiesData = categoryData?.companies || [];
-      
-      // Flatten new products
-      const newProducts = [];
-      companiesData.forEach((company) => {
-        if (Array.isArray(company.products)) {
-          company.products.forEach((product) => {
-            newProducts.push({
-              ...product,
-              company_id: company.id,
-              company_name: company.name,
-              company_logo: company.logo,
-            });
-          });
-        }
+      const res = await getCategory(categoryId, {
+        params: { page: productPage },
       });
+      
 
-      // Append new products to existing ones
-      setProducts(prev => [...prev, ...newProducts]);
-      setCompanies(prev => [...prev, ...companiesData]);
-      
-      // Update pagination state
-      const totalPages = categoryData?.products_pagination?.last_page || 1;
-      const hasMore = nextPage < totalPages;
-      
-      setProductPage(nextPage);
-      setHasMoreProducts(hasMore);
-      
-    } catch (error) {
-      logError("Failed to load more products", error);
+      const data = res?.data?.data;
+      if (!data) return;
+
+      // 👇 set category & companies ONCE
+      if (productPage === 1) {
+        setCategory(data);
+        setCompanies(data.companies || []);
+      }
+
+      setProductLastPage(data.products_pagination?.last_page || 1);
+
+      setProducts(prev => {
+        if (productPage === 1) return data.products;
+        if (isMobile) return [...prev, ...data.products];
+        return data.products;
+      });
+    } catch (err) {
+      logError("Category fetch failed", err);
     } finally {
-      setLoadingMoreProducts(false);
+      setLoading(false);
     }
-  }, [categoryId, productPage, hasMoreProducts, loadingMoreProducts]);
+  };
 
-  // =================== MEMOIZED SORTING - UPDATED ===================
+  fetchCategory();
+}, [categoryId, productPage]);
+
+
+
+
+
+  // =================== INFINITE SCROLL FOR MOBILE ===================
+
+useEffect(() => {
+  if (!isMobile) return;
+  if (productPage >= productLastPage) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting && !loading) {
+        setProductPage(p => p + 1);
+      }
+    },
+    { rootMargin: "300px" }
+  );
+
+  const el = loadMoreRef.current;
+  if (el) observer.observe(el);
+
+  return () => observer.disconnect();
+}, [isMobile, productPage, productLastPage, loading]);
+
+
+  // =================== MEMOIZED SORTING ===================
   const sortedCompanies = useMemo(() => {
     if (!Array.isArray(companies) || companies.length === 0) return [];
 
     if (sortBy === "rating") {
       return [...companies].sort((a, b) => {
-        // Use getRatingValueForSort to handle both object and number formats
         const ratingA = getRatingValueForSort(a.rating);
         const ratingB = getRatingValueForSort(b.rating);
         return ratingB - ratingA;
@@ -707,7 +533,6 @@ const CategoryPage = memo(() => {
         );
       case "rating":
         return productsCopy.sort((a, b) => {
-          // Use getRatingValueForSort for products too (if they also use the new format)
           const ratingA = getRatingValueForSort(a.rating);
           const ratingB = getRatingValueForSort(b.rating);
           return ratingB - ratingA;
@@ -724,124 +549,100 @@ const CategoryPage = memo(() => {
 
   const handleViewTypeChange = useCallback((type) => {
     setViewType(type);
+    // Reset product page when switching to products view
+    if (type === "products") {
+      setProductPage(1);
+    }
   }, []);
 
   const handleSortChange = useCallback((e) => {
     setSortBy(e.target.value);
   }, []);
 
-  // Get category header image - SPECIAL HANDLING for category image
-  const getCategoryHeaderImage = useCallback((imgData) => {
-    if (!imgData) return null;
-    
-    // If it's the new format (object with webp/avif)
-    if (typeof imgData === 'object' && imgData.webp) {
-      // For category header, we need a string URL, so use webp as fallback
-      const webpPath = imgData.webp;
-      if (webpPath.startsWith("http")) return webpPath;
-      return `${API_BASE_URL}/${webpPath.replace(/^\//, '')}`;
-    }
-    
-    // If it's a string
-    if (typeof imgData === 'string') {
-      if (imgData.startsWith("http")) return imgData;
-      return `${API_BASE_URL}/${imgData.replace(/^\//, '')}`;
-    }
-    
-    return null;
-  }, []);
+  // =================== RENDER COMPANIES GRID ===================
+  const renderCompaniesGrid = useMemo(() => (
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
+        {loading && companies.length === 0 ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <CompanyCardSkeleton key={`company-skel-${i}`} />
+          ))
+        ) : (
+          sortedCompanies.map((company) => (
+            <CompanyCard
+              key={company.id}
+              company={company}
+              navigate={navigate}
+            />
+          ))
+        )}
+      </div>
 
-  // Memoize category data
-  const categoryData = useMemo(() => {
-    const imageUrl = getCategoryHeaderImage(category?.image);
-    
-    return {
-      name: category?.title || category?.name || "Category",
-      image: imageUrl
-    };
-  }, [category, getCategoryHeaderImage]);
+      
+    </>
+  ), [loading, companies.length, sortedCompanies, navigate, isMobile]);
 
-  // =================== RENDER PRODUCTS IN SINGLE GRID ===================
-  const renderProductsGrid = useMemo(() => {
-    if (!sortedProducts.length) return null;
+  // =================== RENDER PRODUCTS GRID ===================
+  const renderProductsGrid = useMemo(() => (
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+        {loading && products.length === 0 && productPage === 1 ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <ProductCardSkeleton key={`product-skel-${i}`} />
+          ))
+        ) : (
+          sortedProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+
+              product={product}
+              isFav={isFavourite(product.id)}
+              toggleFavourite={handleToggleFavourite}
+              navigate={navigate}
+              fw={fw}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Mobile infinite scroll sentinel */}
+      {isMobile && productPage < productLastPage && (
+        <div ref={loadMoreRef} className="h-20 flex justify-center items-center col-span-full">
+        {loading && (
+  <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+)}
+
+        </div>
+      )}
+    </>
+  ), [loading, products.length, productPage, sortedProducts, isFavourite, handleToggleFavourite, navigate, fw, isMobile, productLastPage]);
+
+
+  // =================== RENDER PAGINATION CONTROLS ===================
+  const renderPaginationControls = useMemo(() => {
+    // Only show pagination for products
+    if (viewType !== "products") return null;
+    if (isMobile || productLastPage <= 1) return null;
 
     return (
-      <>
-        {/* Products Grid - ALL products together */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-          {sortedProducts.map((product) => {
-            const enhancedProduct = {
-              ...product,
-              company_name: product.company_name || 'Company',
-              company_id: product.company_id || null,
-              isOnSale: product.isOnSale || false,
-              isNewArrival: product.isNewArrival || false,
-              category_name: category?.title || ''
-            };
-            
-            return (
-              <ProductCard
-                key={`${product.id}-${product.company_id}`}
-                product={enhancedProduct}
-                isFav={isFavourite(product.id)}
-                toggleFavourite={handleToggleFavourite}
-                navigate={navigate}
-                fw={fw}
-              />
-            );
-          })}
-          
-          {/* Skeleton loaders when loading more */}
-          {loadingMoreProducts && Array.from({ length: 4 }).map((_, i) => (
-            <ProductCardSkeleton key={`loading-more-${i}`} />
-          ))}
-        </div>
+      <div className="flex justify-center items-center gap-4 mt-12">
+<button
+  disabled={productPage === 1}
+  onClick={() => setProductPage(p => p - 1)}
+>
+  Previous
+</button>
 
-        {/* Load More Button */}
-        {hasMoreProducts && (
-          <div className="text-center mt-12">
-            <button
-              onClick={loadMoreProducts}
-              disabled={loadingMoreProducts}
-              className={`px-8 py-3 rounded-full font-medium text-sm transition-all duration-300 ${
-                loadingMoreProducts
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-95 shadow-lg hover:shadow-xl'
-              }`}
-            >
-              {loadingMoreProducts ? (
-                <span className="flex items-center justify-center gap-3">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {fw.loading || "Loading..."}
-                </span>
-              ) : (
-                `${fw.load_more || "Load more products"}`
-              )}
-            </button>
-          </div>
-        )}
-      </>
+<button
+  disabled={productPage === productLastPage}
+  onClick={() => setProductPage(p => p + 1)}
+>
+  Next
+</button>
+
+      </div>
     );
-  }, [sortedProducts, loadingMoreProducts, hasMoreProducts, isFavourite, handleToggleFavourite, navigate, fw, category, loadMoreProducts]);
-
-  // Memoize grid content
-  const companiesGrid = useMemo(() => (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
-      {loading ? (
-        Array.from({ length: 8 }).map((_, i) => (
-          <CompanyCardSkeleton key={`company-skel-${i}`} />
-        ))
-      ) : (
-        sortedCompanies.map((company) => (
-          <CompanyCard
-            key={company.id}
-            company={company}
-            navigate={navigate}
-          />
-        ))
-      )}
-    </div>
-  ), [loading, sortedCompanies, navigate]);
+  }, [isMobile, productLastPage, productPage, fw, viewType, loading]);
 
   // Error state
   if (pageError && !category) {
@@ -862,7 +663,6 @@ const CategoryPage = memo(() => {
 
   return (
     <section className="min-h-screen w-full py-10 sm:py-14 px-4 sm:px-8 md:px-12 relative overflow-hidden">
-      <BackButton variant="absolute" className="top-16"/>
       
       {/* Loading indicator */}
       {loading && (
@@ -878,19 +678,34 @@ const CategoryPage = memo(() => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
           <div className="flex items-center gap-4 ml-0 sm:ml-4 md:ml-0">
-            {categoryData.image ? (
-              <img
-                src={categoryData.image}
-                alt={categoryData.name}
-                className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover"
-                loading="lazy"
-              />
+            {category?.image && typeof category.image === 'object' ? (
+              <picture>
+                {category.image.avif && (
+                  <source 
+                    srcSet={getFullImageUrl(category.image.avif)} 
+                    type="image/avif" 
+                  />
+                )}
+                {category.image.webp && (
+                  <source 
+                    srcSet={getFullImageUrl(category.image.webp)} 
+                    type="image/webp" 
+                  />
+                )}
+                <img
+                  src={getFullImageUrl(category.image.webp || category.image.avif)}
+                  alt={category.title || 'Category'}
+                  className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-200 shadow-md object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
             ) : (
               <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-shimmer bg-[length:200%_100%]" />
             )}
-            {categoryData.name ? (
+            {category?.title ? (
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tighter text-gray-900">
-                {categoryData.name || fw.category}
+                {category.title}
               </h2>
             ) : (
               <div className="h-8 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-full animate-shimmer bg-[length:200%_100%] w-48" />
@@ -951,7 +766,10 @@ const CategoryPage = memo(() => {
         </div>
 
         {/* Content Grid */}
-        {viewType === "companies" ? companiesGrid : renderProductsGrid}
+        {viewType === "companies" ? renderCompaniesGrid : renderProductsGrid}
+        
+        {/* Desktop/Tablet Pagination - Only for products */}
+        {!isMobile && viewType === "products" && productLastPage > 1 && renderPaginationControls}
         
         {/* Empty State */}
         {!loading && viewType === "companies" && sortedCompanies.length === 0 && (

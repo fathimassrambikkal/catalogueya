@@ -1,23 +1,20 @@
 import React, { useState } from "react";
 import { FaChevronRight, FaClock, FaTimes, FaWallet } from "react-icons/fa";
-
+import { useNavigate } from "react-router-dom";
 function PendingFatora({ fatoras }) {
-  const [showModal, setShowModal] = useState(false);
-  const [selectedFatora, setSelectedFatora] = useState(null);
-  const [tipOption, setTipOption] = useState("no");
-  const [tipAmount, setTipAmount] = useState("");
+ 
+ const navigate = useNavigate();
+
+
 
   const handlePayNow = (fatora) => {
-    setSelectedFatora(fatora);
-    setShowModal(true);
+    navigate("/customer/pay", {
+      state: { fatora }
+    });
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setTipOption("no");
-    setTipAmount("");
-    setSelectedFatora(null);
-  };
+
+
 
   if (fatoras.length === 0) {
     return (
@@ -161,7 +158,7 @@ function PendingFatora({ fatoras }) {
                 {/* Pay Button */}
                 <div className="w-full sm:w-auto mt-4 sm:mt-0">
                   <button
-                    onClick={() => handlePayNow(fatora)}
+                     onClick={() => handlePayNow(fatora)}
                     className="
                       w-full sm:w-auto
                       px-2 py-2.5 sm:px-6 sm:py-3 md:px-4 md:py-2
@@ -189,229 +186,10 @@ function PendingFatora({ fatoras }) {
         ))}
       </div>
 
-      {/* Ultra Glass Modal */}
-      {showModal && selectedFatora && (
-        <div className="
-          fixed inset-0 z-50
-          flex items-center justify-center
-          p-4 sm:p-6
-          bg-black/40 backdrop-blur-sm
-          animate-fadeIn
-        ">
-          <div 
-            className="
-              relative
-              w-full max-w-md
-              bg-white/95 backdrop-blur-2xl
-              rounded-2xl sm:rounded-3xl
-              border border-white/90
-              shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_32px_64px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
-              overflow-hidden
-              animate-scaleIn
-            "
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={closeModal}
-              className="
-                absolute top-4 right-4
-                w-8 h-8
-                flex items-center justify-center
-                rounded-full
-                bg-white/90 backdrop-blur-sm
-                border border-white/80
-                shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.6)]
-                text-gray-500
-                hover:text-gray-700
-                hover:bg-white
-                active:scale-95
-                transition-all duration-200
-                z-10
-              "
-            >
-              <FaTimes className="text-sm" />
-            </button>
+    
 
-            {/* Modal Header */}
-            <div className="px-6 pt-8 pb-6 text-center">
-              <div className="
-                w-16 h-16
-                rounded-full
-                bg-gradient-to-br from-blue-50 to-blue-100/30
-                flex items-center justify-center
-                mx-auto mb-4
-                shadow-[inset_0_0_20px_rgba(255,255,255,0.9),0_4px_16px_rgba(59,130,246,0.1)]
-                border border-blue-100/50
-              ">
-                <FaWallet className="text-2xl text-blue-500/80" />
-              </div>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2 tracking-tight">
-                Complete Payment
-              </h2>
-           
-            </div>
-
-            <div className="h-[0.5px] bg-gradient-to-r from-transparent via-gray-200/40 to-transparent" />
-
-            {/* Modal Content */}
-            <div className="px-6 py-6">
-              {/* Company Info */}
-              <div className="mb-6">
-               
-               
-
-                {/* Tip Selection */}
-                <div className="mb-6">
-                  <h4 className="text-base font-medium text-gray-900 mb-4">
-                    Would you like to add a tip?
-                  </h4>
-                  
-                  <div className="flex gap-3 mb-4">
-                    {/* Yes Button */}
-                    <button
-                      onClick={() => setTipOption("yes")}
-                      className={`
-                        flex-1 py-3
-                        rounded-xl
-                        border
-                        text-base font-medium
-                        transition-all duration-200
-                        ${tipOption === "yes" 
-                          ? "bg-blue-50 border-blue-500/50 text-blue-600 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.2)]"
-                          : "bg-white border-gray-200 text-gray-700 hover:border-blue-300/50 hover:bg-blue-50/50"
-                        }
-                      `}
-                    >
-                      Yes
-                    </button>
-
-                    {/* No Button */}
-                    <button
-                      onClick={() => {
-                        setTipOption("no");
-                        setTipAmount("");
-                      }}
-                      className={`
-                        flex-1 py-3
-                        rounded-xl
-                        border
-                        text-base font-medium
-                        transition-all duration-200
-                        ${tipOption === "no" 
-                          ? "bg-blue-50 border-blue-500/50 text-blue-600 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.2)]"
-                          : "bg-white border-gray-200 text-gray-700 hover:border-blue-300/50 hover:bg-blue-50/50"
-                        }
-                      `}
-                    >
-                      No
-                    </button>
-                  </div>
-
-                  {/* Tip Amount Input */}
-                  {tipOption === "yes" && (
-                    <div className="space-y-3">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Enter tip amount
-                      </label>
-                      <div className="relative">
-                        <div className="
-                          absolute left-4 top-1/2 -translate-y-1/2
-                          text-gray-400
-                        ">
-                          QAR
-                        </div>
-                        <input
-                          type="text"
-                          value={tipAmount}
-                          onChange={(e) => setTipAmount(e.target.value)}
-                          placeholder=""
-                          className="
-                            w-full
-                            pl-12 pr-4 py-4
-                            rounded-xl
-                            bg-white
-                            border border-gray-200
-                            text-lg font-medium text-gray-900
-                            placeholder:text-gray-400
-                            focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20
-                            transition-all duration-200
-                          "
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Total Amount */}
-                <div className="
-                  p-4
-                  rounded-xl
-                  bg-gradient-to-r from-blue-50/50 to-blue-100/20
-                  border border-blue-100/50
-                  mb-6
-                ">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-medium text-gray-700">
-                      Total Amount
-                    </span>
-                    <span className="text-xl font-bold text-gray-900">
-                      {selectedFatora.amount || "250 QAR"}
-                      {tipAmount && ` + ${tipAmount} QAR`}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={closeModal}
-                    className="
-                      flex-1 py-3
-                      rounded-xl
-                      bg-white
-                      border border-gray-200
-                      text-gray-700 font-medium
-                      hover:bg-gray-50
-                      active:scale-[0.98]
-                      transition-all duration-200
-                    "
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Handle payment logic here
-                      closeModal();
-                    }}
-                    className="
-                      flex-1 py-3
-                      rounded-xl
-                      bg-gradient-to-r from-blue-500 to-blue-600
-                      text-white font-medium
-                      shadow-[0_2px_12px_rgba(59,130,246,0.3),inset_0_1px_1px_rgba(255,255,255,0.2)]
-                      hover:shadow-[0_4px_20px_rgba(59,130,246,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)]
-                      active:scale-[0.98]
-                      transition-all duration-200
-                      relative overflow-hidden
-                    "
-                  >
-                    {/* Button shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    <span className="relative">Confirm Payment</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            
-         
-          </div>
-        </div>
-      )}
-
-      {/* Add these animations to your global CSS or Tailwind config */}
-      <style jsx>{`
+     
+      <style >{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }

@@ -181,16 +181,8 @@ log("Token saved in localStorage:", {
   };
 
   // DEMO COMPANY LOGIN (NO API)
- const handleCompanyLogin = async (e) => {
+const handleCompanyLogin = async (e) => {
   e.preventDefault();
-
-  //  TEMPORARILY DISABLE COMPANY LOGIN
-  setError("Business sign-in is coming soon ");
-
-  return; //  stop here (nothing below runs)
-
-  /* 
-  ===== OLD CODE (PRESERVED FOR LATER) =====
 
   if (loginType !== "company") return;
 
@@ -232,10 +224,9 @@ log("Token saved in localStorage:", {
   } finally {
     setLoading(false);
   }
-
-  ===== END OLD CODE =====
-  */
 };
+
+
 const handleSubmit = (e) => {
   if (loginType === "customer") {
     handleCustomerLogin(e);

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { useNavigate } from "react-router-dom";
 import { getCategories } from "../api";
 import { useSettings } from "../hooks/useSettings";
-import SmartImage from "../components/SmartImage";
+
 import { warn } from "../utils/logger";
 
 const ChevronLeft = ({ size = 16 }) => (
@@ -413,14 +413,39 @@ const CategoryCard = useCallback(({ service, index, cardsPerView }) => {
   aria-label={`Browse ${service?.title_en || service?.title}`}
 >
   <div className="relative w-full h-full rounded-full overflow-hidden">
-    <SmartImage
-      image={service.image}
+{service.image ? (
+  <picture>
+    {service.image.avif && (
+      <source
+        srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${service.image.avif}`}
+        type="image/avif"
+      />
+    )}
+    {service.image.webp && (
+      <source
+        srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${service.image.webp}`}
+        type="image/webp"
+      />
+    )}
+    <img
+      src={`https://catalogueyanew.com.awu.zxu.temporary.site/${service.image.webp || service.image.avif}`}
       alt={service?.title_en || service?.title}
+      width="160"
+      height="160"
       loading={index < 12 ? "eager" : "lazy"}
-      fetchPriority={index < 6 ? "high" : "low"}
-      decoding={index < 12 ? "sync" : "async"}
+      fetchPriority={index < 6 ? "high" : "auto"}
+      decoding="sync"
+      draggable="false"
       className="w-full h-full object-cover rounded-full"
     />
+  </picture>
+) : (
+  <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+    No Image
+  </div>
+)}
+
+
   </div>
 </div>
 

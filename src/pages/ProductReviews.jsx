@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getProductReviews } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
-import BackButton from "../components/BackButton";
+
 const StarIcon = ({ filled, className = "" }) => (
   <svg 
     className={`${className} transform-gpu`}
@@ -59,8 +59,7 @@ export default function ProductReviews() {
     <section className="w-full  px-6 py-16">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-      {/* Back Button */}
-        <BackButton   variant="absolute" className="top-20"/>
+      
 
       {/* Page Title */}
       <h1 className="text-xl font-semibold text-gray-900 mb-6 mt-12 ">

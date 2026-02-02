@@ -9,10 +9,10 @@ import React, {
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
-import { getCompany, getSettings } from "../api";
+import { getCompany } from "../api";
 import { addFollowCompany, unfollowCompany, getCustomerFollowUps, createCustomerConversation } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
-import BackButton from "../components/BackButton";
+
 import {
   HeartIcon,
   StarIcon,
@@ -21,10 +21,49 @@ import {
 } from "../components/SvgIcon";
 import SmartImage from "../components/SmartImage";
 
+import { ShareAltIcon } from "../components/SvgIcon";
+
+
+import {
+  YoutubeIcon,
+  InstagramIcon,
+  FacebookIcon,
+  WhatsappIcon,
+  LinkedinIcon,
+  TwitterIcon,
+  PinterestIcon,
+  SnapchatIcon,
+} from "../components/SocialSvg";
+
+
+
+const SOCIAL_ICON_MAP = {
+  youtube: YoutubeIcon,
+  instagram: InstagramIcon,
+  facebook: FacebookIcon,
+  whatsapp: WhatsappIcon,
+  linkedin: LinkedinIcon,
+  twitter: TwitterIcon,
+  tweeter: TwitterIcon,
+  pinterest: PinterestIcon,
+  snapchat: SnapchatIcon,
+};
+const SOCIAL_COLORS = {
+  youtube: "#FF0000",
+  instagram: "#E1306C",
+  facebook: "#1877F2",
+  whatsapp: "#25D366",
+  linkedin: "#0A66C2",
+  twitter: "#1DA1F2",
+  tweeter: "#1DA1F2",
+  pinterest: "#E60023",
+  snapchat: "#FFFC00",
+};
+
+
 // =================== Skeleton Components ===================
 const BannerSkeleton = () => (
   <div className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-hidden bg-gray-300 animate-pulse transform-gpu">
-    <div className="absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 rounded-full w-10 h-10 transform-gpu"></div>
     <div className="absolute top-24 right-4 sm:right-8 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 transform-gpu"></div>
     <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-10 w-full transform-gpu">
       <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl bg-gray-400 transform-gpu"></div>
@@ -235,27 +274,61 @@ export default function CompanyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState({});
- const location = useLocation();
-
+  const location = useLocation();
 
   const [isRTL, setIsRTL] = useState(false);
-  const [products, setProducts] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   
-  // Infinite scroll states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [totalProducts, setTotalProducts] = useState(0);
+  // ✅ NEW: Pagination states (like NewArrivalProductPage)
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [products, setProducts] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const loadMoreRef = useRef(null);
   
-  // Refs for intersection observer
-  const observerTarget = useRef(null);
-
   const { fixedWords } = useFixedWords();
   const fw = fixedWords?.fixed_words || {};
 
-  
+
+
+const socialLinks = useMemo(() => {
+  if (!company) return [];
+
+  const raw = {
+    youtube: company.youtube,
+    instagram: company.instagram,
+    facebook: company.facebook,
+    whatsapp: company.whatsapp,
+    linkedin: company.linkedin,
+    twitter: company.twitter || company.tweeter,
+    pinterest: company.pinterest,
+    snapchat: company.snapchat,
+  };
+
+  return Object.entries(raw)
+    .filter(([, url]) => Boolean(url))
+    .map(([key, url]) => ({
+      key,
+      url,
+      Icon: SOCIAL_ICON_MAP[key],
+    }))
+    .filter(item => item.Icon);
+}, [company]);
+
+
+
+  // =================== Mobile Detection (like NewArrivalProductPage) ===================
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // Apple treats tablet as desktop
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // =================== Helper Functions ===================
   const getImageUrl = useCallback((imgData) => {
     return formatImageUrl(imgData);
@@ -275,67 +348,36 @@ export default function CompanyPage() {
     }));
   }, [companyId, company?.name, getImageUrl]);
 
-  // Function to load more products
-  const loadMoreProducts = useCallback(async () => {
-    if (isLoadingMore || !hasMore) return;
-    
+  // ✅ NEW: Fetch company page function (like NewArrivalProductPage)
+  const fetchCompanyPage = useCallback(async (pageToLoad) => {
     try {
-      setIsLoadingMore(true);
-      
-      const response = await fetchCompanyWithPayload(companyId, currentPage + 1);
-      const companyData = response?.data?.data?.company || response?.data?.company || response?.data;
-      
-      if (companyData?.products?.length) {
-        const processedProducts = processCompanyProducts(companyData.products);
-        
-        // Filter out duplicates
-        const currentProductIds = new Set(products.map(p => p.id));
-        const newProducts = processedProducts.filter(p => !currentProductIds.has(p.id));
-        
-        if (newProducts.length) {
-          // Append only new unique products (limit to last 500 for memory)
-          setProducts(prev => {
-          const merged = [...prev, ...newProducts];
-
-          // Keep last 1500 items only (invisible to users)
-          if (merged.length > 1500) {
-            return merged.slice(-1500);
-          }
-
-          return merged;
-        });
-          
-          // Update from backend pagination (source of truth)
-          const pagination = companyData.products_pagination;
-          if (pagination) {
-            setCurrentPage(pagination.page);
-            setHasMore(pagination.has_more || pagination.page < pagination.last_page);
-            setTotalProducts(pagination.total || totalProducts);
-          }
-        } else {
-          setHasMore(false);
-        }
-      } else {
-        setHasMore(false);
-      }
-    } catch {
-      setHasMore(false);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [companyId, currentPage, isLoadingMore, hasMore, processCompanyProducts, totalProducts, products]);
-
-  // Function to refresh company data
-  const refreshCompanyData = useCallback(async (page = 1) => {
-    try {
-      const companyRes = await fetchCompanyWithPayload(companyId, page);
-      
+      const res = await fetchCompanyWithPayload(companyId, pageToLoad);
       const companyData = 
-        companyRes?.data?.data?.company ||
-        companyRes?.data?.company ||
-        companyRes?.data;
-      
-      if (companyData) {
+        res?.data?.data?.company ||
+        res?.data?.company ||
+        res?.data;
+
+      if (!companyData?.products) return;
+
+      const pagination = companyData.products_pagination;
+      setLastPage(pagination?.last_page || 1);
+
+      const processedProducts = processCompanyProducts(companyData.products);
+
+      // ✅ Apply same logic as NewArrivalProductPage
+      setProducts(prev => {
+        // PAGE 1 always replaces
+        if (pageToLoad === 1) return processedProducts;
+
+        // MOBILE → append older products
+        if (isMobile) return [...prev, ...processedProducts];
+
+        // DESKTOP/TABLET → replace
+        return processedProducts;
+      });
+
+      // Update company info (but keep from page 1)
+      if (pageToLoad === 1) {
         setCompany({
           ...companyData,
           logo: getImageUrl(companyData.logo),
@@ -343,103 +385,115 @@ export default function CompanyPage() {
             companyData.cover_photo || companyData.banner || companyData.logo
           ),
         });
-        
-        if (companyData.products) {
-          const processedProducts = processCompanyProducts(companyData.products);
-          setProducts(processedProducts);
-          
-          const pagination = companyData.products_pagination;
-          if (pagination) {
-            setCurrentPage(pagination.page);
-            setHasMore(pagination.has_more || pagination.page < pagination.last_page);
-            setTotalProducts(pagination.total || 0);
-          }
-        }
       }
-    } catch {
-      // Silent error for background refresh
+    } catch (err) {
+      console.error("Failed to fetch company page:", err);
     }
-  }, [companyId, getImageUrl, processCompanyProducts]);
+  }, [companyId, isMobile, processCompanyProducts, getImageUrl]);
 
-  // =================== Infinite Scroll Observer ===================
-useEffect(() => {
-  if (!observerTarget.current) return;
-
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting && !isLoadingMore && hasMore) {
-        loadMoreProducts();
+  // ✅ Fetch when page changes (like NewArrivalProductPage)
+  useEffect(() => {
+    if (!companyId) return;
+    
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        await fetchCompanyPage(page);
+      } catch (err) {
+        setError("Failed to load company data");
+      } finally {
+        setLoading(false);
       }
-    },
-    { rootMargin: "600px" }
-  );
+    };
 
-  observer.observe(observerTarget.current);
-  return () => observer.disconnect();
-}, [loadMoreProducts, isLoadingMore, hasMore]);
+    fetchData();
+  }, [companyId, page, fetchCompanyPage]);
 
+  // ✅ Mobile infinite scroll (like NewArrivalProductPage)
+  useEffect(() => {
+    if (!isMobile) return;
+    if (page >= lastPage) return;
+    if (loading) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPage(p => p + 1);
+        }
+      },
+      { rootMargin: "300px" } // Apple prefetch zone
+    );
+
+    const el = loadMoreRef.current;
+    if (el) observer.observe(el);
+
+    return () => {
+      if (el) observer.unobserve(el);
+      observer.disconnect();
+    };
+  }, [isMobile, page, lastPage, loading]);
+
+  // Scroll to top on page change for desktop/tablet
+  useEffect(() => {
+    if (!isMobile) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [page, isMobile]);
 
   // =================== Follow Status Check ===================
-useEffect(() => {
-  if (!auth.isAuthenticated) {
-    setIsFollowing(false);
-    return;
-  }
-
-  let active = true;
-
-  const checkFollowStatus = async () => {
-    try {
-      const res = await getCustomerFollowUps();
-      const companies = res.data?.companies || res.data || [];
-
-      if (active) {
-        setIsFollowing(companies.some(c => c.id === Number(companyId)));
-      }
-    } catch {
-      if (active) setIsFollowing(false);
+  useEffect(() => {
+    if (!auth.isAuthenticated) {
+      setIsFollowing(false);
+      return;
     }
-  };
 
-  checkFollowStatus();
+    let active = true;
 
-  // ✅ IMPORTANT: re-check when page regains focus
-  window.addEventListener("focus", checkFollowStatus);
+    const checkFollowStatus = async () => {
+      try {
+        const res = await getCustomerFollowUps();
+        const companies = res.data?.companies || res.data || [];
 
-  return () => {
-    active = false;
-    window.removeEventListener("focus", checkFollowStatus);
-  };
-}, [companyId, auth.isAuthenticated]);
+        if (active) {
+          setIsFollowing(companies.some(c => c.id === Number(companyId)));
+        }
+      } catch {
+        if (active) setIsFollowing(false);
+      }
+    };
 
+    checkFollowStatus();
+    window.addEventListener("focus", checkFollowStatus);
 
+    return () => {
+      active = false;
+      window.removeEventListener("focus", checkFollowStatus);
+    };
+  }, [companyId, auth.isAuthenticated]);
 
   const handleFollowToggle = async () => {
-  // 👤 Guest → redirect ONLY
-  if (!auth.isAuthenticated || auth.userType !== "customer") {
-    navigate(
-      `/sign?redirect=${encodeURIComponent(location.pathname)}&action=follow&companyId=${companyId}`
-    );
-    return;
-  }
-
-  // 👤 Logged in
-  if (followLoading) return;
-  setFollowLoading(true);
-
-  try {
-    if (isFollowing) {
-      await unfollowCompany(companyId);
-      setIsFollowing(false);
-    } else {
-      await addFollowCompany(companyId);
-      setIsFollowing(true);
+    if (!auth.isAuthenticated || auth.userType !== "customer") {
+      navigate(
+        `/sign?redirect=${encodeURIComponent(location.pathname)}&action=follow&companyId=${companyId}`
+      );
+      return;
     }
-  } finally {
-    setFollowLoading(false);
-  }
-};
 
+    if (followLoading) return;
+    setFollowLoading(true);
+
+    try {
+      if (isFollowing) {
+        await unfollowCompany(companyId);
+        setIsFollowing(false);
+      } else {
+        await addFollowCompany(companyId);
+        setIsFollowing(true);
+      }
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   // =================== Check for RTL ===================
   useEffect(() => {
@@ -455,71 +509,6 @@ useEffect(() => {
     });
     return () => observer.disconnect();
   }, []);
-
-  // =================== Initial Data Fetch ===================
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchData = async () => {
-      if (!companyId) return;
-      
-      try {
-        setLoading(true);
-        
-        const [companyRes, settingsRes] = await Promise.all([
-          fetchCompanyWithPayload(companyId, 1).catch(() => ({ status: 'rejected' })),
-          getSettings().catch(() => ({ status: 'rejected' })),
-        ]);
-
-        if (!mounted) return;
-
-        if (companyRes.status !== 'rejected' && companyRes.data) {
-          const companyData = 
-            companyRes.data?.data?.company ||
-            companyRes.data?.company ||
-            companyRes.data;
-          
-          if (companyData) {
-            setCompany({
-              ...companyData,
-              logo: getImageUrl(companyData.logo),
-              banner: getImageUrl(
-                companyData.cover_photo || companyData.banner || companyData.logo
-              ),
-            });
-            
-            if (companyData.products) {
-              const processedProducts = processCompanyProducts(companyData.products);
-              setProducts(processedProducts);
-              
-              const pagination = companyData.products_pagination;
-              if (pagination) {
-                setCurrentPage(pagination.page);
-                setHasMore(pagination.has_more || pagination.page < pagination.last_page);
-                setTotalProducts(pagination.total || 0);
-              }
-            }
-          } else {
-            setError("Company not found");
-          }
-        } else {
-          setError("Failed to load company");
-        }
-        
-        if (settingsRes.status !== 'rejected' && settingsRes.data) {
-          setSettings(settingsRes.data);
-        }
-        
-      } catch {
-        if (mounted) setError("Failed to load company data");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    fetchData();
-    return () => { mounted = false; };
-  }, [companyId, getImageUrl, processCompanyProducts]);
 
   // =================== Event Listeners ===================
   useEffect(() => {
@@ -548,7 +537,8 @@ useEffect(() => {
 
     const handleProductsUpdated = (event) => {
       if (event.detail.companyId === companyId) {
-        refreshCompanyData(1);
+        // Refresh from page 1
+        setPage(1);
       }
     };
 
@@ -559,7 +549,7 @@ useEffect(() => {
       window.removeEventListener('productUpdated', handleProductUpdated);
       window.removeEventListener('productsUpdated', handleProductsUpdated);
     };
-  }, [companyId, refreshCompanyData, getImageUrl]);
+  }, [companyId, getImageUrl]);
 
   // =================== Helper Functions ===================
   const isFavourite = (id) => favourites.some((fav) => fav.id === id);
@@ -600,49 +590,41 @@ useEffect(() => {
     }
   };
 
+  const handleToggleFavourite = useCallback(
+    (product) => {
+      const isAlreadyFav = favourites.some(
+        (item) => item.id === product.id
+      );
 
-
-  
-const handleToggleFavourite = useCallback(
-  (product) => {
-    const isAlreadyFav = favourites.some(
-      (item) => item.id === product.id
-    );
-
-    // ✅ 1. Immediate optimistic update (guest + logged-in)
-    dispatch(
-      toggleFavourite({
-        ...product,
-        source: "company",
-      })
-    );
-
-    // ✅ 2. Logged-in → popup for backend sync
-    if (auth.user && !isAlreadyFav) {
       dispatch(
-        openListPopup({
+        toggleFavourite({
           ...product,
           source: "company",
         })
       );
-    }
-  },
-  [dispatch, favourites, auth.user]
-);
+
+      if (auth.user && !isAlreadyFav) {
+        dispatch(
+          openListPopup({
+            ...product,
+            source: "company",
+          })
+        );
+      }
+    },
+    [dispatch, favourites, auth.user]
+  );
 
   // =================== GET COMPANY LOGO URL (SPECIAL HANDLING) ===================
   const getCompanyLogoUrl = useCallback((logoData) => {
     if (!logoData) return "/api/placeholder/200/200";
     
-    // If it's the new format (object with webp/avif)
     if (typeof logoData === 'object' && logoData.webp) {
-      // For company logo, we need a string URL for the img tag
       const webpPath = logoData.webp;
       if (webpPath.startsWith("http")) return webpPath;
       return `${API_BASE_URL}/${webpPath.replace(/^\//, '')}`;
     }
     
-    // If it's a string
     if (typeof logoData === 'string') {
       if (logoData.startsWith("http")) return logoData;
       return `${API_BASE_URL}/${logoData.replace(/^\//, '')}`;
@@ -655,15 +637,12 @@ const handleToggleFavourite = useCallback(
   const getBannerUrl = useCallback((bannerData) => {
     if (!bannerData) return null;
     
-    // If it's the new format (object with webp/avif)
     if (typeof bannerData === 'object' && bannerData.webp) {
-      // For banner, we need a string URL for CSS background
       const webpPath = bannerData.webp;
       if (webpPath.startsWith("http")) return webpPath;
       return `${API_BASE_URL}/${webpPath.replace(/^\//, '')}`;
     }
     
-    // If it's a string
     if (typeof bannerData === 'string') {
       if (bannerData.startsWith("http")) return bannerData;
       return `${API_BASE_URL}/${bannerData.replace(/^\//, '')}`;
@@ -675,7 +654,7 @@ const handleToggleFavourite = useCallback(
   // =================== UI Functions ===================
   const showContent = company;
 
-  if (loading) {
+  if (loading && page === 1) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white transform-gpu">
         <BannerSkeleton />
@@ -707,9 +686,6 @@ const handleToggleFavourite = useCallback(
   const basePath = getBasePath();
 
   // Dynamic positioning classes for RTL support
-  const backButtonClass =
-    "absolute top-20 left-4 sm:left-8 z-30 p-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 shadow-lg hover:bg-white/60 hover:scale-110 transition-all duration-300 transform-gpu active:scale-95";
-
   const shareButtonClass =
     "absolute top-24 right-4 sm:right-8 z-30 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 shadow-xl hover:scale-105 transition-all duration-300 transform-gpu active:scale-95";
 
@@ -743,11 +719,11 @@ const handleToggleFavourite = useCallback(
   const logoUrl = getCompanyLogoUrl(logo);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white overflow-hidden transform-gpu">
+    <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-white overflow-hidden transform-gpu">
       {/* ============ Banner Section ============ */}
       {showContent ? (
         <div
-          className="relative w-full h-[340px] sm:h-[400px] flex items-end justify-start overflow-x-hidden animate-fade-in transform-gpu"
+          className="relative w-full h-[300px] sm:h-[400px] flex items-end justify-start overflow-x-hidden animate-fade-in transform-gpu"
           style={{
             background: bannerUrl ? `
               linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.65)),
@@ -757,206 +733,291 @@ const handleToggleFavourite = useCallback(
             willChange: "transform, opacity",
           }}
         >
-            <BackButton
- 
-      variant="absolute" className="top-16"
-  />
+       
 
-          {/* Share Button */}
+         
+         {/* ===== Company Info ===== */}
+<div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-16 w-full transform-gpu">
+  <img
+    src={logoUrl}
+    alt={name}
+    loading="eager"
+    decoding="async"
+    className="
+      w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32
+      object-cover
+      rounded-xl
+      border 
+      shadow-xl
+      transform-gpu
+      animate-image-fade
+    "
+    style={{ willChange: "transform" }}
+    onError={(e) => {
+      e.target.src = "/api/placeholder/200/200";
+    }}
+  />
+  <div className="flex flex-col justify-center text-white flex-1 min-w-0 transform-gpu">
+    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight break-words text-start rtl:text-right transform-gpu">
+      {name}
+    </h1>
+    {title && (
+      <p className="text-xs sm:text-sm opacity-90 mt-1 break-words text-start rtl:text-right transform-gpu">{title}</p>
+    )}
+
+
+
+    {/* ===== FLOATING ICONS - Now below company name ===== */}
+    <div className="mt-4 transform-gpu">
+      <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl inline-block transform-gpu">
+        <div className={`flex flex-row gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''} transform-gpu`}>
+          
+          {/* Location */}
+          {displayLocation && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`
+                w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+                rounded-lg sm:rounded-xl
+                bg-gray-700/10 backdrop-blur-xl 
+                border border-white/20
+                shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+                transition-all duration-300 ease-out group relative
+                text-sm sm:text-base
+                hover:bg-gray-300/20
+                hover:shadow-[0_0_5px_currentColor]
+                hover:scale-110 hover:-translate-y-1
+                text-white
+                transform-gpu active:scale-95
+              `}
+            >
+              <div className="relative z-10 group-hover:scale-110 transition-transform duration-300 transform-gpu">
+                <MapMarkerIcon className="transform-gpu" />
+              </div>
+              
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 
+                bg-black/80 text-white text-xs px-2 py-1  
+                opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
+                Location
+              </div>
+            </a>
+          )}
+
+          {/* Chat */}
           <button
-            onClick={handleShare}
-            className={shareButtonClass}
+            onClick={handleChatClick}
+            className={`
+              w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+              rounded-lg sm:rounded-xl
+              bg-gray-700/10 backdrop-blur-xl 
+              border border-white/20
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+              transition-all duration-300 ease-out group relative
+              text-sm sm:text-base
+              hover:bg-gray-300/20
+              hover:shadow-[0_0_5px_currentColor]
+              hover:scale-110 hover:-translate-y-1
+              text-white
+              transform-gpu active:scale-95
+            `}
           >
-            <ShareIcon className="text-white transform-gpu" />
+            <div className="relative z-10 group-hover:scale-110 transition-transform duration-300 transform-gpu">
+              <ChatIcon className="transform-gpu" />
+            </div>
+
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 
+              bg-black/80 text-white text-xs px-2 py-1  
+              opacity-0 group-hover:opacity-100 transition-opacity duration-300
+              whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
+              Chat
+            </div>
           </button>
 
-           {/* ===== Company Info ===== */}
-          <div className="relative z-20 flex items-center gap-5 sm:gap-8 px-6 sm:px-16 pb-24 w-full transform-gpu">
-            {/* FIXED: Logo with improved styling */}
-            <img
-              src={logoUrl}
-              alt={name}
-              loading="eager"
-              decoding="async"
+          {/* Follow */}
+          <button
+            onClick={handleFollowToggle}
+            className={`
+              w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+              rounded-lg sm:rounded-xl
+              bg-gray-700/10 backdrop-blur-xl 
+              border border-white/20
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+              transition-all duration-300 ease-out group relative
+              text-sm sm:text-base
+              hover:bg-gray-300/20
+              hover:shadow-[0_0_5px_currentColor]
+              hover:scale-110 hover:-translate-y-1
+              ${isFollowing ? "text-white" : "text-white"}
+              transform-gpu active:scale-95
+            `}
+          >
+            <div className="relative z-10 group-hover:scale-110 transition-transform duration-300 transform-gpu">
+              <UserIcon className={`${isFollowing ? 'fill-current' : ''} transform-gpu`} />
+            </div>
+            
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 
+              bg-black/80 text-white text-xs px-2 py-1  
+              opacity-0 group-hover:opacity-100 transition-opacity duration-300
+              whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
+              {isFollowing ? "Following" : "Follow"}
+            </div>
+          </button>
+
+          {/* Company Reviews */}
+          <button
+            onClick={() => navigate(`${basePath}/reviews`)}
+            className={`
+              w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
+              rounded-lg sm:rounded-xl
+              bg-gray-700/10 backdrop-blur-xl 
+              border border-white/20
+              shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
+              transition-all duration-300 ease-out group relative
+              text-sm sm:text-base
+              hover:bg-gray-300/20
+              hover:shadow-[0_0_5px_currentColor]
+              hover:scale-110 hover:-translate-y-1
+              text-white
+              transform-gpu active:scale-95
+            `}
+          >
+            <div className="relative z-10 group-hover:scale-110 transition-transform duration-300 transform-gpu">
+              <StarIcon className="transform-gpu" />
+            </div>
+            
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 
+              bg-black/80 text-white text-xs px-2 py-1  
+              opacity-0 group-hover:opacity-100 transition-opacity duration-300
+              whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
+              Reviews
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  
+   
+
+
+
+
+{/* Rating + Share */}
+<div
+  className={`flex items-center gap-3 mt-3 text-sm sm:text-base ${
+    isRTL ? "flex-row-reverse justify-end" : ""
+  } transform-gpu`}
+>
+  {/* Rating */}
+  <div
+    className={`flex items-center gap-1 text-white font-semibold drop-shadow-lg ${
+      isRTL ? "flex-row-reverse" : ""
+    } transform-gpu`}
+  >
+    <StarIcon className="text-white text-lg sm:text-xl transform-gpu" />
+    <span className="transform-gpu">{displayRating.toFixed(1)}</span>
+  </div>
+
+  {/* Share Icon */}
+  <button
+    onClick={handleShare}
+   
+    aria-label="Share"
+  >
+    <ShareAltIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+  </button>
+</div>
+
+             
+            </div>
+          </div>
+
+
+{/* ===== Social Links Section ===== */}
+{socialLinks.length > 0 && (
+  <div className={`mt-4 flex ${isRTL ? "justify-end" : "justify-start"}`}>
+    <div
+      className="
+        bg-white/10 backdrop-blur-md
+        rounded-[clamp(10px,1.2vw,14px)]
+        p-[clamp(6px,1vw,10px)]
+        border border-white/20
+        shadow-2xl
+        max-w-full
+      "
+    >
+      <div
+       className={`
+    flex flex-col sm:flex-row
+    gap-[clamp(6px,1vw,10px)]
+    ${isRTL ? "sm:flex-row-reverse" : ""}
+    items-center
+  `}
+      >
+        {socialLinks.map(({ key, url, Icon }) => {
+          const brandColor = SOCIAL_COLORS[key] || "#ffffff";
+          
+          return (
+            <a
+              key={key}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
               className="
-                w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32
-                object-cover
-                rounded-xl
-                border 
-               
-                shadow-xl
-                transform-gpu
-                animate-image-fade
+                relative group
+                flex items-center justify-center
+                rounded-[clamp(6px,0.8vw,10px)]
+                bg-white/20
+                border border-white/30
+                transition-all duration-300
+                w-[clamp(28px,3.2vw,36px)]
+                h-[clamp(28px,3.2vw,36px)]
+                hover:bg-white/30
+                hover:scale-110
+                hover:shadow-lg
               "
-              style={{ willChange: "transform" }}
-              onError={(e) => {
-                e.target.src = "/api/placeholder/200/200";
+              style={{
+                // Add a subtle glow effect matching the brand color
+                boxShadow: `0 0 0 1px ${brandColor}20, 0 4px 6px -1px rgba(0, 0, 0, 0.1)`,
               }}
-            />
-            <div className="flex flex-col justify-center text-white flex-1 min-w-0 transform-gpu">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight drop-shadow-2xl leading-tight break-words text-start rtl:text-right transform-gpu">
-                {name}
-              </h1>
-              {title && (
-                <p className="text-xs sm:text-sm opacity-90 mt-1 break-words text-start rtl:text-right transform-gpu">{title}</p>
-              )}
-
-              {/* Rating - White stars */}
-              <div className={`flex items-center gap-4 mt-3 text-sm sm:text-base ${isRTL ? 'flex-row-reverse justify-end' : ''} transform-gpu`}>
-                <div className={`flex items-center gap-1 text-white font-semibold drop-shadow-lg ${isRTL ? 'flex-row-reverse' : ''} transform-gpu`}>
-                  <StarIcon className="text-white text-lg sm:text-xl transform-gpu" />
-                  <span className="transform-gpu">{displayRating.toFixed(1)}</span>
-                </div>
+            >
+              {/* ICON - Now with brand colors */}
+              <div className="relative z-10">
+                <Icon
+                  className="
+                    w-[clamp(12px,1.8vw,16px)]
+                    h-[clamp(12px,1.8vw,16px)]
+                    transition-transform duration-300
+                    group-hover:scale-110
+                  "
+                />
               </div>
-            </div>
-          </div>
 
-          {/* ===== FLOATING ACTION ICONS - Horizontal with RTL support ===== */}
-          <div className={floatingIconsClass}>
-            <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-white/20 shadow-2xl transform-gpu">
-              <div className={`flex flex-row gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''} transform-gpu`}>
-                
-                {/* Location */}
-                {displayLocation && (
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`
-                      w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                      rounded-lg sm:rounded-xl
-                      bg-gray-700/10 backdrop-blur-xl 
-                      border border-white/20
-                      shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                      transition-all duration-300 ease-out group relative
-                      text-sm sm:text-base
-                      hover:bg-gray-300/20
-                      hover:shadow-[0_0_5px_currentColor]
-                      hover:scale-110 hover:-translate-y-1
-                      text-white
-                      transform-gpu active:scale-95
-                    `}
-                  >
-                    {/* Icon */}
-                    <div className="relative z-10  group-hover:scale-110 transition-transform duration-300 transform-gpu">
-                      <MapMarkerIcon className="transform-gpu" />
-                    </div>
-                    
-                    {/* Tooltip */}
-                    <div className="absolute -top-8 left-1/2  -translate-x-1/2 
-                      bg-black/80 text-white text-xs px-2 py-1  
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                      whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
-                      Location
-                    </div>
-                  </a>
-                )}
+              {/* Enhanced glow effect on hover */}
+              <div
+                className="absolute inset-0 rounded-[clamp(6px,0.8vw,10px)] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: `radial-gradient(circle at center, ${brandColor}20 0%, transparent 70%)`,
+                }}
+              />
 
-                {/* Chat */}
-                <button
-                  onClick={handleChatClick}
-                  className={`
-                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                    rounded-lg sm:rounded-xl
-                    bg-gray-700/10 backdrop-blur-xl 
-                    border border-white/20
-                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                    transition-all duration-300 ease-out group relative
-                    text-sm sm:text-base
-                    hover:bg-gray-300/20
-                    hover:shadow-[0_0_5px_currentColor]
-                    hover:scale-110 hover:-translate-y-1
-                    text-white
-                    transform-gpu active:scale-95
-                  `}
-                >
-                  {/* Icon */}
-                  <div className="relative z-10 group-hover:scale-110 transition-transform duration-300 transform-gpu">
-                    <ChatIcon className="transform-gpu" />
-                  </div>
+              
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+)}
 
-                  {/* Tooltip */}
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 
-                    bg-black/80 text-white text-xs px-2 py-1  
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
-                    Chat
-                  </div>
-                </button>
-
-                {/* Follow */}
-                <button
-                  onClick={handleFollowToggle}
-                  className={`
-                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                    rounded-lg sm:rounded-xl
-                    bg-gray-700/10 backdrop-blur-xl 
-                    border border-white/20
-                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                    transition-all duration-300 ease-out group relative
-                    text-sm sm:text-base
-                    hover:bg-gray-300/20
-                    hover:shadow-[0_0_5px_currentColor]
-                    hover:scale-110 hover:-translate-y-1
-                    ${isFollowing ? "text-white" : "text-white"}
-                    transform-gpu active:scale-95
-                  `}
-                >
-                  {/* Icon */}
-                  <div className="relative z-10  group-hover:scale-110 transition-transform duration-300 transform-gpu">
-                    <UserIcon className={`${isFollowing ? 'fill-current' : ''} transform-gpu`} />
-                  </div>
-                  
-                  {/* Tooltip */}
-                  <div className="absolute -top-8 left-1/2  -translate-x-1/2 
-                    bg-black/80 text-white text-xs px-2 py-1  
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
-                    {isFollowing ? "Following" : "Follow"}
-                  </div>
-                </button>
-
-                {/* Company Reviews */}
-                <button
-                  onClick={() => navigate(`${basePath}/reviews`)}
-                  className={`
-                    w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center 
-                    rounded-lg sm:rounded-xl
-                    bg-gray-700/10 backdrop-blur-xl 
-                    border border-white/20
-                    shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2),inset_-2px_-2px_4px_rgba(0,0,0,0.25)]
-                    transition-all duration-300 ease-out group relative
-                    text-sm sm:text-base
-                    hover:bg-gray-300/20
-                    hover:shadow-[0_0_5px_currentColor]
-                    hover:scale-110 hover:-translate-y-1
-                    text-white
-                    transform-gpu active:scale-95
-                  `}
-                >
-                  {/* Icon */}
-                  <div className="relative z-10  group-hover:scale-110 transition-transform duration-300 transform-gpu">
-                    <StarIcon className="transform-gpu" />
-                  </div>
-                  
-                  {/* Tooltip */}
-                  <div className="absolute -top-8 left-1/2  -translate-x-1/2 
-                    bg-black/80 text-white text-xs px-2 py-1  
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                    whitespace-nowrap pointer-events-none rounded-xl shadow-[0_0_5px_currentColor] transform-gpu">
-                    Reviews
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       ) : (
         <BannerSkeleton />
       )}
 
-
-      {/* ============ Products Section with Infinite Scroll ============ */}
+      {/* ============ Products Section with Pagination ============ */}
       {showContent ? (
         <section className="py-12 animate-fade-in transform-gpu">
           <h2 className="text-xl md:text-2xl font-light mb-10 text-gray-800 tracking-tight px-6 sm:px-12 text-start rtl:text-right transform-gpu">
@@ -978,7 +1039,6 @@ const handleToggleFavourite = useCallback(
                       hover:scale-[1.02]
                     "
                   >
-                    {/* FIXED: Simplified - Use ProductImage for all cases */}
                     <ProductImage
                       src={product.image}
                       alt={product.name}
@@ -990,7 +1050,6 @@ const handleToggleFavourite = useCallback(
                       "
                       priority={false}
                       onError={(e) => {
-                        // Optional fallback if image fails
                         if (e.target && typeof product.image === 'string') {
                           e.target.src = '/api/placeholder/300/300';
                         }
@@ -1053,20 +1112,43 @@ const handleToggleFavourite = useCallback(
                 ))}
               </div>
 
-              {/* Loading Indicator */}
-              {isLoadingMore && (
-                <div className="mt-8">
-                  <LoadingSpinner />
+              {/* ✅ Mobile infinite scroll sentinel */}
+              {isMobile && page < lastPage && (
+                <div 
+                  ref={loadMoreRef} 
+                  className="h-20 flex justify-center items-center"
+                >
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                 </div>
               )}
 
-              {/* Infinite Scroll Trigger */}
-              {hasMore && !isLoadingMore && products.length > 0 && (
-                <div 
-                  ref={observerTarget} 
-                  className="h-10 w-full"
-                  style={{ visibility: 'hidden' }}
-                ></div>
+              {/* ✅ Desktop/Tablet Pagination (like NewArrivalProductPage) */}
+              {!isMobile && lastPage > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-12">
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage(p => p - 1)}
+                    className="px-4 py-2 rounded-full border border-gray-300 
+                               disabled:opacity-40 disabled:cursor-not-allowed
+                               hover:bg-gray-100 transition"
+                  >
+                    {fw.previous || 'Previous'}
+                  </button>
+
+                  <span className="text-sm text-gray-600">
+                    {fw.page || 'Page'} {page} {fw.of || 'of'} {lastPage}
+                  </span>
+
+                  <button
+                    disabled={page === lastPage}
+                    onClick={() => setPage(p => p + 1)}
+                    className="px-4 py-2 rounded-full border border-gray-300 
+                               disabled:opacity-40 disabled:cursor-not-allowed
+                               hover:bg-gray-100 transition"
+                  >
+                    {fw.next || 'Next'}
+                  </button>
+                </div>
               )}
             </>
           ) : (
@@ -1080,7 +1162,7 @@ const handleToggleFavourite = useCallback(
       )}
 
       {/* CSS Animations */}
-      <style jsx>{`
+      <style >{`
         @keyframes fade-in {
           0% { opacity: 0; transform: translateY(10px); }
           100% { opacity: 1; transform: translateY(0); }

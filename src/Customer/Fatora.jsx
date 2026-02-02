@@ -61,7 +61,7 @@ function Fatora() {
         {/* Center title */}
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
-            Fatora
+            Bills
           </h1>
         </div>
 
@@ -97,7 +97,7 @@ function Fatora() {
                 }
               `}
             >
-              Pending Fatora
+              Pending Bills
             </button>
 
             {/* Past Button */}
@@ -115,7 +115,7 @@ function Fatora() {
                 }
               `}
             >
-              Past Fatora
+              Past Bills
             </button>
           </div>
         </div>

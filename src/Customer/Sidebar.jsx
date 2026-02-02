@@ -83,7 +83,7 @@ const menuItems = [
   { label: "Notifications", icon: Icons.bell, page: "notifications" },
   { label: "Reviews", icon: Icons.star, page: "reviews" },
   { label: "Following", icon: Icons.userPlus, page: "following" },
-  { label: "Fatora", icon: "fatora", page: "fatora" },
+  { label: "Bills", icon: "fatora", page: "fatora" },
   { label: "Settings", icon: Icons.cog, page: "settings" },
   { label: "Help", icon: Icons.help, page: "help" },
 ];

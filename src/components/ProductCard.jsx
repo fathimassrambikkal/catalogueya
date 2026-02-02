@@ -1,10 +1,10 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { HeartIcon, ChatIcon } from "./SvgIcon";
+import { HeartIcon, ChatIcon, StarIcon } from "./SvgIcon";
 
 export const ProductCard = memo(({
   product,
-  imageSlot,         
+  imageSlot,
   isFav,
   onToggleFavourite,
   onNavigate,
@@ -21,12 +21,21 @@ export const ProductCard = memo(({
 
   return (
     <div
-      className="relative flex-none rounded-2xl overflow-hidden group cursor-pointer
-                 bg-white/10 border border-white/30 backdrop-blur-2xl 
-                 shadow-[0_8px_30px_rgba(0,0,0,0.08)] 
-                 hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] 
-                 transition-all duration-700"
       onClick={() => onNavigate(product)}
+      className="
+        relative
+        flex flex-col         
+        w-full max-w-[300px]
+        h-[200px] xs:h-[220px] sm:h-[260px]   
+        rounded-2xl
+        overflow-hidden
+        group
+        cursor-pointer
+        bg-white/10
+        border border-white/30
+        backdrop-blur-2xl
+        shadow-[0_8px_30px_rgba(0,0,0,0.08)]
+      "
     >
       {/* TOP RIGHT ACTIONS */}
       <div className="absolute top-2 right-2 z-20 flex flex-col gap-2">
@@ -45,42 +54,170 @@ export const ProductCard = memo(({
             className="w-[clamp(11px,1.1vw,16px)] h-[clamp(11px,1.1vw,16px)]"
           />
         </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onChat(product);
-          }}
-          className="p-[clamp(5px,0.8vw,8px)] rounded-full bg-white/40 backdrop-blur-2xl border shadow"
-        >
-          <ChatIcon className="w-[clamp(12px,1.1vw,16px)] h-[clamp(12px,1.1vw,16px)]" />
-        </button>
       </div>
 
-      {/* IMAGE SLOT (rendered by NewArrivals) */}
-      <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
+      {/* IMAGE SLOT (UNCHANGED) */}
+      <div className="relative w-full h-[190px] xs:h-[210px] sm:h-[250px] overflow-hidden rounded-t-2xl">
         {imageSlot}
+
+        {product.rating !== undefined && (
+          <div
+  className="
+    absolute
+    bottom-[clamp(8px,1vw,12px)]
+    left-[clamp(8px,1vw,12px)]
+    flex items-center
+    gap-[clamp(3px,0.5vw,6px)]
+    bg-black/40
+    backdrop-blur-md
+    px-[clamp(6px,0.9vw,10px)]
+    py-[clamp(3px,0.6vw,6px)]
+    rounded-[clamp(6px,0.8vw,10px)]
+    z-20
+  "
+>
+  {Array.from({ length: 5 }).map((_, i) => (
+    <StarIcon
+      key={i}
+      filled={i < Math.round(product.rating)}
+      className="
+        w-[clamp(9px,1vw,13px)]
+        h-[clamp(9px,1vw,13px)]
+        text-white/90
+      "
+    />
+  ))}
+
+  <span
+    className="
+      ml-[clamp(2px,0.4vw,4px)]
+      text-[clamp(9px,1vw,12px)]
+      text-white/90
+      leading-none
+    "
+  >
+    {Number(product.rating).toFixed(1)}
+  </span>
+</div>
+
+        )}
       </div>
 
-      {/* BOTTOM CONTENT */}
-    <div className="w-full rounded-b-2xl p-3 border-t border-white/20 
-                bg-white/70 backdrop-blur-xl flex flex-col">
-  <h3 className="font-semibold text-gray-900 truncate
-                 text-[11px] sm:text-[14px]">
-    {product.name}
-  </h3>
-
-  {priceSlot ? (
-    priceSlot
-  ) : (
-    <span className="font-bold text-gray-900   text-[11px] sm:text-[14px] md:text-xs mt-1">
+      {/* BOTTOM CONTENT (FIXED HEIGHT, SAME LOOK) */}
+      <div
+        className="
+          flex items-center justify-between
+          gap-[clamp(6px,1vw,14px)]
+          w-full
+          px-[clamp(10px,1.6vw,18px)]
+          py-[clamp(8px,1.2vw,14px)]
+          h-[72px] sm:h-[80px]      /* ✅ FIXED INFO HEIGHT */
+          border-t border-white/20
+          bg-white/75
+          backdrop-blur-xl
+        "
+      >
+    {/* PRODUCT NAME + PRICE */}
+    <div className="flex flex-col min-w-0 flex-1">
+      <h3
+        className="
+          font-medium
+          text-gray-900
+          truncate
+          tracking-[-0.01em]
+          text-[clamp(10.5px,1.2vw,12.5px)]
+          leading-[1.25]
+        "
+      >
+        {product.name}
+      </h3>
+{priceSlot ? (
+  <div
+    className="
+      mt-[clamp(2px,0.4vw,4px)]
+      whitespace-nowrap
+      flex-shrink-0
+      leading-[1.2]
+    "
+  >
+    {priceSlot}
+  </div>
+) : (
+  <div
+    className="
+      mt-[clamp(2px,0.4vw,4px)]
+      whitespace-nowrap
+      flex-shrink-0
+      leading-[1.2]
+    "
+  >
+    <span
+      className="
+        font-semibold
+        text-gray-900
+        tracking-tight
+        text-[clamp(10px,1vw,11px)]
+      "
+    >
       {i18n.language === "ar"
         ? `${currency} ${product.price}`
         : `${product.price} ${currency}`}
     </span>
-  )}
-</div>
+  </div>
+)}
 
+
+    </div>
+
+    {/* CHAT ICON */}
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    onChat(product);
+  }}
+  aria-label="Chat"
+  title="Chat"
+  className="
+    relative
+    flex-shrink-0
+    flex items-center justify-center
+
+    p-[clamp(6px,0.8vw,9px)]
+    rounded-full
+
+    bg-white/40
+    backdrop-blur-2xl
+    border border-[rgba(255,255,255,0.28)]
+    shadow-[0_8px_24px_rgba(0,0,0,0.18)]
+
+    hover:bg-white/55
+    transition-all duration-300
+
+    focus:outline-none
+    focus-visible:ring-2
+    focus-visible:ring-black/20
+  "
+>
+  {/* Chrome liquid highlight */}
+  <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/70 via-white/10 to-transparent opacity-40 pointer-events-none" />
+
+  {/* Glass ribbon streak */}
+  <span className="absolute inset-0 rounded-full bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)] opacity-35 pointer-events-none" />
+
+  {/* Titanium depth */}
+  <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-20 pointer-events-none" />
+
+  <ChatIcon
+    className="
+      relative z-10
+      w-[clamp(12px,1.1vw,16px)]
+      h-[clamp(12px,1.1vw,16px)]
+      text-[rgba(18,18,18,0.88)]
+      drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
+    "
+  />
+</button>
+      </div>
     </div>
   );
 });

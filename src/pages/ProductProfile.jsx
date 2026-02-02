@@ -14,7 +14,7 @@ import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
 import BackButton from "../components/BackButton";
-import SmartImage from "../components/SmartImage"; // ✅ Import SmartImage
+import SmartImage from "../components/SmartImage";
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 import {
   HeartIcon,
@@ -628,8 +628,7 @@ showToast(
         </div>
       )}
 
-      {/* Back button */}
-<BackButton   variant="absolute" className="top-20"/>
+
 
       {/* Main layout */}
       <section

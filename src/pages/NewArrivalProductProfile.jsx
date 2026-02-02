@@ -10,7 +10,7 @@ import { createCustomerConversation, getProductReviews } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { addProductReview } from "../api";
 import { useLocation } from "react-router-dom";
-import BackButton from "../components/BackButton";
+
 import SmartImage from "../components/SmartImage";
 import {
   HeartIcon,
@@ -546,7 +546,7 @@ showToast(
         </div>
       )}
 
-      <BackButton variant="absolute" className="top-20"/>
+   
       <section
         key={product?.id || 'loading'}
         className="max-w-[1200px] mx-auto px-6 md:px-10 py-24 grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-16 bg-white rounded-3xl shadow-sm animate-fade-in"

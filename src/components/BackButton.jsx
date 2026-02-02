@@ -22,30 +22,20 @@ const ArrowLeftIcon = ({ className = "" }) => (
 );
 
 /* =========================
-   STYLE VARIANTS
+   Base Styles (Apple style)
    ========================= */
-const styles = {
-  fixed: `
-    fixed
-    top-[calc(env(safe-area-inset-top)+16px)]
-    left-4 sm:left-8
-    z-[60]
-  `,
-  absolute: `
-    absolute
-    top-20
-    left-4 sm:left-8
-    z-30
-  `,
-};
-
 const baseClass = `
+ absolute
+  left-4 sm:left-8 top-24
+ z-10
+
   p-2
   rounded-full
   bg-white/60
   backdrop-blur-xl
   border border-white/50
   shadow-[0_8px_24px_rgba(0,0,0,0.18)]
+
   hover:bg-white/70
   hover:scale-110
   transition-all duration-300
@@ -56,32 +46,29 @@ const baseClass = `
 /* =========================
    Back Button Component
    ========================= */
-const BackButton = memo(
-  ({
-    to = -1,
-    onClick,
-    variant = "fixed", // 👈 DEFAULT
-    className = "",
-  }) => {
-    const navigate = useNavigate();
+const BackButton = memo(({ to = -1, onClick, className = "" }) => {
+  const navigate = useNavigate();
 
-    const handleClick = (e) => {
-      e.stopPropagation();
-      if (onClick) return onClick(e);
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (onClick) {
+      onClick(e);
+    } else {
       navigate(to);
-    };
+    }
+  };
 
-    return (
-      <button
-        onClick={handleClick}
-        aria-label="Go back"
-        className={`${styles[variant]} ${baseClass} ${className}`}
-      >
-        <ArrowLeftIcon className="text-gray-700 transform-gpu" />
-      </button>
-    );
-  }
-);
+  return (
+    <button
+      type="button"
+      aria-label="Go back"
+      onClick={handleClick}
+      className={`${baseClass} ${className}`}
+    >
+      <ArrowLeftIcon className="text-gray-700 transform-gpu" />
+    </button>
+  );
+});
 
 BackButton.displayName = "BackButton";
 

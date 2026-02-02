@@ -159,3 +159,46 @@ export const TrashIcon = ({ className = "", size = 16 }) => (
   </svg>
 );
 
+export const DotsIcon = ({ className = "", size = 16 }) => (
+ <svg
+    width="16"
+    height="16"
+    viewBox="0 0 4 16"
+    fill="currentColor"
+    className={className}
+  >
+    <circle cx="2" cy="2" r="2" />
+    <circle cx="2" cy="8" r="2" />
+    <circle cx="2" cy="14" r="2" />
+  </svg>
+);
+
+/* ================= OUTLINE HEART (AiOutlineHeart SVG) ================= */
+export const OutlineHeartIcon = ({ className = "", size = 16 }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+  </svg>
+);
+export const ShareAltIcon = ({ className = "" }) => (
+  <svg
+    viewBox="0 0 448 512"
+    className={className}
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M352 320c-22.6 0-43.5 9.2-58.7 24.1L158.6 260.6c1.3-6.1 1.9-12.3 1.9-18.6s-.7-12.5-1.9-18.6l134.7-83.5C308.5 154.8 329.4 164 352 164c53 0 96-43 96-96S405  -28 352  -28s-96 43-96 96c0 6.3.7 12.5 1.9 18.6L123.2 170.1C108.1 155.2 87.2 146 64.6 146 11.6 146-31.4 189-31.4 242s43 96 96 96c22.6 0 43.5-9.2 58.7-24.1l134.7 83.5c-1.3 6.1-1.9 12.3-1.9 18.6 0 53 43 96 96 96s96-43 96-96-43-96-96-96z" />
+  </svg>
+);
+

@@ -127,19 +127,7 @@ function ReviewedItems({
         mx-auto w-full max-w-md lg:max-w-lg
         glass-effect
       ">
-        <div className="
-          w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24
-          bg-gradient-to-br from-white to-blue-50/30
-          rounded-full 
-          flex items-center justify-center 
-          mx-auto mb-4 sm:mb-6
-          shadow-[inset_0_0_20px_rgba(255,255,255,0.8),0_4px_20px_rgba(59,130,246,0.08)]
-          border border-white/60
-        ">
-          <div className="text-2xl sm:text-3xl text-blue-300">
-            ⭐
-          </div>
-        </div>
+     
         <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-gray-900 mb-2 sm:mb-3 tracking-tight">
           No Reviewed Items
         </h3>

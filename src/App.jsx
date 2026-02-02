@@ -10,6 +10,7 @@ import { loginSuccess } from "./store/authSlice";
 import { Toaster } from "react-hot-toast";
 import { showToast } from "./utils/showToast.jsx";
 import { fetchFavourites } from "./store/favouritesSlice";
+import PageLayout from "./components/PageLayout";
 
 
 
@@ -43,6 +44,8 @@ const Messages = React.lazy(() => import("./Customer/Messages"));
 const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
 const ProductReviews = React.lazy(() => import("./pages/ProductReviews"));
 const MoreDetails = React.lazy(() => import("./dashboard/MoreDetails"));
+const PaymentPage = React.lazy(() => import("./Customer/PaymentPage"));
+const CompanyChat = React.lazy(() => import("./dashboard/ChatDashboard"));
 
 function AppContent() {
   const location = useLocation();
@@ -84,7 +87,9 @@ useEffect(() => {
 
 const hideNavbar = [
   "/customer-login/chat",
+  "/company-dashboard/chat",
 ].some(path => location.pathname.startsWith(path));
+
 
 const hideFooter = [
   "/sign",
@@ -97,8 +102,10 @@ const hideFooter = [
   "/customer-login/messages",
   "/company-dashboard",
 ].some(path => location.pathname.startsWith(path));
+const isChatRoute =
+  location.pathname.startsWith("/customer-login/chat") ||
+  location.pathname.startsWith("/company-dashboard/chat");
 
-const isChatRoute = location.pathname.startsWith("/customer-login/chat");
 
 
 
@@ -155,8 +162,8 @@ useEffect(() => {
 
 
             <Route path="/customer-login/messages" element={<Messages />} />
-
-            <Route path="/favourite" element={<Favourite />} />
+           
+          
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/customer-register" element={<CustomerRegister />} />
             <Route path="/company-register" element={<CompanyRegister />} />
@@ -167,13 +174,27 @@ useEffect(() => {
   element={<MoreDetails />}
 />
 
+            <Route
+  path="/company-dashboard/chat/:conversationId"
+  element={<CompanyChat />}
+/>
 
             <Route path="/customer-login" element={<CustomerLogin />} />
             <Route path="/company-forgot-password" element={<CompanyForgotPassword />} />
+          
+
+
+{/* page backbutton */}
+
+        <Route element={<PageLayout />}>
+
+
+
+
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-
+ <Route path="/customer/pay" element={<PaymentPage />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
             <Route path="/category/:categoryId/company/:companyId" element={<CompanyPage />} />
             <Route path="/company/:companyId" element={<CompanyPage />} />
@@ -190,6 +211,12 @@ useEffect(() => {
 
             <Route path="/newarrivalproducts" element={<NewArrivalProductPage />} />
             <Route path="/newarrivalprofile/:id" element={<NewArrivalProductProfile />} />
+            <Route path="/favourite" element={<Favourite />} />
+
+      </Route>
+
+
+
 
           </Routes>
         </Suspense>

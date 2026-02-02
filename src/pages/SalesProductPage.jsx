@@ -3,17 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
-import BackButton from "../components/BackButton";
+
 import CallToAction from "../components/CallToAction";
 import { getSalesProducts } from "../api"; 
 import { createCustomerConversation } from "../api";
-import SmartImage from "../components/SmartImage";
+
 import {
   HeartIcon,
   StarIcon,
   ChatIcon,
 } from "../components/SvgIcon";
-import { log, warn, error as logError } from "../utils/logger";
+import { log, error as logError } from "../utils/logger";
+import { ProductCard } from "../components/ProductCard";
 
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
@@ -214,33 +215,28 @@ function SalesProductPageComponent() {
     });
   }, [products, sortBy]);
 
-  const handleToggleFavourite = useCallback((e, product) => {
-    e.stopPropagation();
-    
-    const isAlreadyFav = favourites.some(
-      (item) => item.id === product.id
-    );
+const handleToggleFavourite = useCallback((product) => {
+  const isAlreadyFav = favourites.some(
+    (item) => item.id === product.id
+  );
 
+  dispatch(
+    toggleFavourite({
+      ...product,
+      source: "sales",
+    })
+  );
+
+  if (auth.user && !isAlreadyFav) {
     dispatch(
-      toggleFavourite({
+      openListPopup({
         ...product,
         source: "sales",
       })
     );
+  }
+}, [auth.user, favourites, dispatch]);
 
-    if (auth.user && !isAlreadyFav) {
-      dispatch(
-        openListPopup({
-          ...product,
-          source: "sales",
-        })
-      );
-    }
-  }, [auth.user, favourites, dispatch]);
-
-  const handleProductClick = useCallback((productId) => {
-    navigate(`/salesproduct/${productId}`);
-  }, [navigate]);
 
   // Loading skeleton
   const skeletonLoader = useMemo(() => 
@@ -282,8 +278,7 @@ function SalesProductPageComponent() {
       )}
 
       <section className="relative min-h-screen pt-24 pb-16 sm:pt-28 sm:pb-20 px-4 sm:px-8 md:px-12 lg:px-16 bg-gray-50">
-        {/* Back Button */}
-        {!loading && <BackButton variant="absolute" className="top-16" />}
+        
 
         {/* Page Title */}
         <div className="mb-10 text-center">
@@ -348,156 +343,69 @@ function SalesProductPageComponent() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 place-items-center">
-              {sortedProducts.map((product) => {
-                const isFav = favourites.some((item) => item.id === product.id);
-                
-                return (
-                  <div
-                    key={product.id}
-                    className="relative w-full max-w-[280px] sm:max-w-[300px]
-             rounded-2xl overflow-hidden group cursor-pointer
-             bg-white border border-gray-100
-             shadow-[0_8px_30px_rgba(0,0,0,0.08)]
-             hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)]
-             transition-all duration-300"
-                    onClick={() => handleProductClick(product.id)}
-                  >
-                    {/* ❤️ Favourite Button */}
-                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-20 flex flex-col gap-2">
-                      <button
-                        onClick={(e) => handleToggleFavourite(e, product)}
-                        className={`
-                          p-[clamp(6px,0.8vw,9px)]
-                          rounded-full
-                          shadow-md
-                          transition-all duration-200
-                          backdrop-blur-md
-                          border
-                          ${isFav
-                            ? "bg-red-100 border-red-200 hover:bg-red-200"
-                            : "bg-white/80 border-white/50 hover:bg-gray-50"
-                          }
-                        `}
-                      >
-                        <HeartIcon
-                          filled={isFav}
-                          className={`
-                            w-[clamp(12px,1.1vw,16px)]
-                            h-[clamp(12px,1.1vw,16px)]
-                            ${isFav ? "text-red-500" : "text-gray-600"}
-                          `}
-                        />
-                      </button>
+         {sortedProducts.map((product) => {
+  const isFav = favourites.some((item) => item.id === product.id);
 
-                      {/* 💬 CHAT */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleChatClick(product);
-                        }}
-                        title="Chat"
-                        className="
-                          p-[clamp(6px,0.8vw,9px)]
-                          rounded-full
-                          bg-white/80
-                          backdrop-blur-md
-                          border border-gray-200
-                          shadow-md
-                          hover:bg-white
-                          transition-all duration-200
-                        "
-                      >
-                        <ChatIcon
-                          className="
-                            w-[clamp(12px,1.1vw,16px)]
-                            h-[clamp(12px,1.1vw,16px)]
-                            text-gray-600
-                          "
-                        />
-                      </button>
-                    </div>
+  return (
+    <ProductCard
+      key={product.id}
+      product={product}
+      isFav={isFav}
+      currency={fw.qar}
 
-                    {/* 🖼️ Product Image */}
-                    <div className="relative w-full h-[160px] xs:h-[180px] sm:h-[200px] overflow-hidden rounded-t-2xl">
-                   <SmartImage
-    image={product.image}
-    alt={product.name_en || product.name}
-    loading="lazy"
-    className="w-full h-full object-cover
-               transition-transform duration-300 group-hover:scale-105"
-  />
+      /* ❤️ Favourite */
+      onToggleFavourite={handleToggleFavourite}
 
-                      {/* ⭐ Rating */}
-                      <div
-                        className="
-                          absolute bottom-3 left-3
-                          flex items-center
-                          gap-[clamp(3px,0.4vw,5px)]
-                          bg-black/60
-                          backdrop-blur-sm
-                          px-[clamp(7px,0.8vw,9px)]
-                          py-[clamp(4px,0.6vw,6px)]
-                          rounded-lg
-                        "
-                      >
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <StarIcon
-                            key={i}
-                            filled={i < Math.floor(product.rating || 0)}
-                            className={`
-                              w-[clamp(10px,1vw,13px)]
-                              h-[clamp(10px,1vw,13px)]
-                              ${i < Math.floor(product.rating || 0) ? "text-yellow-400" : "text-gray-300"}
-                            `}
-                          />
-                        ))}
-                        <span
-                          className="
-                            ml-[clamp(3px,0.4vw,5px)]
-                            text-[clamp(9px,1vw,11px)]
-                            text-white
-                            leading-none
-                            font-medium
-                          "
-                        >
-                          {(product.rating || 0).toFixed(1)}
-                        </span>
-                      </div>
-                    </div>
+      /* ➡ Navigation */
+      onNavigate={() => navigate(`/salesproduct/${product.id}`)}
 
-                    {/* 💬 Info Section */}
-{/* 💬 Info Section — SAME AS Sales.jsx + old price */}
-<div
-  className="w-full rounded-b-2xl p-3
-             border-t border-white/20
-             bg-white/70 backdrop-blur-xl
-             flex flex-col"
->
-  <h3
-    className="font-semibold text-gray-900
-               text-[11px] sm:text-[14px]"
-  >
-    {product.name_en || product.name}
-  </h3>
+      /* 💬 Chat */
+      onChat={handleChatClick}
 
-  <div className="flex items-center gap-2 mt-1">
-    <span className="font-bold text-gray-900   text-[11px] sm:text-[14px] md:text-xs">
-      {fw.qar} {product.price}
-    </span>
+      /* 🖼 Image */
+      imageSlot={
+        <picture>
+          {product.image?.avif && (
+            <source
+              srcSet={`${API_BASE_URL}/${product.image.avif}`}
+              type="image/avif"
+            />
+          )}
+          {product.image?.webp && (
+            <source
+              srcSet={`${API_BASE_URL}/${product.image.webp}`}
+              type="image/webp"
+            />
+          )}
+          <img
+            src={`${API_BASE_URL}/${product.image.webp || product.image.avif}`}
+            alt={product.name_en || product.name}
+            loading="lazy"
+            decoding="async"
+            draggable="false"
+            className="w-full h-full object-cover"
+          />
+        </picture>
+      }
 
-    {product.old_price && (
-      <span className="line-through text-gray-500   text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs  ">
-        {product.old_price}
-      </span>
-    )}
-  </div>
-</div>
+      /* 💰 Price */
+      priceSlot={
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-gray-900 text-[clamp(10px,1vw,11px)]">
+            {fw.qar} {product.price}
+          </span>
 
+          {product.old_price && (
+            <span className="text-gray-500 line-through text-[clamp(7px,0.8vw,10px)]">
+              {product.old_price}
+            </span>
+          )}
+        </div>
+      }
+    />
+  );
+})}
 
-                      </div>
-                 
-                );
-              })}
 
               {/* ✅ Sentinel element for infinite scroll (Mobile only) */}
               {isMobile && page < lastPage && (

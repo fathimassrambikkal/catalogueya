@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import BackButton from "../components/BackButton";
+
 import { getCompanyReviewsPublic, addCompanyReview } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { error as logError } from "../utils/logger";
@@ -341,7 +341,7 @@ const handleSubmit = useCallback(
         </div>
       )}
 
-      <BackButton variant="absolute" className="top-16" />
+    
 
       {/* Main Content */}
       <div className="max-w-[1920px] mx-auto animate-fade-in mt-20">

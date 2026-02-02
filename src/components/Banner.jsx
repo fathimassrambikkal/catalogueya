@@ -135,7 +135,7 @@ export default function Banner() {
     setImageErrors((p) => ({ ...p, [id]: true }));
   }, []);
 
-  const sectionHeight = "h-[60vh] sm:h-[80vh] md:h-[90vh] lg:h-screen";
+  const sectionHeight = "h-[55vh] sm:h-[70vh] md:h-[90vh] lg:h-screen";
 
   return (
     <section
