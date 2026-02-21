@@ -1,198 +1,299 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ViewsIcon,
-  SoldIcon,
-  HeartIcon,
-  ShareIcon,
-  InfoIcon,
-} from "./AnalyticsIcons";
 
-const products = [
-  {
-    id: 1,
-    name: "Golden Barrel Cactus",
-    image: "https://via.placeholder.com/48",
-    addedOn: "12/10/2025",
-    views: 67,
-    sold: 5,
-    fav: 24,
-    shares: 26,
-  },
-  {
-    id: 2,
-    name: "Cycas in Kolambi Pot",
-    image: "https://via.placeholder.com/48",
-    addedOn: "24/10/2025",
-    views: 56,
-    sold: 2,
-    fav: 23,
-    shares: 26,
-  },
-  {
-    id: 3,
-    name: "Epidendrum Orchid",
-    image: "https://via.placeholder.com/48",
-    addedOn: "07/11/2025",
-    views: 47,
-    sold: 2,
-    fav: 20,
-    shares: 26,
-  },
-  {
-    id: 4,
-    name: "Hibiscus Pink",
-    image: "https://via.placeholder.com/48",
-    addedOn: "12/11/2025",
-    views: 67,
-    sold: 5,
-    fav: 24,
-    shares: 26,
-  },
-];
 
-function AnalyticsAllProductCard() {
-  const navigate = useNavigate();
+import { getImageUrl } from "../companyDashboardApi";
+import AnalyticsGraph from "./AnalyticsGraph";
 
-  return (
-    <div className="relative rounded-3xl bg-white/80 backdrop-blur-xl border border-gray-200/60 overflow-hidden">
-      {/* Header */}
-      <div className="px-4 sm:px-5 py-3 border-b border-gray-200/60">
-        <h3 className="text-[15px] sm:text-[17px] font-semibold text-gray-900">
-          Products Analytics
+
+// Helper to safely parse image string
+const parseImageString = (imgStr) => {
+  if (!imgStr) return null;
+  try {
+    if (imgStr.startsWith('"') || imgStr.startsWith('{')) {
+      let parsed = JSON.parse(imgStr);
+      if (typeof parsed === 'string' && (parsed.startsWith('{') || parsed.startsWith('"'))) {
+        parsed = JSON.parse(parsed);
+      }
+      if (typeof parsed === 'object' && parsed !== null) {
+        return parsed.webp || parsed.avif || parsed.url || null;
+      }
+      return parsed;
+    }
+    return imgStr;
+  } catch (e) {
+    console.error("Error parsing image string", e);
+    return imgStr;
+  }
+};
+
+function AnalyticsAllProductCard({ range, data = [], onProductClick }) {
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'graph'
+  const [sortBy, setSortBy] = useState('views');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Process and Sort
+  const processedProducts = React.useMemo(() => {
+    let items = data.map(p => ({
+      id: p.id,
+      name: p.name_en || p.name || "Product",
+      image: getImageUrl(parseImageString(p.image)),
+      addedOn: p.added_at ? new Date(p.added_at).toLocaleDateString() : "--",
+      views: p.views || 0,
+      sold: p.sold || 0,
+      fav: p.favoured || p.fav || 0,
+      shares: p.shares || 0,
+    }));
+
+    // Sort
+    items.sort((a, b) => {
+      const valA = a[sortBy] || 0;
+      const valB = b[sortBy] || 0;
+      if (sortOrder === 'asc') return valA - valB;
+      return valB - valA;
+    });
+
+    return items;
+  }, [data, sortBy, sortOrder]);
+
+  // Pagination (Table Only)
+  const totalPages = Math.ceil(processedProducts.length / itemsPerPage);
+  const paginatedProducts = processedProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleSortBy = (e) => {
+    setSortBy(e.target.value.toLowerCase());
+    setCurrentPage(1);
+  };
+
+  const handleOrderChange = (order) => {
+    setSortOrder(order);
+    setCurrentPage(1);
+  };
+
+  /* Custom Tooltip for Graph */
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white border border-gray-100 p-3 rounded-xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] min-w-[150px]">
+          <p className="font-bold text-gray-900 text-xs mb-2 truncate max-w-[200px]">{label}</p>
+          {payload.map((entry, index) => (
+            <div key={index} className="flex items-center gap-2 text-[10px] mb-1">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+              <span className="text-gray-500 capitalize">{entry.name}:</span>
+              <span className="font-bold text-gray-900">{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+return (
+  <div className="w-full bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden flex flex-col mt-4 xs:mt-6 sm:mt-8">
+
+    {/* Header */}
+    <div className="px-3 xs:px-4 sm:px-6 md:px-8 py-4 xs:py-5 sm:py-6 md:py-7 flex flex-col lg:flex-row lg:items-end justify-between gap-4 xs:gap-5 sm:gap-6 md:gap-8 border-b border-gray-100">
+      
+      {/* Title Section */}
+      <div className="space-y-1 xs:space-y-1.5 sm:space-y-2">
+        <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
+          Product's Analytics
         </h3>
-        <p className="text-[11px] text-gray-500">
-          Last 7 days · All products
+        <p className="text-[10px] xs:text-xs sm:text-sm text-blue-500">
+          YOUR TOP PRODUCT
+        </p>
+        <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400">
+          {typeof range === "string" ? range : "Custom Range"}
         </p>
       </div>
 
-      <table className="w-full text-sm">
-        {/* Desktop Header */}
-        <thead className="hidden sm:table-header-group">
-          <tr className="text-[11px] text-gray-500 uppercase tracking-wide">
-            <th className="px-5 py-2.5 text-left">Product</th>
-            <th className="px-3 py-2.5 text-center">
-              <HeaderIcon icon={ViewsIcon} label="Views" />
-            </th>
-            <th className="px-3 py-2.5 text-center">
-              <HeaderIcon icon={SoldIcon} label="Sold" />
-            </th>
-            <th className="px-3 py-2.5 text-center">
-              <HeaderIcon icon={HeartIcon} label="Fav" />
-            </th>
-            <th className="px-3 py-2.5 text-center">
-              <HeaderIcon icon={ShareIcon} label="Share" />
-            </th>
-            <th className="px-5 py-2.5 text-right">
-              <InfoIcon className="w-4 h-4 inline text-blue-600" />
-            </th>
-          </tr>
-        </thead>
+      {/* Filters & View Toggle */}
+      <div className="flex flex-wrap items-center gap-2 xs:gap-3 sm:gap-4 md:gap-6 w-full lg:w-auto">
 
-        <tbody>
-          {products.map((p) => (
-            <tr
-              key={p.id}
-              className="border-t border-gray-200/40 hover:bg-blue-50/30 transition"
-            >
-              <td className="px-4 sm:px-5 py-3">
-                <div className="flex gap-3">
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg object-cover border border-gray-200 shrink-0"
-                  />
+        {/* Sort Order Buttons */}
+        <div className="flex rounded-lg xs:rounded-xl border border-gray-200 bg-gray-50 p-0.5 xs:p-1 text-[9px] xs:text-[10px] sm:text-xs font-medium">
+          <button
+            onClick={() => handleOrderChange('desc')}
+            className={`px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2 rounded-md xs:rounded-lg transition whitespace-nowrap ${
+              sortOrder === 'desc'
+                ? 'bg-white shadow-sm text-gray-900'
+                : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            Highest 
+          </button>
+          <button
+            onClick={() => handleOrderChange('asc')}
+            className={`px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2 rounded-md xs:rounded-lg transition whitespace-nowrap ${
+              sortOrder === 'asc'
+                ? 'bg-white shadow-sm text-gray-900'
+                : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            Lowest
+          </button>
+        </div>
 
-                  <div className="flex-1 min-w-0">
-                    {/* NAME + DETAILS */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <span className="text-[13px] font-medium text-gray-900 truncate block">
+        {/* View Toggle */}
+        <div className="flex items-center gap-1 xs:gap-2 sm:gap-3 text-[9px] xs:text-[10px] sm:text-xs text-gray-500">
+          <span className="hidden xs:inline">View</span>
+          <select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value)}
+            className="bg-gray-50 border border-gray-200 rounded-lg px-2 xs:px-3 py-1.5 xs:py-2 outline-none focus:ring-0 text-gray-700 text-[9px] xs:text-[10px] sm:text-xs w-auto"
+          >
+            <option value="table">Table</option>
+            <option value="graph">Graph</option>
+          </select>
+        </div>
+
+        {/* Sort By */}
+        <div className="flex items-center gap-1 xs:gap-2 sm:gap-3 text-[9px] xs:text-[10px] sm:text-xs text-gray-500">
+          <span className="hidden xs:inline">Sort By</span>
+          <select
+            value={sortBy}
+            onChange={handleSortBy}
+            className="bg-gray-50 border border-gray-200 rounded-lg px-2 xs:px-3 py-1.5 xs:py-2 outline-none focus:ring-0 text-gray-700 text-[9px] xs:text-[10px] sm:text-xs w-auto"
+          >
+            <option value="views">View</option>
+            <option value="sold">Sold</option>
+            <option value="fav">Favoured</option>
+            <option value="shares">Shared</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Content */}
+    <div className="flex-1 w-full overflow-x-hidden">
+      {viewMode === 'table' ? (
+        <div className="w-full">
+          <table className="w-full text-left border-collapse table-auto">
+            
+            {/* Desktop Header */}
+            <thead className="hidden sm:table-header-group bg-gray-50 border-b border-gray-100">
+              <tr className="text-[10px] xs:text-xs uppercase tracking-wide text-gray-400">
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 w-8 xs:w-10 sm:w-12 text-center"></th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4">Product</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Views</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Sold</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Favoured</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Shares</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Details</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-100">
+              {paginatedProducts.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-8 xs:py-12 sm:py-16 text-gray-400 text-[10px] xs:text-xs">
+                    No products found
+                  </td>
+                </tr>
+              ) : (
+                paginatedProducts.map((p, index) => (
+                  <tr
+                    key={p.id}
+                    className="hover:bg-gray-50/60 transition"
+                  >
+                    {/* Rank */}
+                    <td className="px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5 text-center text-[10px] xs:text-xs sm:text-sm text-gray-400 w-8 xs:w-10 sm:w-12">
+                      {(currentPage - 1) * itemsPerPage + index + 1}.
+                    </td>
+
+                    {/* Product */}
+                    <td className="px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5">
+                      <div className="flex gap-2 xs:gap-3 sm:gap-4 items-center">
+                        <div className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <span className="text-[10px] xs:text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
                           {p.name}
-                        </span>
-
-                        {/* ✅ Added date */}
-                        <span className="text-[10px] text-gray-500">
-                          Added on {p.addedOn}
                         </span>
                       </div>
 
-                      {/* Mobile details */}
+                      {/* Mobile Stats Grid - Shows on very small screens */}
+                      <div className="grid grid-cols-2 gap-1 xs:gap-1.5 mt-2 xs:mt-3 sm:hidden text-[8px] xs:text-[10px] text-gray-500">
+                        <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
+                          <span className="font-medium text-gray-700">Views:</span> {p.views}
+                        </div>
+                        <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
+                          <span className="font-medium text-gray-700">Sold:</span> {p.sold}
+                        </div>
+                        <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
+                          <span className="font-medium text-gray-700">Fav:</span> {p.fav}
+                        </div>
+                        <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
+                          <span className="font-medium text-gray-700">Shares:</span> {p.shares}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Desktop Stats Columns */}
+                    <td className="hidden sm:table-cell px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5 text-right text-gray-700 font-medium text-[11px] xs:text-xs sm:text-sm">
+                      {p.views}
+                    </td>
+                    <td className="hidden sm:table-cell px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5 text-right text-gray-700 font-medium text-[11px] xs:text-xs sm:text-sm">
+                      {p.sold}
+                    </td>
+                    <td className="hidden sm:table-cell px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5 text-right text-gray-700 font-medium text-[11px] xs:text-xs sm:text-sm">
+                      {p.fav}
+                    </td>
+                    <td className="hidden sm:table-cell px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5 text-right text-gray-700 font-medium text-[11px] xs:text-xs sm:text-sm">
+                      {p.shares}
+                    </td>
+
+                    {/* More Details Link */}
+                    <td className="px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5 text-right">
                       <button
-                        onClick={() =>
-                          navigate(`/dashboard/products/${p.id}`)
-                        }
-                        className="sm:hidden text-[11px] font-medium text-blue-600 shrink-0"
+                        onClick={() => onProductClick(p)}
+                        className="text-[9px] xs:text-[10px] sm:text-xs text-blue-500 hover:text-blue-600 transition underline whitespace-nowrap"
                       >
-                        Details →
+                        View 
                       </button>
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <AnalyticsGraph data={processedProducts} />
+      )}
+    </div>
 
-                    {/* MOBILE STATS */}
-                    <div className="mt-2 grid grid-cols-4 gap-1.5 sm:hidden">
-                      <MobileStat icon={ViewsIcon} label="Views" value={p.views} />
-                      <MobileStat icon={SoldIcon} label="Sold" value={p.sold} />
-                      <MobileStat icon={HeartIcon} label="Fav" value={p.fav} />
-                      <MobileStat icon={ShareIcon} label="Share" value={p.shares} />
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              {/* Desktop Stats */}
-              <td className="hidden sm:table-cell px-3 text-center">{p.views}</td>
-              <td className="hidden sm:table-cell px-3 text-center">{p.sold}</td>
-              <td className="hidden sm:table-cell px-3 text-center">{p.fav}</td>
-              <td className="hidden sm:table-cell px-3 text-center">{p.shares}</td>
-
-              {/* Desktop Details */}
-              <td className="hidden sm:table-cell px-5 text-right">
-                <button
-                  onClick={() => navigate(`/dashboard/products/${p.id}`)}
-                  className="text-[11px] font-medium text-blue-600"
-                >
-                  Details
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Footer */}
-      <div className="px-4 sm:px-5 py-2 border-t border-gray-200/50 text-[11px] text-gray-500 flex justify-between">
-        <span>Showing {products.length} products</span>
-        <span className="text-blue-600 font-medium cursor-pointer">
-          View all →
-        </span>
+    {/* Pagination - Only for Table */}
+    {viewMode === 'table' && processedProducts.length > itemsPerPage && (
+      <div className="px-3 xs:px-4 sm:px-6 md:px-8 py-3 xs:py-4 sm:py-5 border-t border-gray-100 flex flex-wrap justify-center gap-1 xs:gap-1.5 sm:gap-2">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            onClick={() => setCurrentPage(n)}
+            className={`w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 text-[9px] xs:text-[10px] sm:text-xs rounded-lg border transition ${
+              currentPage === n
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            {n}
+          </button>
+        ))}
       </div>
-    </div>
-  );
-}
-
-/* ===== Desktop Header Icon ===== */
-function HeaderIcon({ icon: Icon, label }) {
-  return (
-    <div className="flex items-center justify-center gap-1.5">
-      <span className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-50">
-        <Icon className="w-4 h-4 text-blue-600" />
-      </span>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-/* ===== Mobile Stat ===== */
-function MobileStat({ icon: Icon, label, value }) {
-  return (
-    <div className="flex flex-col items-center text-[10px] text-gray-600">
-      <span className="flex items-center justify-center w-5 h-5 rounded-md bg-blue-50">
-        <Icon className="w-3 h-3 text-blue-600" />
-      </span>
-      <span>{label}</span>
-      <span className="font-medium text-gray-800">{value}</span>
-    </div>
-  );
+    )}
+  </div>
+);
 }
 
 export default AnalyticsAllProductCard;

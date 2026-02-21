@@ -8,74 +8,114 @@ import {
   LocationIcon,
   MailIcon,
   PhoneIcon
-} from "./CustomerSvgicons";
-import { useLocation, useNavigate } from "react-router-dom";
+} from "./Svgicons";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+
+
+import { getPublicBill} from "../api";
+
 
 function PaymentPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const fatora = state?.fatora;
-
+  const { publicToken } = useParams(); 
+  
+  const [billData, setBillData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [tipOption, setTipOption] = useState("no");
   const [tipAmount, setTipAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("apple-pay");
   const [showAddCard, setShowAddCard] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-const [note, setNote] = useState("");
-const [showRejectSuccess, setShowRejectSuccess] = useState(false);
+  const [note, setNote] = useState("");
+  const [showRejectSuccess, setShowRejectSuccess] = useState(false);
 
   useEffect(() => {
-    if (!fatora) {
+    // First check if we have data from state (existing flow)
+    if (state?.fatora) {
+      setBillData({ bill: state.fatora });
+      setLoading(false);
+      return;
+    }
+    
+    // If no state data but we have publicToken, fetch from API
+    if (publicToken) {
+      fetchBillData();
+    } else {
       navigate("/customer", { replace: true });
     }
-  }, [fatora, navigate]);
+  }, [publicToken, state, navigate]);
+
+  const fetchBillData = async () => {
+    try {
+      setLoading(true);
+      const response = await getPublicBill(publicToken);
+      setBillData(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching bill:", err);
+      setError("Failed to load bill. Please check the link and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     setPaymentMethod("cash");
   }, []);
 
-  if (!fatora) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading bill information...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const userInfo = fatora.customer || {
-    name: fatora.customerName || "Aljazeera alarabia street, Doha, Qatar",
-    email: fatora.customerEmail || "f.almoghunni@gmail.com",
-    phone: fatora.customerPhone || "+97466070009"
+  if (error || !billData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Bill</h2>
+          <p className="text-gray-600 mb-6">{error || "Bill data not found"}</p>
+          <button
+            onClick={() => navigate("/customer")}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const bill = billData.bill;
+  const company = billData.company || bill.company;
+  
+  const userInfo = {
+    name: bill.customer_name || "Demo User",
+    email: bill.customer_email || "demo@gmail.com",
+    phone: bill.customer_phone || "1234123412"
   };
 
-  const defaultItems = fatora.items || [
-    { 
-      id: "1", 
-      type: "product", 
-      name: "Selected from Products", 
-      unit: "pcs", 
-      quantity: 1, 
-      price: 0 
-    },
-    { 
-      id: "2", 
-      type: "service", 
-      name: "Enter Service type Manually", 
-      unit: "service", 
-      quantity: 1, 
-      price: 0 
-    }
-  ];
+  const items = bill.items || [];
+  const products = items.filter(item => item.type === "product");
+  const services = items.filter(item => item.type === "manual");
 
-  const products = defaultItems.filter(item => item.type === "product");
-  const services = defaultItems.filter(item => item.type === "service");
-
-  const subtotal = defaultItems.reduce(
-    (sum, item) => sum + (item.price * (item.quantity || 1)),
-    0
-  );
-
-  const discountPercent = fatora.discountPercent || 10;
-  const discountAmount = (subtotal * discountPercent) / 100;
-  const totalBeforeTip = subtotal - discountAmount;
+  const subtotal = bill.subtotal || 0;
+  const discountPercent = bill.discount_percent || 0;
+  const discountAmount = bill.discount_amount || (subtotal * discountPercent) / 100;
   const tipValue = tipOption === "yes" && tipAmount ? parseFloat(tipAmount) || 0 : 0;
-  const finalTotal = totalBeforeTip + tipValue;
-  const currency = fatora.currency || "QR";
+  const finalTotal = bill.total_amount ? bill.total_amount + tipValue : subtotal - discountAmount + tipValue;
+  const currency = bill.currency || "QAR";
 
   const formatCurrency = (amount) => {
     return `${amount.toFixed(2)} ${currency}`;
@@ -83,10 +123,10 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
 
   const handlePayment = () => {
     const paymentData = {
-      fatoraId: fatora.id,
-      fatoraNumber: fatora.fatoraNumber,
+      fatoraId: bill.id,
+      fatoraNumber: bill.bill_number,
       customer: userInfo,
-      items: defaultItems,
+      items: items,
       subtotal: subtotal,
       discountPercent: discountPercent,
       discountAmount: discountAmount,
@@ -94,11 +134,17 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
       totalAmount: finalTotal,
       currency: currency,
       paymentMethod: paymentMethod,
-      companyName: fatora.companyName
+      companyName: company?.name || company?.name_en || "Company"
     };
 
     console.log("Processing payment:", paymentData);
-    navigate(-1);
+    
+    // If there's a checkout URL and payment is online, redirect to payment gateway
+    if (paymentMethod === "online" && billData.checkout_url) {
+      window.location.href = billData.checkout_url;
+    } else {
+      navigate(-1);
+    }
   };
 
   return (
@@ -150,14 +196,22 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
             text-[clamp(14px,4vw,18px)]
             text-gray-600 font-normal
           ">
-            {fatora.companyName}
+            {company?.name || company?.name_en || "Company"}
           </p>
-          {fatora.fatoraNumber && (
+          {bill.bill_number && (
             <p className="
               text-[clamp(11px,3vw,14px)] 
               text-gray-500 mt-1
             ">
-              Invoice: {fatora.fatoraNumber}
+              Invoice: {bill.bill_number}
+            </p>
+          )}
+          {bill.valid_until && (
+            <p className="
+              text-[clamp(11px,3vw,12px)] 
+              text-blue-600 bg-blue-50 inline-block px-3 py-1 rounded-full mt-2
+            ">
+               Valid until: {new Date(bill.valid_until).toLocaleDateString()}
             </p>
           )}
         </div>
@@ -301,7 +355,7 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                 hover:bg-blue-50
                 transition-all duration-200
               ">
-                Change Address
+                Edit Address
               </button>
             </div>
 
@@ -482,8 +536,7 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                   </div>
                 </button>
 
-                {/* Visa Card */}
-                <div className="
+                  <div className="
                   w-full 
                   flex items-center justify-between 
                   p-[clamp(12px,3vw,20px)]
@@ -526,6 +579,69 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                     Coming Soon
                   </div>
                 </div>
+
+                {/* Online Payment */}
+                {billData.checkout_url && (
+                  <button
+                    onClick={() => {
+                      setPaymentMethod("online");
+                      // If user selects online, we can immediately redirect or show confirmation
+                    }}
+                    className={`
+                      w-full 
+                      flex items-center justify-between 
+                      p-[clamp(12px,3vw,20px)]
+                      rounded-[clamp(8px,2vw,12px)] 
+                      border 
+                      transition-all duration-150
+                      ${paymentMethod === "online"
+                        ? "border-blue-500/30 bg-blue-50/30"
+                        : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-[clamp(8px,2vw,16px)]">
+                      <div className={`
+                        w-[clamp(32px,8vw,48px)] h-[clamp(32px,8vw,48px)]
+                        rounded-full 
+                        flex items-center justify-center 
+                        border
+                        ${paymentMethod === "online"
+                          ? "bg-white border-gray-200"
+                          : "bg-gray-50 border-gray-200"
+                        }
+                      `}>
+                        <CreditCardIcon className={`
+                          w-[clamp(16px,4vw,20px)] h-[clamp(16px,4vw,20px)]
+                          transition-colors
+                          ${paymentMethod === "online"
+                            ? "text-gray-900"
+                            : "text-gray-600"
+                          }
+                        `} />
+                      </div>
+                      <div className="
+                        text-[clamp(11px,3vw,16px)]
+                        font-medium text-gray-900
+                      ">
+                        Credit/Debit Card
+                      </div>
+                    </div>
+                    {paymentMethod === "online" && (
+                      <div className="
+                        w-[clamp(20px,5vw,24px)] h-[clamp(20px,5vw,24px)]
+                        rounded-full 
+                        bg-blue-500 
+                        flex items-center justify-center
+                      ">
+                        <div className="
+                          w-[clamp(6px,1.5vw,8px)] h-[clamp(6px,1.5vw,8px)]
+                          rounded-full bg-white
+                        " />
+                      </div>
+                    )}
+                  </button>
+                )}
 
                 {/* Add New Card */}
                 <button
@@ -685,33 +801,39 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                     border border-gray-200 
                     flex items-center justify-center
                   ">
-                    <CashIcon className="w-[clamp(16px,4vw,18px)] h-[clamp(16px,4vw,18px)] text-gray-700" />
+                    {paymentMethod === "cash" ? (
+                      <CashIcon className="w-[clamp(16px,4vw,18px)] h-[clamp(16px,4vw,18px)] text-gray-700" />
+                    ) : (
+                      <CreditCardIcon className="w-[clamp(16px,4vw,18px)] h-[clamp(16px,4vw,18px)] text-gray-700" />
+                    )}
                   </div>
                   <span className="
                     text-[clamp(14px,4vw,18px)]
                     font-semibold text-gray-900
                   ">
-                    Cash
+                    {paymentMethod === "cash" ? "Cash" : "Online Payment"}
                   </span>
                 </div>
                 <p className="
                   text-[clamp(11px,3vw,14px)]
                   text-gray-500
                 ">
-                  You'll pay with cash upon delivery
+                  {paymentMethod === "cash" 
+                    ? "You'll pay with cash upon delivery"
+                    : "You'll be redirected to secure payment gateway"}
                 </p>
               </div>
 
-              {/* Products Table */}
+              {/* Items Table */}
               <div className="mb-[clamp(16px,4vw,24px)]">
                 <h4 className="
                   text-[clamp(11px,3vw,14px)]
                   font-medium text-gray-500 
                   mb-[clamp(8px,2vw,12px)]
                 ">
-                  Product(s)
+                  Items
                 </h4>
-                {products.length > 0 ? (
+                {items.length > 0 ? (
                   <div className="
                     overflow-auto
                     rounded-[clamp(6px,1.5vw,8px)] 
@@ -727,7 +849,7 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                             text-[clamp(11px,3vw,14px)]
                             font-medium text-gray-700
                           ">
-                            Product(s)
+                            Item
                           </th>
                           <th className="
                             text-left 
@@ -735,7 +857,7 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                             text-[clamp(11px,3vw,14px)]
                             font-medium text-gray-700
                           ">
-                            Unit
+                            Type
                           </th>
                           <th className="
                             text-left 
@@ -753,32 +875,48 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                           ">
                             Price
                           </th>
+                          <th className="
+                            text-left 
+                            py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
+                            text-[clamp(11px,3vw,14px)]
+                            font-medium text-gray-700
+                          ">
+                            Total
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {products.map((product, index) => (
-                          <tr key={product.id || index} className="border-t border-gray-100">
+                        {items.map((item, index) => (
+                          <tr key={item.id || index} className="border-t border-gray-100">
                             <td className="
                               py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
                               text-[clamp(11px,3vw,16px)]
                               text-gray-900
                               truncate max-w-[100px]
                             ">
-                              {product.name}
+                              {item.title}
+                            </td>
+                            <td className="
+                              py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
+                              text-[clamp(11px,3vw,14px)]
+                              text-gray-600
+                            ">
+                              <span className={`
+                                px-2 py-1 rounded-full text-xs font-medium
+                                ${item.type === 'product' 
+                                  ? 'bg-blue-100 text-blue-800' 
+                                  : 'bg-green-100 text-green-800'
+                                }
+                              `}>
+                                {item.type === 'product' ? 'Product' : 'Service'}
+                              </span>
                             </td>
                             <td className="
                               py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
                               text-[clamp(11px,3vw,16px)]
                               text-gray-900
                             ">
-                              {product.unit}
-                            </td>
-                            <td className="
-                              py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                              text-[clamp(11px,3vw,16px)]
-                              text-gray-900
-                            ">
-                              {product.quantity || 1}
+                              {item.quantity || 1}
                             </td>
                             <td className="
                               py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
@@ -786,7 +924,16 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                               text-gray-900
                               whitespace-nowrap
                             ">
-                              {formatCurrency(product.price)}
+                              {formatCurrency(item.unit_price)}
+                            </td>
+                            <td className="
+                              py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
+                              text-[clamp(11px,3vw,16px)]
+                              text-gray-900
+                              whitespace-nowrap
+                              font-medium
+                            ">
+                              {formatCurrency(item.line_total)}
                             </td>
                           </tr>
                         ))}
@@ -800,113 +947,18 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                     py-[clamp(12px,3vw,16px)]
                     text-[clamp(13px,3.5vw,14px)]
                   ">
-                    No products
+                    No items in this bill
                   </p>
                 )}
               </div>
 
-              {/* Services Table */}
-              <div className="mb-[clamp(16px,4vw,24px)]">
-                <h4 className="
-                  text-[clamp(11px,3vw,14px)]
-                  font-medium text-gray-500 
-                  mb-[clamp(8px,2vw,12px)]
-                ">
-                  Service(s)
-                </h4>
-                {services.length > 0 ? (
-                  <div className="
-                    overflow-auto
-                    rounded-[clamp(6px,1.5vw,8px)] 
-                    border border-gray-200
-                    -mx-[clamp(4px,1vw,0px)]
-                  ">
-                    <table className="w-full min-w-[280px]">
-                      <thead>
-                        <tr className="bg-gray-50/50">
-                          <th className="
-                            text-left 
-                            py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                            text-[clamp(11px,3vw,14px)]
-                            font-medium text-gray-700
-                          ">
-                            Service(s)
-                          </th>
-                          <th className="
-                            text-left 
-                            py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                            text-[clamp(11px,3vw,14px)]
-                            font-medium text-gray-700
-                          ">
-                            Unit
-                          </th>
-                          <th className="
-                            text-left 
-                            py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                            text-[clamp(11px,3vw,14px)]
-                            font-medium text-gray-700
-                          ">
-                            Qty
-                          </th>
-                          <th className="
-                            text-left 
-                            py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                            text-[clamp(11px,3vw,14px)]
-                            font-medium text-gray-700
-                          ">
-                            Price
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {services.map((service, index) => (
-                          <tr key={service.id || index} className="border-t border-gray-100">
-                            <td className="
-                              py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                              text-[clamp(11px,3vw,16px)]
-                              text-gray-900
-                              truncate max-w-[100px]
-                            ">
-                              {service.name}
-                            </td>
-                            <td className="
-                              py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                              text-[clamp(11px,3vw,16px)]
-                              text-gray-900
-                            ">
-                              {service.unit}
-                            </td>
-                            <td className="
-                              py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                              text-[clamp(11px,3vw,16px)]
-                              text-gray-900
-                            ">
-                              {service.quantity || 1}
-                            </td>
-                            <td className="
-                              py-[clamp(8px,2vw,12px)] px-[clamp(8px,2vw,16px)]
-                              text-[clamp(11px,3vw,16px)]
-                              text-gray-900
-                              whitespace-nowrap
-                            ">
-                              {formatCurrency(service.price)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="
-                    text-gray-500 
-                    text-center 
-                    py-[clamp(12px,3vw,16px)]
-                    text-[clamp(13px,3.5vw,14px)]
-                  ">
-                    No services
-                  </p>
-                )}
-              </div>
+              {/* Note Section */}
+              {bill.note && (
+                <div className="mb-[clamp(16px,4vw,24px)] p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Note from {company?.name || company?.name_en}:</h4>
+                  <p className="text-gray-600 text-sm">{bill.note}</p>
+                </div>
+              )}
 
               {/* Discount and Total */}
               <div className="space-y-[clamp(8px,2vw,16px)] mt-auto pt-[clamp(16px,4vw,40px)]">
@@ -925,20 +977,22 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                   </span>
                 </div>
                 
-                <div className="flex items-center justify-between py-[clamp(4px,1vw,8px)]">
-                  <span className="
-                    text-[clamp(13px,3.5vw,16px)]
-                    font-medium text-gray-700
-                  ">
-                    Special Discount
-                  </span>
-                  <span className="
-                    text-[clamp(13px,3.5vw,16px)]
-                    font-medium text-green-600
-                  ">
-                    {discountPercent}% ({formatCurrency(discountAmount)})
-                  </span>
-                </div>
+                {discountAmount > 0 && (
+                  <div className="flex items-center justify-between py-[clamp(4px,1vw,8px)]">
+                    <span className="
+                      text-[clamp(13px,3.5vw,16px)]
+                      font-medium text-gray-700
+                    ">
+                      Discount
+                    </span>
+                    <span className="
+                      text-[clamp(13px,3.5vw,16px)]
+                      font-medium text-green-600
+                    ">
+                      {discountPercent > 0 ? `${discountPercent}%` : ''} ({formatCurrency(discountAmount)})
+                    </span>
+                  </div>
+                )}
 
                 {tipOption === "yes" && tipAmount && (
                   <div className="flex items-center justify-between py-[clamp(4px,1vw,8px)]">
@@ -1028,7 +1082,9 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
                   group-hover:translate-x-full 
                   transition-transform duration-700
                 " />
-                <span className="relative">Accept</span>
+                <span className="relative">
+                  {paymentMethod === "online" ? "Pay Online" : "Accept"}
+                </span>
               </button>
             </div>
           </div>
@@ -1099,14 +1155,15 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
 
               <button
                onClick={() => {
-  console.log("Reject reason:", rejectReason);
+                  console.log("Reject reason:", rejectReason);
 
-  // TODO: API call here
+                  // TODO: API call here
+                  // Example: await rejectBill(bill.id, rejectReason);
 
-  setShowRejectModal(false);
-  setRejectReason("");
-  setShowRejectSuccess(true); 
-}}
+                  setShowRejectModal(false);
+                  setRejectReason("");
+                  setShowRejectSuccess(true); 
+                }}
                 disabled={!rejectReason.trim()}
                 className="
                   px-[clamp(16px,4vw,24px)] 
@@ -1127,70 +1184,69 @@ const [showRejectSuccess, setShowRejectSuccess] = useState(false);
       )}
 
       {showRejectSuccess && (
-  <div className="
-    fixed inset-0 z-50
-    flex items-center justify-center
-    bg-black/40 backdrop-blur-sm
-    p-[clamp(12px,3vw,16px)]
-  ">
-    <div className="
-      w-full max-w-md
-      bg-white
-      rounded-[clamp(12px,3vw,16px)]
-      shadow-[0_20px_60px_rgba(0,0,0,0.2)]
-      p-[clamp(20px,5vw,28px)]
-      text-center
-      animate-scaleIn
-    ">
-      <h3 className="
-        text-[clamp(16px,4.5vw,20px)]
-        font-semibold text-blue-600
-        mb-[clamp(12px,3vw,16px)]
-      ">
-        Request Sent
-      </h3>
+        <div className="
+          fixed inset-0 z-50
+          flex items-center justify-center
+          bg-black/40 backdrop-blur-sm
+          p-[clamp(12px,3vw,16px)]
+        ">
+          <div className="
+            w-full max-w-md
+            bg-white
+            rounded-[clamp(12px,3vw,16px)]
+            shadow-[0_20px_60px_rgba(0,0,0,0.2)]
+            p-[clamp(20px,5vw,28px)]
+            text-center
+            animate-scaleIn
+          ">
+            <h3 className="
+              text-[clamp(16px,4.5vw,20px)]
+              font-semibold text-blue-600
+              mb-[clamp(12px,3vw,16px)]
+            ">
+              Request Sent
+            </h3>
 
-      <p className="
-        text-[clamp(13px,3.5vw,16px)]
-        text-gray-700
-        leading-relaxed
-        mb-[clamp(20px,5vw,28px)]
-      ">
-        We’re sorry you’re rejecting{" "}
-        <span className="font-semibold">
-          {fatora.companyName}
-        </span>
-        ’s bill.
-        <br />
-        <span className="font-semibold">
-          {fatora.companyName}
-        </span>{" "}
-        is reviewing your issue and may revise your bill.
-      </p>
+            <p className="
+              text-[clamp(13px,3.5vw,16px)]
+              text-gray-700
+              leading-relaxed
+              mb-[clamp(20px,5vw,28px)]
+            ">
+              We're sorry you're rejecting{" "}
+              <span className="font-semibold">
+                {company?.name || company?.name_en || "Company"}
+              </span>
+              's bill.
+              <br />
+              <span className="font-semibold">
+                {company?.name || company?.name_en || "Company"}
+              </span>{" "}
+              is reviewing your issue and may revise your bill.
+            </p>
 
-      <button
-        onClick={() => {
-          setShowRejectSuccess(false);
-        
-        }}
-        className="
-          w-full
-          py-[clamp(12px,3vw,16px)]
-          rounded-[clamp(10px,2.5vw,12px)]
-          bg-blue-600
-          text-white
-          text-[clamp(14px,4vw,18px)]
-          font-semibold
-          hover:bg-blue-700
-          transition-all
-        "
-      >
-        OK
-      </button>
-    </div>
-  </div>
-)}
-
+            <button
+              onClick={() => {
+                setShowRejectSuccess(false);
+                navigate(-1);
+              }}
+              className="
+                w-full
+                py-[clamp(12px,3vw,16px)]
+                rounded-[clamp(10px,2.5vw,12px)]
+                bg-blue-600
+                text-white
+                text-[clamp(14px,4vw,18px)]
+                font-semibold
+                hover:bg-blue-700
+                transition-all
+              "
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -62,7 +62,7 @@ function Settings({ companyId, companyInfo, setCompanyInfo }) {
   }
 
   if (activePage === "plans") {
-    return <SettingsPlan onBack={() => setActivePage("dashboard")} />;
+    return <SettingsPlan onBack={() => setActivePage("dashboard")} onTabChange={setActivePage} />;
   }
   if (activePage === "billing") {
   return <SettingsBillingPage onBack={() => setActivePage("dashboard")} />;
@@ -72,19 +72,14 @@ function Settings({ companyId, companyInfo, setCompanyInfo }) {
   /* ================= SETTINGS DASHBOARD ================= */
 
   return (
-    <div className="min-h-screen w-full p-4 sm:p-6 mt-16 md:mt-0">
-      <div className="w-full h-full mx-auto">
+    <div className="w-full min-h-screen flex flex-col overflow-x-hidden p-4 sm:p-6 bg-white pt-16 md:pt-0  ">
+      <div className="flex-1 flex flex-col min-h-0 ">
         <div className="
-          bg-white/80 backdrop-blur-xl
-          rounded-xl sm:rounded-2xl
-          border border-gray-200/60
-          min-h-[calc(100vh-8rem)]
-          overflow-hidden
-          shadow-sm sm:shadow-md
+         flex-1 overflow-hidden flex flex-col
         ">
           {/* Header */}
           <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-5 border-b border-gray-200/60">
-            <h1 className="text-gray-900 text-3xl font-semibold tracking-tight">
+            <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">
               Settings
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -104,6 +99,7 @@ function Settings({ companyId, companyInfo, setCompanyInfo }) {
                   px-4 sm:px-6 md:px-8
                   py-3 sm:py-4
                   text-left
+                  
                   hover:bg-blue-50/60
                   transition-colors
                 "

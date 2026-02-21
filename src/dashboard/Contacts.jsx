@@ -1,96 +1,151 @@
-import React, { useState } from 'react';
-import { FaUsers, FaBell } from 'react-icons/fa';
-import AddCustomerModal from './AddCustomerModal';
-import SendNotificationModal from './SendNotificationModal';
-import CustomerManagement from './CustomerManagement';
+import React, { useState, useEffect } from 'react';
 
-function Contacts({ companyInfo, products }) {
-  const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
+import { getContacts, deleteContact, getImageUrl } from '../companyDashboardApi';
+import { toast } from 'react-hot-toast';
+ import { IconDelete  } from "./SvgIcons";
+function Contacts({ onBack }) {
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample data - replace with your actual API data
-  const loyalCustomers = [
-    { id: 1, name: 'Sara', phone: '66070009', orders: 3, online: true },
-    { id: 2, name: 'Fathima', phone: '66070009', orders: 3, online: false },
-    { id: 3, name: 'Fatma', phone: '66070009', orders: 3, online: true },
-    { id: 4, name: 'Reseeeem', phone: '66070009', orders: 0, online: false },
-    { id: 5, name: 'Twennjiree', phone: '66070009', orders: 0, online: true },
-    { id: 6, name: 'Tolga', phone: '66070009', orders: 0, online: false }
-  ];
+  useEffect(() => {
+    fetchContacts();
+  }, []);
 
-  // Handlers
-  const handleRemoveCustomer = (customer) => console.log('Removing:', customer.name);
-  const handleSendNotification = (customer, type) =>
-    console.log('Sending notification:', type, 'to', customer.name);
-  const handleRequestPayment = (customer) =>
-    console.log('Requesting payment from:', customer.name);
-  const handleRequestReview = (customer, reviewType) =>
-    console.log('Review request from:', customer.name, 'for', reviewType);
-  const handleSendMessage = (customer, message) =>
-    console.log('Message to', customer.name, ':', message);
+  const fetchContacts = async () => {
+    try {
+      const res = await getContacts();
+      // res.data.data -> array of contacts
+      setContacts(res.data?.data || res.data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load contacts");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  return (
-    <>
-      {/* MAIN WRAPPER */}
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-3 sm:p-4 lg:p-6 overflow-x-hidden w-full min-w-0">
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this contact?")) return;
 
-        {/* MAIN CARD */}
-        <div className="bg-white/80 backdrop-blur-lg p-3 sm:p-4 lg:p-6 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-            rounded-xl max-w-full overflow-x-hidden min-w-0">
+    try {
+      await deleteContact(id);
+      toast.success("Contact deleted");
+      fetchContacts();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete contact");
+    }
+  };
+return (
+  <div >
+    <div className="w-full">
 
-          {/* HEADER */}
-          <div className="flex flex-row justify-between items-center gap-3 mb-4 sm:mb-6 min-w-0 w-full overflow-x-hidden">
-            
-            {/* Left */}
-            <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-hidden">
-              <div className="flex items-center gap-2 min-w-0 overflow-x-hidden">
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                  Contacts
-                </span>
-              </div>
+      {loading ? (
+  <div className="bg-white backdrop-blur-xl">
+    {/* Header Skeleton */}
+    <div className="px-5 py-4 border-b border-gray-100">
+      <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mt-16 md:mt-4" />
+    </div>
+
+    {/* Contact Row Skeletons */}
+    <div className="divide-y divide-gray-100">
+      {[...Array(6)].map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center justify-between px-5 py-4"
+        >
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+
+            <div className="space-y-2">
+              <div className="h-3 w-32 bg-gray-200 rounded animate-pulse" />
+              <div className="h-2 w-24 bg-gray-100 rounded animate-pulse" />
             </div>
+          </div>
 
-            {/* Right */}
-            <div className="flex-shrink-0 overflow-x-hidden">
-              <button
-                onClick={() => setShowNotificationModal(true)}
-                className="flex items-center justify-center gap-2 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all duration-200
-                  shadow-[3px_3px_10px_rgba(59,130,246,0.3)] hover:shadow-[3px_3px_15px_rgba(59,130,246,0.4)] text-sm font-medium whitespace-nowrap flex-shrink-0 min-w-0"
+          <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
+        </div>
+      ))}
+    </div>
+  </div>
+) : contacts.length === 0 ? (
+  <div className="text-center py-16 text-gray-400">
+    No contacts found.
+  </div>
+) : (
+  <div className="bg-white backdrop-blur-xl">
+       
+
+          {/* Section Header INSIDE card */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 ">
+            <h2 className="text-2xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-16 md:mt-4  p-4">
+              Contacts
+            </h2>
+           
+          </div>
+
+          {/* Contact Rows */}
+          <div className=' '>
+             <div className="divide-y divide-gray-100 ">
+            {contacts.map((contact) => (
+              <div
+                key={contact.contact_user_id}
+                className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
               >
-                <FaBell className="text-sm flex-shrink-0" />
-                <span>Notify</span>
-              </button>
-            </div>
-          </div>
+                {/* Left */}
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-gray-700 font-medium text-sm flex-shrink-0">
+                    {contact.avatar ? (
+                      <img
+                        src={getImageUrl(contact.avatar)}
+                        alt={contact.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      contact.name?.charAt(0).toUpperCase()
+                    )}
+                  </div>
 
-          {/* MAIN CUSTOMER MANAGEMENT */}
-          <div className="w-full overflow-hidden max-w-full min-w-0">
-            <CustomerManagement
-              loyalCustomers={loyalCustomers}
-              onRemoveCustomer={handleRemoveCustomer}
-              onRequestPayment={handleRequestPayment}
-              onRequestReview={handleRequestReview}
-              onSendMessage={handleSendMessage}
-            />
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-medium text-gray-900 truncate">
+                      {contact.name}
+                    </h3>
+
+                    {contact.phone && (
+                      <p className="text-xs text-gray-500 truncate">
+                        {contact.phone}
+                      </p>
+                    )}
+
+                    {contact.email && (
+                      <p className="text-xs text-gray-400 truncate">
+                        {contact.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Delete */}
+                <button
+                  onClick={() =>
+                    handleDelete(contact.contact_user_id)
+                  }
+                  className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                >
+                  <IconDelete className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
           </div>
+          </div>
+       
 
         </div>
-      </div>
-
-      {/* MODALS */}
-      <AddCustomerModal
-        showAddCustomerModal={showAddCustomerModal}
-        setShowAddCustomerModal={setShowAddCustomerModal}
-      />
-
-      <SendNotificationModal
-        showNotificationModal={showNotificationModal}
-        setShowNotificationModal={setShowNotificationModal}
-        products={products}
-        loyalCustomers={loyalCustomers}
-      />
-    </>
-  );
+      )}
+    </div>
+  </div>
+);
 }
 
 export default Contacts;

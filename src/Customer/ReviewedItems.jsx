@@ -12,6 +12,7 @@ function ReviewedItems({
   refreshTrigger
 }) {
   const customer = useSelector(state => state.auth.user);
+  const [loading, setLoading] = useState(true);
   
   // Safe guard for reviewedItems
   const safeReviewedItems = Array.isArray(reviewedItems) ? reviewedItems : [];
@@ -19,6 +20,7 @@ function ReviewedItems({
   useEffect(() => {
     if (!customer) {
       setReviewedItems([]);
+      setLoading(false);
       return;
     }
     fetchReviewedReviews();
@@ -28,6 +30,7 @@ function ReviewedItems({
     if (!customer?.id) return;
 
     try {
+      setLoading(true);
       const [companyRes, productRes] = await Promise.all([
         getCustomerCompanyReviews(customer.id),
         getCustomerProductReviews(customer.id),
@@ -97,9 +100,10 @@ function ReviewedItems({
       });
 
     } catch (err) {
-  error("ReviewedItems: failed to load reviews", err);
-}
-
+      error("ReviewedItems: failed to load reviews", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateReviewedItem = (reviewId, updatedData) => {
@@ -116,6 +120,129 @@ function ReviewedItems({
     );
   };
 
+  // ===== ENTERPRISE-LEVEL SKELETON LOADER =====
+  const SkeletonLoader = () => (
+    <div className="flex flex-col gap-4 sm:gap-5 md:gap-6">
+      {/* Generate 3 skeleton cards */}
+      {[1, 2, 3].map((index) => (
+        <div
+          key={index}
+          className="
+            bg-white/95 backdrop-blur-xl
+            rounded-xl sm:rounded-2xl
+            border border-white/80
+            shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_4px_24px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.02)]
+            overflow-hidden
+            animate-pulse
+            glass-effect
+          "
+        >
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4">
+            {/* Left: Date skeleton */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="
+                w-7 h-7 sm:w-9 sm:h-9
+                rounded-lg sm:rounded-xl
+                bg-gradient-to-br from-gray-100 to-gray-200/40
+                border border-gray-100/50
+              "></div>
+              <div className="flex flex-col gap-2">
+                <div className="w-20 h-3 rounded-md bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-24 h-3 rounded-md bg-gradient-to-r from-gray-200 to-gray-300/60"></div>
+                  <div className="hidden sm:block w-3 h-3 rounded-md bg-gradient-to-r from-gray-100 to-gray-200/50"></div>
+                  <div className="hidden sm:block w-16 h-3 rounded-md bg-gradient-to-r from-gray-200 to-gray-300/60"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Type badge skeleton */}
+            <div className="
+              px-2 py-1.5 sm:px-4 sm:py-2
+              rounded-lg
+              bg-gradient-to-r from-gray-100/30 to-gray-200/20
+              border border-gray-100/40
+            ">
+              <div className="w-20 h-3 rounded-md bg-gradient-to-r from-gray-200 to-gray-300/60"></div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-[0.5px] bg-gradient-to-r from-transparent via-gray-200/30 to-transparent" />
+
+          {/* Main Content Skeleton */}
+          <div className="px-4 sm:px-5 md:px-6 py-4 md:py-5 gap-3 sm:gap-4 md:gap-5">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              {/* Item Info Skeleton */}
+              <div className="flex-1 min-w-0">
+                {/* Review Type Badge Skeleton */}
+                <div className="mb-4">
+                  <div className="w-36 h-6 rounded-full bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                </div>
+
+                {/* Product/Company Name Skeleton */}
+                <div className="mb-4">
+                  <div className="w-3/4 h-6 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300/60 mb-3"></div>
+                  <div className="w-full h-4 rounded-md bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                </div>
+
+                {/* Service Name Skeleton */}
+                <div className="mb-4">
+                  <div className="w-40 h-6 rounded-full bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                </div>
+
+                {/* Rating & Comment Skeleton */}
+                <div className="mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                    {/* Stars Skeleton */}
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <div
+                          key={star}
+                          className="w-5 h-5 rounded-full bg-gradient-to-r from-gray-100 to-gray-200/60"
+                        ></div>
+                      ))}
+                      <div className="w-8 h-4 rounded-md bg-gradient-to-r from-gray-200 to-gray-300/60 ml-2"></div>
+                    </div>
+
+                    {/* Comment Box Skeleton */}
+                    <div className="w-48 sm:w-64 h-10 rounded-lg bg-gradient-to-r from-gray-50/50 to-gray-100/30"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons Skeleton */}
+              <div className="w-full sm:w-auto mt-4 sm:mt-0">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Edit Button Skeleton */}
+                  <div className="
+                    w-24 h-10
+                    rounded-lg sm:rounded-xl
+                    bg-gradient-to-r from-gray-100 to-gray-200/60
+                    border border-gray-100/50
+                  "></div>
+
+                  {/* Delete Button Skeleton */}
+                  <div className="
+                    w-28 h-10
+                    rounded-lg sm:rounded-xl
+                    bg-gradient-to-r from-gray-100 to-gray-200/60
+                    border border-gray-100/50
+                  "></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (loading) {
+    return <SkeletonLoader />;
+  }
+
   if (safeReviewedItems.length === 0) {
     return (
       <div className="
@@ -127,7 +254,21 @@ function ReviewedItems({
         mx-auto w-full max-w-md lg:max-w-lg
         glass-effect
       ">
-     
+        <div className="
+          w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24
+          bg-gradient-to-br from-white to-blue-50/30
+          rounded-full
+          flex items-center justify-center
+          mx-auto mb-4 sm:mb-6
+          shadow-[inset_0_0_20px_rgba(255,255,255,0.8),0_4px_20px_rgba(59,130,246,0.08)]
+          border border-white/60
+          transition-all duration-500
+          hover:scale-105 hover:shadow-[inset_0_0_24px_rgba(255,255,255,0.9),0_6px_24px_rgba(59,130,246,0.12)]
+        ">
+          <div className="text-2xl sm:text-3xl text-blue-300/80">
+            📝
+          </div>
+        </div>
         <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-gray-900 mb-2 sm:mb-3 tracking-tight">
           No Reviewed Items
         </h3>

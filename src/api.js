@@ -64,7 +64,10 @@ export const getSubscribeNow = () => {
 
 export const getCategories = () => api.get("/showCategories");
 
-export const getCategory = (id) => api.get(`/showCategory/${id}`);
+export const getCategory = (id, page = 1) =>
+  api.get(`/showCategory/${id}`, {
+    params: { page },
+  });
 
 
 // ==================== CATEGORY SEARCH ====================
@@ -82,8 +85,10 @@ export const searchCategories = (query) => {
 
 export const getCompanies = () => api.get("/showCompanies");
 
-export const getCompany = (id, payload = {}) => {
-  return api.post(`/showCompany/${id}`, payload);
+export const getCompany = (id, page = 1) => {
+  return api.get(`/showCompany/${id}`, {
+    params: { page }
+  });
 };
 
 // ==================== PRODUCTS ====================
@@ -137,6 +142,12 @@ export const submitContactJson = (data) => {
 
 
 
+
+// Product Share
+// POST /{lang}/api/customer/products/{id}/share
+export const shareProduct = (productId) => {
+  return api.post(`/customer/products/${productId}/share`);
+};
 
 // ==================== PRODUCT REVIEWS (PUBLIC) ====================
 
@@ -445,12 +456,20 @@ export const markCustomerConversationRead = (conversationId) => {
 
 // ==================== CUSTOMER NOTIFICATIONS ====================
 
-// Get all notifications for logged-in customer
-// GET /{lang}/api/customer/notifications
-// Token required (handled by interceptor)
-export const getCustomerNotifications = (page = 1) => {
-  return api.get(`/customer/notifications?page=${page}`);
+export const getCustomerNotifications = () => {
+  return api.get("/customer/notifications", {
+    responseType: "json",
+    transformResponse: [(data) => {
+      try {
+        return typeof data === "string" ? JSON.parse(data) : data;
+      } catch {
+        return data;
+      }
+    }],
+  });
 };
+
+
 
 
 
@@ -459,11 +478,83 @@ export const getCustomerNotifications = (page = 1) => {
 
 // ==================== COMPANY REVIEWS (PUBLIC) ====================
 
-// ✅ Get all reviews for a company (public – no token required)
-// POST /{lang}/api/ShowCompanyReviews/{companyId}/customer
+//  Get all reviews for a company (public – no token required)
+
 export const getCompanyReviewsPublic = (companyId) => {
   return api.post(`/ShowCompanyReviews/${companyId}/customer`);
 };
+
+
+// ==================== BILLS ====================
+
+// Get pending bills (Token required)
+
+export const getPendingBills = (data = {}) => {
+  return axios.post(
+    "http://catalogueyanew.com.awu.zxu.temporary.site/bills/public/pending",
+    data,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+};
+
+
+
+export const getPublicBill = (publicToken) => {
+  return axios.get(
+    `https://catalogueyanew.com.awu.zxu.temporary.site/bills/public/${publicToken}`,
+    {
+      headers: {
+        Accept: "application/json",
+        Authorization: localStorage.getItem("token")
+          ? `Bearer ${localStorage.getItem("token")}`
+          : undefined,
+      },
+    }
+  );
+};
+
+
+export const getPaidBills = (page = 1) => {
+  return axios.post(
+    `https://catalogueyanew.com.awu.zxu.temporary.site/bills/public/paid?page=${page}`,
+    {}, // 👈 empty body
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+};
+
+// Reject / Cancel Bill
+
+
+export const rejectPublicBill = (publicToken, reason) => {
+  return axios.post(
+    `https://catalogueyanew.com.awu.zxu.temporary.site/bills/public/${publicToken}/reject`,
+    {
+      reason,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        Authorization: localStorage.getItem("token")
+          ? `Bearer ${localStorage.getItem("token")}`
+          : undefined,
+      },
+    }
+  );
+};
+
 
 
 

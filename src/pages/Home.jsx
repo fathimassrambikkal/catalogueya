@@ -10,6 +10,7 @@ import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 
 
+
 export default function Home() {
   return (
     <div>
@@ -20,8 +21,9 @@ export default function Home() {
       <Sales />
       <Pricing />
       <Faq />
-  
+    
       <CallToAction />
+      
     </div>
   );
 }

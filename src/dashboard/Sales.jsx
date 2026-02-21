@@ -1,438 +1,458 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { FaPlus, FaTimes, FaEdit } from "react-icons/fa";
-import { addSalesProduct } from "../api";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  FaPlus,
+  FaTimes,
+  FaBell,
+  FaShoppingBag,
+  FaTags,
+  FaStar,
+  FaBullhorn,
+  FaCrown,
+  FaCartArrowDown,
+  FaCartPlus,
 
+  FaCalendarAlt,
+  FaPercent,
+  FaHistory
+} from "./SvgIcons";
 
-export default function Sales({ products }) {
-  const [saleProducts, setSaleProducts] = useState([]);
-  const [showStartModal, setShowStartModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedEditProduct, setSelectedEditProduct] = useState(null);
+import {
+  getHighlightProducts,
+  getCompanyProducts,
+  getImageUrl,
+  updateSalesProduct,
+  deleteSalesProduct
+} from "../companyDashboardApi";
 
-  const [bulkFromDate, setBulkFromDate] = useState("");
-  const [bulkToDate, setBulkToDate] = useState("");
+import AddToHighlightsModalSales from "./AddToHighlightsModalSales";
+import NotifyHighlightsModalSales from "./NotifyHighlightsModalSales";
+import Notifications from "./Notifications";
 
-  /** Load products into saleProducts */
-  useEffect(() => {
-    if (!products) return;
-    setSaleProducts(
-      products.map((p) => ({
-        ...p,
-        rate: p.rate ?? 0,
-        fromDate: p.fromDate ?? "",
-        toDate: p.toDate ?? "",
-      }))
-    );
-  }, [products]);
+import { showToast } from "../utils/showToast";
 
+const HIGHLIGHT_TYPES = [
+  { id: "sales", label: "SALES", icon: FaTags, color: "from-blue-500 to-blue-600" },
+  { id: "new_arrivals", label: "NEW ARRIVAL", icon: FaStar, color: "from-blue-400 to-blue-500" },
+  { id: "limited_edition", label: "LIMITED EDITION", icon: FaCrown, color: "from-blue-600 to-blue-700" },
+  { id: "best_seller", label: "BEST SELLER", icon: FaBullhorn, color: "from-blue-500 to-blue-600" },
+  { id: "low_in_stock", label: "LOW IN STOCK", icon: FaCartArrowDown, color: "from-blue-400 to-blue-500" },
+  { id: "back_in_stock", label: "BACK IN STOCK", icon: FaCartPlus, color: "from-blue-600 to-blue-700" },
+];
 
-  const saveSaleToApi = async (product) => {
-  if (!product.rate || !product.fromDate || !product.toDate) return;
+export default function Sales({ companyId, companyInfo, user, setActiveTab, setTargetConversationId }) {
+  const [selectedType, setSelectedType] = useState("sales");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [view, setView] = useState("list");
+  const [isSending, setIsSending] = useState(false);
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [discountData, setDiscountData] = useState({ discount: '', from: '', to: '' });
+  const [editingProduct, setEditingProduct] = useState(null);
 
-  try {
-    await addSalesProduct(product.id, {
-      discount: product.rate,
-      discount_from: product.fromDate,
-      discount_to: product.toDate,
-    });
+  const currentUserId = companyId || localStorage.getItem("company_id") || "13";
 
-    console.log("✅ Sale saved for product:", product.id);
-  } catch (err) {
-    console.error("❌ Sale API failed:", err);
-    alert(`Failed to save sale for ${product.name}`);
-  }
-};
-
-
-  /** Helpers */
-  const getSaleInfo = useCallback((product) => {
-    const today = new Date();
-    const from = product.fromDate ? new Date(product.fromDate) : null;
-    const to = product.toDate ? new Date(product.toDate) : null;
-
-    let status = "not-active";
-    let discountedPrice = product.price;
-
-    if (product.rate > 0 && from && to) {
-      if (today >= from && today <= to) {
-        status = "active";
-        discountedPrice = product.price - (product.price * product.rate) / 100;
-      } else if (today < from) {
-        status = "upcoming";
-      } else if (today > to) {
-        status = "ended";
+  const fetchProducts = useCallback(async (type) => {
+    try {
+      setLoading(true);
+      if (type === 'back_in_stock') {
+        const res = await getCompanyProducts();
+        let data = [];
+        if (res.data?.data) {
+          data = Array.isArray(res.data.data) ? res.data.data : (res.data.data.products || []);
+        } else if (Array.isArray(res.data)) {
+          data = res.data;
+        } else if (res.data?.products) {
+          data = res.data.products;
+        }
+        const lowStockProducts = data.filter(p => (parseInt(p.quantity) || 0) <= 5);
+        setProducts(lowStockProducts);
+      } else {
+        const res = await getHighlightProducts(type, currentUserId);
+        let data = [];
+        if (res.data?.data) {
+          data = Array.isArray(res.data.data) ? res.data.data : (res.data.data.products || []);
+        } else if (Array.isArray(res.data)) {
+          data = res.data;
+        } else if (res.data?.products) {
+          data = res.data.products;
+        }
+        setProducts(data);
       }
+    } catch (error) {
+      console.error("Error fetching highlight products:", error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
+  }, [currentUserId]);
 
-    return { status, discountedPrice };
-  }, []);
+  useEffect(() => {
+    fetchProducts(selectedType);
+  }, [selectedType, fetchProducts]);
 
-  const formatDate = (d) =>
-    !d ? "" : new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-
-  const statusColor = {
-    active: "bg-green-100 text-green-800",
-    upcoming: "bg-blue-100 text-blue-800",
-    ended: "bg-red-100 text-red-800",
-    "not-active": "bg-gray-100 text-gray-800",
-  };
-
-  const statusText = {
-    active: "Active",
-    upcoming: "Upcoming",
-    ended: "Ended",
-    "not-active": "No Sale",
-  };
-
-  const handleRateChange = (id, value) => {
-    setSaleProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, rate: Number(value) } : p))
-    );
-  };
-
-  /** Publish bulk sale */
- const handlePublishSales = async () => {
-  if (!bulkFromDate || !bulkToDate)
-    return alert("Select both dates");
-
-  if (new Date(bulkFromDate) >= new Date(bulkToDate))
-    return alert("End date must be after start date");
-
-  // 🔥 SAVE TO API
-  for (const product of saleProducts) {
-    if (product.rate > 0) {
-      await saveSaleToApi({
-        ...product,
-        fromDate: bulkFromDate,
-        toDate: bulkToDate,
+  const handleFinalSalesAdd = async () => {
+    try {
+      setIsSending(true);
+      await updateSalesProduct(editingProduct.id, {
+        type: selectedType,
+        discount: discountData.discount,
+        discount_from: discountData.from,
+        discount_to: discountData.to
       });
+      showToast("Updated successfully", { type: "success" });
+      setShowDiscountModal(false);
+      setEditingProduct(null);
+      setView("list");
+      fetchProducts(selectedType);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to update", { type: "error" });
+    } finally {
+      setIsSending(false);
     }
-  }
-
-  // 🔄 Update UI
-  setSaleProducts((prev) =>
-    prev.map((p) => ({
-      ...p,
-      fromDate: bulkFromDate,
-      toDate: bulkToDate,
-    }))
-  );
-
-  setShowStartModal(false);
-};
-
-
-  /** Open edit modal */
-  const handleEditProduct = (product) => {
-    setSelectedEditProduct({ ...product });
-    setShowEditModal(true);
   };
 
-  /** Publish edit */
-  const handlePublishEdit = async () => {
-  const p = selectedEditProduct;
+  const handleEditClick = (p) => {
+    setEditingProduct(p);
+    setDiscountData({
+      discount: p.discount || "",
+      from: p.discount_from || "",
+      to: p.discount_to || ""
+    });
+    setShowDiscountModal(true);
+  };
 
-  if (p.fromDate && p.toDate) {
-    if (new Date(p.fromDate) >= new Date(p.toDate)) {
-      return alert("End date must be after start date");
+  const handleDeleteClick = async (id) => {
+    if (!window.confirm("Are you sure you want to remove this from highlights?")) return;
+    try {
+      setIsSending(true);
+      await deleteSalesProduct(id);
+      showToast("Removed successfully", { type: "success" });
+      fetchProducts(selectedType);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to remove", { type: "error" });
+    } finally {
+      setIsSending(false);
     }
-  }
+  };
 
-  // 🔥 SAVE TO API
-  await saveSaleToApi(p);
+  const renderProductCard = (p) => {
+    const imgSrc = getImageUrl(p.image);
+    const SelectedIcon = HIGHLIGHT_TYPES.find(t => t.id === selectedType)?.icon || FaShoppingBag;
+    
+return (
+  <article className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 transition-all flex flex-col h-full">
+    {/* Image Section - 2/3 of card */}
+    <div className="relative w-full aspect-[4/3] bg- flex-shrink-0 overflow-hidden">
+      {imgSrc ? (
+        <img
+          src={imgSrc}
+          className="w-full h-full object-cover"
+          alt={p.name_en || p.name}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-gray-200 text-xs">
+          <SelectedIcon className="w-7 h-7 text-blue-300" />
+        </div>
+      )}
 
-  // 🔄 Update UI
-  setSaleProducts((prev) =>
-    prev.map((item) =>
-      item.id === p.id ? { ...p } : item
-    )
-  );
+      {/* Minimal Status Tags */}
+      <div className="absolute top-2 left-2 flex flex-wrap gap-1 items-center pointer-events-none">
+        {p.discount && (
+          <span className="px-1.5 py-0.5 text-[8px] font-medium bg-blue-600 text-white  rounded-full border border-gray-200/50">
+            {p.discount}% OFF
+          </span>
+        )}
+      </div>
+    </div>
 
-  setShowEditModal(false);
-  setSelectedEditProduct(null);
-};
+    {/* Content Section - Ultra compact */}
+    <div className="p-2 flex-grow flex flex-col">
+      <h3 className="font-medium text-xs text-gray-900 line-clamp-1 mb-0.5">
+        {p.name_en || p.name}
+      </h3>
+      
+      {/* Price Section */}
+      <div className="leading-tight mb-1.5">
+        <p className="font-bold text-blue-600 text-[clamp(0.7rem,2vw,1rem)]">
+          QAR {Number(p.price).toFixed(2)}
+        </p>
 
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-2 sm:p-4 md:p-6 overflow-x-hidden">
-
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 ml-12">Sales</h1>
-
-        <button
-          onClick={() => setShowStartModal(true)}
-          className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:scale-105 transition-all"
-        >
-          <FaPlus className="text-sm" />
-          Start Sale
-        </button>
+        {p.original_price && (
+          <p className="text-gray-400 line-through text-[clamp(0.6rem,1.5vw,0.75rem)]">
+            QAR {Number(p.original_price).toFixed(2)}
+          </p>
+        )}
+      </div>
+      
+      <div className="flex items-center justify-between text-[10px] mb-1.5">
+        {selectedType === "sales" && (p.discount_from || p.discount_to) && (
+           <div className="flex items-center gap-1 text-[8px] sm:text-[10px] md:text-[11px] text-gray-500 pt-1">
+              <FaCalendarAlt className="w-3 h-3 text-blue-400" />
+              <span>
+                {p.discount_from || '---'} — {p.discount_to || '---'}
+              </span>
+            </div>
+        )}
       </div>
 
-      {/* PRODUCT GRID */}
-      <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        
 
-        {saleProducts.map((item) => {
-          const { status, discountedPrice } = getSaleInfo(item);
 
-          return (
-            <div
-              key={item.id}
-              className="rounded-xl bg-white/80 backdrop-blur-lg border border-gray-200 shadow hover:scale-[1.02] transition-all relative"
-            >
-              {/* Image */}
-              {item.image ? (
-                <img src={item.image} className="w-full h-32 object-cover" alt="" />
-              ) : (
-                <div className="w-full h-32 flex items-center justify-center text-gray-400 bg-gray-100">
-                  No image
-                </div>
-              )}
 
-              {/* Status */}
-              <span
-                className={`absolute top-1 left-1 px-2 py-0.5 text-[10px] font-semibold rounded ${statusColor[status]}`}
-              >
-                {statusText[status]}
-              </span>
 
-              {/* TAG */}
-              {item.tag && (
-                <span className="absolute top-1 right-1 bg-blue-500 text-white px-2 py-0.5 text-[10px] rounded">
-                  {item.tag}
-                </span>
-              )}
-
-              <div className="p-3">
-                <h3 className="font-semibold text-sm truncate">{item.name}</h3>
-
-                {/* Price */}
-                <div className="mt-2">
-                  {status === "active" ? (
-                    <>
-                      <p className="text-red-600 text-xs font-bold">{item.rate}% OFF</p>
-                      <p className="font-bold text-sm">QAR {discountedPrice.toFixed(2)}</p>
-                      <p className="text-gray-500 text-xs line-through">QAR {item.price}</p>
-                    </>
-                  ) : (
-                    <p className="font-bold text-sm">QAR {item.price}</p>
-                  )}
-                </div>
-
-                {/* Dates */}
-                {item.rate > 0 && (
-                  <div className="text-[10px] text-gray-600 mt-1">
-                    {item.fromDate && <p>From: {formatDate(item.fromDate)}</p>}
-                    {item.toDate && <p>To: {formatDate(item.toDate)}</p>}
-                  </div>
-                )}
-
-                <button
-                  onClick={() => handleEditProduct(item)}
-                  className="mt-3 bg-blue-500 text-white text-xs px-3 py-2 rounded-lg w-full flex items-center justify-center gap-1 hover:bg-blue-600"
-                >
-                  <FaEdit className="text-xs" />
-                  Edit Sale
-                </button>
-              </div>
-            </div>
-          );
-        })}
-
-        {/* ADD SALE CARD */}
-        <div
-          onClick={() => setShowStartModal(true)}
-          className="rounded-xl border border-dashed border-gray-300 bg-white/60 flex flex-col items-center justify-center cursor-pointer hover:scale-[1.02] transition-all"
+      {/* Actions - Minimal */}
+      <div className="flex items-center justify-between border-t border-gray-50 pt-1.5">
+        <button
+          onClick={() => handleEditClick(p)}
+          className="text-[10px] text-blue-500 hover:text-blue-600 font-medium px-1 py-0.5 rounded-md hover:bg-blue-50/50 transition-colors"
         >
-          <FaPlus className="text-2xl text-gray-400 mb-1" />
-          <span className="text-gray-500 text-sm">Add Sale</span>
+          Edit
+        </button>
+        
+        <button
+          onClick={() => handleDeleteClick(p.id)}
+          className="text-[10px] text-red-400 hover:text-red-500 font-medium px-1 py-0.5 rounded-md hover:bg-red-50/50 transition-colors"
+        >
+          Delete
+        </button>
+        
+       
+      </div>
+    </div>
+  </article>
+);
+  };
+
+  return (
+    <div className="min-h-screen pt-[clamp(1rem,2vw,1.5rem)] px-[clamp(0.75rem,2vw,1.5rem)] sm:px-[clamp(1rem,3vw,2rem)] lg:px-[clamp(1.5rem,4vw,2.5rem)] bg-white">
+      <div className="max-w-[clamp(1000px,90vw,1920px)] mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-[clamp(1rem,2.5vw,1.5rem)]">
+          <h1 className=" text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">Product Highlights</h1>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-1">
+            {HIGHLIGHT_TYPES.map((type) => {
+              const Icon = type.icon;
+              const isSelected = selectedType === type.id;
+              
+              return (
+                <button
+                  key={type.id}
+                  onClick={() => { setSelectedType(type.id); setView("list"); }}
+                  className={`
+                    relative px-[clamp(0.5rem,1vw,0.625rem)] py-[clamp(0.125rem,0.5vw,0.25rem)] rounded-full text-[clamp(0.675rem,1.2vw,0.75rem)] font-medium transition-all duration-200
+                    ${isSelected 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-[#f8f8fc] text-gray-600 hover:bg-[#e8e8ed]'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-1">
+                    <Icon className={`w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] ${isSelected ? 'text-white' : 'text-blue-500'}`} />
+                    <span>{type.label}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-[clamp(0.875rem,2vw,1.25rem)]">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className=" ">
+              <span className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700">
+                {products.length} {products.length === 1 ? 'Product' : 'Products'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setView("add")}
+              className=" sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-blue-600 rounded-xl text-[clamp(0.6rem,1.2vw,0.875rem)] font-medium text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <FaPlus className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(0.875rem,1.2vw,1rem)]" />
+              <span>Add Highlights</span>
+            </button>
+
+            <button
+              onClick={() => setView("notify")}
+              className="flex-1 sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-white/80 backdrop-blur-sm rounded-xl text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700 hover:bg-white hover:shadow-md transition-all duration-200 border border-blue-100/50 flex items-center justify-center gap-2"
+            >
+              <FaBell className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(0.875rem,1.2vw,1rem)] text-blue-500" />
+              <span>Notify</span>
+            </button>
+
+            <button
+              onClick={() => setView("history")}
+              className="flex-1 sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-white/80 backdrop-blur-sm rounded-xl text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700 hover:bg-white hover:shadow-md transition-all duration-200 border border-blue-100/50 flex items-center justify-center gap-2"
+            >
+              <FaHistory className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(0.875rem,1.2vw,1rem)] text-blue-500" />
+              <span>History</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="bg-white/40 backdrop-blur-xl rounded-3xl border border-blue-100/50 shadow-xl shadow-blue-500/5 p-[clamp(0.875rem,2vw,1.25rem)]">
+          {/* Section Title */}
+          <div className="flex items-center gap-2 mb-[clamp(0.875rem,2vw,1.25rem)]">
+            <div className="w-1 h-[clamp(1rem,2vw,1.25rem)] bg-blue-600 rounded-full" />
+            <h2 className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-500 uppercase tracking-wider">
+              {selectedType.replace(/_/g, " ")} Products
+            </h2>
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[clamp(0.5rem,1.5vw,0.875rem)]">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 animate-pulse">
+                  <div className="aspect-square bg-blue-100/50 rounded-xl mb-3" />
+                  <div className="h-3 bg-blue-100/50 rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-blue-100/50 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[clamp(0.5rem,1.5vw,0.875rem)]">
+              {products.map(p => (
+                <React.Fragment key={p.id}>
+                  {renderProductCard(p)}
+                </React.Fragment>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-[clamp(2rem,6vw,4rem)] text-gray-400">
+              <div className="w-[clamp(2.5rem,5vw,4rem)] h-[clamp(2.5rem,5vw,4rem)] bg-blue-50/50 rounded-2xl flex items-center justify-center mb-4">
+                <FaShoppingBag className="w-[clamp(1.25rem,2.5vw,1.75rem)] h-[clamp(1.25rem,2.5vw,1.75rem)] text-blue-300" />
+              </div>
+              <p className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium">No products found</p>
+              <p className="text-[clamp(0.625rem,1vw,0.75rem)] mt-1">Add products to get started</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* START SALE MODAL */}
-      {showStartModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-start p-4 overflow-auto z-50">
-          <div className="bg-white/90 backdrop-blur-lg border rounded-xl p-4 max-w-3xl w-full relative">
-
-            <button
-              onClick={() => setShowStartModal(false)}
-              className="absolute top-2 right-2 p-2 bg-white rounded-full shadow"
-            >
-              <FaTimes />
-            </button>
-
-            <h2 className="text-lg font-bold mb-4">Start Sale</h2>
-
-            {/* PRODUCTS LIST INSIDE MODAL */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto mb-4">
-              {saleProducts.map((item) => {
-                const { status } = getSaleInfo(item);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="border rounded-lg p-2 relative bg-white shadow"
-                  >
-                    <span className={`absolute top-1 right-1 px-2 py-0.5 text-[9px] rounded ${statusColor[status]}`}>
-                      {statusText[status]}
-                    </span>
-
-                    <img src={item.image} className="w-full h-20 object-cover rounded" />
-
-                    <p className="text-xs font-semibold mt-1 truncate">{item.name}</p>
-
-                    <div className="flex items-center gap-1 text-xs mt-1">
-                      <label>Rate:</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        className="border rounded px-1 py-0.5 w-12 text-[10px]"
-                        value={item.rate}
-                        onChange={(e) => handleRateChange(item.id, e.target.value)}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+      {/* History Modal */}
+      {view === "history" && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white backdrop-blur-xl rounded-3xl w-full max-w-[clamp(300px,90vw,1280px)] max-h-[80vh] flex flex-col shadow-2xl border border-blue-100/50 ">
+            <div className="p-[clamp(0.875rem,2vw,1.25rem)] border-b border-blue-100/50 flex justify-between items-center">
+              <h3 className="text-[clamp(0.875rem,2vw,1.125rem)] font-semibold text-gray-900">Notification History</h3>
+              <button 
+                onClick={() => setView('list')} 
+                className="w-[clamp(1.5rem,3vw,2rem)] h-[clamp(1.5rem,3vw,2rem)] rounded-full bg-gray-200/30 hover:bg-white flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
             </div>
-
-            {/* DATE SELECT */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div>
-                <label className="text-sm font-medium">From Date</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded-lg w-full mt-1"
-                  value={bulkFromDate}
-                  onChange={(e) => setBulkFromDate(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">To Date</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded-lg w-full mt-1"
-                  value={bulkToDate}
-                  onChange={(e) => setBulkToDate(e.target.value)}
-                />
-              </div>
+            <div className="flex-1 overflow-y-auto  ">
+              <Notifications 
+                setActiveTab={setActiveTab} 
+                setTargetConversationId={setTargetConversationId} 
+                initialTab={selectedType} 
+              />
             </div>
-
-            <button
-              onClick={handlePublishSales}
-              className="bg-blue-500 text-white w-full py-2 rounded-lg font-semibold hover:bg-blue-600"
-            >
-              Publish Sales
-            </button>
           </div>
         </div>
       )}
 
-      {/* EDIT SALE MODAL */}
-      {showEditModal && selectedEditProduct && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-start p-4 overflow-auto z-50">
-          <div className="bg-white/90 backdrop-blur-lg border rounded-xl p-4 max-w-sm w-full relative">
-
-            <button
-              onClick={() => setShowEditModal(false)}
-              className="absolute top-2 right-2 p-2 bg-white rounded-full shadow"
-            >
-              <FaTimes />
-            </button>
-
-            <h2 className="text-lg font-bold mb-4">Edit Sale</h2>
-
-            <img
-              src={selectedEditProduct.image}
-              className="w-full h-24 object-cover rounded mb-2"
-              alt=""
-            />
-
-            <p className="font-medium">{selectedEditProduct.name}</p>
-
-            {/* RATE */}
-            <div className="mt-3">
-              <label>Sale Rate (%)</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                className="border p-2 rounded w-full mt-1"
-                value={selectedEditProduct.rate}
-                onChange={(e) =>
-                  setSelectedEditProduct({
-                    ...selectedEditProduct,
-                    rate: Number(e.target.value),
-                  })
-                }
-              />
+      {/* Discount Modal */}
+      {showDiscountModal && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/90 backdrop-blur-xl rounded-3xl w-full max-w-[clamp(280px,90vw,448px)] p-[clamp(0.875rem,2vw,1.25rem)] shadow-2xl border border-blue-100/50">
+            <div className="flex justify-between items-center mb-[clamp(0.875rem,2vw,1.25rem)]">
+              <h3 className="text-[clamp(0.875rem,2vw,1.125rem)] font-semibold text-gray-900">
+                {editingProduct ? 'Edit Discount' : 'Add Discount'}
+              </h3>
+              <button
+                onClick={() => { setShowDiscountModal(false); setEditingProduct(null); }}
+                className="w-[clamp(1.5rem,3vw,2rem)] h-[clamp(1.5rem,3vw,2rem)] rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-gray-400 hover:text-gray-600"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* DATES */}
-            <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="space-y-4">
               <div>
-                <label>From</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded w-full mt-1"
-                  value={selectedEditProduct.fromDate || ""}
-                  onChange={(e) =>
-                    setSelectedEditProduct({
-                      ...selectedEditProduct,
-                      fromDate: e.target.value,
-                    })
-                  }
-                />
+                <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">
+                  Discount Percentage
+                </label>
+                <div className="relative">
+                  <FaPercent className="absolute left-3 top-1/2 -translate-y-1/2 w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] text-gray-400" />
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={discountData.discount}
+                    onChange={e => setDiscountData({ ...discountData, discount: e.target.value })}
+                    className="w-full pl-9 pr-3 py-[clamp(0.375rem,1vw,0.5rem)] bg-white/80 border border-blue-100 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20 text-[clamp(0.75rem,1.2vw,0.875rem)]"
+                  />
+                </div>
               </div>
-              <div>
-                <label>To</label>
-                <input
-                  type="date"
-                  className="border p-2 rounded w-full mt-1"
-                  value={selectedEditProduct.toDate || ""}
-                  onChange={(e) =>
-                    setSelectedEditProduct({
-                      ...selectedEditProduct,
-                      toDate: e.target.value,
-                    })
-                  }
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">From</label>
+                  <div className="relative">
+                    <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] text-gray-400" />
+                    <input
+                      type="date"
+                      value={discountData.from}
+                      onChange={e => setDiscountData({ ...discountData, from: e.target.value })}
+                      className="w-full pl-9 pr-3 py-[clamp(0.375rem,1vw,0.5rem)] bg-white/80 border border-blue-100 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20 text-[clamp(0.75rem,1.2vw,0.875rem)]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">To</label>
+                  <div className="relative">
+                    <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] text-gray-400" />
+                    <input
+                      type="date"
+                      value={discountData.to}
+                      onChange={e => setDiscountData({ ...discountData, to: e.target.value })}
+                      className="w-full pl-9 pr-3 py-[clamp(0.375rem,1vw,0.5rem)] bg-white/80 border border-blue-100 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20 text-[clamp(0.75rem,1.2vw,0.875rem)]"
+                    />
+                  </div>
+                </div>
               </div>
+
+              <button
+                onClick={handleFinalSalesAdd}
+                disabled={isSending}
+                className="w-full py-[clamp(0.375rem,1.5vw,0.625rem)] bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-[clamp(0.75rem,1.2vw,0.875rem)]"
+              >
+                {isSending ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
-
-            {/* END SALE CHECKBOX */}
-            <div className="flex items-center gap-2 mt-3">
-              <input
-                type="checkbox"
-                checked={selectedEditProduct.rate === 0}
-                onChange={(e) =>
-                  setSelectedEditProduct({
-                    ...selectedEditProduct,
-                    rate: e.target.checked ? 0 : selectedEditProduct.rate,
-                  })
-                }
-              />
-              <span>End sale (set rate to 0%)</span>
-            </div>
-
-            {/* BUTTONS */}
-            <button
-              onClick={handlePublishEdit}
-              className="bg-blue-500 text-white w-full py-2 rounded-lg mt-4"
-            >
-              Publish Changes
-            </button>
-
-            <button
-              onClick={() => setShowEditModal(false)}
-              className="bg-gray-300 text-gray-800 w-full py-2 rounded-lg mt-2"
-            >
-              Cancel
-            </button>
           </div>
         </div>
+      )}
+
+      {/* Add Modal */}
+      {view === "add" && (
+        <AddToHighlightsModalSales
+          selectedType={selectedType}
+          companyId={companyId}
+          onClose={() => setView("list")}
+          onSuccess={() => fetchProducts(selectedType)}
+        />
+      )}
+
+      {/* Notify Modal */}
+      {view === "notify" && (
+        <NotifyHighlightsModalSales
+          selectedType={selectedType}
+          products={products}
+          onClose={() => setView("list")}
+        />
       )}
     </div>
   );

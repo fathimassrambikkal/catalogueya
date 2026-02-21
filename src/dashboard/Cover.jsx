@@ -1,17 +1,19 @@
 import React, { useMemo, useEffect, useState } from "react";
-import {
-  FaWhatsapp,
-  FaMapMarkerAlt,
-  FaFacebook,
-  FaInstagram,
-  FaYoutube,
-  FaLinkedin,
-  FaPinterest,
-  FaSnapchat,
-  FaGooglePlusG,
-} from "react-icons/fa";
-import { FiEdit } from "react-icons/fi";
+import { FaMapMarkerAlt } from "react-icons/fa";
 
+import {
+  YoutubeIcon,
+  InstagramIcon,
+  FacebookIcon,
+  WhatsappIcon,
+  LinkedinIcon,
+  TwitterIcon,
+  PinterestIcon,
+  SnapchatIcon,
+} from "../components/SocialSvg";
+import { FiEdit } from "react-icons/fi";
+import { getImageUrl } from "../companyDashboardApi";
+ import {IconPhoneModern} from "./SvgIcons"
 export default function Cover({ companyInfo = {}, setActiveTab }) {
   // Use local state to prevent stale data
   const [localCompanyInfo, setLocalCompanyInfo] = useState({
@@ -35,7 +37,7 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
   // Update local state when companyInfo changes
   useEffect(() => {
     console.log("🔄 Cover component received new companyInfo:", companyInfo?.companyName || "No name");
-    
+
     // Reset to defaults first if no valid company info
     if (!companyInfo || Object.keys(companyInfo).length === 0) {
       setLocalCompanyInfo({
@@ -60,13 +62,13 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
 
     // Only update if we have valid data
     setLocalCompanyInfo({
-      companyName: companyInfo.companyName || "",
-      companyDescription: companyInfo.companyDescription || "",
-      contactMobile: companyInfo.contactMobile || "",
+      companyName: companyInfo.companyName || companyInfo.name || "",
+      companyDescription: companyInfo.companyDescription || companyInfo.description || "",
+      contactMobile: companyInfo.contactMobile || companyInfo.phone || companyInfo.mobile || "",
       address: companyInfo.address || "",
       specialties: Array.isArray(companyInfo.specialties) ? companyInfo.specialties : [],
-      logo: companyInfo.logo || null,
-      coverPhoto: companyInfo.coverPhoto || null,
+      logo: companyInfo.logo || companyInfo.logo_url || null,
+      coverPhoto: companyInfo.coverPhoto || companyInfo.cover_photo || companyInfo.banner || null,
       facebook: companyInfo.facebook || "",
       instagram: companyInfo.instagram || "",
       youtube: companyInfo.youtube || "",
@@ -97,50 +99,53 @@ export default function Cover({ companyInfo = {}, setActiveTab }) {
   } = localCompanyInfo;
 
   const coverSrc = useMemo(() => {
-  return typeof coverPhoto === "string" && coverPhoto.trim()
-    ? coverPhoto
-    : null;
-}, [coverPhoto]);
-const logoSrc = useMemo(() => {
-  return typeof logo === "string" && logo.trim()
-    ? logo
-    : null;
-}, [logo]);
+    return getImageUrl(coverPhoto);
+  }, [coverPhoto]);
+
+  const logoSrc = useMemo(() => {
+    return getImageUrl(logo);
+  }, [logo]);
 
 
-  const socialIcons = useMemo(
-    () => ({
-      facebook: { icon: <FaFacebook />, link: facebook },
-      instagram: { icon: <FaInstagram />, link: instagram },
-      youtube: { icon: <FaYoutube />, link: youtube },
-      linkedin: { icon: <FaLinkedin />, link: linkedin },
-      pinterest: { icon: <FaPinterest />, link: pinterest },
-      snapchat: { icon: <FaSnapchat />, link: snapchat },
-      whatsapp: {
-        icon: <FaWhatsapp />,
-        link: whatsapp
-          ? whatsapp.startsWith("http")
-            ? whatsapp
-            : `https://wa.me/${whatsapp.replace(/\D/g, "")}`
-          : "",
-      },
-      google: { icon: <FaGooglePlusG />, link: google },
-    }),
-    [facebook, instagram, youtube, linkedin, pinterest, snapchat, whatsapp, google]
-  );
+const SOCIAL_ICON_MAP = {
+  facebook: FacebookIcon,
+  instagram: InstagramIcon,
+  youtube: YoutubeIcon,
+  linkedin: LinkedinIcon,
+  pinterest: PinterestIcon,
+  snapchat: SnapchatIcon,
+  twitter: TwitterIcon,
+  tweeter: TwitterIcon,
+  whatsapp: WhatsappIcon,
+};
 
-  const activeSocialIcons = useMemo(
-    () => Object.entries(socialIcons).filter(([, obj]) => obj.link && obj.link.trim() !== ""),
-    [socialIcons]
-  );
+const activeSocialIcons = useMemo(() => {
+  const raw = {
+    facebook,
+    instagram,
+    youtube,
+    linkedin,
+    pinterest,
+    snapchat,
+    twitter: localCompanyInfo.twitter,
+    whatsapp: whatsapp
+      ? whatsapp.startsWith("http")
+        ? whatsapp
+        : `https://wa.me/${whatsapp.replace(/\D/g, "")}`
+      : "",
+  };
 
-  const iconChunks = useMemo(() => {
-    const rows = [];
-    for (let i = 0; i < activeSocialIcons.length; i += 3) {
-      rows.push(activeSocialIcons.slice(i, i + 3));
-    }
-    return rows;
-  }, [activeSocialIcons]);
+  return Object.entries(raw)
+    .filter(([, url]) => url && url.trim() !== "")
+    .map(([key, url]) => ({
+      key,
+      url,
+      Icon: SOCIAL_ICON_MAP[key],
+    }))
+    .filter(item => item.Icon);
+}, [facebook, instagram, youtube, linkedin, pinterest, snapchat, whatsapp]);
+
+
 
   // Debug log
   useEffect(() => {
@@ -151,179 +156,179 @@ const logoSrc = useMemo(() => {
       socialIconsCount: activeSocialIcons.length
     });
   }, [companyName, logo, coverPhoto, activeSocialIcons.length]);
+return (
+  <div className="relative w-full">
 
-  return (
-    <div className="relative w-full overflow-hidden shadow-md mb-6 max-w-full min-w-0">
-
-      {/* COVER PHOTO */}
-     <div className="w-full h-52 sm:h-48 md:h-56 lg:h-64 bg-gray-300 min-w-0">
-  {coverSrc && (
-  <img
-    src={coverSrc}
-    alt="Cover"
-    className="w-full h-full object-cover"
-  />
-)}
-</div>
-
-      {/* EDIT BUTTON */}
-      <button
-        onClick={() => setActiveTab("Settings")}
-        className="
-          absolute top-3 right-3 sm:top-4 sm:right-4 z-50 px-3 py-1.5 sm:px-4 sm:py-2
-          bg-gray-900/10 text-white rounded-lg sm:rounded-xl border border-white/20 
-          backdrop-blur-md flex items-center gap-2 transition-all duration-300
-          hover:scale-105 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]
-          min-w-0
-        "
-      >
-        <FiEdit className="text-xs sm:text-sm" />
-        <span className="hidden xs:inline">Edit</span>
-      </button>
-
-      {/* SOCIAL ICON DOCK */}
-      {activeSocialIcons.length > 0 && (
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-40 max-w-[calc(100%-24px)] min-w-0">
-          <div
-            className="
-              bg-white/20 backdrop-blur-md border border-white/20 p-2 sm:p-3 md:p-4
-              rounded-2xl shadow-[inset_1px_1px_2px_rgba(255,255,255,0.2)]
-              min-w-0
-            "
-          >
-            <div className="flex flex-col sm:flex-row gap-3 min-w-0">
-              {iconChunks.map((chunk, i) => (
-                <div key={i} className="flex gap-3 justify-center sm:justify-start min-w-0">
-                  {chunk.map(([key, { icon, link }]) => (
-                    <a
-                      key={key}
-                      href={link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="
-                        relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 
-                        flex items-center justify-center min-w-0
-                        text-white text-sm sm:text-base md:text-lg
-                        rounded-xl bg-white/20 border border-white/30
-                        backdrop-blur-md transition-all duration-300 group
-                        hover:bg-white/30 hover:scale-110 hover:-translate-y-1
-                      "
-                      onClick={(e) => {
-                        if (!link || link.trim() === "") {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <div className="z-10 group-hover:scale-110 transition-transform">
-                        {icon}
-                      </div>
-
-                      {/* Tooltip */}
-                      <div
-                        className="
-                          absolute -top-8 left-1/2 -translate-x-1/2 text-white text-[10px]
-                          bg-white/20 backdrop-blur-lg border border-white/30 px-2 py-1 rounded
-                          opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                          pointer-events-none whitespace-nowrap
-                        "
-                      >
-                        {key.charAt(0).toUpperCase() + key.slice(1)}
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+    {/* COMPACT COVER - minimal height */}
+    <div className="relative h-36 sm:h-40 md:h-48 overflow-hidden">
+      {coverSrc ? (
+        <img
+          src={coverSrc}
+          alt="Cover"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800" />
       )}
+      
+      {/* Ultra-minimal overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+    </div>
 
-      {/* COMPANY INFO BLOCK */}
-      <div className="absolute bottom-0 left-0 w-full p-4 flex items-start gap-3 sm:gap-4 min-w-0">
-
-      {/* LOGO */}
-<div
+    {/* CONTENT - directly overlapping */}
+    <div className="relative px-4 -mt-12 sm:-mt-14 md:-mt-16">
+      
+      {/* Main card - floating minimal */}
+ <div
   className="
-    w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 min-w-0
-    rounded-lg sm:rounded-xl overflow-hidden 
-    border border-white/20 backdrop-blur-md
-    shadow-[inset_1px_1px_2px rgba(255,255,255,0.2)]
+    relative
+    bg-white
+    
+  
+
+    px-[clamp(24px,5vw,60px)]
+    py-[clamp(28px,5vw,60px)]
+    p-2 sm:p-4
+
+    rounded-[28px]
+
   "
 >
-  {logoSrc ? (
-    <img
-      src={logoSrc}
-      alt="Logo"
-      className="w-full h-full object-contain p-1"
-    />
-  ) : (
-    <div className="w-full h-full flex items-center justify-center text-white/50 text-xs">
-      No Logo
-    </div>
-  )}
-</div>
+        <div className="flex items-start gap-3 sm:gap-4">
 
+          {/* LOGO - smaller */}
+          <div className="
+            w-16 h-16 sm:w-20 sm:h-20
+            rounded-xl sm:rounded-2xl
+            overflow-hidden
+            ring-2 ring-white/50
+            shadow-md
+            flex-shrink-0
+            
+          ">
+            {logoSrc ? (
+              <img
+                src={logoSrc}
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white/60 text-xs">
+                Logo
+              </div>
+            )}
+          </div>
 
-        {/* TEXT BLOCK */}
-        <div className="flex-1 min-w-0">
-
-          <h1 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-bold truncate">
-            {companyName || "Company Name"}
-          </h1>
-
-          <p className="text-white text-xs sm:text-sm opacity-90 mt-1 line-clamp-2 min-w-0">
-            {companyDescription || "Company Description"}
-          </p>
-
-          {/* Specialties */}
-          {specialties.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2 min-w-0">
-              {specialties.map((s, index) => (
-                <span
-                  key={`${s}-${index}`}
-                  className="
-                    px-2 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-full 
-                    text-white bg-gray-900/10 border border-white/20 
-                    backdrop-blur-sm max-w-full truncate min-w-0
-                  "
-                >
-                  {s}
-                </span>
-              ))}
+          {/* TEXT AREA */}
+          <div className="flex-1 min-w-0 space-y-1.5">
+            
+            {/* Title row with edit button */}
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="
+                text-gray-900
+                font-semibold
+                text-base sm:text-lg
+                truncate
+              ">
+                {companyName || "Company Name"}
+              </h2>
+              
+              {/* EDIT BUTTON - small */}
+              <button
+                onClick={() => setActiveTab("Settings")}
+                className="
+                  w-7 h-7 sm:w-8 sm:h-8
+                  rounded-full
+                  bg-gray-100
+                  flex items-center justify-center
+                  text-gray-600
+                  hover:bg-gray-200
+                  transition-colors
+                  flex-shrink-0
+                "
+                aria-label="Edit profile"
+              >
+                <FiEdit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </button>
             </div>
-          )}
 
-          {/* Contact Info */}
-          <div className="flex flex-wrap gap-2 mt-2 min-w-0">
+            {/* Description - minimal */}
+            <p className="
+              text-gray-500
+              text-xs sm:text-sm
+              line-clamp-2
+              leading-relaxed
+            ">
+              {companyDescription || "Company Description"}
+            </p>
 
-            {contactMobile && (
-              <div
-                className="
-                  px-3 py-1 rounded-md text-xs sm:text-sm text-white 
-                  bg-gray-900/10 border border-white/20 backdrop-blur-sm min-w-0
-                "
-              >
-                {contactMobile}
+            {/* Specialties - tiny chips */}
+            {specialties.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {specialties.slice(0, 3).map((s, index) => (
+                  <span
+                    key={`${s}-${index}`}
+                    className="
+                      px-2 py-0.5
+                      text-[10px] sm:text-xs
+                      bg-gray-100
+                      text-gray-600
+                      rounded-full
+                    "
+                  >
+                    {s}
+                  </span>
+                ))}
               </div>
             )}
 
-            {address && (
-              <div
-                className="
-                  flex items-center gap-2 px-3 py-1 rounded-md text-xs sm:text-sm text-white 
-                  bg-gray-900/10 border border-white/20 backdrop-blur-sm min-w-0
-                "
-              >
-                <FaMapMarkerAlt className="text-white/80 text-xs flex-shrink-0" />
-                <span className="truncate max-w-[150px] sm:max-w-xs min-w-0">
-                  {address}
-                </span>
-              </div>
-            )}
+      {/* Contact row - compact */}
+<div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-gray-500">
 
+  {contactMobile && (
+    <span className="flex items-center gap-1.5">
+      <IconPhoneModern className="w-3.5 h-3.5 text-gray-900" />
+      {contactMobile}
+    </span>
+  )}
+
+  {address && (
+    <span className="flex items-center gap-1.5 truncate max-w-[150px]">
+      <FaMapMarkerAlt className="w-3 h-3 text-gray-400" />
+      <span className="truncate">{address}</span>
+    </span>
+  )}
+
+</div>
           </div>
         </div>
+
+        {/* Social Icons - minimal */}
+        {activeSocialIcons.length > 0 && (
+          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-gray-100">
+            {activeSocialIcons.map(({ key, url, Icon }) => (
+              <a
+                key={key}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  w-7 h-7 sm:w-8 sm:h-8
+                  rounded-full
+                  bg-gray-50
+                  hover:bg-gray-100
+                  flex items-center justify-center
+                  text-gray-500 hover:text-gray-700
+                  transition-colors
+                "
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 }

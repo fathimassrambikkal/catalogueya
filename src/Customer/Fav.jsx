@@ -14,7 +14,7 @@ import {
   removeFromFavorite,
 } from "../api";
 import SmartImage from "../components/SmartImage";
-import { log, warn, error } from "../utils/logger";
+import { log, warn } from "../utils/logger";
 
 
 function Fav() {
@@ -91,11 +91,7 @@ function Fav() {
     </svg>
   );
 
-  const RefreshIcon = () => (
-    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-    </svg>
-  );
+
 
   const SmallDeleteIcon = () => (
     <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
@@ -433,17 +429,17 @@ function Fav() {
   };
 
   // ================= RENDER LIST CARD =================
-  const renderListCard = (list) => {
+
+
+ const renderListCard = (list) => {
     const displayAllProducts = list.products.length > 4;
     
     return (
       <div
         key={list.id}
         className={`flex flex-col sm:flex-row items-stretch sm:items-start justify-between p-3 sm:p-4 md:p-6 rounded-2xl mb-3 sm:mb-4 transition-all duration-200
-        bg-white/80 backdrop-blur-lg border ${list.isOptimistic ? 'border-yellow-200/60' : 'border-gray-200/60'}
-        shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]
-        hover:shadow-[3px_3px_15px_rgba(0,0,0,0.08),-3px_-3px_15px_rgba(255,255,255,0.8)]
-        hover:border-blue-200/60  w-full overflow-hidden max-w-full
+       bg-white/80 backdrop-blur-xl  border border-gray-200/60
+          w-full  max-w-full relative 
         ${list.isOptimistic ? 'opacity-90' : ''}`}
       >
         {list.isOptimistic && (
@@ -453,68 +449,111 @@ function Fav() {
         )}
         
         {/* Content area */}
-        <div className="flex-1 min-w-0 mb-3 sm:mb-0 sm:mr-4 overflow-hidden">
+        <div className="flex-1 min-w-0 mb-3 sm:mb-0 sm:mr-4 ">
           {/* List header with name and action buttons inline */}
           <div className="flex flex-row items-center justify-between mb-3 sm:mb-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <h3 className="font-semibold text-gray-900 text-sm sm:text-base md:text-lg break-words leading-tight">
+              <h3 className="font-semibold text-gray-900 tracking-tighter text-sm sm:text-base md:text-lg break-words leading-tight">
                 {list.name}
               </h3>
             </div>
             
-            {/* Action Buttons */}
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 ml-2 sm:ml-4">
-              {/* Share - Disabled for default list */}
-              <button
-                onClick={() => !list.isDefault && handleShare(list)}
-                disabled={list.isDefault || list.isOptimistic}
-                title={list.isDefault ? "Cannot share default list" : "Share"}
-                className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-xl
-                bg-white/80 border border-gray-200
-                flex items-center justify-center transition
-                ${
-                  list.isDefault || list.isOptimistic
-                    ? "text-gray-300 cursor-not-allowed"
-                    : "text-gray-500 hover:text-blue-500 hover:bg-blue-50"
-                }`}
-              >
-                <ShareIcon />
-              </button>
 
-              {/* Edit - Disabled for default list */}
-              <button
-                onClick={() => !list.isDefault && setEditModal({ isOpen: true, list, newName: list.name })}
-                disabled={list.isDefault || list.isOptimistic}
-                title={list.isDefault ? "Cannot edit default list" : "Edit"}
-                className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-xl
-                bg-white/80 border border-gray-200
-                flex items-center justify-center transition
-                ${
-                  list.isDefault || list.isOptimistic
-                    ? "text-gray-300 cursor-not-allowed"
-                    : "text-gray-500 hover:text-green-600 hover:bg-green-50"
-                }`}
-              >
-                <EditIcon />
-              </button>
+{/* action buttons */}
+            
+<div
+  className="
+    flex items-center gap-1.5
+    px-2 py-1
+    rounded-full
 
-              {/* Delete List - Disabled for default list */}
-              <button
-                onClick={() => !list.isDefault && setDeleteModal({ isOpen: true, list })}
-                disabled={list.isDefault || list.isOptimistic}
-                title={list.isDefault ? "Cannot delete default list" : "Delete List"}
-                className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-xl
-                bg-white/80 border border-gray-200
-                flex items-center justify-center transition
-                ${
-                  list.isDefault || list.isOptimistic
-                    ? "text-gray-300 cursor-not-allowed"
-                    : "text-gray-500 hover:text-red-600 hover:bg-red-50"
-                }`}
-              >
-                <DeleteIcon />
-              </button>
-            </div>
+    bg-white/40
+    backdrop-blur-xl backdrop-saturate-150
+
+    border border-white/40
+    shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.6)]
+  "
+>
+  {/* Share */}
+  <button
+    onClick={() => handleShare(list)}
+    disabled={list.isDefault || list.isOptimistic}
+    title="Share"
+    className={`
+      w-8 h-8 rounded-full
+      flex items-center justify-center
+      transition-all duration-200 ease-out
+
+      ${
+        list.isDefault || list.isOptimistic
+          ? "text-gray-300 cursor-not-allowed"
+          : `
+            text-gray-700
+            hover:bg-white/60
+            hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]
+            active:scale-90
+          `
+      }
+    `}
+  >
+    <ShareIcon />
+  </button>
+
+  {/* Edit */}
+  <button
+    onClick={() =>
+      setEditModal({ isOpen: true, list, newName: list.name })
+    }
+    disabled={list.isDefault || list.isOptimistic}
+    title="Rename"
+    className={`
+      w-8 h-8 rounded-full
+      flex items-center justify-center
+      transition-all duration-200 ease-out
+
+      ${
+        list.isDefault || list.isOptimistic
+          ? "text-gray-300 cursor-not-allowed"
+          : `
+            text-gray-700
+            hover:bg-white/60
+            hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]
+            active:scale-90
+          `
+      }
+    `}
+  >
+    <EditIcon />
+  </button>
+
+  {/* Delete */}
+  <button
+    onClick={() => setDeleteModal({ isOpen: true, list })}
+    disabled={list.isDefault || list.isOptimistic}
+    title="Delete"
+    className={`
+      w-8 h-8 rounded-full
+      flex items-center justify-center
+      transition-all duration-200 ease-out
+
+      ${
+        list.isDefault || list.isOptimistic
+          ? "text-gray-300 cursor-not-allowed"
+          : `
+            text-red-500
+            hover:bg-red-500/10
+            hover:shadow-[0_4px_12px_rgba(239,68,68,0.25)]
+            active:scale-90
+          `
+      }
+    `}
+  >
+    <DeleteIcon />
+  </button>
+</div>
+
+
+
           </div>
           
           {/* Product preview */}
@@ -527,65 +566,100 @@ function Fav() {
                     const imageForSmartImage = getImageForSmartImage(product.image);
                     return (
                       <div key={index} className="relative group">
-                        <div onClick={() => handleProductClick(product)} className="cursor-pointer">
+                        <div onClick={() => handleProductClick(product)} className="cursor-pointer w-14 h-14 sm:w-20 sm:h-20 rounded-xl overflow-hidden relative
+                          bg-white/60 backdrop-blur-sm border border-gray-200/50
+                          shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]
+                          hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_2px_rgba(255,255,255,0.8)]
+                          transition-all duration-200 hover:scale-105">
+                          {/* Glass overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent z-0" />
+                          
                           {imageForSmartImage ? (
                             <SmartImage
                               image={imageForSmartImage}
                               alt={product.name}
-                              className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover
-                                       hover:scale-105 transition-transform"
+                              className="absolute inset-0 w-full h-full object-cover"
                               loading="lazy"
                               decoding="async"
                             />
                           ) : (
-                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 border border-gray-200 
-                                            flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
                               <span className="text-gray-400 text-xs">📷</span>
                             </div>
                           )}
+                          
+                          {/* Product name on hover */}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-1.5
+                            opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <p className="text-[10px] sm:text-xs text-white font-medium truncate">{product.name}</p>
+                          </div>
                         </div>
+{/* remove icon on image */}
+                     <button
+  onClick={(e) => {
+    e.stopPropagation();
+    handleRemoveProduct(product.id, list.id);
+  }}
+  className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full
+    bg-white/90 backdrop-blur-md border border-gray-200
+    shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+    text-gray-500 hover:text-red-600
+    flex items-center justify-center
+    hover:bg-red-50 hover:scale-110
+    transition-all duration-200 z-10"
+  title="Remove from list"
+>
+  <svg
+    viewBox="0 0 24 24"
+    className="w-2.5 h-2.5 sm:w-3 sm:h-3"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+  >
+    <path d="M6 6l12 12" />
+    <path d="M18 6l-12 12" />
+  </svg>
+</button>
 
-                        {/* Remove button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveProduct(product.id, list.id);
-                          }}
-                          className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white rounded-full 
-                                   flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm z-10"
-                          title="Remove from list"
-                        >
-                          <SmallDeleteIcon />
-                        </button>
                       </div>
                     );
                   })}
                 </div>
               ) : (
                 // When more than 4 products: show ALL in wrapped rows
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1">
                   {list.products.map((product, index) => {
                     const imageForSmartImage = getImageForSmartImage(product.image);
                     return (
                       <div key={index} className="relative">
-                        <div onClick={() => handleProductClick(product)} className="cursor-pointer">
+                        <div onClick={() => handleProductClick(product)} className="cursor-pointer w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden relative
+                          bg-white/60 backdrop-blur-sm border border-gray-200/50
+                          shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)]
+                          hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_2px_rgba(255,255,255,0.8)]
+                          transition-all duration-200 hover:scale-105">
+                          {/* Glass overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent z-0" />
+                          
                           {imageForSmartImage ? (
                             <SmartImage
                               image={imageForSmartImage}
                               alt={product.name}
-                              className="
-                                w-14 h-14 sm:w-16 sm:h-16
-                                rounded-lg object-cover
-                                hover:scale-105 transition-transform
-                              "
+                              className="absolute inset-0 w-full h-full object-cover"
                               loading="lazy"
                               decoding="async"
                             />
                           ) : (
-                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
                               <span className="text-gray-400 text-xs">📷</span>
                             </div>
                           )}
+                          
+                          {/* Product name on hover */}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-1
+                            opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <p className="text-[9px] text-white font-medium truncate">{product.name}</p>
+                          </div>
                         </div>
 
                         {/* Delete button */}
@@ -594,16 +668,16 @@ function Fav() {
                             e.stopPropagation();
                             handleRemoveProduct(product.id, list.id);
                           }}
-                          className="
-                            absolute -top-1 -right-1
-                            w-4 h-4 sm:w-5 sm:h-5
-                            bg-red-500 text-white rounded-full
+                          className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full
+                            bg-white/90 backdrop-blur-md border border-gray-200
+                            shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+                            text-gray-700 hover:text-red-600
                             flex items-center justify-center
-                            hover:bg-red-600 transition-colors
-                            shadow-sm z-10
-                          "
+                            hover:bg-red-50 hover:scale-110
+                            transition-all duration-200 z-10"
+                          title="Remove from list"
                         >
-                          <SmallDeleteIcon />
+                          <SmallDeleteIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         </button>
                       </div>
                     );
@@ -627,7 +701,7 @@ function Fav() {
             
             transition-all duration-300
             hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_8px_32px_rgba(0,0,0,0.06)]
-            glass-effect w-full overflow-hidden max-w-full">
+            glass-effect w-full  max-w-full ">
       <h3 className="font-semibold text-gray-900 text-sm sm:text-base md:text-lg mb-3 sm:mb-4 break-words">
         Create New List
       </h3>
@@ -675,44 +749,60 @@ function Fav() {
     <>
       <ErrorNotification />
       
-      <div className="min-h-full p-3 sm:p-4 md:p-6 overflow-x-hidden w-full max-w-full">
-        <div className="w-full max-w-full mx-auto mt-10 overflow-hidden">
+      <div className="
+  min-h-full 
+  px-[clamp(1rem,4vw,3rem)]
+  pt-[clamp(2rem,6vw,4rem)]
+  pb-[clamp(2rem,6vw,4rem)]
+  overflow-x-hidden  mt-28 md:mt-10
+">
+        <div className="w-full max-w-full mx-auto  ">
           {/* ✅ UPDATED HEADER: Apple-style header with top-right button */}
-          <div className="relative mb-4 sm:mb-6 mt-10">
-            {/* Centered title */}
-            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 text-center">
-              My Favorites Lists
-            </h1>
+     <div className="
+  flex items-center justify-between
+  mb-[clamp(1.5rem,4vw,3rem)]
+">
 
-            {/* Right-aligned action */}
-            <button
-              onClick={() => setIsCreating(true)}
-              className="
-                absolute right-0 top-1/2 -translate-y-1/2
-                flex items-center gap-2
-                px-3  md:px-4 py-1.5 md:py-2.5
-                rounded-lg
+  {/* Title */}
+  <h1 className="
+   
+    tracking-tight
+   text-2xl sm:text-3xl font-semibold  text-gray-900
+  ">
+    My Favorites
+  </h1>
 
-                bg-blue-500/90
-                backdrop-blur-xl
-                text-white font-semibold text-sm sm:text-base
+  {/* Button */}
+  <button
+    onClick={() => setIsCreating(true)}
+    className="
+      flex items-center gap-2
+      px-[clamp(0.75rem,1.5vw,1.25rem)]
+      py-[clamp(0.4rem,1vw,0.75rem)]
+      rounded-xl
 
-                shadow-[0_8px_24px_rgba(59,130,246,0.35)]
-                hover:bg-blue-500
+      bg-blue-500/90
+      text-white
+      font-semibold
+      text-[clamp(0.8rem,1.2vw,1rem)]
 
-                transition-all duration-200
-                active:scale-95
-              "
-            >
-              <span className="text-lg leading-none">+</span>
-              <span className="hidden md:inline">New List</span>
-            </button>
-          </div>
+      shadow-[0_8px_24px_rgba(59,130,246,0.35)]
+      hover:bg-blue-600
+      transition-all duration-200
+      active:scale-95
+    "
+  >
+    <span className="text-[clamp(1rem,1.5vw,1.3rem)] leading-none">+</span>
+    New List
+  </button>
+
+</div>
+
 
           {/* ✅ Create form under header (only when active) */}
           {isCreating && renderCreateListForm()}
 
-          <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-hidden">
+          <div className="space-y-3 sm:space-y-4 w-full max-w-full ">
             {/* Always show the default list first */}
             {defaultList && renderListCard(defaultList)}
             

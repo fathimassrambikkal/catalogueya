@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate ,useLocation } from "react-router-dom";
-import ReviewModal from "../components/ReviewModal";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import ReviewModal from "../components/ReviewModal2";
 import SimilarProducts from "../components/SimilarProducts";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
-import { createCustomerConversation,getProductReviews,addProductReview} from "../api";
+import { createCustomerConversation, getProductReviews, addProductReview, shareProduct } from "../api";
 import { error as logError, warn } from "../utils/logger";
 import { showToast } from "../utils/showToast";
 
@@ -28,37 +28,37 @@ const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 // ✅ Helper to normalize image data
 const normalizeImage = (image) => {
   if (!image) return null;
-  
+
   // If image is an object with avif/webp, return as-is
   if (typeof image === 'object' && !Array.isArray(image)) {
     return image;
   }
-  
+
   // If it's already a string, return as-is
   if (typeof image === 'string') return image;
-  
+
   return null;
 };
 
 // ✅ Helper to get fallback URL for error handling
 const getFallbackUrl = (imgData) => {
   if (!imgData) return "/api/placeholder/400/400";
-  
+
   if (typeof imgData === 'string') {
-    return imgData.startsWith("http") 
-      ? imgData 
+    return imgData.startsWith("http")
+      ? imgData
       : `${API_BASE_URL}/${imgData.replace(/^\//, "")}`;
   }
-  
+
   if (typeof imgData === 'object') {
     const webp = imgData.webp || imgData.url || imgData.path;
     if (webp) {
-      return webp.startsWith("http") 
-        ? webp 
+      return webp.startsWith("http")
+        ? webp
         : `${API_BASE_URL}/${webp.replace(/^\//, "")}`;
     }
   }
-  
+
   return "/api/placeholder/400/400";
 };
 
@@ -119,16 +119,16 @@ const getCountryFromIP = async () => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
+
     try {
       const res = await fetch("https://ipapi.co/json/", {
         signal: controller.signal,
         headers: { 'Accept': 'application/json' }
       });
       clearTimeout(timeoutId);
-      
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       const data = await res.json();
       return data.country_name;
     } catch (fetchError) {
@@ -140,16 +140,16 @@ const getCountryFromIP = async () => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       try {
         const res = await fetch("https://ipwho.is/", {
           signal: controller.signal,
           headers: { 'Accept': 'application/json' }
         });
         clearTimeout(timeoutId);
-        
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
+
         const data = await res.json();
         return data.country;
       } catch (fallbackError) {
@@ -165,7 +165,7 @@ const getCountryFromIP = async () => {
 //  Build payload for showProduct API
 const buildShowProductPayload = async () => {
   let country = null;
-  
+
   try {
     country = await getCountryFromIP();
   } catch (error) {
@@ -194,7 +194,7 @@ export default function SalesProductProfile() {
   const resolvedProductId = routeProductId || productId || pid;
   const { fixedWords } = useFixedWords();
   const { i18n } = useTranslation();
-const location = useLocation();
+  const location = useLocation();
   // shortcut like Sales component
   const fw = fixedWords?.fixed_words || {};
 
@@ -208,7 +208,7 @@ const location = useLocation();
   const [reviewRating, setReviewRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
- const [showAllReviews, setShowAllReviews] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
 
   const isFavourite = product ? favourites.some((f) => f.id === product.id) : false;
@@ -216,10 +216,10 @@ const location = useLocation();
   //  Function to refresh product data
   const refreshProductData = useCallback(async () => {
     if (!resolvedProductId) return;
-    
+
     try {
       setLoading(true);
-      
+
       let productResponse;
       try {
         const payload = await buildShowProductPayload();
@@ -228,7 +228,7 @@ const location = useLocation();
         const simplePayload = { device: navigator.userAgent };
         productResponse = await getProduct(resolvedProductId, simplePayload);
       }
-      
+
       const productData = productResponse?.data?.data?.product || productResponse?.data?.product;
 
       if (!productData) {
@@ -241,7 +241,7 @@ const location = useLocation();
       const transformedProduct = {
         id: productData.id,
         name: productData.name,
-        
+
         // Use sale.price_after for current price, fallback to productData.price
         price: sale?.price_after
           ? Number(sale.price_after).toFixed(2)
@@ -273,7 +273,7 @@ const location = useLocation();
       };
 
       setProduct(transformedProduct);
-      
+
       const mainImage = normalizeImage(productData.image) || transformedProduct.albums?.[0] || null;
       setSelectedImage(mainImage);
 
@@ -309,7 +309,7 @@ const location = useLocation();
     const handleProductsUpdated = (event) => {
       if (event.detail && event.detail.products) {
         const updatedProduct = event.detail.products.find((p) => p.id === resolvedProductId);
-        
+
         if (updatedProduct) {
           refreshProductData();
         } else if (event.detail.companyId === product?.company_id) {
@@ -320,7 +320,7 @@ const location = useLocation();
 
     window.addEventListener('productsUpdated', handleProductsUpdated);
     window.addEventListener('companyProductsUpdated', handleProductsUpdated);
-    
+
     return () => {
       window.removeEventListener('productsUpdated', handleProductsUpdated);
       window.removeEventListener('companyProductsUpdated', handleProductsUpdated);
@@ -362,7 +362,7 @@ const location = useLocation();
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
-          
+
           // Use sale data for prices
           price: sale?.price_after
             ? Number(sale.price_after).toFixed(2)
@@ -382,8 +382,8 @@ const location = useLocation();
           discount_percent: sale?.discount_value || null,
           albums: Array.isArray(productData.albums)
             ? productData.albums
-                .map(a => normalizeImage(a)) // ✅ Normalize album images
-                .filter(Boolean)
+              .map(a => normalizeImage(a)) // ✅ Normalize album images
+              .filter(Boolean)
             : [],
           isOnSale: Boolean(sale),
           sale: sale,
@@ -393,7 +393,7 @@ const location = useLocation();
 
         // Set product IMMEDIATELY for instant rendering
         setProduct(transformedProduct);
-        
+
         const mainImage = normalizeImage(productData.image) || transformedProduct.albums?.[0] || null;
         setSelectedImage(mainImage);
 
@@ -461,8 +461,8 @@ const location = useLocation();
       if (!product) return;
 
       const token =
-   localStorage.getItem("token") ||
-   sessionStorage.getItem("token");
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token");
       const userType = localStorage.getItem("userType");
 
       // Normalize company ID (VERY IMPORTANT)
@@ -520,12 +520,12 @@ const location = useLocation();
 
         // ✅ MAP API → UI FORMAT
         const mappedReviews = apiReviews.map((r) => ({
-          id: r.review_id,                          
-          name: r.user?.name || "Anonymous",        
-          rating: Number(r.rating) || 0,            
-          comment: r.comment || "",                 
+          id: r.review_id,
+          name: r.user?.name || "Anonymous",
+          rating: Number(r.rating) || 0,
+          comment: r.comment || "",
           date: new Date(r.created_at).toLocaleDateString(),
-          userImage: r.user?.image || null,       
+          userImage: r.user?.image || null,
         }));
 
         setReviews(mappedReviews);
@@ -539,7 +539,7 @@ const location = useLocation();
     fetchReviews();
   }, [resolvedProductId]);
 
-  
+
 
   const averageRating =
     reviews.length > 0
@@ -549,16 +549,28 @@ const location = useLocation();
   const handleShare = async () => {
     if (!product) return;
 
+    let shareUrl = window.location.href;
+
+    try {
+      const res = await shareProduct(product.id);
+      if (res.data?.status && res.data?.data?.share_url) {
+        shareUrl = res.data.data.share_url;
+      }
+    } catch (err) {
+      logError("Share API failed", err);
+    }
+
     const shareData = {
       title: product.name,
       text: `Check out this sale product: ${product.name} from ${product.company_name}`,
-      url: window.location.href,
+      url: shareUrl,
     };
+
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(shareUrl);
         showToast(fw.link_copied || "Link copied");
       }
     } catch (err) {
@@ -567,55 +579,55 @@ const location = useLocation();
   };
 
   const handleReviewSubmit = async () => {
-  if (!reviewText || reviewRating === 0) {
-    showToast(fw.fill_all_fields || "Please enter rating and comment", { type: "warning" });
-    return;
-  }
+    if (!reviewText || reviewRating === 0) {
+      showToast(fw.fill_all_fields || "Please enter rating and comment", { type: "warning" });
+      return;
+    }
 
-  try {
-    await addProductReview(
-      resolvedProductId,
-      reviewRating,
-      reviewText.trim()
-    );
+    try {
+      await addProductReview(
+        resolvedProductId,
+        reviewRating,
+        reviewText.trim()
+      );
 
-    // ✅ Optimistic UI update
-    const newRev = {
-      id: Date.now(),
-      name: auth?.user?.name || "You",
-      rating: reviewRating,
-      comment: reviewText,
-      date: new Date().toLocaleDateString(),
-    };
+      // ✅ Optimistic UI update
+      const newRev = {
+        id: Date.now(),
+        name: auth?.user?.name || "You",
+        rating: reviewRating,
+        comment: reviewText,
+        date: new Date().toLocaleDateString(),
+      };
 
-    setReviews((prev) => [...prev, newRev]);
-    setShowReviewModal(false);
-    setReviewText("");
-    setReviewRating(0);
+      setReviews((prev) => [...prev, newRev]);
+      setShowReviewModal(false);
+      setReviewText("");
+      setReviewRating(0);
 
-    showToast(fw.review_success || "Review submitted", { type: "success" });
+      showToast(fw.review_success || "Review submitted", { type: "success" });
 
-  } catch (error) {
-   showToast(
-   error?.response?.data?.message || fw.review_failed || "Review failed",
-   { type: "error" }
- );
-  }
-};
-useEffect(() => {
-  if (!auth?.user) return;
-  if (!product) return;
+    } catch (error) {
+      showToast(
+        error?.response?.data?.message || fw.review_failed || "Review failed",
+        { type: "error" }
+      );
+    }
+  };
+  useEffect(() => {
+    if (!auth?.user) return;
+    if (!product) return;
 
-  const params = new URLSearchParams(location.search);
-  const action = params.get("action");
+    const params = new URLSearchParams(location.search);
+    const action = params.get("action");
 
-  if (action === "review") {
-    setShowReviewModal(true);
+    if (action === "review") {
+      setShowReviewModal(true);
 
-    // 🧹 clean URL after opening modal
-    navigate(location.pathname, { replace: true });
-  }
-}, [auth?.user, product]);
+      // 🧹 clean URL after opening modal
+      navigate(location.pathname, { replace: true });
+    }
+  }, [auth?.user, product]);
 
 
   const handleImageClick = (imgData) => {
@@ -627,7 +639,7 @@ useEffect(() => {
     ? reviews
     : reviews.slice(0, 2);
 
-  
+
 
   // Only show error if we have no product AND an error occurred
   if (error && !product) {
@@ -683,7 +695,7 @@ useEffect(() => {
         <div className="relative flex flex-col md:sticky md:top-24 h-fit w-full transform-gpu">
           {/* MAIN IMAGE WRAPPER */}
           <div className="relative w-full h-[520px] md:h-[620px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm transform-gpu">
-            
+
             {/* ✅ MAIN IMAGE with SmartImage */}
             {product ? (
               <SmartImage
@@ -741,9 +753,8 @@ useEffect(() => {
                 <HeartIcon
                   filled={isFavourite}
                   className={`w-[clamp(12px,1.1vw,16px)]
-              h-[clamp(12px,1.1vw,16px)] ${
-                    isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
-                  }`}
+              h-[clamp(12px,1.1vw,16px)] ${isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                    }`}
                 />
               </PremiumIconButton>
 
@@ -855,72 +866,71 @@ useEffect(() => {
             )}
           </div>
 
-         {/* Price + rating */}
-<div className="space-y-2 transform-gpu">
-  {product ? (
-    <>
-      {/* PRICE ROW */}
-      <div
-  className="flex items-end gap-3 transform-gpu"
-  dir={i18n.language === "ar" ? "rtl" : "ltr"}
->
-  {/* NEW PRICE */}
-  <span
-    className="text-3xl font-semibold text-gray-900 transform-gpu"
-    dir="ltr"
-  >
-    {product.price}
-  </span>
+          {/* Price + rating */}
+          <div className="space-y-2 transform-gpu">
+            {product ? (
+              <>
+                {/* PRICE ROW */}
+                <div
+                  className="flex items-end gap-3 transform-gpu"
+                  dir={i18n.language === "ar" ? "rtl" : "ltr"}
+                >
+                  {/* NEW PRICE */}
+                  <span
+                    className="text-3xl font-semibold text-gray-900 transform-gpu"
+                    dir="ltr"
+                  >
+                    {product.price}
+                  </span>
 
-  {/* OLD PRICE */}
-  {product.oldPrice && (
-    <span
-      className="text-sm text-gray-400 line-through transform-gpu"
-      dir="ltr"
-    >
-      {product.oldPrice}
-    </span>
-  )}
+                  {/* OLD PRICE */}
+                  {product.oldPrice && (
+                    <span
+                      className="text-sm text-gray-400 line-through transform-gpu"
+                      dir="ltr"
+                    >
+                      {product.oldPrice}
+                    </span>
+                  )}
 
-  {/* CURRENCY */}
-  <span className="text-sm font-medium text-gray-500 transform-gpu">
-    {fw.qar || "QAR"}
-  </span>
-</div>
+                  {/* CURRENCY */}
+                  <span className="text-sm font-medium text-gray-500 transform-gpu">
+                    {fw.qar || "QAR"}
+                  </span>
+                </div>
 
 
-      {/* ⭐ Rating */}
-      <div className="flex items-center gap-1 pt-2 transform-gpu">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <StarIcon
-            key={i}
-            filled={i < Math.round(averageRating)}
-            className={`w-4 h-4 transform-gpu ${
-              i < Math.round(averageRating)
-                ? "text-gray-900"
-                : "text-gray-400"
-            }`}
-          />
-        ))}
-        <span className="text-sm text-gray-600 transform-gpu">
-          {averageRating.toFixed(1)}
-        </span>
-      </div>
-    </>
-  ) : (
-    <>
-      <div className="h-8 w-40 bg-gray-100 rounded animate-pulse" />
-      <div className="flex items-center gap-1">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="w-4 h-4 bg-gray-100 rounded animate-pulse" />
-        ))}
-      </div>
-    </>
-  )}
-</div>
+                {/* ⭐ Rating */}
+                <div className="flex items-center gap-1 pt-2 transform-gpu">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <StarIcon
+                      key={i}
+                      filled={i < Math.round(averageRating)}
+                      className={`w-4 h-4 transform-gpu ${i < Math.round(averageRating)
+                        ? "text-gray-900"
+                        : "text-gray-400"
+                        }`}
+                    />
+                  ))}
+                  <span className="text-sm text-gray-600 transform-gpu">
+                    {averageRating.toFixed(1)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-8 w-40 bg-gray-100 rounded animate-pulse" />
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-4 h-4 bg-gray-100 rounded animate-pulse" />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-          
-         
+
+
 
           {/* Product Details */}
           <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3 transform-gpu">
@@ -940,77 +950,75 @@ useEffect(() => {
           </div>
 
           {/* Write Review Button */}
-         <button
-  onClick={(e) => {
-    e.stopPropagation();
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
 
-    // 🚫 Guest → redirect to login with intent
-    if (!auth?.user) {
-     navigate(
-  `/sign?redirect=/salesproduct/${resolvedProductId}&action=review`
-);
-      return;
-    }
+              // 🚫 Guest → redirect to login with intent
+              if (!auth?.user) {
+                navigate(
+                  `/sign?redirect=/salesproduct/${resolvedProductId}&action=review`
+                );
+                return;
+              }
 
-    // ✅ Logged-in customer → open modal
-    setShowReviewModal(true);
-  }}
-  disabled={!product}
-  className={`inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl transition active:scale-95 ${
-    product
-      ? "bg-gray-900 text-white hover:bg-gray-800"
-      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-  }`}
->
-  {product ? fw.write_review : "Loading..."}
-</button>
+              // ✅ Logged-in customer → open modal
+              setShowReviewModal(true);
+            }}
+            disabled={!product}
+            className={`inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl transition active:scale-95 ${product
+              ? "bg-gray-900 text-white hover:bg-gray-800"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+          >
+            {product ? fw.write_review : "Loading..."}
+          </button>
 
 
-      {/* Customer Reviews */}
-<div className="space-y-3 transform-gpu">
-  <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between">
-    {fw.customer_reviews}
-  
-  </h3>
+          {/* Customer Reviews */}
+          <div className="space-y-3 transform-gpu">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between">
+              {fw.customer_reviews}
 
-  {product && reviews.length > 0 ? (
-    <>
-      {/* Show only first 2 reviews */}
-     {visibleReviews.map((rev) => (
-        <div
-          key={rev.id}
-          className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
-        >
-          <div className="flex justify-between mb-1">
-            <span className="font-semibold text-gray-800">{rev.name}</span>
-            <span className="text-gray-500 text-xs">{rev.date}</span>
-          </div>
+            </h3>
 
-          <div className="flex items-center  gap-1 mb-1">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <StarIcon
-                key={i}
-                filled={i < getSafeRating(rev.rating)}
-                className={`w-4 h-4 ${
-                  i < getSafeRating(rev.rating)
-                    ? "text-gray-900"
-                    : "text-gray-400"
-                }`}
-              />
-            ))}
-          </div>
+            {product && reviews.length > 0 ? (
+              <>
+                {/* Show only first 2 reviews */}
+                {visibleReviews.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
+                  >
+                    <div className="flex justify-between mb-1">
+                      <span className="font-semibold text-gray-800">{rev.name}</span>
+                      <span className="text-gray-500 text-xs">{rev.date}</span>
+                    </div>
 
-          <p className="text-gray-700 text-sm">{rev.comment}</p>
-        </div>
-      ))}
+                    <div className="flex items-center  gap-1 mb-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          filled={i < getSafeRating(rev.rating)}
+                          className={`w-4 h-4 ${i < getSafeRating(rev.rating)
+                            ? "text-gray-900"
+                            : "text-gray-400"
+                            }`}
+                        />
+                      ))}
+                    </div>
 
-      {/* 🔗 VIEW ALL REVIEWS BUTTON */}
-     {reviews.length > 2 && (
-        <button
-          onClick={() =>
-            navigate(`/product/${resolvedProductId}/reviews`)
-          }
-          className="
+                    <p className="text-gray-700 text-sm">{rev.comment}</p>
+                  </div>
+                ))}
+
+                {/* 🔗 VIEW ALL REVIEWS BUTTON */}
+                {reviews.length > 2 && (
+                  <button
+                    onClick={() =>
+                      navigate(`/product/${resolvedProductId}/reviews`)
+                    }
+                    className="
            group
     w-full mt-2 py-2
     text-sm font-medium
@@ -1023,18 +1031,18 @@ useEffect(() => {
     ltr:flex-row
   
           "
-        >
-{(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
-  
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="
+                  >
+                    {(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="
       w-4 h-4
       transition-transform duration-200
       transform-gpu
@@ -1044,20 +1052,20 @@ useEffect(() => {
 
       rtl:scale-x-[-1]
     "
-    aria-hidden="true"
-  >
-    <path d="M5 12h14" />
-    <path d="M13 5l6 7-6 7" />
-  </svg>
-        </button>
-      )}
-    </>
-  ) : (
-    <p className="text-sm text-gray-500">{fw.no_reviews}</p>
-  )}
-</div>
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="M13 5l6 7-6 7" />
+                    </svg>
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">{fw.no_reviews}</p>
+            )}
+          </div>
 
-      
+
         </div>
       </section>
 

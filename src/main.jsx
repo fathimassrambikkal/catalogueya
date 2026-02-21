@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { HashRouter } from "react-router-dom";
-import { Provider } from "react-redux"; 
+import { Provider } from "react-redux";
 import { store } from "./store";
 
 
@@ -32,7 +32,7 @@ const LenisProvider = ({ children }) => {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
+      smoothWheel: false,
     });
 
     const raf = (time) => {
@@ -56,7 +56,7 @@ const Main = () => {
         if (res?.data?.apiKey) {
           loadGoogleMaps(res.data.apiKey);
         }
-      } catch {}
+      } catch { }
     };
     init();
   }, []);
@@ -65,15 +65,15 @@ const Main = () => {
     <ErrorBoundary>
       <Provider store={store}> {/* REDUX WRAPPER */}
         <HashRouter>
-          
-          
-            
-                <LenisProvider>
-                  <App />
-                </LenisProvider>
-              
-           
-          
+
+
+
+          <LenisProvider>
+            <App />
+          </LenisProvider>
+
+
+
         </HashRouter>
       </Provider>
     </ErrorBoundary>

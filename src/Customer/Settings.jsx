@@ -98,17 +98,17 @@ function Settings() {
       <div className="w-full overflow-hidden">
 
         {/* Header */}
-        <div className="flex justify-center items-center mb-6 mt-10">
-          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
+        <div className="flex  mb-6 mt-28 md:mt-20">
+          <h1 className="text-2xl sm:text-3xl font-semibold  text-gray-900">
             Settings
           </h1>
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-6  bg-white border border-gray-200 shadow-sm rounded-2xl   ">
 
           {/* Navigation */}
-          <div className="space-y-3">
+          <div className="space-y-3 ">
             {[
               { label: "Personal Information", onClick: openPersonal },
               { label: "Change Password", onClick: openPassword },
@@ -118,7 +118,7 @@ function Settings() {
                 onClick={item.onClick}
                 role="button"
                 tabIndex={0}
-                className="flex items-center justify-between p-4 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition cursor-pointer"
+                className="flex items-center justify-between p-4 rounded-2xl bg-white/60 border-b  border-gray-100 hover:bg-white/80 transition cursor-pointer  "
               >
                 <span className="text-sm sm:text-base font-medium text-gray-900">
                   {item.label}
@@ -129,8 +129,8 @@ function Settings() {
           </div>
 
           {/* Notifications */}
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-white/60 border border-white/40">
-            <span className="text-sm sm:text-base font-medium text-gray-900">
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-white/60  border-b  border-gray-100 ">
+            <span className="text-sm sm:text-base font-medium text-gray-900 ">
               Notifications
             </span>
 
@@ -146,8 +146,8 @@ function Settings() {
           </div>
 
           {/* Language */}
-          <div className="p-4 rounded-2xl bg-white/60 border border-white/40">
-            <div className="flex justify-between items-center">
+          <div className="p-4 rounded-2xl bg-white/60   border-b  border-gray-100 ">
+            <div className="flex justify-between items-center ">
               <span className="text-sm font-medium">Language</span>
               <span className="text-sm text-gray-600">English</span>
             </div>
@@ -155,7 +155,7 @@ function Settings() {
 
           {/* Actions */}
           <div className="space-y-3 pt-4">
-            <button className="w-full p-4 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition">
+            <button className="w-full p-4 rounded-2xl bg-white/60 border  border-gray-100 hover:bg-white/80 transition">
               Sign Out
             </button>
 

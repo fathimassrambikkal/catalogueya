@@ -1,513 +1,146 @@
-import React, { useState, useEffect } from "react";
-import { registerCompany } from "../api";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
- 
+
 export default function CompanyRegister() {
-  const [companyData, setCompanyData] = useState({
-    name_en: "",
-    name_ar: "",
-    email: "",
+  const navigate = useNavigate();
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+
+  // Minimal Form State
+  const [formData, setFormData] = useState({
+    name: "",
     phone: "",
+    email: "",
     password: "",
-    logo: null,
-    address_en: "",
-    address_ar: "",
-    description_en: "",
-    description_ar: "",
-    start_time_work: "",
-    end_time_work: "",
-    status: "active",
-    whatsapp: "",
-    instagram: "",
-    tweeter: "",
-    facebook: "",
-    youtube: "",
+    password_confirmation: "",
+    lat: "",
+    lng: ""
   });
 
+  /* ---------------- GEOLOCATION & MAP LOGIC ---------------- */
 
-  const location = useLocation();
-const navigate = useNavigate();
-const {
-  planKey,
-  billingCycle,
-  price,
-  currency,
-} = location.state || {};
-
-useEffect(() => {
-  if (!planKey || !billingCycle || !price) {
-    navigate("/pricing");
-  }
-}, [planKey, billingCycle, price, navigate]);
-
-
-  const [companyErrors, setCompanyErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [coordinates, setCoordinates] = useState("");
-  
-
-
-  const handleCompanyChange = (e) => {
-    const { name, value, type, files } = e.target;
-    setCompanyData({
-      ...companyData,
-      [name]: type === "file" ? files[0] : value,
-    });
-  };
-
-  const isValidEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
- const checkPasswordStrength = (password) => {
-  if (!password) return false;
-  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$/;
-  return regex.test(password);
-};
-
-  const handleCompanySubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-
-  const errors = {};
-
-  if (!companyData.name_en.trim())
-    errors.name_en = "Company name (English) is required";
-
-  if (!companyData.name_ar.trim())
-    errors.name_ar = "Company name (Arabic) is required";
-
-  if (!isValidEmail(companyData.email))
-    errors.email = "Invalid email address";
-
-  if (!companyData.phone.trim())
-    errors.phone = "Phone number is required";
-
-  if (!companyData.logo)
-    errors.logo = "Company logo is required";
-
-  if (!companyData.password.trim()) {
-  errors.password = "Password is required";
-} else if (!checkPasswordStrength(companyData.password)) {
-  errors.password =
-    "Password must be at least 6 characters with uppercase, lowercase, number, and special character";
-}
-
-
-  setCompanyErrors(errors);
-  if (Object.keys(errors).length > 0) {
-    console.warn("❌ Validation failed:", errors);
-    setLoading(false);
-    return;
-  }
-
-  try {
-    // 🔍 LOG STATE DATA
-    console.log("🟡 Company Data (state):", companyData);
-    console.log("🟡 Coordinates:", coordinates);
-
-    // Prepare FormData
-    const formData = new FormData();
-
-    Object.keys(companyData).forEach((key) => {
-      if (companyData[key] !== null && companyData[key] !== "") {
-        formData.append(key, companyData[key]);
-      }
-    });
-
-    // Coordinates are UI-only (backend may ignore)
-    if (coordinates) {
-      formData.append("coordinates", coordinates);
-    }
-
-    // 🔍 LOG FORMDATA CONTENT (IMPORTANT)
-    console.log("🟡 FormData being sent:");
-    for (let pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-
-    // 🚀 API CALL
-  formData.append("subscription_plan", planKey);
-formData.append("billing_cycle", billingCycle);
-formData.append("subscription_price", price);
-
-    const response = await registerCompany(formData);
-
-    // ✅ SUCCESS LOG
-    console.log("🟢 Company registered successfully:", response);
-
-    localStorage.setItem("justRegistered", "true");
-
-    // Reset form
-    setCompanyData({
-      name_en: "",
-      name_ar: "",
-      email: "",
-      phone: "",
-      password: "",
-      logo: null,
-      address_en: "",
-      address_ar: "",
-      description_en: "",
-      description_ar: "",
-      start_time_work: "",
-      end_time_work: "",
-      status: "active",
-      whatsapp: "",
-      instagram: "",
-      tweeter: "",
-      facebook: "",
-      youtube: "",
-    });
-
-    setCoordinates("");
-    setCompanyErrors({});
-
-    navigate("/sign");
-
-  } catch (err) {
-    console.error("🔴 Company registration failed");
-
-    if (err.response) {
-      console.error("Status:", err.response.status);
-      console.error("Response data:", err.response.data);
-      console.error("Headers:", err.response.headers);
-    } else {
-      console.error("Error message:", err.message);
-    }
-
-    alert(err.response?.data?.message || "Company registration failed!");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // Google Map initialization
   useEffect(() => {
-    const initMap = () => {
-      const defaultCenter = { lat: 25.2048, lng: 55.2708 };
-      const mapEl = document.getElementById("map");
-      const inputEl = document.getElementById("autocomplete");
-      if (!mapEl || !inputEl || !window.google) return;
+    console.log("🚀 CompanyRegister Component Mounted");
 
-      const map = new window.google.maps.Map(mapEl, {
-        center: defaultCenter,
-        zoom: 6,
-      });
+    // Check if Leaflet is available (loaded in index.html)
+    if (!window.L) {
+      console.warn("❌ Leaflet library not found.");
+      return;
+    }
 
-      const autocomplete = new window.google.maps.places.Autocomplete(inputEl);
-      autocomplete.bindTo("bounds", map);
+    const mapElement = document.getElementById("map-container");
+    if (!mapElement) {
+      console.error("❌ Map container element not found");
+      return;
+    }
 
-      const marker = new window.google.maps.Marker({ map, draggable: true });
+    if (mapRef.current) return;
 
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
-        if (!place.geometry) return;
+    // Initialize map (Default center: Doha)
+    const defaultCenter = [25.2854, 51.5310];
+    const map = window.L.map(mapElement).setView(defaultCenter, 12);
+    mapRef.current = map;
 
-        if (place.geometry.viewport) map.fitBounds(place.geometry.viewport);
-        else map.setCenter(place.geometry.location);
+    // Load OpenStreetMap tiles
+    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-        marker.setPosition(place.geometry.location);
-        const coords = `${place.geometry.location.lat()}, ${place.geometry.location.lng()}`;
-        setCoordinates(coords);
-        setCompanyData(prev => ({
-          ...prev,
-          address_en: place.formatted_address || "",
-          address_ar: place.formatted_address || "",
-        }));
-      });
+    // Initial Marker
+    const marker = window.L.marker(defaultCenter, { draggable: true }).addTo(map);
+    markerRef.current = marker;
 
-      marker.addListener("dragend", () => {
-        const pos = marker.getPosition();
-        const coords = `${pos.lat()}, ${pos.lng()}`;
-        setCoordinates(coords);
-      });
+    // 1. Initial Geolocation on Page Entry
+    const handleGeoSuccess = (position) => {
+      const { latitude, longitude } = position.coords;
+      const msg = "✅ [PAGE ENTRY] User Current Location: Lat " + latitude + ", Lon " + longitude;
+      console.error(msg); // Error level is rarely filtered
+      console.log(msg);
+      window.__USER_CURRENT_LOC__ = { latitude, longitude };
+      window.alert(msg);
+
+      const pos = [latitude, longitude];
+      map.setView(pos, 15);
+      marker.setLatLng(pos);
+      setFormData(prev => ({ ...prev, lat: latitude, lng: longitude }));
     };
 
-    if (window.google && window.google.maps) initMap();
-    else {
-      const interval = setInterval(() => {
-        if (window.google && window.google.maps) {
-          clearInterval(interval);
-          initMap();
-        }
-      }, 500);
-      return () => clearInterval(interval);
+    const handleGeoError = (err) => {
+      console.error("❌ Geolocation Error:", err.message);
+      if (err.code === 1) {
+        alert("Location permission is requested to show your current position. Please enable it in your browser settings.");
+      } else if (err.code === 2) {
+        alert("Location provider unavailable.");
+      } else if (err.code === 3) {
+        alert("Location request timed out.");
+      }
+    };
+
+    console.log("🛰️ Requesting current location...");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(handleGeoSuccess, handleGeoError, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+    } else {
+      console.error("❌ Geolocation not supported by this browser");
     }
+
+    // 2. Map Tap Location Logging
+    map.on("click", (e) => {
+      const { lat, lng } = e.latlng;
+      const msg = "📍 [MAP TAP] Tapped Location: Lat " + lat + ", Lon " + lng;
+      console.error(msg);
+      console.log(msg);
+      window.__USER_TAPPED_LOC__ = { lat, lng };
+      window.alert(msg);
+
+      marker.setLatLng([lat, lng]);
+      setFormData(prev => ({ ...prev, lat: lat, lng: lng }));
+    });
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, []);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form Data Submitted:", formData);
+  };
+
   return (
-    <div className="w-full max-w-6xl bg-white border border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)] rounded-3xl p-8">
-      <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Company Registration</h2>
-      {/* PLAN SUMMARY */}
-<div className="mb-6 p-5 rounded-2xl bg-blue-50 border border-blue-100">
-  <h3 className="text-lg font-semibold text-gray-800 mb-3">
-    Selected Subscription
-  </h3>
+    <div style={{ maxWidth: 600, margin: "40px auto", padding: 30, background: "white", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontFamily: "sans-serif" }}>
+      <h1 style={{ textAlign: "center", marginBottom: 30 }}>Company Registration</h1>
 
-  <div className="flex justify-between text-sm text-gray-700">
-    <span>Plan</span>
-    <span className="font-medium">{planKey}</span>
-  </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 15, marginBottom: 20 }}>
+          <input style={inputStyle} placeholder="Company Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+          <input style={inputStyle} placeholder="Phone Number" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} required />
+          <input style={inputStyle} type="email" placeholder="Email Address" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} required />
+          <input style={inputStyle} type="password" placeholder="Password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
+        </div>
 
-  <div className="flex justify-between text-sm text-gray-700 mt-1">
-    <span>Billing</span>
-    <span className="capitalize">{billingCycle}</span>
-  </div>
+        <p style={{ fontSize: 13, color: "#666", marginBottom: 10 }}>* Check console for Latitude/Longitude logs on entry and map tap.</p>
 
-  <div className="flex justify-between text-sm text-gray-900 font-semibold mt-2">
-    <span>Total</span>
-    <span>
-      {price} {currency}
-    </span>
-  </div>
-</div>
+        <div id="map-container" style={{ height: 350, width: "100%", borderRadius: 10, border: "1px solid #ddd", marginBottom: 20, background: "#f0f0f0" }}></div>
 
-      <form className="flex flex-col gap-6" onSubmit={handleCompanySubmit}>
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* LEFT COLUMN */}
-          <div className="flex-1 flex flex-col gap-4">
-            {/* Company Name (English) */}
-            <div>
-              <input
-                type="text"
-                name="name_en"
-                placeholder="Company Name (English) *"
-                value={companyData.name_en}
-                onChange={handleCompanyChange}
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                focus:ring-2 focus:ring-black/10 transition"
-              />
-              {companyErrors.name_en && (
-                <p className="text-red-500 text-sm mt-1">{companyErrors.name_en}</p>
-              )}
-            </div>
-
-            {/* Company Name (Arabic) */}
-            <div>
-              <input
-                type="text"
-                name="name_ar"
-                placeholder="Company Name (Arabic) *"
-                value={companyData.name_ar}
-                onChange={handleCompanyChange}
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                focus:ring-2 focus:ring-black/10 transition"
-              />
-              {companyErrors.name_ar && (
-                <p className="text-red-500 text-sm mt-1">{companyErrors.name_ar}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <input
-                type="email"
-                name="email"
-                placeholder="Email *"
-                value={companyData.email}
-                onChange={handleCompanyChange}
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                focus:ring-2 focus:ring-black/10 transition"
-              />
-              {companyErrors.email && (
-                <p className="text-red-500 text-sm mt-1">{companyErrors.email}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Phone *"
-                value={companyData.phone}
-                onChange={handleCompanyChange}
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                focus:ring-2 focus:ring-black/10 transition"
-              />
-              {companyErrors.phone && (
-                <p className="text-red-500 text-sm mt-1">{companyErrors.phone}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <input
-                type="password"
-                name="password"
-                placeholder="Password *"
-                value={companyData.password}
-                onChange={handleCompanyChange}
-                 required
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                focus:ring-2 focus:ring-black/10 transition"
-              />
-              {companyErrors.password && (
-                <p className="text-red-500 text-sm mt-1">{companyErrors.password}</p>
-              )}
-            </div>
-
-            {/* Logo Upload */}
-            <div className="flex flex-col gap-1 font-medium">
-              Company Logo *
-              <input
-                type="file"
-                name="logo"
-                accept="image/*"
-                onChange={handleCompanyChange}
-                className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl 
-                file:border file:border-gray-300 file:bg-white file:text-gray-700 
-                hover:file:bg-gray-100 transition"
-              />
-              {companyErrors.logo && (
-                <p className="text-red-500 text-sm">{companyErrors.logo}</p>
-              )}
-            </div>
-
-            {/* Address (English) */}
-            <textarea
-              name="address_en"
-              placeholder="Company Address (English)"
-              value={companyData.address_en}
-              onChange={handleCompanyChange}
-              rows={2}
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-              focus:ring-2 focus:ring-black/10 transition"
-            />
-
-            {/* Address (Arabic) */}
-            <textarea
-              name="address_ar"
-              placeholder="Company Address (Arabic)"
-              value={companyData.address_ar}
-              onChange={handleCompanyChange}
-              rows={2}
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-              focus:ring-2 focus:ring-black/10 transition"
-            />
-
-            {/* Map */}
-            <label className="font-semibold text-gray-800">Company Location</label>
-            <input
-              type="text"
-              id="autocomplete"
-              placeholder="Search place"
-              className="w-full px-4 py-3 mb-3 rounded-2xl bg-gray-50 border border-gray-200 
-              focus:ring-2 focus:ring-black/10"
-            />
-            <div id="map" className="w-full h-64 border border-gray-200 rounded-2xl"></div>
-
-            {coordinates && (
-              <p className="text-sm text-gray-600 mt-2">
-                Coordinates: <b>{coordinates}</b>
-              </p>
-            )}
+        <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 12, color: "#888" }}>
+            Lat: {formData.lat || "-"} | Lon: {formData.lng || "-"}
           </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="flex-1 flex flex-col gap-4">
-            {/* Working Hours */}
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  name="start_time_work"
-                  placeholder="Start Time (e.g., 09:00)"
-                  value={companyData.start_time_work}
-                  onChange={handleCompanyChange}
-                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                  focus:ring-2 focus:ring-black/10 transition"
-                />
-              </div>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  name="end_time_work"
-                  placeholder="End Time (e.g., 17:00)"
-                  value={companyData.end_time_work}
-                  onChange={handleCompanyChange}
-                  className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                  focus:ring-2 focus:ring-black/10 transition"
-                />
-              </div>
-            </div>
-
-            {/* Description (English) */}
-            <textarea
-              name="description_en"
-              placeholder="Company Description (English)"
-              value={companyData.description_en}
-              onChange={handleCompanyChange}
-              rows={3}
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-              focus:ring-2 focus:ring-black/10 transition"
-            />
-
-            {/* Description (Arabic) */}
-            <textarea
-              name="description_ar"
-              placeholder="Company Description (Arabic)"
-              value={companyData.description_ar}
-              onChange={handleCompanyChange}
-              rows={3}
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-              focus:ring-2 focus:ring-black/10 transition"
-            />
-
-            {/* WhatsApp */}
-            <input
-              type="tel"
-              name="whatsapp"
-              placeholder="WhatsApp Number"
-              value={companyData.whatsapp}
-              onChange={handleCompanyChange}
-              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-              focus:ring-2 focus:ring-black/10 transition"
-            />
-
-            {/* Social Media Links */}
-            {[
-              { name: "facebook", placeholder: "Facebook URL" },
-              { name: "instagram", placeholder: "Instagram URL" },
-              { name: "tweeter", placeholder: "Twitter (X) URL" },
-              { name: "youtube", placeholder: "YouTube URL" },
-            ].map(({ name, placeholder }) => (
-              <input
-                key={name}
-                type="url"
-                name={name}
-                placeholder={placeholder}
-                value={companyData[name]}
-                onChange={handleCompanyChange}
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 
-                focus:ring-2 focus:ring-black/10 transition"
-              />
-            ))}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#45a8ff] text-white py-3 rounded-full text-sm font-medium 
-              hover:bg-[#1b93ff] transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed 
-              flex items-center justify-center"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                  Registering Company...
-                </>
-              ) : (
-                "Register Company"
-              )}
-            </button>
-
-            {/* Hidden status field */}
-            <input type="hidden" name="status" value="active" />
+          <div style={{ display: "flex", gap: 10 }}>
+            <button type="button" onClick={() => navigate(-1)} style={{ ...buttonStyle, background: "#9ca3af" }}>Back</button>
+            <button type="submit" style={{ ...buttonStyle, background: "#2563eb" }}>Register</button>
           </div>
         </div>
       </form>
     </div>
   );
 }
+
+const inputStyle = { width: "100%", padding: "12px", border: "1px solid #d1d5db", borderRadius: "8px", boxSizing: "border-box", fontSize: "14px" };
+const buttonStyle = { padding: "10px 20px", border: "none", borderRadius: "8px", color: "white", fontWeight: "bold", cursor: "pointer", fontSize: "14px" };
+

@@ -1,25 +1,90 @@
-import React, { useState } from "react";
-import { FaUser, FaEnvelope, FaCalendar, FaTrash } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaUser, FaEnvelope, FaCalendar, FaTrash, FaUserPlus, FaUserCheck } from "react-icons/fa";
+import { getFollowers, getImageUrl, getContacts, addContact, deleteContact } from "../companyDashboardApi";
+import { showToast } from "../utils/showToast";
 
 export default function Followers() {
-  // ⛔ REMOVED FollowersContext
-  // ✅ Local state instead (replace with API later if needed)
   const [followers, setFollowers] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    await Promise.all([fetchFollowers(), fetchContacts()]);
+    setLoading(false);
+  };
+
+  const fetchContacts = async () => {
+    try {
+      const res = await getContacts();
+      if (res.data?.data) {
+        setContacts(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setContacts(res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  };
+
+  const fetchFollowers = async () => {
+    try {
+      // setLoading(true); // Handled in fetchData
+      const res = await getFollowers();
+      // Expecting res.data.data or res.data as array
+      let list = [];
+      if (res.data?.data) {
+        list = Array.isArray(res.data.data) ? res.data.data : (res.data.data.followers || []);
+      } else if (Array.isArray(res.data)) {
+        list = res.data;
+      }
+      setFollowers(list);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    } finally {
+      // setLoading(false); // Handled in fetchData
+    }
+  };
 
   const getFollowersCount = () => followers.length;
 
-  const removeFollower = (customerId) => {
-    setFollowers((prev) => prev.filter((f) => f.id !== customerId));
+  const handleRemoveFollower = (customerId) => {
+    // Current API doesn't seem to have "unfollow/remove follower" for company side specifically 
+    // unless defined elsewhere. Usually followers manage their own following.
+    // If needed we can implement based on and specific endpoint.
+    alert("Functionality to remove followers is not currently implemented in the API.");
   };
 
-  /* REMOVE FOLLOWER HANDLER */
-  const handleRemoveFollower = (customerId) => {
-    if (window.confirm("Are you sure you want to remove this follower?")) {
-      removeFollower(customerId);
+  const handleToggleContact = async (user, isContact, contactId) => {
+    try {
+      if (isContact) {
+        // Optional: Remove from contacts
+        // await deleteContact(contactId);
+        // setContacts(prev => prev.filter(c => c.id !== contactId));
+        showToast("Already in contacts", { type: 'info' });
+      } else {
+        // Add to contacts
+        const userId = user.id;
+        if (!userId) {
+          showToast("Cannot add user: ID missing", { type: 'error' });
+          return;
+        }
+        await addContact(userId);
+        showToast("Added to contacts", { type: 'success' });
+        fetchContacts(); // Refresh list to get the new contact ID and structure
+      }
+    } catch (e) {
+      console.error("Error toggling contact", e);
+      showToast("Failed to update contact", { type: 'error' });
     }
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -27,90 +92,184 @@ export default function Followers() {
     });
   };
 
+ if (loading) {
+  return (
+    <div className="w-full">
+      <div className="bg-white border overflow-hidden">
+
+        {/* Header Skeleton */}
+        <div className="px-6 py-5 border-b border-gray-100">
+          <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mt-20 md:mt-4"></div>
+          <div className="h-3 w-24 bg-gray-100 rounded animate-pulse mt-2"></div>
+        </div>
+
+        {/* Skeleton Rows */}
+        <div className="divide-y divide-gray-100">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between px-6 py-5"
+            >
+              <div className="flex items-center gap-4">
+
+                {/* Avatar Skeleton */}
+                <div className="w-11 h-11 rounded-full bg-gray-200 animate-pulse"></div>
+
+                {/* Text Skeleton */}
+                <div className="space-y-2">
+                  <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-2 w-24 bg-gray-100 rounded animate-pulse"></div>
+                  <div className="h-2 w-20 bg-gray-100 rounded animate-pulse"></div>
+                </div>
+              </div>
+
+              {/* Button Skeleton */}
+              <div className="h-7 w-16 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
   /* EMPTY STATE */
   if (!followers || followers.length === 0) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 min-w-0 overflow-x-hidden">
-        <div className="text-center py-8 sm:py-12">
-          <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <FaUser className="text-3xl text-gray-400" />
-          </div>
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-700">
-            No Followers Yet
-          </h2>
-          <p className="text-gray-500 mt-2">
-            When customers follow your company, they will appear here.
-          </p>
+      <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 min-w-0 overflow-x-hidden text-center py-12">
+        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+          <FaUser className="text-3xl text-gray-400" />
         </div>
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-700">No Followers Yet</h2>
+        <p className="text-gray-500 mt-2">When customers follow your company, they will appear here.</p>
       </div>
     );
   }
 
   /* MAIN UI */
-  return (
-    <div className="w-full max-w-6xl mx-auto p-3 sm:p-4 md:p-6 overflow-x-hidden">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+ return (
+  <div className="w-full ">
+
+    {/* Main White Surface */}
+    <div className="bg-white border overflow-hidden">
+
+      {/* Header INSIDE container */}
+      <div className="px-6 py-5 border-b border-gray-100">
+        <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4 ">
           Followers
         </h1>
-        <p className="text-gray-600 text-sm sm:text-base">
-          You have {getFollowersCount()} follower
-          {getFollowersCount() === 1 ? "" : "s"}
+        <p className="text-sm text-gray-500 mt-0.5">
+          {getFollowersCount()} follower{getFollowersCount() === 1 ? "" : "s"}
         </p>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
-        {followers.map((follower) => (
-          <div
-            key={follower.id}
-            className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300"
-          >
-            {/* HEADER */}
-            <div className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
-                  {follower.avatar ? (
+      {/* List */}
+      <div className="divide-y divide-gray-100">
+
+        {followers.map((follower) => {
+
+          const name =
+            follower.user?.name_en ||
+            follower.customer?.name ||
+            follower.name ||
+            "Customer";
+
+          const email =
+            follower.user?.email ||
+            follower.customer?.email ||
+            follower.email ||
+            "";
+
+          const avatar =
+            follower.user?.image ||
+            follower.customer?.image ||
+            follower.avatar ||
+            null;
+
+          const date =
+            follower.created_at ||
+            follower.followed_at ||
+            follower.followedAt;
+
+          const followerUserId =
+            follower.user?.id ||
+            follower.customer?.id ||
+            follower.id;
+
+          const existingContact = contacts.find((c) => {
+            const cId =
+              c.user_id ||
+              c.contact_user_id ||
+              c.id ||
+              c.user?.id;
+            return String(cId) === String(followerUserId);
+          });
+
+          const isContact = !!existingContact;
+
+          return (
+            <div
+              key={follower.id}
+              className="flex items-center justify-between px-6 py-5 hover:bg-gray-50/60 transition-colors"
+            >
+              {/* Left */}
+              <div className="flex items-center gap-4 min-w-0">
+
+                {/* Avatar */}
+                <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-gray-700 font-medium text-sm shrink-0">
+                  {avatar ? (
                     <img
-                      src={follower.avatar}
-                      alt={follower.name}
-                      className="w-12 h-12 rounded-full object-cover"
+                      src={getImageUrl(avatar)}
+                      alt={name}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    follower.name?.charAt(0)?.toUpperCase() || "U"
+                    name.charAt(0).toUpperCase()
                   )}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">
-                    {follower.name}
+                {/* Info */}
+                <div className="min-w-0">
+                  <h3 className="text-sm font-medium text-gray-900 truncate">
+                    {name}
                   </h3>
 
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                    <FaEnvelope />
-                    <span className="truncate">{follower.email}</span>
-                  </div>
+                  {email && (
+                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                      {email}
+                    </p>
+                  )}
 
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                    <FaCalendar />
-                    <span>Followed {formatDate(follower.followedAt)}</span>
-                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Followed {formatDate(date)}
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* REMOVE BUTTON */}
-            <div className="px-4 pb-4">
+              {/* Right Button */}
               <button
-                onClick={() => handleRemoveFollower(follower.id)}
-                className="w-full flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm"
+                onClick={() =>
+                  handleToggleContact(
+                    follower.user || follower.customer || follower,
+                    isContact,
+                    existingContact?.id
+                  )
+                }
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  isContact
+                    ? "bg-green-50 text-green-600 hover:bg-green-100"
+                    : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                }`}
               >
-                <FaTrash />
-                Remove Follower
+                {isContact ? "Added" : "Add"}
               </button>
             </div>
-          </div>
-        ))}
+          );
+        })}
+
       </div>
     </div>
-  );
+  </div>
+);
 }

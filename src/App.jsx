@@ -46,6 +46,9 @@ const ProductReviews = React.lazy(() => import("./pages/ProductReviews"));
 const MoreDetails = React.lazy(() => import("./dashboard/MoreDetails"));
 const PaymentPage = React.lazy(() => import("./Customer/PaymentPage"));
 const CompanyChat = React.lazy(() => import("./dashboard/ChatDashboard"));
+const NotificationsProducts = React.lazy(() => import("./Customer/NotificationsProducts"));
+const ViewBill = React.lazy(() => import("./Customer/ViewBill"));
+
 
 function AppContent() {
   const location = useLocation();
@@ -179,22 +182,28 @@ useEffect(() => {
   element={<CompanyChat />}
 />
 
+
+
+
+
             <Route path="/customer-login" element={<CustomerLogin />} />
             <Route path="/company-forgot-password" element={<CompanyForgotPassword />} />
           
 
 
-{/* page backbutton */}
+        {/* page backbutton */}
 
         <Route element={<PageLayout />}>
 
 
 
+          <Route path="/customer/bill-view/:publicToken?" element={<ViewBill />} />
+          <Route path="/company/products/:type/:companyId" element={<NotificationsProducts />}/>
 
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
- <Route path="/customer/pay" element={<PaymentPage />} />
+            <Route path="/customer/pay" element={<PaymentPage />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
             <Route path="/category/:categoryId/company/:companyId" element={<CompanyPage />} />
             <Route path="/company/:companyId" element={<CompanyPage />} />

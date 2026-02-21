@@ -162,10 +162,10 @@ export default function Following() {
    MAIN UI 
 ----------------------------------- */
 return (
-  <div className="min-h-full p-3 sm:p-6 lg:p-10  mt-10">
+  <div className="min-h-full p-3 sm:p-6 lg:p-10  mt-28 md:mt-20">
     
     {/* Header */}
-    <h1 className="text-center text-[17px] sm:text-xl font-semibold tracking-tight text-gray-900 mb-8">
+    <h1 className="text-2xl sm:text-3xl font-semibold  text-gray-900 mb-8">
       Following
     </h1>
 

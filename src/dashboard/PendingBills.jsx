@@ -1,209 +1,304 @@
-import React from "react";
-import fatoraLogo from "../assets/fatoralogo.webp";
+import React, { useState, useEffect } from "react";
 import {
   IconView,
-  IconInvoice,
-  IconSuccess,
-  IconCalendar,
-  BackIcon,
+ 
 } from "./CompanySvg";
+import { getPendingBills, getBillDetails, confirmCashPayment, rejectBillPayment } from "../companyDashboardApi";
+import BillDetailsModal from "./BillDetailsModal";
+import ConfirmationDialog from "./ConfirmationDialog";
+import { showToast } from "../utils/showToast";
+import { Check, X } from "lucide-react";
+import toast from "react-hot-toast";
 
-function PendingBills({ onBack }) {
-  const pendingFatoras = [
-    {
-      id: 1,
-      number: "1023060786",
-      recipient: "Fatma Mohammed",
-      dateIssued: "12/11/2025",
-      status: "Received",
-      paymentMethod: "Cash",
-    },
-    {
-      id: 2,
-      number: "1023060787",
-      recipient: "Aisha Khan",
-      dateIssued: "12/11/2025",
-      status: "Received",
-      paymentMethod: "Card",
-    },
-  ];
+function PendingBills({ onBack, refreshCounts }) {
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
+  const [dialogState, setDialogState] = useState({ isOpen: false, type: 'info', billId: null, action: null });
+  const [cashConfirmedBy, setCashConfirmedBy] = useState('');
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 mt-20 md:mt-0 ">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
-          {/* HEADER */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 sm:p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-white/90 hover:text-white transition group"
-              >
-                <div className="p-2 bg-white/10 rounded-lg group-hover:bg-white/20 transition">
-                  <BackIcon />
-                </div>
-                <span className="font-medium">Back to Dashboard</span>
-              </button>
-            </div>
+  useEffect(() => {
+    fetchBills();
+  }, []);
+
+  const fetchBills = async () => {
+    try {
+      const res = await getPendingBills();
+      const list = res.data?.data || res.data || [];
+      setBills(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.error("Error fetching pending bills:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewBill = async (billId) => {
+    try {
+      const res = await getBillDetails(billId);
+      setSelectedBill(res.data?.data || res.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching bill details", error);
+    }
+  };
+
+  const initiateAction = (billId, action) => {
+    if (action === 'yes') {
+      setCashConfirmedBy('');
+      setDialogState({
+        isOpen: true,
+        type: 'success',
+        title: 'Confirm Payment',
+        message: 'Are you sure this bill has been paid in cash?',
+        confirmText: 'Yes, Paid',
+        cancelText: 'Cancel',
+        billId,
+        action: 'confirm_payment'
+      });
+    } else if (action === 'no') {
+      setDialogState({
+        isOpen: true,
+        type: 'danger',
+        title: 'Payment Not Received?',
+        message: 'Are you sure you want to mark this as not received? (This action might be logged)',
+        confirmText: 'Mark Not Received',
+        cancelText: 'Cancel',
+        billId,
+        action: 'reject_payment'
+      });
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    const { billId, action } = dialogState;
+    if (!billId) return;
+
+    if (action === 'confirm_payment') {
+      setProcessingId(billId);
+      try {
+        const res = await confirmCashPayment(billId, { cash_confirmed_by: cashConfirmedBy });
+        if (res.status === 200 || res.status === 201) {
+          toast.success("Cash payment confirmed!");
+          fetchBills();
+          refreshCounts();
+        } else {
+          toast.error("Failed to confirm");
+        }
+      } catch (error) {
+        toast.error("Error confirming payment");
+      } finally {
+        setProcessingId(null);
+      }
+    } else if (action === 'reject_payment') {
+      const bill = bills.find(b => b.id === billId);
+      const token = bill?.public_token || bill?.token; // Fallback to token if public_token is key
+
+      if (!token) {
+        toast.error("Missing bill token for rejection");
+        setDialogState({ isOpen: false, type: 'info', billId: null, action: null });
+        return;
+      }
+
+      setProcessingId(billId);
+      try {
+        await rejectBillPayment(token);
+        toast.success("Payment marked as not received");
+        fetchBills();
+        refreshCounts();
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to reject payment");
+      } finally {
+        setProcessingId(null);
+      }
+    }
+    setDialogState({ isOpen: false, type: 'info', billId: null, action: null });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+return (
+    <div className="animate-fadeIn">
+      <BillDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        bill={selectedBill}
+      />
+
+      <ConfirmationDialog
+        isOpen={dialogState.isOpen}
+        onClose={() => setDialogState({ ...dialogState, isOpen: false })}
+        onConfirm={handleConfirmAction}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmText={dialogState.confirmText}
+        cancelText={dialogState.cancelText}
+        type={dialogState.type}
+      >
+        {dialogState.action === 'confirm_payment' && (
+          <div className="mb-4 text-left bg-gray-50 p-3 rounded-lg border border-gray-200/60">
+            <label className="block text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Received By</label>
+            <input
+              type="text"
+              className="w-full bg-white border border-gray-200/80 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-gray-600 outline-none transition-all"
+              placeholder="Enter name..."
+              value={cashConfirmedBy}
+              onChange={e => setCashConfirmedBy(e.target.value)}
+              autoFocus
+            />
           </div>
+        )}
+      </ConfirmationDialog>
 
-          {/* PAGE TITLE (separate section) */}
-          <div className="px-4 sm:px-6 md:px-8 py-5 sm:py-6 border-b border-gray-200">
-            <h1
-              className="
-                text-gray-900
-                text-2xl sm:text-3xl md:text-4xl
-                font-bold
-                tracking-tight
-                leading-tight
-              "
-            >
-              Pending Bills
-            </h1>
-          </div>
+      <div className="bg-white rounded-xl border border-gray-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+        {/* Table Header - Mobile Optimized */}
+        <div className="hidden sm:grid grid-cols-12 bg-gray-50 text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider py-3 px-4 sm:px-5 border-b border-gray-100">
+          <div className="col-span-2">Bill Number</div>
+          <div className="col-span-2">Customer</div>
+          <div className="col-span-2">Issued on</div>
+          <div className="col-span-1">Method</div>
+          <div className="col-span-1">Amount</div>
+          <div className="col-span-1">Status</div>
+          <div className="col-span-2 text-center">Cash received?</div>
+          <div className="col-span-1 text-center">Action</div>
+        </div>
 
-          {/* ================= TABLE ================= */}
-          <div className="p-4 sm:p-6">
-            {/* Desktop Table (600px and above) */}
-            <div className="hidden sm:block bg-white/80 backdrop-blur-xl rounded-3xl border border-gray-200/40 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden">
-              {/* Table Header */}
-              <div className="px-2 sm:px-4 py-2 border-b border-gray-200/40 bg-white/60">
-                <div className="grid grid-cols-12 gap-1 sm:gap-2 text-[8px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
-                  <div className="col-span-2">Bill Number</div>
-                  <div className="col-span-3">Recipient</div>
-                  <div className="col-span-2">Date Issued</div>
-                  <div className="col-span-2">Payment Method</div>
-                  <div className="col-span-2">Status</div>
-                  <div className="col-span-1 text-right">View</div>
-                </div>
-              </div>
+        <div className="divide-y divide-gray-100">
+          {bills.length === 0 ? (
+            <div className="p-6 sm:p-8 text-center text-gray-400 text-sm">No pending bills found.</div>
+          ) : (
+            bills.map((bill) => (
+              <div key={bill.id} className="p-3 sm:p-0 sm:grid sm:grid-cols-12 sm:items-center sm:px-5 sm:py-3 hover:bg-gray-50/30 transition-colors">
+                
+                {/* Mobile Card View */}
+                <div className="sm:hidden space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="text-xs font-medium text-gray-800">{bill.bill_number}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">{bill.customer_name}</div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">{bill.status}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                      <span>{bill.issued_at || bill.created_at?.split('T')[0]}</span>
+                      <span>•</span>
+                      <span className="capitalize">{bill.payment_method}</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">{bill.total_amount || bill.amount} {bill.currency || 'QR'}</span>
+                  </div>
 
-              {/* Table Rows */}
-              <div className="divide-y divide-gray-200/30">
-                {pendingFatoras.map((fatora) => (
-                  <div
-                    key={fatora.id}
-                    className="grid grid-cols-12 items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 hover:bg-blue-50/30 transition"
-                  >
-                    {/* Bill Number */}
-                    <div className="col-span-2 flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
-                        <IconInvoice className="w-4 h-4 text-blue-600" />
+                  <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[8px] text-gray-400">Yes</span>
+                        <button 
+                          onClick={() => initiateAction(bill.id, 'yes')}
+                          disabled={processingId === bill.id}
+                          className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                        >
+                          {processingId === bill.id ? <div className="w-2.5 h-2.5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /> : <Check className="w-3 h-3 text-green-500" />}
+                        </button>
                       </div>
-                      <span className="text-sm font-medium text-gray-900 truncate">
-                        {fatora.number}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[8px] text-gray-400">No</span>
+                        <button 
+                          onClick={() => initiateAction(bill.id, 'no')}
+                          className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                        >
+                          <X className="w-3 h-3 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                   <button
+              onClick={() => handleViewBill(bill.id)}
+              className="w-6 h-6 rounded-md bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center shadow-sm"
+            >
+              <IconView className="w-3 h-3 text-white" />
+            </button>
+              </div>
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden sm:contents">
+                  {/* Bill Number */}
+                  <div className="col-span-2 text-xs font-normal text-gray-600">
+                    {bill.bill_number}
+                  </div>
+
+                  {/* Customer */}
+                  <div className="col-span-2 text-xs font-normal text-gray-600">
+                    {bill.customer_name}
+                  </div>
+
+                  {/* Issued on */}
+                  <div className="col-span-2 text-xs text-gray-500">
+                    {bill.issued_at || bill.created_at?.split('T')[0]}
+                  </div>
+
+                  {/* Method */}
+                  <div className="col-span-1 text-xs text-gray-500 capitalize">
+                    {bill.payment_method}
+                  </div>
+
+                  {/* Amount */}
+                  <div className="col-span-1 text-xs font-medium text-gray-700">
+                    {bill.total_amount || bill.amount} {bill.currency || 'QR'}
+                  </div>
+
+                  {/* Status */}
+                  <div className="col-span-1">
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">{bill.status}</span>
+                  </div>
+
+                  {/* Actions: Yes/No */}
+                  <div className="col-span-2 flex justify-center items-center gap-3">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[8px] text-gray-400 mb-1">Yes</span>
+                      <button 
+                        onClick={() => initiateAction(bill.id, 'yes')}
+                        disabled={processingId === bill.id}
+                        className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition"
+                      >
+                        {processingId === bill.id ? <div className="w-2.5 h-2.5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /> : <Check className="w-3.5 h-3.5 text-green-500" />}
+                      </button>
                     </div>
 
-                    {/* Recipient */}
-                    <div className="col-span-3 min-w-0">
-                      <span className="text-sm text-gray-700 truncate block">
-                        {fatora.recipient}
-                      </span>
-                    </div>
-
-                    {/* Date Issued */}
-                    <div className="col-span-2 flex items-center gap-1 text-gray-600 min-w-0">
-                      <IconCalendar className="w-4 h-4" />
-                      <span className="text-sm truncate">{fatora.dateIssued}</span>
-                    </div>
-
-                    {/* Payment Method */}
-                    <div className="col-span-2 min-w-0">
-                      <span className="text-xs text-gray-700 font-medium truncate block">
-                        {fatora.paymentMethod}
-                      </span>
-                    </div>
-
-                    {/* Status */}
-                    <div className="col-span-2">
-                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                        <IconSuccess className="w-3 h-3 text-green-500" />
-                        {fatora.status}
-                      </span>
-                    </div>
-
-                    {/* View */}
-                    <div className="col-span-1 flex justify-end">
-                      <button className="w-8 h-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center">
-                        <IconView className="w-4 h-4" />
+                    <div className="flex flex-col items-center">
+                      <span className="text-[8px] text-gray-400 mb-1">No</span>
+                      <button 
+                        onClick={() => initiateAction(bill.id, 'no')}
+                        className="w-7 h-7 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition"
+                      >
+                        <X className="w-3.5 h-3.5 text-red-500" />
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Mobile Cards (600px and below) */}
-            <div className="sm:hidden space-y-3">
-              {pendingFatoras.map((fatora) => (
-                <div
-                  key={fatora.id}
-                  className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/40 shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-4"
-                >
-                  {/* Card Header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center">
-                        <IconInvoice className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          {fatora.number}
-                        </div>
-                        <div className="text-xs text-gray-500">Bill Number</div>
-                      </div>
-                    </div>
-                    <button className="w-8 h-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center">
-                      <IconView className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="space-y-2">
-                    {/* Recipient */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Recipient</span>
-                      <span className="text-sm text-gray-900 font-medium">
-                        {fatora.recipient}
-                      </span>
-                    </div>
-
-                    {/* Date Issued */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Date Issued</span>
-                      <div className="flex items-center gap-1 text-sm text-gray-900">
-                        <IconCalendar className="w-4 h-4" />
-                        {fatora.dateIssued}
-                      </div>
-                    </div>
-
-                    {/* Payment Method */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Payment Method</span>
-                      <span className="text-sm text-gray-900 font-medium">
-                        {fatora.paymentMethod}
-                      </span>
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Status</span>
-                      <span className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                        <IconSuccess className="w-3 h-3 text-green-500" />
-                        {fatora.status}
-                      </span>
-                    </div>
+                  {/* View Action */}
+                  <div className="col-span-1 flex justify-center items-center">
+                 <button
+                onClick={() => handleViewBill(bill.id)}
+                className="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center shadow-sm"
+              >
+                <IconView className="w-3.5 h-3.5 text-white" />
+              </button>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Footer */}
-            <div className="mt-6 text-sm text-gray-600">
-              Total <strong>{pendingFatoras.length}</strong> pending fatoras
-            </div>
-          </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

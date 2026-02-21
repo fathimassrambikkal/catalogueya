@@ -22,18 +22,27 @@ import { getCategory } from "../api";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
-// =================== DETECT MOBILE ===================
+// =================== DETECT MOBILE (FIXED VERSION) ===================
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    // Use matchMedia for more reliable detection
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    
+    const checkMobile = (e) => {
+      setIsMobile(e.matches);
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    // Set initial value
+    setIsMobile(mediaQuery.matches);
+    
+    // Add listener for changes
+    mediaQuery.addEventListener("change", checkMobile);
+    
+    return () => {
+      mediaQuery.removeEventListener("change", checkMobile);
+    };
   }, []);
 
   return isMobile;
@@ -81,7 +90,7 @@ const getFullImageUrl = (path) => {
   return `${API_BASE_URL}/${path}`;
 };
 
-// =================== COMPANY CARD (UPDATED WITH PICTURE ELEMENT) ===================
+// =================== COMPANY CARD ===================
 const CompanyCard = memo(({ company, navigate }) => {
   const { getSafeRating, formatRating } = useRatingHelpers();
   const rating = getSafeRating(company.rating);
@@ -161,7 +170,7 @@ const CompanyCard = memo(({ company, navigate }) => {
 });
 CompanyCard.displayName = 'CompanyCard';
 
-// =================== PRODUCT CARD (UPDATED WITH PICTURE ELEMENT) ===================
+// =================== PRODUCT CARD ===================
 const ProductCard = memo(({ 
   product, 
   isFav, 
@@ -390,20 +399,30 @@ const CategoryPage = memo(() => {
   const [sortBy, setSortBy] = useState("relevance");
   
   // Pagination states - ONLY FOR PRODUCTS
+  const [productPage, setProductPage] = useState(1);
+  const [productLastPage, setProductLastPage] = useState(1);
 
-
-  
   const { fixedWords } = useFixedWords();
   const fw = fixedWords?.fixed_words || {};
   const isMobile = useIsMobile();
 
-
-
-  const [productPage, setProductPage] = useState(1);
-const [productLastPage, setProductLastPage] = useState(1);
-
-
   const { getRatingValueForSort } = useRatingHelpers();
+
+  // Debug logs to check values
+  useEffect(() => {
+    console.log("isMobile:", isMobile);
+    console.log("viewType:", viewType);
+    console.log("productPage:", productPage);
+    console.log("productLastPage:", productLastPage);
+    console.log("loading:", loading);
+  }, [isMobile, viewType, productPage, productLastPage, loading]);
+
+  // Reset to page 1 when switching between mobile/desktop or view type
+  useEffect(() => {
+    if (!isMobile) {
+      setProductPage(1);
+    }
+  }, [viewType, isMobile]);
 
   // Memoize expensive calculations
   const isFavourite = useCallback((id) => 
@@ -437,70 +456,105 @@ const [productLastPage, setProductLastPage] = useState(1);
   );
 
   // =================== FETCH DATA ===================
- 
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        setLoading(true);
+        const res = await getCategory(categoryId, productPage);
+        
+        const data = res?.data?.data;
+        if (!data) return;
 
-  // =================== INITIAL FETCH ===================
-useEffect(() => {
-  const fetchCategory = async () => {
-    try {
-      setLoading(true);
+        // Set category & companies ONCE
+        if (productPage === 1) {
+          setCategory(data);
+          setCompanies(data.companies || []);
+        }
 
-      const res = await getCategory(categoryId, {
-        params: { page: productPage },
-      });
-      
+        setProductLastPage(data.products_pagination?.last_page || 1);
 
-      const data = res?.data?.data;
-      if (!data) return;
+        setProducts(prev => {
+          if (isMobile) {
+            // Mobile = append pages
+            return productPage === 1
+              ? data.products
+              : [...prev, ...data.products];
+          }
 
-      // 👇 set category & companies ONCE
-      if (productPage === 1) {
-        setCategory(data);
-        setCompanies(data.companies || []);
+          // Desktop = replace per page
+          return data.products;
+        });
+      } catch (err) {
+        logError("Category fetch failed", err);
+        setPageError(fw.failed_to_load || "Failed to load category");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setProductLastPage(data.products_pagination?.last_page || 1);
+    fetchCategory();
+  }, [categoryId, productPage, isMobile, fw]);
 
-      setProducts(prev => {
-        if (productPage === 1) return data.products;
-        if (isMobile) return [...prev, ...data.products];
-        return data.products;
-      });
-    } catch (err) {
-      logError("Category fetch failed", err);
-    } finally {
-      setLoading(false);
+  // Scroll to top for desktop pagination only
+  useEffect(() => {
+    if (!isMobile) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  };
+  }, [productPage, isMobile]);
 
-  fetchCategory();
-}, [categoryId, productPage]);
+  // =================== INFINITE SCROLL FOR MOBILE (FIXED VERSION) ===================
+  useEffect(() => {
+    // Only run on mobile, for products view, and if there are more pages
+    if (!isMobile) {
+      console.log("Infinite scroll: Not mobile");
+      return;
+    }
+    
+    if (viewType !== "products") {
+      console.log("Infinite scroll: Not products view");
+      return;
+    }
+    
+    if (productPage >= productLastPage) {
+      console.log("Infinite scroll: No more pages");
+      return;
+    }
 
+    const el = loadMoreRef.current;
+    if (!el) {
+      console.log("Infinite scroll: Sentinel element not found");
+      return;
+    }
 
+    console.log("Infinite scroll: Setting up observer for mobile products");
 
-
-
-  // =================== INFINITE SCROLL FOR MOBILE ===================
-
-useEffect(() => {
-  if (!isMobile) return;
-  if (productPage >= productLastPage) return;
-
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting && !loading) {
-        setProductPage(p => p + 1);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          console.log("Infinite scroll: Sentinel visible, loading next page...");
+          if (!loading) {
+            setProductPage(prev => prev + 1);
+          }
+        }
+      },
+      {
+        root: null,
+        rootMargin: "200px", // Load earlier for smoother experience
+        threshold: 0.1,
       }
-    },
-    { rootMargin: "300px" }
-  );
+    );
 
-  const el = loadMoreRef.current;
-  if (el) observer.observe(el);
+    observer.observe(el);
+    console.log("Infinite scroll: Observer attached to sentinel");
 
-  return () => observer.disconnect();
-}, [isMobile, productPage, productLastPage, loading]);
-
+    return () => {
+      console.log("Infinite scroll: Cleaning up observer");
+      if (el) {
+        observer.unobserve(el);
+      }
+      observer.disconnect();
+    };
+  }, [isMobile, viewType, productPage, productLastPage, loading]);
 
   // =================== MEMOIZED SORTING ===================
   const sortedCompanies = useMemo(() => {
@@ -549,10 +603,7 @@ useEffect(() => {
 
   const handleViewTypeChange = useCallback((type) => {
     setViewType(type);
-    // Reset product page when switching to products view
-    if (type === "products") {
-      setProductPage(1);
-    }
+    setProductPage(1); // Reset to first page when switching views
   }, []);
 
   const handleSortChange = useCallback((e) => {
@@ -577,10 +628,8 @@ useEffect(() => {
           ))
         )}
       </div>
-
-      
     </>
-  ), [loading, companies.length, sortedCompanies, navigate, isMobile]);
+  ), [loading, companies.length, sortedCompanies, navigate]);
 
   // =================== RENDER PRODUCTS GRID ===================
   const renderProductsGrid = useMemo(() => (
@@ -594,7 +643,6 @@ useEffect(() => {
           sortedProducts.map((product) => (
             <ProductCard
               key={product.id}
-
               product={product}
               isFav={isFavourite(product.id)}
               toggleFavourite={handleToggleFavourite}
@@ -605,51 +653,66 @@ useEffect(() => {
         )}
       </div>
 
-      {/* Mobile infinite scroll sentinel */}
-      {isMobile && productPage < productLastPage && (
-        <div ref={loadMoreRef} className="h-20 flex justify-center items-center col-span-full">
-        {loading && (
-  <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-)}
-
+      {/* Mobile infinite scroll sentinel - Only when conditions are met */}
+      {viewType === "products" && isMobile && productPage < productLastPage && (
+        <div 
+          ref={loadMoreRef} 
+          className="h-20 flex justify-center items-center col-span-full"
+        >
+          {loading && (
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+          )}
+          {!loading && (
+            <div className="text-sm text-gray-500">Loading more...</div>
+          )}
         </div>
       )}
     </>
-  ), [loading, products.length, productPage, sortedProducts, isFavourite, handleToggleFavourite, navigate, fw, isMobile, productLastPage]);
-
+  ), [loading, products.length, productPage, sortedProducts, isFavourite, 
+      handleToggleFavourite, navigate, fw, isMobile, productLastPage, viewType]);
 
   // =================== RENDER PAGINATION CONTROLS ===================
   const renderPaginationControls = useMemo(() => {
-    // Only show pagination for products
+    // Only show pagination for products on desktop/tablet
     if (viewType !== "products") return null;
-    if (isMobile || productLastPage <= 1) return null;
+    if (isMobile) return null; // No pagination on mobile
+    if (productLastPage <= 1) return null;
 
     return (
       <div className="flex justify-center items-center gap-4 mt-12">
-<button
-  disabled={productPage === 1}
-  onClick={() => setProductPage(p => p - 1)}
->
-  Previous
-</button>
+        <button
+          disabled={productPage === 1}
+          onClick={() => setProductPage(p => p - 1)}
+          className="px-4 py-2 rounded-full border border-gray-300 
+                     disabled:opacity-40 disabled:cursor-not-allowed
+                     hover:bg-gray-100 transition"
+        >
+          {fw.previous || "Previous"}
+        </button>
 
-<button
-  disabled={productPage === productLastPage}
-  onClick={() => setProductPage(p => p + 1)}
->
-  Next
-</button>
+        <span className="text-sm text-gray-600">
+          {fw.page || "Page"} {productPage} {fw.of || "of"} {productLastPage}
+        </span>
 
+        <button
+          disabled={productPage === productLastPage}
+          onClick={() => setProductPage(p => p + 1)}
+          className="px-4 py-2 rounded-full border border-gray-300 
+                     disabled:opacity-40 disabled:cursor-not-allowed
+                     hover:bg-gray-100 transition"
+        >
+          {fw.next || "Next"}
+        </button>
       </div>
     );
-  }, [isMobile, productLastPage, productPage, fw, viewType, loading]);
+  }, [isMobile, productLastPage, productPage, fw, viewType]);
 
   // Error state
   if (pageError && !category) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center py-20">
-          <div className="text-red-500 text-lg mb-4">{pageError || "Category not found"}</div>
+          <div className="text-red-500 text-lg mb-4">{pageError}</div>
           <button
             onClick={handleBackClick}
             className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
@@ -664,13 +727,10 @@ useEffect(() => {
   return (
     <section className="min-h-screen w-full py-10 sm:py-14 px-4 sm:px-8 md:px-12 relative overflow-hidden">
       
-      {/* Loading indicator */}
+      {/* Loading indicator - top right spinner */}
       {loading && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="relative w-6 h-6">
-            <div className="absolute inset-0 border-2 border-gray-300/50 rounded-full" />
-            <div className="absolute inset-0 border-2 border-transparent border-t-gray-600 border-r-gray-600 rounded-full animate-spin" />
-          </div>
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
         </div>
       )}
 
@@ -714,7 +774,7 @@ useEffect(() => {
 
           {/* Filters */}
           <div className="flex flex-wrap items-center justify-center md:justify-end gap-4">
-            {/* Toggle Button */}
+            {/* Toggle Button - Like NewArrivalProductPage style */}
             <div className="relative border border-gray-300 rounded-full overflow-hidden bg-white shadow-sm">
               <div 
                 className={`absolute top-0 bottom-0 w-1/2 rounded-full transition-all duration-300 ease-in-out ${
@@ -743,33 +803,42 @@ useEffect(() => {
               </button>
             </div>
 
+            {/* Sort Dropdown - Like NewArrivalProductPage style */}
             <select
               value={sortBy}
               onChange={handleSortChange}
               disabled={loading}
-              className={`border border-gray-300 rounded-full px-3 py-2 pr-8 text-sm bg-white focus:ring-2 focus:ring-blue-400 text-start rtl:text-right rtl:pl-8 rtl:pr-3 ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className="bg-white/60 backdrop-blur-md border border-gray-200 text-sm sm:text-base md:text-base rounded-full px-1 py-1 sm:px-2 sm:py-2 md:px-4 md:py-2 focus:outline-none text-gray-700"
             >
               <option value="relevance">
                 {fw.store_by || "Sort by"} {fw.name || "Relevance"}
               </option>
-              <option value="rating">{fw.rating}</option>
+              <option value="rating">{fw.rating || "Rating"}</option>
               <option value="priceLow">
-                {fw.price}: {fw.low_to_hight}
+                {fw.price || "Price"}: {fw.low_to_hight || "Low to High"}
               </option>
               <option value="priceHigh">
-                {fw.price}: {fw.hight_to_low}
+                {fw.price || "Price"}: {fw.hight_to_low || "High to Low"}
               </option>
             </select>
           </div>
         </div>
 
+        {/* Product Count - Like NewArrivalProductPage style */}
+        {viewType === "products" && (
+          <p className="text-[15px] sm:text-base md:text-lg text-gray-600 mb-4">
+            {loading 
+              ? "Loading..." 
+              : `${sortedProducts.length} ${fw.products_found || "products found"}`
+            }
+          </p>
+        )}
+
         {/* Content Grid */}
         {viewType === "companies" ? renderCompaniesGrid : renderProductsGrid}
         
-        {/* Desktop/Tablet Pagination - Only for products */}
-        {!isMobile && viewType === "products" && productLastPage > 1 && renderPaginationControls}
+        {/* Desktop/Tablet Pagination - Only for products and non-mobile */}
+        {viewType === "products" && renderPaginationControls}
         
         {/* Empty State */}
         {!loading && viewType === "companies" && sortedCompanies.length === 0 && (

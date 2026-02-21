@@ -174,7 +174,7 @@ export const DotsIcon = ({ className = "", size = 16 }) => (
 );
 
 /* ================= OUTLINE HEART (AiOutlineHeart SVG) ================= */
-export const OutlineHeartIcon = ({ className = "", size = 16 }) => (
+export const OutlineHeartIcon = ({ className = "", size = 20 }) => (
   <svg
     viewBox="0 0 24 24"
     width={size}
@@ -202,3 +202,19 @@ export const ShareAltIcon = ({ className = "" }) => (
   </svg>
 );
 
+ export const UserOutlineIcon = ({ size = 20, className = "" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);

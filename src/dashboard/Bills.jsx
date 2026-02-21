@@ -7,144 +7,172 @@ import PaidBills from "./PaidBills";
 import UnpaidBills from "./UnpaidBills";
 import DraftBills from "./DraftBills";
 
+
 import {
-  IconCreate,
-  IconPending,
-  IconPast,
-  IconUnpaid,
-  IconDraft,
-  IconBank,
-} from "./CompanySvg";
+  getPendingBills,
+  getPaidBills,
+  getUnpaidBills,
+  getDraftBills
+} from "../companyDashboardApi";
 
-const Bills = () => {
-  const [activePage, setActivePage] = useState("dashboard");
+const Bills = ({ companyId, companyInfo, products }) => {
+  const [activePage, setActivePage] = useState("create");
+  const [editingBillId, setEditingBillId] = useState(null);
 
-  const items = [
-    { id: "create", label: "Create a Bill", icon: IconCreate },
-    { id: "pending", label: "Pending Bill", icon: IconPending, count: 50 },
-    { id: "past", label: "Paid Bill", icon: IconPast, count: 9 },
-    { id: "unpaid", label: "Unpaid Bill", icon: IconUnpaid, count: 3 },
+  const [counts, setCounts] = useState({
+    pending: 0,
+    past: 0,
+    unpaid: 0,
+    draftBills: 0
+  });
 
-     { id: "draftBills", label: "Draft Bills", icon: IconDraft },
-    { id: "bank", label: "Edit Bank Account", icon: IconBank, disabled: true },
+  React.useEffect(() => {
+    fetchCounts();
+  }, []);
+
+  const fetchCounts = async () => {
+    try {
+      const [pendingRes, paidRes, unpaidRes, draftRes] = await Promise.all([
+        getPendingBills(),
+        getPaidBills(),
+        getUnpaidBills(),
+        getDraftBills()
+      ]);
+
+      const getCount = (res) => {
+        if (Array.isArray(res.data)) return res.data.length;
+        if (res.data?.data && Array.isArray(res.data.data)) return res.data.data.length;
+        if (res.data?.bills && Array.isArray(res.data.bills)) return res.data.bills.length;
+        return 0;
+      };
+
+      setCounts({
+        pending: getCount(pendingRes),
+        past: getCount(paidRes),
+        unpaid: getCount(unpaidRes),
+        draftBills: getCount(draftRes)
+      });
+    } catch (error) {
+      console.error("Error fetching bill counts:", error);
+    }
+  };
+
+  const handleEditBill = (billId) => {
+    setEditingBillId(billId);
+    setActivePage("create");
+  };
+
+  const handleBackToDashboard = () => {
+    setActivePage("create"); 
+    setEditingBillId(null);
+    fetchCounts();
+  };
+
+  const tabs = [
+    { id: "create", label: "CREATING", count: null, color: "bg-blue-600" }, 
+    { id: "pending", label: "PENDING", count: counts.pending, color: "bg-gray-400" },
+    { id: "unpaid", label: "UNPAID", count: counts.unpaid, color: "bg-gray-400" },
+    { id: "past", label: "PAID", count: counts.past, color: "bg-gray-400" },
+    
   ];
 
-  const renderPage = () => {
+  const renderContent = () => {
     switch (activePage) {
       case "create":
-        return <CreateBills onBack={() => setActivePage("dashboard")} />;
+        return (
+          <CreateBills
+            onBack={handleBackToDashboard}
+            products={products}
+            editBillId={editingBillId}
+          />
+        );
       case "pending":
-        return <PendingBills onBack={() => setActivePage("dashboard")} />;
+        return <PendingBills onBack={handleBackToDashboard} refreshCounts={fetchCounts} />;
       case "past":
-        return <PaidBills onBack={() => setActivePage("dashboard")} />;
+        return <PaidBills onBack={handleBackToDashboard} />;
       case "unpaid":
-        return <UnpaidBills onBack={() => setActivePage("dashboard")} />;
-     
-         case "draftBills":
-      return <DraftBills onBack={() => setActivePage("dashboard")} />;
+        return <UnpaidBills onBack={handleBackToDashboard} />;
+      case "draftBills":
+        return <DraftBills onBack={handleBackToDashboard} onEdit={handleEditBill} />;
       default:
         return null;
     }
   };
 
-  if (activePage !== "dashboard") return renderPage();
+return (
+  <div className="min-h-screen bg-white w-full  ">
+    <div className="flex items-center px-6 sm:px-10 lg:px-16 py-4 sm:py-6 ">
+      <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">Bills Status</h1>
+      <button
+        onClick={() => setActivePage('draftBills')}
+        className="text-xs sm:text-sm font-semibold text-gray-500 hover:text-blue-500 transition"
+      >
+        {/* View Drafts ({counts.draftBills}) */}
+      </button>
+    </div>
 
+    {/* GHOST PILL WITH SLIDING INDICATOR */}
+    <div className="flex justify-start mb-8 sm:mb-12 px-6 sm:px-10 lg:px-16">
+      <div className="relative inline-flex bg-gray-100 p-1 rounded-full w-full max-w-md sm:max-w-lg md:max-w-xl">
+        {/* Sliding background indicator */}
+        <div 
+          className="absolute top-1 bottom-1 rounded-full bg-blue-500 shadow-sm transition-all duration-300 ease-in-out"
+          style={{
+            width: `${100 / tabs.length}%`,
+            transform: `translateX(${tabs.findIndex(tab => tab.id === activePage) * 100}%)`,
+          }}
+        />
+        
+  {/* Tabs */}
+{tabs.map((tab) => {
+  const isActive = activePage === tab.id;
   return (
-    <div className=" min-h-screen bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 w-full max-w-7xl mt-10 min-w-0">
-      {/* HEADER */}
-      <div className="flex items-center gap-3 mb-6">
-   
-      <div className="flex flex-col leading-tight">
-  <span className="text-gray-900 text-3xl font-semibold tracking-tight">
-    Bills
-  </span>
-
-
-        </div>
-      </div>
-
-      {/* MENU */}
-      <div className="flex flex-col gap-3">
-        {items.map((item) => {
-          const Icon = item.icon;
-
-          //  SPECIAL CASE: BANK (COMING SOON CARD)
-          if (item.id === "bank") {
-            return (
-              <div
-                key={item.id}
-                className="
-                  w-full
-                  flex items-center justify-between
-                  px-[clamp(12px,3vw,20px)]
-                  py-[clamp(12px,3vw,18px)]
-                  rounded-[clamp(10px,2vw,14px)]
-                  border border-gray-200
-                  bg-gray-50/60
-                  opacity-80
-                  cursor-not-allowed
-                "
-              >
-                <div className="flex items-center gap-[clamp(10px,2vw,16px)]">
-                  <Icon className="w-5 h-5 text-gray-400" />
-
-                  <span className="text-gray-700 font-medium">
-                    Edit Bank Account
-                  </span>
-                </div>
-
-                <span
-                  className="
-                    text-[clamp(11px,2.8vw,13px)]
-                    font-medium
-                    text-gray-400
-                    px-[clamp(8px,2vw,12px)]
-                    py-[clamp(4px,1vw,6px)]
-                    bg-white/80
-                    rounded-full
-                    border border-gray-200
-                    whitespace-nowrap
-                  "
-                >
-                  Coming Soon
-                </span>
-              </div>
-            );
-          }
-
-          // ✅ NORMAL ITEMS
-          const isActive = activePage === item.id;
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActivePage(item.id)}
-              className={`
-                flex items-center w-full px-5 py-4 rounded-xl border transition-all
-                ${
-                  isActive
-                    ? "bg-blue-50 text-blue-600 border-blue-200 shadow-sm"
-                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                }
-              `}
-            >
-              <Icon className="w-5 h-5 mr-4" />
-
-              <span className="text-base font-medium flex-1 text-left">
-                {item.label}
-              </span>
-
-              {item.count !== undefined && (
-                <span className="text-sm text-gray-500">
-                  ({item.count})
-                </span>
-              )}
-            </button>
-          );
-        })}
+    <button
+      key={tab.id}
+      onClick={() => setActivePage(tab.id)}
+      className={`
+        relative flex-1
+        px-[clamp(6px,1.2vw,16px)]
+        py-[clamp(4px,0.9vw,10px)]
+        rounded-full
+        text-[clamp(9px,1vw,14px)]
+        font-medium
+        transition-colors duration-200
+        z-10
+        whitespace-nowrap
+        ${isActive ? 'text-white' : 'text-gray-500 hover:text-gray-900'}
+      `}
+    >
+      <span className="flex items-center justify-center gap-[clamp(4px,0.6vw,8px)]">
+        {tab.label}
+        {tab.count > 0 && (
+          <span
+            className={`
+              text-[clamp(8px,0.8vw,12px)]
+              px-[clamp(4px,0.6vw,6px)]
+              py-[2px]
+              rounded-full
+              ${isActive 
+                ? 'bg-white/20 text-white' 
+                : 'bg-gray-200 text-gray-700'}
+            `}
+          >
+            {tab.count}
+          </span>
+        )}
+      </span>
+    </button>
+  );
+})}
       </div>
     </div>
-  );
+
+    {/* CONTENT */}
+    <div className="mt-4 sm:mt-6 px-6 sm:px-10 lg:px-16">
+      {renderContent()}
+    </div>
+  </div>
+);
 };
 
 export default Bills;

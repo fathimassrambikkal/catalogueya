@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "../store/favouritesSlice";
+import { shareProduct } from "../api";
 
 // ==================== NORMALIZE PRODUCT ====================
 const normalizeProductData = (item) => {
@@ -101,9 +102,20 @@ export default function Favourite() {
     if (item.company_id) navigate(`/company/${item.company_id}`);
   };
 
-  const handleShare = (item, e) => {
+  const handleShare = async (item, e) => {
     e.stopPropagation();
-    const url = `${window.location.origin}${getProductUrl(item)}`;
+    let url = `${window.location.origin}${getProductUrl(item)}`;
+
+    try {
+      if (item.id) {
+        const res = await shareProduct(item.id);
+        if (res.data?.status && res.data?.data?.share_url) {
+          url = res.data.data.share_url;
+        }
+      }
+    } catch (err) {
+      console.error("Share API failed", err);
+    }
 
     if (navigator.share) {
       navigator.share({ title: item.name, text: item.name, url });

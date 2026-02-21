@@ -1,6 +1,8 @@
 // src/dashboard/ChatDashboard.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { addContact, getContacts } from "../companyDashboardApi";
+import { toast } from "react-hot-toast";
 
 import ChatHeader from "./ChatHeader";
 import ChatInput from "./ChatInput";
@@ -12,6 +14,8 @@ const conversations = [
     id: 1,
     name: "Mona Faheem Alharmy",
     online: false,
+    // Assuming we have participant ID here
+    participant_id: 62, 
     messages: [
       {
         id: 1,
@@ -26,6 +30,7 @@ const conversations = [
 function ChatDashboard() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
+  const [isContact, setIsContact] = useState(false);
 
   const chat = useMemo(
     () => conversations.find(c => c.id === Number(conversationId)),
@@ -34,7 +39,37 @@ function ChatDashboard() {
 
   const [messages, setMessages] = useState(chat?.messages || []);
 
+  useEffect(() => {
+    // Check if this chat user is already in contacts
+    if (chat?.participant_id) {
+      checkContactStatus(chat.participant_id);
+    }
+  }, [chat]);
+
+  const checkContactStatus = async (userId) => {
+    try {
+      const res = await getContacts();
+      const contacts = res.data?.data || res.data || [];
+      const exists = contacts.some(c => String(c.contact_user_id) === String(userId));
+      setIsContact(exists);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (!chat) return <div className="p-6">Chat not found</div>;
+
+  const handleAddContact = async () => {
+    if (!chat.participant_id) return;
+    try {
+      await addContact(chat.participant_id);
+      toast.success("Contact added successfully");
+      setIsContact(true);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to add contact");
+    }
+  };
 
   const sendMessage = (text) => {
     setMessages((prev) => [
@@ -54,6 +89,8 @@ function ChatDashboard() {
         name={chat.name}
         online={chat.online}
         onBack={() => navigate(-1)}
+        onAddContact={handleAddContact}
+        isContact={isContact}
       />
 
       <MessageList

@@ -1,68 +1,70 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { getCustomerPendingReviews } from "../api"
-import { FaClock,  FaChevronRight } from "react-icons/fa"
+import { FaClock, FaChevronRight } from "react-icons/fa"
 import { log, error } from "../utils/logger";
 
 function AwaitingReviews({ onStartLeaveReview }) {
   const [awaitingReviews, setAwaitingReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const customer = useSelector(state => state.auth.user);
 
   const fetchAwaitingReviews = async () => {
     try {
+      setLoading(true);
       const pendingRes = await getCustomerPendingReviews();
       log("AwaitingReviews: API response", pendingRes);
 
-      
- const reviews = (pendingRes.data?.data || []).map(item => {
-  const reviewDate = item.created_at
-    ? new Date(item.created_at)
-    : new Date();
+      const reviews = (pendingRes.data?.data || []).map(item => {
+        const reviewDate = item.created_at
+          ? new Date(item.created_at)
+          : new Date();
 
-  const isCompany = Boolean(item.company_id);
+        const isCompany = Boolean(item.company_id);
 
-  return {
-    id: item.id,
-    review_id: null,
+        return {
+          id: item.id,
+          review_id: null,
 
-    type: isCompany ? "company" : "product",
+          type: isCompany ? "company" : "product",
 
-    company_id: isCompany ? item.company_id : null,
-    product_id: !isCompany ? item.product_id : null,
+          company_id: isCompany ? item.company_id : null,
+          product_id: !isCompany ? item.product_id : null,
 
-    productName: isCompany
-      ? item.company?.name_en || "Company"
-      : item.product?.name || "Product",
+          productName: isCompany
+            ? item.company?.name_en || "Company"
+            : item.product?.name || "Product",
 
-    description: isCompany
-      ? (item.company?.description_en || "").replace(/<[^>]*>/g, "")
-      : item.product?.description || "",
+          description: isCompany
+            ? (item.company?.description_en || "").replace(/<[^>]*>/g, "")
+            : item.product?.description || "",
 
-    service_name: isCompany ? item.service_name : null,
+          service_name: isCompany ? item.service_name : null,
 
-    receivedDate: reviewDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
-    receivedTime: reviewDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-});
+          receivedDate: reviewDate.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          receivedTime: reviewDate.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+      });
 
-      
       setAwaitingReviews(reviews);
     } catch (err) {
       error("AwaitingReviews: failed to load pending reviews", err);
-
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (!customer) {
       setAwaitingReviews([]);
+      setLoading(false);
       return;
     }
     fetchAwaitingReviews();
@@ -71,6 +73,99 @@ function AwaitingReviews({ onStartLeaveReview }) {
   const removeAwaitingItem = (itemId) => {
     setAwaitingReviews(prev => prev.filter(item => item.id !== itemId));
   };
+
+  // ===== ENTERPRISE-LEVEL SKELETON LOADER =====
+  const SkeletonLoader = () => (
+    <div className="flex flex-col gap-4 sm:gap-5 md:gap-6">
+      {/* Generate 3 skeleton cards */}
+      {[1, 2, 3].map((index) => (
+        <div
+          key={index}
+          className="
+            bg-white/95 backdrop-blur-xl
+            rounded-xl sm:rounded-2xl
+            border border-white/80
+            shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_4px_24px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.02)]
+            overflow-hidden
+            animate-pulse
+            glass-effect
+          "
+        >
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4">
+            {/* Left: Date skeleton */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="
+                w-7 h-7 sm:w-9 sm:h-9
+                rounded-lg sm:rounded-xl
+                bg-gradient-to-br from-gray-100 to-gray-200/40
+                border border-gray-100/50
+              "></div>
+              <div className="flex flex-col gap-2">
+                <div className="w-16 h-3 rounded-md bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-20 h-3 rounded-md bg-gradient-to-r from-gray-200 to-gray-300/60"></div>
+                  <div className="hidden sm:block w-3 h-3 rounded-md bg-gradient-to-r from-gray-100 to-gray-200/50"></div>
+                  <div className="hidden sm:block w-16 h-3 rounded-md bg-gradient-to-r from-gray-200 to-gray-300/60"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Type badge skeleton */}
+            <div className="
+              px-2 py-1.5 sm:px-4 sm:py-2
+              rounded-lg
+              bg-gradient-to-r from-gray-100/30 to-gray-200/20
+              border border-gray-100/40
+            ">
+              <div className="w-20 h-3 rounded-md bg-gradient-to-r from-gray-200 to-gray-300/60"></div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-[0.5px] bg-gradient-to-r from-transparent via-gray-200/30 to-transparent" />
+
+          {/* Main Content Skeleton */}
+          <div className="px-4 sm:px-5 md:px-6 py-4 md:py-5 gap-3 sm:gap-4 md:gap-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Review Info Skeleton */}
+              <div className="flex-1 min-w-0">
+                {/* Review Type Badge Skeleton */}
+                <div className="mb-4">
+                  <div className="w-32 h-6 rounded-full bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                </div>
+
+                {/* Product/Company Name Skeleton */}
+                <div className="mb-3">
+                  <div className="w-3/4 h-6 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300/60 mb-2"></div>
+                  <div className="w-full h-4 rounded-md bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                </div>
+
+                {/* Service Name Skeleton */}
+                <div className="mb-3">
+                  <div className="w-40 h-6 rounded-full bg-gradient-to-r from-gray-100 to-gray-200/60"></div>
+                </div>
+              </div>
+
+              {/* Button Skeleton */}
+              <div className="w-full sm:w-auto mt-4 sm:mt-0">
+                <div className="
+                  w-32 h-10
+                  rounded-lg sm:rounded-xl
+                  bg-gradient-to-r from-gray-100 to-gray-200/60
+                  border border-gray-100/50
+                "></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (loading) {
+    return <SkeletonLoader />;
+  }
 
   if (awaitingReviews.length === 0) {
     return (
@@ -83,9 +178,23 @@ function AwaitingReviews({ onStartLeaveReview }) {
         mx-auto w-full max-w-md lg:max-w-lg
         glass-effect
       ">
-     
+        <div className="
+          w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24
+          bg-gradient-to-br from-white to-blue-50/30
+          rounded-full
+          flex items-center justify-center
+          mx-auto mb-4 sm:mb-6
+          shadow-[inset_0_0_20px_rgba(255,255,255,0.8),0_4px_20px_rgba(59,130,246,0.08)]
+          border border-white/60
+          transition-all duration-500
+          hover:scale-105 hover:shadow-[inset_0_0_24px_rgba(255,255,255,0.9),0_6px_24px_rgba(59,130,246,0.12)]
+        ">
+          <div className="text-2xl sm:text-3xl text-blue-300/80">
+            ⭐
+          </div>
+        </div>
         <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-gray-900 mb-2 sm:mb-3 tracking-tight">
-          No  Reviews
+          No Pending Reviews
         </h3>
         <p className="text-gray-400 text-sm sm:text-base px-4 font-light">
           All your reviews are up to date
@@ -240,7 +349,6 @@ function AwaitingReviews({ onStartLeaveReview }) {
                     whitespace-nowrap
                   "
                 >
-                 
                   <span>Leave Review</span>
                   <FaChevronRight className="text-xs sm:text-sm opacity-70 group-hover:translate-x-0.5 transition-transform" />
                 </button>

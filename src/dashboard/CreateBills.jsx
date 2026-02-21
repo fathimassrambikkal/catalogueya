@@ -1,951 +1,500 @@
-import React, { useState, useMemo, useCallback, memo } from 'react';
-import PreviewFatora from './PreviewFatora'; 
+import React, { useState, useEffect } from 'react';
+
+
 import {
-  BackIcon,
-  PlusIcon,
-  DeleteIcon,
-} from "./CompanySvg";
+  getContacts,
+  createBill,
+  editBill,
+  addBillItem,
+  sendBill,
+  getBillDetails,
+  getCategories
+} from '../companyDashboardApi';
+import { toast } from 'react-hot-toast';
+import { ChevronDown, Plus, Trash2, User, FileText, CheckCircle, ArrowRight } from 'lucide-react';
 
-// Memoized components for better performance
-const ProductRow = memo(({ product, index, handleProductChange, calculatePrice, handleDeleteProduct, productsLength }) => {
-  const onInputChange = useCallback((field, value) => {
-    handleProductChange(product.id, field, value);
-  }, [product.id, handleProductChange]);
+function CreateBills({ onBack, products = [], editBillId = null }) {
+  const [loading, setLoading] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [categories, setCategories] = useState([]);
 
-  const price = useMemo(() => calculatePrice(product.pricePer1, product.quantity), [product.pricePer1, product.quantity, calculatePrice]);
+  // Bill State
+  const [billId, setBillId] = useState(editBillId);
+  const [billData, setBillData] = useState({
+    customer_id: '',
+    payment_method: 'cash',
+    currency: 'qar',
+    discount_percent: 0,
+    tip_amount: 0,
+    valid_for_hours: 24,
+    note: '',
+    customer_name: '',
+    customer_first_name: '',
+    customer_surname: '',
+    customer_email: '',
+    customer_phone: ''
+  });
 
-  return (
-    <div className={`grid grid-cols-12 px-6 py-4 items-center gap-4 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/30 transition-colors`}>
-      <div className="col-span-5">
-        <div className="mb-2">
-          <select 
-            className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-            value={product.name}
-            onChange={(e) => onInputChange('name', e.target.value)}
-          >
-            <option value="">Select a product...</option>
-            <option value="Laptop Pro X1">Laptop Pro X1 - $1,299</option>
-            <option value="Wireless Mouse">Wireless Mouse - $49</option>
-            <option value="Mechanical Keyboard">Mechanical Keyboard - $129</option>
-            <option value="4K Monitor">4K Monitor - $599</option>
-            <option value="Noise Cancelling Headphones">Noise Cancelling Headphones - $299</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>or</span>
-          <input 
-            type="text" 
-            placeholder="Enter custom product name"
-            value={product.manualName}
-            onChange={(e) => onInputChange('manualName', e.target.value)}
-            className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-          />
-        </div>
-      </div>
+  const [items, setItems] = useState([]);
+  const [newItemProduct, setNewItemProduct] = useState({ product_id: '', quantity: 1 });
+  const [newItemService, setNewItemService] = useState({ title: '', unit_price: '', quantity: 1 });
 
-      <div className="col-span-2">
-        <select
-          className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-          value={product.unit}
-          onChange={(e) => onInputChange('unit', e.target.value)}
-        >
-          <option value="item">Item</option>
-          <option value="kg">Kg</option>
-          <option value="cm">cm</option>
-          <option value="m">m</option>
-          <option value="ft">Feet</option>
-        </select>
-      </div>
+  // Fetch Data
+  useEffect(() => {
+    fetchContacts();
+    fetchCategories();
+    if (editBillId) fetchBillDetails(editBillId);
+  }, [editBillId]);
 
-      <div className="col-span-2">
-        <div className="relative">
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={product.pricePer1}
-            onChange={(e) => onInputChange('pricePer1', e.target.value)}
-            placeholder="0.00"
-            className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-          />
-          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">QR</span>
-        </div>
-      </div>
-
-      <div className="col-span-1">
-        <input
-          type="number"
-          min="0"
-          value={product.quantity}
-          onChange={(e) => onInputChange('quantity', e.target.value)}
-          placeholder="0"
-          className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-        />
-      </div>
-
-      <div className="col-span-1">
-        <div className="text-center text-gray-900 font-semibold text-sm">
-          {price} QR
-        </div>
-      </div>
-
-      <div className="col-span-1">
-      <button
-  onClick={() => handleDeleteProduct(product.id)}
-  className={`
-    w-full flex justify-center p-2 rounded-lg transition-colors
-    ${
-      productsLength > 1
-        ? "text-red-500 hover:text-red-700 hover:bg-red-50"
-        : "text-gray-300 cursor-not-allowed"
+  const fetchCategories = async () => {
+    try {
+      const res = await getCategories();
+      setCategories(res.data?.data || res.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
     }
-  `}
-  
-  title={productsLength === 1 ? "At least one product is required" : "Delete product"}
->
-  <DeleteIcon  className="w-4 h-4" />
-</button>
+  };
 
+  const resetForm = () => {
+    setBillId(null);
+    setBillData({
+      customer_id: '',
+      payment_method: 'cash',
+      currency: 'qar',
+      discount_percent: 0,
+      tip_amount: 0,
+      valid_for_hours: 24,
+      note: '',
+      customer_name: '',
+      customer_first_name: '',
+      customer_surname: '',
+      customer_email: '',
+      customer_phone: ''
+    });
+    setItems([]);
+    setNewItemProduct({ product_id: '', quantity: 1 });
+    setNewItemService({ title: '', unit_price: '', quantity: 1 });
+    // Keep contacts and categories
+  };
+
+  const fetchBillDetails = async (id) => {
+    try {
+      setLoading(true);
+      const res = await getBillDetails(id);
+      const bill = res.data?.data || res.data;
+      if (bill) {
+        setBillId(bill.id);
+        const [first, ...rest] = (bill.customer_name || '').split(' ');
+        setBillData({
+          customer_id: bill.customer_id,
+          payment_method: bill.payment_method || 'cash',
+          currency: bill.currency || 'qar',
+          discount_percent: bill.discount_value || 0,
+          tip_amount: bill.tip_amount || 0,
+          valid_for_hours: 24,
+          note: bill.note || '',
+          customer_name: bill.customer_name || '',
+          customer_first_name: first || '',
+          customer_surname: rest.join(' ') || '',
+          customer_email: bill.customer_email || '',
+          customer_phone: bill.customer_phone || ''
+        });
+        if (bill.items && Array.isArray(bill.items)) {
+          setItems(bill.items.map(item => ({
+            id: item.id,
+            product_id: item.product_id,
+            title: item.product_name || item.title,
+            quantity: item.quantity,
+            price: item.unit_price,
+            total: item.line_total,
+            type: item.type || (item.product_id ? 'product' : 'manual')
+          })));
+        }
+        setStep(2); 
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchContacts = async () => {
+    try {
+      const res = await getContacts();
+      setContacts(res.data?.data || res.data || []);
+    } catch (error) { }
+  };
+
+  const handleContactSelect = (e) => {
+    const contactId = e.target.value;
+    const contact = contacts.find(c => String(c.contact_user_id) === String(contactId));
+    if (contact) {
+      const [first, ...rest] = (contact.name || '').split(' ');
+      setBillData(prev => ({
+        ...prev,
+        customer_id: contactId,
+        customer_name: contact.name,
+        customer_first_name: first || '',
+        customer_surname: rest.join(' ') || '',
+        customer_email: contact.email,
+        customer_phone: contact.phone
+      }));
+    } else {
+      setBillData(prev => ({ ...prev, customer_id: contactId, customer_name: '', customer_first_name: '', customer_surname: '', customer_email: '', customer_phone: '' }));
+    }
+  };
+
+  /* SINGLE STEP FLOW REFACTOR */
+
+  // Remove step state, keep relevant states
+  // const [step, setStep] = useState(1); // REMOVED
+
+
+
+  const handleRemoveItem = (index) => {
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    setItems(newItems);
+    toast.success("Item removed");
+  };
+
+  const handleCreateAndSend = async () => {
+    if (!billData.customer_id) return toast.error("Please select a recipient");
+    if (items.length === 0) return toast.error("Please add at least one item");
+
+    setLoading(true);
+    try {
+      // 1. Create Bill
+      const billPayload = {
+        customer_id: billData.customer_id,
+        payment_method: billData.payment_method,
+        currency: billData.currency,
+        note: billData.note,
+        discount_percent: billData.discount_percent,
+        discount_value: billData.discount_percent,
+        discount: billData.discount_percent,
+        tip_amount: billData.tip_amount,
+        valid_for_hours: billData.valid_for_hours
+      };
+
+      let currentBillId = billId;
+
+      if (!currentBillId) {
+        const createRes = await createBill(billPayload);
+        const createdBill = createRes.data?.data || createRes.data;
+        if (!createdBill?.id) throw new Error("Failed to create bill");
+        currentBillId = createdBill.id;
+      } else {
+        // If editing, update metadata first (optional per user request, but good practice)
+        await editBill(currentBillId, billPayload);
+      }
+
+      // 2. Add Items (Sequentially to ensure order or handle errors)
+      // Note: If editing, we assume these are NEW items or we need to handle diff. 
+      // For this user flow "create bill... add product", we assume clean slate creation usually.
+      // We will loop through ALL local items.
+      // IMPORTANT: If we are editing and items already exist on server, we might duplicate them if we re-add.
+      // Filter out items that already have an 'id' (presumed existing from fetch).
+      const itemsToAdd = items.filter(i => !i.id);
+
+      // But wait! User might want ONE CLICK flow.
+      // If fetching details populated `items` with `id`, we skip adding them again?
+      // Yes, `fetchBillDetails` sets `id` on items.
+
+      for (const item of itemsToAdd) {
+        const itemPayload = item.type === 'product'
+          ? { type: 'product', product_id: item.product_id, quantity: item.quantity }
+          : { type: 'manual', title: item.title, unit_price: item.price, quantity: item.quantity };
+        await addBillItem(currentBillId, itemPayload);
+      }
+
+      // 3. Send Bill
+      await sendBill(currentBillId);
+
+      toast.success("Bill Created & Sent! Ready for next.");
+      resetForm();
+
+    } catch (error) {
+      console.error("Action Error:", error);
+      toast.error(error.response?.data?.message || "Failed to process bill");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+return (
+    <div className="animate-fadeIn pb-16  px-4 sm:px-5 border-2 border-gray-100 p-6 rounded-xl">
+      {/* PAGE TITLE */}
+      <div className="flex items-center gap-2 mb-5 sm:mb-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-normal text-gray-800 tracking-tight">{editBillId ? 'Edit & Send Bill' : 'Create New Bill'}</h1>
+          <p className="text-gray-400 text-xs sm:text-sm mt-0.5">Fill in the details below to generate a new invoice.</p>
+        </div>
       </div>
-    </div>
-  );
-});
 
-ProductRow.displayName = 'ProductRow';
+      {/* SECTION 1: GENERAL INFO */}
+      <div className="bg-white rounded-xl border border-gray-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] mb-4">
+        <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center gap-2.5">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </div>
+          <h3 className="text-sm sm:text-base font-normal text-gray-700">General Information</h3>
+        </div>
 
-const MobileProductCard = memo(({ product, handleProductChange, calculatePrice, handleDeleteProduct, productsLength }) => {
-  const onInputChange = useCallback((field, value) => {
-    handleProductChange(product.id, field, value);
-  }, [product.id, handleProductChange]);
+        <div className="p-4 sm:p-5 space-y-4">
+          {/* Recipient Input */}
+          <div>
+            <label className="block text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Recipient</label>
+            <div className="relative">
+              <select
+                className="w-full bg-white border border-gray-200/80 focus:border-blue-500 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-gray-600 outline-none appearance-none transition-colors"
+                value={billData.customer_id}
+                onChange={handleContactSelect}
+              >
+                <option value="">Select Customer</option>
+                {contacts.map(c => <option key={c.contact_user_id} value={c.contact_user_id}>{c.name}</option>)}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 w-3.5 h-3.5 pointer-events-none" />
+            </div>
 
+            {/* User Details Display */}
+            {billData.customer_id && (
+              <div className="mt-2.5 p-2.5 bg-gray-50/80 rounded-lg border border-gray-100 flex flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <User className="w-3 h-3 text-gray-400" />
+                  <span className="text-xs font-normal text-gray-600">{billData.customer_name}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] text-gray-400 pl-4">{billData.customer_email || 'No email available'}</span>
+                </div>
+              </div>
+            )}
+          </div>
 
-  const price = useMemo(() => calculatePrice(product.pricePer1, product.quantity), [product.pricePer1, product.quantity, calculatePrice]);
+          {/* Payment Method */}
+          <div className="pt-2 border-t border-gray-100">
+            <label className="block text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Payment Method</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setBillData({ ...billData, payment_method: 'cash' })}
+                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all border ${billData.payment_method === 'cash' ? 'border-blue-500 bg-blue-50/50 text-blue-600' : 'border-gray-200/80 bg-white text-gray-500 hover:bg-gray-50'}`}
+              >
+                CASH
+              </button>
+              <button
+                disabled
+                className="flex-1 py-2 rounded-lg text-xs font-medium border border-gray-200/80 bg-gray-50/30 text-gray-300 cursor-not-allowed"
+              >
+                ONLINE
+              </button>
+            </div>
+          </div>
 
+          {/* Details & Options */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Discount Card */}
+            <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
+              <h4 className="flex items-center gap-1.5 font-normal text-gray-500 text-xs mb-2">
+                <div className="w-1 h-1 rounded-full bg-gray-300" /> Discount
+              </h4>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-gray-400">Percentage</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    className="w-14 bg-white border border-gray-200/80 rounded-md py-1 px-1.5 text-center text-xs font-normal text-gray-600 outline-none focus:border-blue-500"
+                    placeholder="0"
+                    value={billData.discount_percent}
+                    onChange={e => setBillData({ ...billData, discount_percent: parseFloat(e.target.value) || 0 })}
+                  />
+                  <span className="text-gray-300 text-[10px]">%</span>
+                </div>
+              </div>
+            </div>
 
-
-
-  return (
-    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 mb-2">Product #{product.id}</h3>
-          <div className="space-y-2">
-            <select 
-              className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm"
-              value={product.name}
-              onChange={(e) => onInputChange('name', e.target.value)}
-            >
-              <option value="">Select product...</option>
-              <option value="Laptop Pro X1">Laptop Pro X1</option>
-              <option value="Wireless Mouse">Wireless Mouse</option>
-              <option value="Mechanical Keyboard">Mechanical Keyboard</option>
-            </select>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">or</span>
-              <input 
-                type="text" 
-                placeholder="Custom product"
-                value={product.manualName}
-                onChange={(e) => onInputChange('manualName', e.target.value)}
-                className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm"
+            {/* Note Area */}
+            <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
+              <h4 className="flex items-center gap-1.5 font-normal text-gray-500 text-xs mb-1.5">
+                <div className="w-1 h-1 rounded-full bg-gray-300" /> Note
+              </h4>
+              <textarea
+                className="w-full bg-white border border-gray-200/80 rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-blue-500 resize-none placeholder:text-gray-300"
+                rows="2"
+                placeholder="Add a note..."
+                value={billData.note}
+                onChange={e => setBillData({ ...billData, note: e.target.value })}
               />
             </div>
           </div>
         </div>
- <button
-  onClick={() => handleDeleteProduct(product.id)}
-  className={`
-    w-full flex justify-center p-2 rounded-lg transition-colors
-    ${
-      productsLength > 1
-        ? "text-red-500 hover:text-red-700 hover:bg-red-50"
-        : "text-gray-300 cursor-not-allowed"
-    }
-  `}
-  title={productsLength === 1 ? "At least one product is required" : "Delete product"}
->
-  <span className="w-4 h-4 flex items-center justify-center">
-    <DeleteIcon  className="w-4 h-4" />
-  </span>
-</button>
-
-
       </div>
-      
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Unit</label>
-          <select
-            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            value={product.unit}
-            onChange={(e) => onInputChange('unit', e.target.value)}
-          >
-            <option>Item</option>
-            <option>Kg</option>
-            <option>Box</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Unit Price</label>
-          <div className="relative">
-            <input
-              type="number"
-              value={product.pricePer1}
-              onChange={(e) => onInputChange('pricePer1', e.target.value)}
-              placeholder="0.00"
-              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm pr-8"
-            />
-            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">QR</span>
+
+      {/* SECTION 2: ITEMS */}
+      <div className="bg-white rounded-xl border border-gray-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center gap-2.5">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
+          <h3 className="text-sm sm:text-base font-normal text-gray-700">Items & Breakdown</h3>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Quantity</label>
-          <input
-            type="number"
-            value={product.quantity}
-            onChange={(e) => onInputChange('quantity', e.target.value)}
-            placeholder="0"
-            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm"
-          />
-        </div>
-      </div>
-      
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-gray-700">Item Total:</span>
-          <span className="text-lg font-bold text-gray-900">
-            {price} QR
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-});
 
-MobileProductCard.displayName = 'MobileProductCard';
-
-function CreateBills({ onBack }) {
-  const [recipient, setRecipient] = useState('');
-  const [validityDays, setValidityDays] = useState('1');
-  const [customDays, setCustomDays] = useState(1);
-  const [requestTip, setRequestTip] = useState(false);
-  const [addDiscount, setAddDiscount] = useState(false);
-  const [discountPercentage, setDiscountPercentage] = useState(0);
-  const [specialNote, setSpecialNote] = useState('');
-  const [fatoraNumber, setFatoraNumber] = useState(() => `FTR-${Date.now().toString().slice(-6)}`);
-  const [invoiceDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [invoiceTime] = useState(() => new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-  const [showPreview, setShowPreview] = useState(false);
-  
-  const [products, setProducts] = useState([{
-    id: 1, 
-    name: '', 
-    manualName: '', 
-    unit: 'Item', 
-    pricePer1: '', 
-    quantity: ''
-  }]);
-  
-  const [services, setServices] = useState([{
-    id: 1, 
-    name: '', 
-    price: ''
-  }]);
-
-  // Memoized calculations
-  const calculatePrice = useCallback((pricePer1, quantity) => {
-    const price = parseFloat(pricePer1) || 0;
-    const qty = parseFloat(quantity) || 0;
-    return (price * qty).toFixed(2);
-  }, []);
-
-  const calculateTotal = useMemo(() => {
-    const productsTotal = products.reduce((sum, product) => {
-      const price = parseFloat(product.pricePer1) || 0;
-      const quantity = parseFloat(product.quantity) || 0;
-      return sum + (price * quantity);
-    }, 0);
-    
-    const servicesTotal = services.reduce((sum, service) => sum + (parseFloat(service.price) || 0), 0);
-    const subtotal = productsTotal + servicesTotal;
-    const discountAmount = subtotal * (discountPercentage / 100);
-    return subtotal - discountAmount;
-  }, [products, services, discountPercentage]);
-
-  const productsSubtotal = useMemo(() => 
-    products.reduce((sum, product) => {
-      const price = parseFloat(product.pricePer1) || 0;
-      const quantity = parseFloat(product.quantity) || 0;
-      return sum + (price * quantity);
-    }, 0),
-    [products]
-  );
-
-  const servicesSubtotal = useMemo(() => 
-    services.reduce((sum, service) => sum + (parseFloat(service.price) || 0), 0),
-    [services]
-  );
-
-  const subtotal = useMemo(() => 
-    productsSubtotal + servicesSubtotal,
-    [productsSubtotal, servicesSubtotal]
-  );
-
-  const discountAmount = useMemo(() => 
-    subtotal * (discountPercentage / 100),
-    [subtotal, discountPercentage]
-  );
-
-  // Event handlers
-  const handleAddProduct = useCallback(() => {
-    setProducts(prev => [...prev, {
-      id: Math.max(...prev.map(p => p.id), 0) + 1,
-      name: '', 
-      manualName: '', 
-      unit: 'Item', 
-      pricePer1: '', 
-      quantity: ''
-    }]);
-  }, []);
-
-const handleDeleteProduct = useCallback((id) => {
-  setProducts(prev => {
-    // If only one product → just reset its fields
-    if (prev.length === 1) {
-      return [{
-        ...prev[0],
-        name: '',
-        manualName: '',
-        pricePer1: '',
-        quantity: ''
-      }];
-    }
-
-    // Otherwise → remove normally
-    return prev.filter(product => product.id !== id);
-  });
-}, []);
-
-
-
-  const handleAddService = useCallback(() => {
-    setServices(prev => [...prev, {
-      id: Math.max(...prev.map(s => s.id), 0) + 1,
-      name: '', 
-      price: ''
-    }]);
-  }, []);
-
-const handleDeleteService = useCallback((id) => {
-  setServices(prev => {
-    if (prev.length === 1) {
-      return [{
-        ...prev[0],
-        name: '',
-        price: ''
-      }];
-    }
-
-    return prev.filter(service => service.id !== id);
-  });
-}, []);
-
-
-
-  const handleProductChange = useCallback((id, field, value) => {
-    setProducts(prev => prev.map(product => 
-      product.id === id ? { ...product, [field]: value } : product
-    ));
-  }, []);
-
-  const handleServiceChange = useCallback((id, field, value) => {
-    setServices(prev => prev.map(service => 
-      service.id === id ? { ...service, [field]: value } : service
-    ));
-  }, []);
-
-  const handleCreateFatora = useCallback(() => {
-    if (!recipient) {
-      alert('Please select a recipient');
-      return;
-    }
-    
-    setShowPreview(true);
-  }, [recipient]);
-
-
-
-
-
-  const handleSaveDraft = useCallback(() => {
-  const draftPayload = {
-    fatoraNumber,
-    recipient,
-    products,
-    services,
-    requestTip,
-    addDiscount,
-    discountPercentage,
-    specialNote,
-    invoiceDate,
-    invoiceTime,
-  };
-
-  console.log("Saved as draft", draftPayload);
-
-  // TODO: replace with API call
-  alert("Draft saved successfully");
-  onBack();
-}, [
-  fatoraNumber,
-  recipient,
-  products,
-  services,
-  requestTip,
-  addDiscount,
-  discountPercentage,
-  specialNote,
-  invoiceDate,
-  invoiceTime,
-  onBack,
-]);
-
-
-  const handleBackFromPreview = useCallback(() => {
-    setShowPreview(false);
-  }, []);
-
-  const handleSendFatora = useCallback(() => {
-    alert('Fatora sent successfully!');
-    onBack();
-  }, [onBack]);
-
-  const handleEditFromPreview = useCallback(() => {
-    setShowPreview(false);
-  }, []);
-
-  if (showPreview) {
-    return (
-      <PreviewFatora
-        data={{
-          fatoraNumber,
-          invoiceDate,
-          invoiceTime,
-          recipient,
-          validityDays,
-          customDays,
-          products,
-          services,
-          requestTip,
-          addDiscount,
-          discountPercentage,
-          specialNote
-        }}
-        onBack={handleBackFromPreview}
-        onSend={handleSendFatora}
-        onEdit={handleEditFromPreview}
-      />
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 mt-20 md:mt-0 ">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col ">
-          {/* HEADER */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 sm:p-6 ">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onBack}
-                  className="flex items-center gap-2 text-white/90 hover:text-white transition-colors group"
-                >
-                  <div className="p-2 bg-white/10 rounded-lg group-hover:bg-white/20 transition">
-                    <BackIcon />
-                  </div>
-                  <span className="font-medium text-sm sm:text-base">Back to Dashboard</span>
-                </button>
-              </div>
-            </div>
-          </div>
-   {/* PAGE TITLE (separate section) */}
-<div className="px-4 sm:px-6 md:px-8 py-5 sm:py-6 border-b border-gray-200">
-  <h1
-    className="
-      text-gray-900
-      text-2xl sm:text-3xl md:text-4xl
-      font-bold
-      tracking-tight
-      leading-tight
-    "
-  >
-    Create a Bill
-  </h1>
-  </div>
-          {/* CONTENT */}
-          <div className="divide-y divide-gray-200">
-            {/* General Information Section - Responsive */}
-            <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-6 ">
-             
-              <h2 className="font-semibold text-gray-900 text-base sm:text-lg mb-3 sm:mb-4 tracking-tight">
-                General Information
-              </h2>
-
-              <div className="space-y-3 sm:space-y-4">
-                {/* Recipient */}
-                <div>
-                  <label className="block text-gray-600 text-xs sm:text-sm mb-1">
-                    Recipient
-                  </label>
+        <div className="p-4 sm:p-5 space-y-4">
+          {/* Add Product Section */}
+          <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
+            <h4 className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2.5">Add Product</h4>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1">
+                <div className="relative">
                   <select
-                    className="w-full rounded-lg bg-white/70 backdrop-blur border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                    className="w-full bg-white border border-gray-200/80 focus:border-blue-500 rounded-md px-2.5 py-2 text-xs text-gray-600 outline-none appearance-none"
+                    value={newItemProduct.product_id}
+                    onChange={e => setNewItemProduct({ ...newItemProduct, product_id: e.target.value })}
                   >
-                    <option>Insert Customers information</option>
+                    <option value="">Select product...</option>
+                    {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.price} QR)</option>)}
                   </select>
-                </div>
-
-                {/* First name + Surname */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-gray-600 text-xs sm:text-sm mb-1">
-                      Customers First Name
-                    </label>
-                    <input
-                      className="w-full rounded-lg bg-white/80 backdrop-blur border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-600 text-xs sm:text-sm mb-1">
-                      Surname
-                    </label>
-                    <input
-                      className="w-full rounded-lg bg-white/80 backdrop-blur border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    />
-                  </div>
-                </div>
-
-                {/* Mobile / Email */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <label className="flex items-center gap-2 sm:gap-3 rounded-lg bg-white/80 backdrop-blur border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-                    <input type="radio" name="contact" defaultChecked className="w-4 h-4" />
-                    <span className="text-gray-700 text-xs sm:text-sm whitespace-nowrap">
-                      Mobile
-                    </span>
-                    <input
-                      className="flex-1 bg-transparent outline-none text-gray-900 text-xs sm:text-sm min-w-0"
-                    />
-                  </label>
-
-                  <label className="flex items-center gap-2 sm:gap-3 rounded-lg bg-white/80 backdrop-blur border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-                    <input type="radio" name="contact" className="w-4 h-4" />
-                    <span className="text-gray-700 text-xs sm:text-sm whitespace-nowrap">
-                      Email
-                    </span>
-                    <input
-                      className="flex-1 bg-transparent outline-none text-gray-900 text-xs sm:text-sm min-w-0"
-                    />
-                  </label>
-                </div>
-
-                {/* Valid For */}
-                <div className="max-w-[140px] sm:max-w-[200px]">
-                  <label className="block text-gray-600 text-xs sm:text-sm mb-1">
-                    Valid for
-                  </label>
-                  <select
-                    className="w-full rounded-lg bg-white/70 backdrop-blur border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                  >
-                    <option>1 Day</option>
-                    <option>3 Days</option>
-                    <option>1 Week</option>
-                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 w-3 h-3 pointer-events-none" />
                 </div>
               </div>
-            </div>
 
-            {/* Products Section */}
-            <div className="p-4 sm:p-6 md:p-8">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">Products</h2>
-                    <p className="text-xs sm:text-sm text-gray-600">Add products to this invoice</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleAddProduct}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium text-xs sm:text-sm"
-                >
-                  <PlusIcon />
-                  <span className="hidden sm:inline">Add</span>
-                </button>
+              <div className="flex items-center w-24 bg-white border border-gray-200/80 rounded-md overflow-hidden">
+                <button onClick={() => setNewItemProduct(p => ({ ...p, quantity: Math.max(1, p.quantity - 1) }))} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 text-xs">-</button>
+                <div className="flex-1 text-center text-xs font-normal text-gray-600">{newItemProduct.quantity}</div>
+                <button onClick={() => setNewItemProduct(p => ({ ...p, quantity: p.quantity + 1 }))} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 text-xs">+</button>
               </div>
 
-              {/* Desktop Products Table */}
-              <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200">
-                {/* Table Header */}
-                <div className="grid grid-cols-12 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                  <div className="col-span-5 text-xs sm:text-sm font-semibold text-gray-700">Product Details</div>
-                  <div className="col-span-2 text-xs sm:text-sm font-semibold text-gray-700 text-center">Unit</div>
-                  <div className="col-span-2 text-xs sm:text-sm font-semibold text-gray-700 text-center">Unit Price</div>
-                  <div className="col-span-1 text-xs sm:text-sm font-semibold text-gray-700 text-center">Quantity</div>
-                  <div className="col-span-1 text-xs sm:text-sm font-semibold text-gray-700 text-center">Total</div>
-                  <div className="col-span-1 text-xs sm:text-sm font-semibold text-gray-700 text-center">Action</div>
-                </div>
-
-                {/* Products Rows - Memoized */}
-                {products.map((product, index) => (
-                  <ProductRow
-                    key={product.id}
-                    product={product}
-                    index={index}
-                    handleProductChange={handleProductChange}
-                    calculatePrice={calculatePrice}
-                    handleDeleteProduct={handleDeleteProduct}
-                    productsLength={products.length}
-                  />
-                ))}
-              </div>
-
-              {/* Mobile Products View - Memoized */}
-              <div className="md:hidden space-y-3 sm:space-y-4">
-                {products.map((product) => (
-                  <MobileProductCard
-                    key={product.id}
-                    product={product}
-                    handleProductChange={handleProductChange}
-                    calculatePrice={calculatePrice}
-                    handleDeleteProduct={handleDeleteProduct}
-                    productsLength={products.length}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Services Section */}
-            <div className="p-4 sm:p-6 md:p-8">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">Services</h2>
-                    <p className="text-xs sm:text-sm text-gray-600">Additional services provided</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleAddService}
-                  className="flex items-center gap-2 bg-blue-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg hover:bg-blue-600 transition-colors font-medium text-xs sm:text-sm"
-                >
-                  <PlusIcon />
-                  <span className="hidden sm:inline">Add</span>
-                </button>
-              </div>
-              
-              <div className="space-y-2 sm:space-y-3">
-                {services.map((service, index) => (
-                  <div key={service.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100/50 transition-colors">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-white border border-gray-300 rounded-full text-xs sm:text-sm font-semibold text-gray-700">
-                          {index + 1}
-                        </span>
-                        <input
-                          type="text"
-                          placeholder="Service name"
-                          className="bg-transparent border-0 px-0 py-1 text-xs sm:text-sm md:text-base text-gray-900 focus:outline-none focus:ring-0 w-full placeholder-gray-500"
-                          value={service.name}
-                          onChange={(e) => handleServiceChange(service.id, 'name', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 sm:gap-4 mt-2 md:mt-0">
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0.00"
-                          className="bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm w-24 sm:w-32 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-                          value={service.price}
-                          onChange={(e) => handleServiceChange(service.id, 'price', e.target.value)}
-                        />
-                        <span className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm">QR</span>
-                      </div>
-<button
-  onClick={() => handleDeleteService(service.id)}
-  className={`
-    p-2 rounded-lg transition
-    ${
-      services.length > 1
-        ? "text-red-500 hover:text-red-700"
-        : "text-gray-300 cursor-not-allowed"
-    }
-  `}
-  title={services.length === 1 ? "At least one service is required" : "Delete service"}
->
-  <span className="w-4 h-4 flex items-center justify-center">
-    <DeleteIcon className="w-4 h-4"  />
-  </span>
-</button>
-
-
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Additional Options */}
-            <div className="p-4 sm:p-6 md:p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                {/* Left Column - Tips & Discounts */}
-                <div className="space-y-6 sm:space-y-8">
-                  {/* Tips */}
-                  <div className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200">
-                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Tips & Gratuity</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Do you want to request for tip?</p>
-                    <div className="space-y-2 sm:space-y-3">
-                      <label className="flex items-center justify-between p-3 sm:p-4 bg-white/80 rounded-xl border border-gray-300/50 hover:border-blue-400/50 hover:bg-gray-50/30 transition-all duration-200 cursor-pointer backdrop-blur-sm">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${requestTip 
-                            ? 'border-blue-500 bg-blue-500 shadow-sm' 
-                            : 'border-gray-400 group-hover:border-gray-500'}`}
-                          >
-                            {requestTip && (
-                              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            Yes, include tip option
-                          </span>
-                        </div>
-                        <input
-                          type="radio"
-                          name="tip"
-                          checked={requestTip}
-                          onChange={() => setRequestTip(true)}
-                          className="hidden"
-                        />
-                      </label>
-
-                      <label className="flex items-center justify-between p-3 sm:p-4 bg-white/80 rounded-xl border border-gray-300/50 hover:border-blue-400/50 hover:bg-gray-50/30 transition-all duration-200 cursor-pointer backdrop-blur-sm">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${!requestTip 
-                            ? 'border-blue-500 bg-blue-500 shadow-sm' 
-                            : 'border-gray-400 group-hover:border-gray-500'}`}
-                          >
-                            {!requestTip && (
-                              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            No, don't include tip
-                          </span>
-                        </div>
-                        <input
-                          type="radio"
-                          name="tip"
-                          checked={!requestTip}
-                          onChange={() => setRequestTip(false)}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Discounts */}
-                  <div className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200">
-                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Discounts</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Do you want to add special discounts?</p>
-                    <div className="space-y-2 sm:space-y-3">
-                      <label className="flex items-center justify-between p-3 sm:p-4 bg-white/80 rounded-xl border border-gray-300/50 hover:border-blue-400/50 hover:bg-gray-50/30 transition-all duration-200 cursor-pointer backdrop-blur-sm">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${addDiscount 
-                            ? 'border-blue-500 bg-blue-500 shadow-sm' 
-                            : 'border-gray-400 group-hover:border-gray-500'}`}
-                          >
-                            {addDiscount && (
-                              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            Yes, apply discount
-                          </span>
-                        </div>
-                        <input
-                          type="radio"
-                          name="discount"
-                          checked={addDiscount}
-                          onChange={() => setAddDiscount(true)}
-                          className="hidden"
-                        />
-                      </label>
-                      
-                      <label className="flex items-center justify-between p-3 sm:p-4 bg-white/80 rounded-xl border border-gray-300/50 hover:border-gray-400/50 hover:bg-gray-50/30 transition-all duration-200 cursor-pointer backdrop-blur-sm">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${!addDiscount 
-                            ? 'border-blue-500 bg-blue-500 shadow-sm' 
-                            : 'border-gray-400 group-hover:border-gray-500'}`}
-                          >
-                            {!addDiscount && (
-                              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            No discount
-                          </span>
-                        </div>
-                        <input
-                          type="radio"
-                          name="discount"
-                          checked={!addDiscount}
-                          onChange={() => setAddDiscount(false)}
-                          className="hidden"
-                        />
-                      </label>
-                      
-                      {addDiscount && (
-                        <div className="pt-3 sm:pt-4 mt-3 sm:mt-4 border-t border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm font-medium text-gray-700">Discount %</span>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.1"
-                                className="w-20 sm:w-24 bg-white border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                value={discountPercentage}
-                                onChange={(e) => setDiscountPercentage(parseFloat(e.target.value) || 0)}
-                              />
-                              <span className="text-gray-700 font-medium text-sm">%</span>
-                            </div>
-                          </div>
-                          <div className="mt-2 text-xs text-gray-500">
-                            Discount: {discountAmount.toFixed(2)} QR
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column - Notes & Summary */}
-                <div className="space-y-6 sm:space-y-8">
-                  {/* Special Note */}
-                  <div className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200">
-                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Special Notes</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Add any special instructions or notes</p>
-                    <textarea
-                      className="w-full bg-white border border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none"
-                      rows="5"
-                      placeholder="Example: Payment due within 30 days..."
-                      value={specialNote}
-                      onChange={(e) => setSpecialNote(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Summary Card */}
-                  <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 sm:p-6 text-white">
-                    <h3 className="text-base sm:text-lg font-bold mb-4 sm:mb-6">Invoice Summary</h3>
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-300 text-xs sm:text-sm">Subtotal</span>
-                        <span className="font-medium text-sm sm:text-base">
-                          {subtotal.toFixed(2)} QR
-                        </span>
-                      </div>
-                      {addDiscount && discountPercentage > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-300 text-xs sm:text-sm">Discount ({discountPercentage}%)</span>
-                          <span className="text-green-400 font-medium text-sm sm:text-base">
-                            -{discountAmount.toFixed(2)} QR
-                          </span>
-                        </div>
-                      )}
-                      <div className="border-t border-gray-700 pt-2 sm:pt-3 mt-2 sm:mt-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm sm:text-lg font-bold">Total Amount</span>
-                          <span className="text-xl sm:text-2xl md:text-3xl font-bold">
-                            {calculateTotal.toFixed(2)} QR
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <button
+                onClick={() => {
+                  if (!newItemProduct.product_id) return toast.error("Select a product");
+                  const prod = products.find(p => String(p.id) === String(newItemProduct.product_id));
+                  if (!prod) return;
+                  const newItem = {
+                    type: 'product',
+                    product_id: newItemProduct.product_id,
+                    title: prod.name,
+                    quantity: parseInt(newItemProduct.quantity),
+                    price: parseFloat(prod.price),
+                    total: parseFloat(prod.price) * parseInt(newItemProduct.quantity)
+                  };
+                  setItems([...items, newItem]);
+                  setNewItemProduct({ product_id: '', quantity: 1 });
+                  toast.success("Product added");
+                }}
+              className="px-3 py-2 bg-blue-500 text-white rounded-md text-xs font-medium hover:bg-blue-600 transition-all flex items-center justify-center gap-1 text-center w-full sm:w-auto"
+              >
+                <Plus className="w-3 h-3" /> Add
+              </button>
             </div>
           </div>
 
-          {/* FOOTER ACTIONS */}
-          <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              {/* Meta */}
-              <div className="text-xs sm:text-sm text-gray-600">
-                <p>Created on {invoiceDate} at {invoiceTime}</p>
+          {/* Add Service Section */}
+          <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
+            <h4 className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2.5">Add Service</h4>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  className="w-full bg-white border border-gray-200/80 focus:border-blue-500 rounded-md px-2.5 py-2 text-xs text-gray-600 outline-none placeholder:text-gray-300"
+                  placeholder="Service name"
+                  value={newItemService.title}
+                  onChange={e => setNewItemService({ ...newItemService, title: e.target.value })}
+                />
               </div>
 
-              {/* Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-                {/* Cancel */}
-                <button
-                  onClick={onBack}
-                  className="
-                    px-4 sm:px-5 py-2
-                    border border-gray-300
-                    text-gray-700
-                    rounded-xl
-                    hover:bg-gray-50
-                    transition
-                    font-medium
-                    text-xs sm:text-sm
-                    w-full sm:w-auto
-                  "
-                >
-                  Cancel
-                </button>
+              <div className="w-24">
+                <input
+                  type="number"
+                  className="w-full bg-white border border-gray-200/80 rounded-md px-2.5 py-2 text-xs text-gray-600 outline-none text-center"
+                  placeholder="Price"
+                  value={newItemService.unit_price}
+                  onChange={e => setNewItemService({ ...newItemService, unit_price: e.target.value })}
+                />
+              </div>
 
-                {/* Save as Draft */}
-                <button
-                  onClick={handleSaveDraft}
-                  className="
-                    px-4 sm:px-5 py-2
-                    border border-blue-300
-                    text-blue-600
-                    bg-blue-50/50
-                    rounded-xl
-                    hover:bg-blue-100/60
-                    transition
-                    font-medium
-                    text-xs sm:text-sm
-                    w-full sm:w-auto
-                  "
-                >
-                  Save as Draft
-                </button>
+              <div className="flex items-center w-24 bg-white border border-gray-200/80 rounded-md overflow-hidden">
+                <button onClick={() => setNewItemService(s => ({ ...s, quantity: Math.max(1, s.quantity - 1) }))} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 text-xs">-</button>
+                <div className="flex-1 text-center text-xs font-normal text-gray-600">{newItemService.quantity}</div>
+                <button onClick={() => setNewItemService(s => ({ ...s, quantity: s.quantity + 1 }))} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 text-xs">+</button>
+              </div>
 
-                {/* Create */}
-                <button
-                  onClick={handleCreateFatora}
-                  className="
-                    px-5 sm:px-6 py-2
-                   bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold text-xs sm:text-sm shadow-md hover:shadow-lg
-                    w-full sm:w-auto
-                  "
-                >
-                  Create
-                </button>
+              <button
+                onClick={() => {
+                  if (!newItemService.title || !newItemService.unit_price) return toast.error("Enter service details");
+                  const newItem = {
+                    type: 'manual',
+                    title: newItemService.title,
+                    quantity: parseInt(newItemService.quantity),
+                    price: parseFloat(newItemService.unit_price),
+                    total: parseFloat(newItemService.unit_price) * parseInt(newItemService.quantity)
+                  };
+                  setItems([...items, newItem]);
+                  setNewItemService({ title: '', unit_price: '', quantity: 1 });
+                  toast.success("Service added");
+                }}
+                className="px-3 py-2 bg-blue-500 text-white rounded-md text-xs font-medium hover:bg-blue-600 transition-all flex items-center justify-center gap-1 text-center w-full sm:w-auto"
+              >
+                <Plus className="w-3 h-3" /> Add
+              </button>
+            </div>
+          </div>
+
+          {/* Added Items List */}
+          {items.length > 0 && (
+            <div className="border border-gray-200/60 rounded-lg overflow-hidden">
+              {items.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2.5 border-b border-gray-100 last:border-0">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-normal text-gray-600">{item.title}</span>
+                      <span className="text-[7px] font-medium px-1 py-0.5 rounded bg-gray-100 text-gray-500 uppercase">{item.type}</span>
+                    </div>
+                    <span className="text-[10px] text-gray-400">Qty: {item.quantity}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-normal text-gray-700">{parseFloat(item.price).toFixed(2)} QR</span>
+                    <button
+                      onClick={() => handleRemoveItem(idx)}
+                      className="p-1 text-gray-300 hover:text-gray-500 rounded"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* FINAL ACTION BAR */}
+          <div className="bg-gray-50 rounded-lg p-3.5 sm:p-4 flex flex-col sm:flex-row justify-between items-center gap-3 border border-gray-200/60">
+            <div className="text-center sm:text-left">
+              <div className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider">Total Payable</div>
+              <div className="text-lg sm:text-xl font-normal text-gray-800">
+                {(() => {
+                  const subtotal = items.reduce((acc, i) => acc + (parseFloat(i.price) * i.quantity), 0);
+                  const discount = subtotal * ((billData.discount_percent || 0) / 100);
+                  const total = subtotal - discount;
+                  return total.toFixed(2);
+                })()} <span className="text-xs opacity-60">QR</span>
               </div>
             </div>
+
+            <button
+              onClick={handleCreateAndSend}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md text-xs font-medium shadow-sm hover:bg-blue-600 transition-all flex items-center gap-1.5 disabled:opacity-60"
+            >
+              {loading ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processing
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-3.5 h-3.5" /> Confirm & Send
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -953,4 +502,4 @@ const handleDeleteService = useCallback((id) => {
   );
 }
 
-export default memo(CreateBills);
+export default CreateBills;

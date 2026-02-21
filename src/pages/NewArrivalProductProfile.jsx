@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
-import ReviewModal from "../components/ReviewModal";
+import ReviewModal from "../components/ReviewModal2";
 import SimilarProducts from "../components/SimilarProducts";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
-import { createCustomerConversation, getProductReviews } from "../api";
+import { createCustomerConversation, getProductReviews, shareProduct } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { addProductReview } from "../api";
 import { useLocation } from "react-router-dom";
@@ -28,16 +28,16 @@ import { getProduct, getCompany } from "../api";
 // ✅ ADD THIS HELPER FUNCTION (same as other components)
 const normalizeImage = (image) => {
   if (!image) return null;
-  
+
   // If image is an object with avif/webp
   if (typeof image === 'object' && !Array.isArray(image)) {
     // Return the object as-is for SmartImage to handle
     return image;
   }
-  
+
   // If it's already a string
   if (typeof image === 'string') return image;
-  
+
   return null;
 };
 
@@ -91,7 +91,7 @@ const getCountryFromIP = async () => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
+
     try {
       const res = await fetch("https://ipapi.co/json/", {
         signal: controller.signal,
@@ -100,11 +100,11 @@ const getCountryFromIP = async () => {
         }
       });
       clearTimeout(timeoutId);
-      
+
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
-      
+
       const data = await res.json();
       return data.country_name;
     } catch (fetchError) {
@@ -115,7 +115,7 @@ const getCountryFromIP = async () => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       try {
         const res = await fetch("https://ipwho.is/", {
           signal: controller.signal,
@@ -124,11 +124,11 @@ const getCountryFromIP = async () => {
           }
         });
         clearTimeout(timeoutId);
-        
+
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        
+
         const data = await res.json();
         return data.country;
       } catch (fallbackError) {
@@ -143,7 +143,7 @@ const getCountryFromIP = async () => {
 
 const buildShowProductPayload = async () => {
   let country = null;
-  
+
   try {
     country = await getCountryFromIP();
   } catch (error) {
@@ -195,7 +195,7 @@ export default function NewArrivalProductProfile() {
 
 
 
-  
+
 
   useEffect(() => {
     if (!auth?.user) return;
@@ -256,7 +256,7 @@ export default function NewArrivalProductProfile() {
 
         let productResponse;
         let lastError = null;
-        
+
         try {
           const simplePayload = {
             device: navigator.userAgent,
@@ -264,13 +264,13 @@ export default function NewArrivalProductProfile() {
           productResponse = await getProduct(resolvedProductId, simplePayload);
         } catch (error1) {
           lastError = error1;
-          
+
           try {
             const payload = await buildShowProductPayload();
             productResponse = await getProduct(resolvedProductId, payload);
           } catch (error2) {
             lastError = error2;
-            
+
             try {
               productResponse = await getProduct(resolvedProductId, {});
             } catch (error3) {
@@ -291,7 +291,7 @@ export default function NewArrivalProductProfile() {
 
         // ✅ UPDATED: Preserve object format for SmartImage
         const productImage = normalizeImage(productData.image);
-        
+
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
@@ -307,8 +307,8 @@ export default function NewArrivalProductProfile() {
           discount_percent: productData.discount_percent || null,
           albums: Array.isArray(productData.albums)
             ? productData.albums
-                .map(a => normalizeImage(a)) // ✅ Normalize album images too
-                .filter(Boolean)
+              .map(a => normalizeImage(a)) // ✅ Normalize album images too
+              .filter(Boolean)
             : [],
           isNewArrival: true,
         };
@@ -316,7 +316,7 @@ export default function NewArrivalProductProfile() {
         if (!mounted) return;
 
         setProduct(transformedProduct);
-        
+
         // ✅ Set selected image with object format
         const mainImage = productImage || transformedProduct.albums?.[0] || null;
         setSelectedImage(mainImage);
@@ -387,11 +387,11 @@ export default function NewArrivalProductProfile() {
     async (e) => {
       e.stopPropagation();
 
-     if (!product?.company_id) {
-  logError("Chat: invalid company ID", product);
-  showToast(fw.chat_unavailable || "Chat unavailable");
-  return;
-}
+      if (!product?.company_id) {
+        logError("Chat: invalid company ID", product);
+        showToast(fw.chat_unavailable || "Chat unavailable");
+        return;
+      }
 
 
       const token = localStorage.getItem("token");
@@ -414,18 +414,18 @@ export default function NewArrivalProductProfile() {
           res.data?.conversation?.id ||
           res.data?.id;
 
-       if (!conversationId) {
-  logError("Chat: conversation ID missing", res);
-  showToast(fw.chat_failed || "Unable to start chat");
-  return;
-}
+        if (!conversationId) {
+          logError("Chat: conversation ID missing", res);
+          showToast(fw.chat_failed || "Unable to start chat");
+          return;
+        }
 
 
         navigate(`/customer-login/chat/${conversationId}`);
       } catch (err) {
-  logError("Chat creation failed", err);
-  showToast(fw.chat_failed || "Unable to start chat");
-}
+        logError("Chat creation failed", err);
+        showToast(fw.chat_failed || "Unable to start chat");
+      }
     },
     [product, navigate]
   );
@@ -433,22 +433,33 @@ export default function NewArrivalProductProfile() {
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum, r) => sum + getSafeRating(r.rating), 0) /
-        reviews.length
+      reviews.length
       : product?.rating || 0;
 
   const handleShare = async () => {
     if (!product) return;
 
+    let shareUrl = window.location.href;
+
+    try {
+      const res = await shareProduct(product.id);
+      if (res.data?.status && res.data?.data?.share_url) {
+        shareUrl = res.data.data.share_url;
+      }
+    } catch (error) {
+      console.error("Share API failed", error);
+    }
+
     const shareData = {
       title: product.name,
       text: `Check out this new arrival: ${product.name} from ${product.company_name}`,
-      url: window.location.href,
+      url: shareUrl,
     };
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(shareUrl);
         showToast(fw.link_copied || "Link copied to clipboard");
       }
     } catch (err) {
@@ -458,10 +469,10 @@ export default function NewArrivalProductProfile() {
   const handleReviewSubmit = async () => {
     if (!reviewName || !reviewText || reviewRating === 0) {
       showToast(
-  fw.fill_all_fields || "Please enter name, rating and comment",
-  { type: "warning" }
-);
-return;
+        fw.fill_all_fields || "Please enter name, rating and comment",
+        { type: "warning" }
+      );
+      return;
 
     }
 
@@ -487,18 +498,18 @@ return;
       setReviewRating(0);
 
       showToast(
-  fw.review_submitted || `⭐ ${newRev.rating}-star review submitted!`,
-  { type: "success" }
-);
+        fw.review_submitted || `⭐ ${newRev.rating}-star review submitted!`,
+        { type: "success" }
+      );
 
     } catch (error) {
       logError("Review submit failed", error);
-showToast(
-  error?.response?.data?.message ||
-  fw.review_failed ||
-  "Failed to submit review",
-  { type: "error" }
-);
+      showToast(
+        error?.response?.data?.message ||
+        fw.review_failed ||
+        "Failed to submit review",
+        { type: "error" }
+      );
 
     }
   };
@@ -546,14 +557,14 @@ showToast(
         </div>
       )}
 
-   
+
       <section
         key={product?.id || 'loading'}
         className="max-w-[1200px] mx-auto px-6 md:px-10 py-24 grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-16 bg-white rounded-3xl shadow-sm animate-fade-in"
       >
         <div className="relative flex flex-col md:sticky md:top-24 h-fit w-full ">
           <div className="relative w-full h-[520px] md:h-[620px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm ">
-            
+
             {product ? (
               <SmartImage
                 key={selectedImage ? JSON.stringify(selectedImage) : 'fallback'}
@@ -596,9 +607,8 @@ showToast(
               >
                 <HeartIcon
                   filled={isFavourite}
-                  className={`w-[clamp(12px,1.1vw,16px)] h-[clamp(12px,1.1vw,16px)] ${
-                    isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
-                  }`}
+                  className={`w-[clamp(12px,1.1vw,16px)] h-[clamp(12px,1.1vw,16px)] ${isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                    }`}
                 />
               </PremiumIconButton>
 
@@ -620,11 +630,10 @@ showToast(
                     <button
                       key={idx}
                       onClick={() => handleImageClick(imgData)}
-                      className={`relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden flex items-center justify-center border transition-all duration-300 ${
-                        isActive
-                          ? "border-gray-900 shadow-xl bg-white/40 scale-105"
-                          : "border-gray-300 opacity-80 bg-white/25 hover:scale-105"
-                      } active:scale-95`}
+                      className={`relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden flex items-center justify-center border transition-all duration-300 ${isActive
+                        ? "border-gray-900 shadow-xl bg-white/40 scale-105"
+                        : "border-gray-300 opacity-80 bg-white/25 hover:scale-105"
+                        } active:scale-95`}
                     >
                       {isActive && (
                         <div className="absolute inset-0 rounded-xl border-[2.5px] border-white shadow-lg" />
@@ -635,7 +644,7 @@ showToast(
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
-                           logError("Image load failed (thumbnail)", imgData);
+                          logError("Image load failed (thumbnail)", imgData);
                           e.target.src = "/api/placeholder/200/200";
                         }}
                       />
@@ -708,11 +717,10 @@ showToast(
                     <StarIcon
                       key={i}
                       filled={i < Math.round(averageRating)}
-                      className={`w-4 h-4 ${
-                        i < Math.round(averageRating)
-                          ? "text-gray-900"
-                          : "text-gray-400"
-                      }`}
+                      className={`w-4 h-4 ${i < Math.round(averageRating)
+                        ? "text-gray-900"
+                        : "text-gray-400"
+                        }`}
                     />
                   ))}
                   <span className="text-sm text-gray-600">
@@ -758,11 +766,10 @@ showToast(
               setShowReviewModal(true);
             }}
             disabled={!product}
-            className={`inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl transition active:scale-95 ${
-              product
-                ? "bg-gray-900 text-white hover:bg-gray-800"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+            className={`inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl transition active:scale-95 ${product
+              ? "bg-gray-900 text-white hover:bg-gray-800"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
           >
             {product ? (fw.write_review || "Write a Review") : "Loading..."}
           </button>
@@ -789,11 +796,10 @@ showToast(
                         <StarIcon
                           key={i}
                           filled={i < getSafeRating(rev.rating)}
-                          className={`w-4 h-4 ${
-                            i < getSafeRating(rev.rating)
-                              ? "text-gray-900"
-                              : "text-gray-400"
-                          }`}
+                          className={`w-4 h-4 ${i < getSafeRating(rev.rating)
+                            ? "text-gray-900"
+                            : "text-gray-400"
+                            }`}
                         />
                       ))}
                     </div>
@@ -807,7 +813,7 @@ showToast(
                     onClick={() => navigate(`/product/${resolvedProductId}/reviews`)}
                     className="group w-full mt-2 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition flex items-center gap-1.5 text-left"
                   >
-                   {(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
+                    {(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -832,7 +838,7 @@ showToast(
         </div>
       </section>
 
-      <SimilarProducts 
+      <SimilarProducts
         products={similarProducts}
         favourites={favourites}
         toggleFavourite={(item) => {

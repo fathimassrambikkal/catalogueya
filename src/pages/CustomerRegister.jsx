@@ -100,7 +100,7 @@ export default function CustomerRegister() {
   };
 
   return (
-    <div className="w-full max-w-6xl bg-white border border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)] rounded-3xl p-8">
+    <div className="w-full max-w-6xl mx-auto bg-white border border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)] rounded-3xl p-8 mt-20">
       <div className="flex flex-col gap-4">
         <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">Customer Registration</h2>
         

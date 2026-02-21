@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import ReviewModal from "../components/ReviewModal";
+import ReviewModal from "../components/ReviewModal2";
 import SimilarProducts from "../components/SimilarProducts";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
-import { createCustomerConversation,getProductReviews  } from "../api";
+import { createCustomerConversation, getProductReviews, shareProduct } from "../api";
 import { addProductReview } from "../api";
 import { error as logError, warn } from "../utils/logger";
- import { showToast } from "../utils/showToast";
+import { showToast } from "../utils/showToast";
 import { getProduct, getCompany } from "../api";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
@@ -26,15 +26,15 @@ import {
 // ✅ Helper to normalize image data
 const normalizeImage = (image) => {
   if (!image) return null;
-  
+
   // If image is an object with avif/webp, return as-is
   if (typeof image === 'object' && !Array.isArray(image)) {
     return image;
   }
-  
+
   // If it's already a string, return as-is
   if (typeof image === 'string') return image;
-  
+
   return null;
 };
 
@@ -97,16 +97,16 @@ const getCountryFromIP = async () => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
+
     try {
       const res = await fetch("https://ipapi.co/json/", {
         signal: controller.signal,
         headers: { 'Accept': 'application/json' }
       });
       clearTimeout(timeoutId);
-      
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       const data = await res.json();
       return data.country_name;
     } catch (fetchError) {
@@ -118,16 +118,16 @@ const getCountryFromIP = async () => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       try {
         const res = await fetch("https://ipwho.is/", {
           signal: controller.signal,
           headers: { 'Accept': 'application/json' }
         });
         clearTimeout(timeoutId);
-        
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
+
         const data = await res.json();
         return data.country;
       } catch (fallbackError) {
@@ -143,7 +143,7 @@ const getCountryFromIP = async () => {
 // ✅ Build payload for showProduct API
 const buildShowProductPayload = async () => {
   let country = null;
-  
+
   try {
     country = await getCountryFromIP();
   } catch (error) {
@@ -167,12 +167,12 @@ export default function ProductProfile() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const favourites = useSelector((state) => state.favourites.items);
-const auth = useSelector((state) => state.auth);
-const { fixedWords } = useFixedWords();
-const { i18n } = useTranslation();
-const location = useLocation();
+  const auth = useSelector((state) => state.auth);
+  const { fixedWords } = useFixedWords();
+  const { i18n } = useTranslation();
+  const location = useLocation();
 
-const fw = fixedWords?.fixed_words || {};
+  const fw = fixedWords?.fixed_words || {};
 
   const { companyId, id: routeProductId, productId, pid } = params;
   const resolvedProductId = routeProductId || productId || pid;
@@ -193,10 +193,10 @@ const fw = fixedWords?.fixed_words || {};
   // ✅ Function to refresh product data
   const refreshProductData = useCallback(async () => {
     if (!resolvedProductId) return;
-    
+
     try {
       setLoading(true);
-      
+
       let productResponse;
       try {
         const payload = await buildShowProductPayload();
@@ -205,7 +205,7 @@ const fw = fixedWords?.fixed_words || {};
         const simplePayload = { device: navigator.userAgent };
         productResponse = await getProduct(resolvedProductId, simplePayload);
       }
-      
+
       const productData = productResponse?.data?.data?.product || productResponse?.data?.product;
 
       if (!productData) {
@@ -228,13 +228,13 @@ const fw = fixedWords?.fixed_words || {};
         discount_percent: productData.discount_percent || null,
         albums: Array.isArray(productData.albums)
           ? productData.albums
-              .map(a => normalizeImage(a)) // ✅ Normalize album images
-              .filter(Boolean)
+            .map(a => normalizeImage(a)) // ✅ Normalize album images
+            .filter(Boolean)
           : [],
       };
 
       setProduct(transformedProduct);
-      
+
       const mainImage = normalizeImage(productData.image) || transformedProduct.albums?.[0] || null;
       setSelectedImage(mainImage);
 
@@ -270,7 +270,7 @@ const fw = fixedWords?.fixed_words || {};
     const handleProductsUpdated = (event) => {
       if (event.detail && event.detail.products) {
         const updatedProduct = event.detail.products.find((p) => p.id === resolvedProductId);
-        
+
         if (updatedProduct) {
           refreshProductData();
         } else if (event.detail.companyId === product?.company_id) {
@@ -281,7 +281,7 @@ const fw = fixedWords?.fixed_words || {};
 
     window.addEventListener('productsUpdated', handleProductsUpdated);
     window.addEventListener('companyProductsUpdated', handleProductsUpdated);
-    
+
     return () => {
       window.removeEventListener('productsUpdated', handleProductsUpdated);
       window.removeEventListener('companyProductsUpdated', handleProductsUpdated);
@@ -333,8 +333,8 @@ const fw = fixedWords?.fixed_words || {};
           discount_percent: productData.discount_percent || null,
           albums: Array.isArray(productData.albums)
             ? productData.albums
-                .map(a => normalizeImage(a)) // ✅ Normalize album images
-                .filter(Boolean)
+              .map(a => normalizeImage(a)) // ✅ Normalize album images
+              .filter(Boolean)
             : [],
         };
 
@@ -342,7 +342,7 @@ const fw = fixedWords?.fixed_words || {};
 
         // Set product IMMEDIATELY for instant rendering
         setProduct(transformedProduct);
-        
+
         const mainImage = normalizeImage(productData.image) || transformedProduct.albums?.[0] || null;
         setSelectedImage(mainImage);
 
@@ -396,41 +396,41 @@ const fw = fixedWords?.fixed_words || {};
   }, [resolvedProductId]);
 
   // ✅ Fetch product reviews from backend (Product Page)
-useEffect(() => {
-  if (!resolvedProductId) return;
+  useEffect(() => {
+    if (!resolvedProductId) return;
 
-  let mounted = true;
+    let mounted = true;
 
-  const fetchReviews = async () => {
-    try {
-      const res = await getProductReviews(resolvedProductId);
+    const fetchReviews = async () => {
+      try {
+        const res = await getProductReviews(resolvedProductId);
 
-      const apiData = res?.data?.data || {};
-      const apiReviews = apiData.reviews || [];
+        const apiData = res?.data?.data || {};
+        const apiReviews = apiData.reviews || [];
 
-      // ✅ MAP API → UI FORMAT
-      const mappedReviews = apiReviews.map((r) => ({
-        id: r.review_id,
-        name: r.user?.name || "Anonymous",
-        rating: Number(r.rating) || 0,
-        comment: r.comment || "",
-        date: new Date(r.created_at).toLocaleDateString(),
-        userImage: r.user?.image || null,
-      }));
+        // ✅ MAP API → UI FORMAT
+        const mappedReviews = apiReviews.map((r) => ({
+          id: r.review_id,
+          name: r.user?.name || "Anonymous",
+          rating: Number(r.rating) || 0,
+          comment: r.comment || "",
+          date: new Date(r.created_at).toLocaleDateString(),
+          userImage: r.user?.image || null,
+        }));
 
-      if (mounted) setReviews(mappedReviews);
-    } catch (err) {
-      logError("ProductProfile: failed to load product reviews", err);
-      if (mounted) setReviews([]);
-    }
-  };
+        if (mounted) setReviews(mappedReviews);
+      } catch (err) {
+        logError("ProductProfile: failed to load product reviews", err);
+        if (mounted) setReviews([]);
+      }
+    };
 
-  fetchReviews();
+    fetchReviews();
 
-  return () => {
-    mounted = false;
-  };
-}, [resolvedProductId]);
+    return () => {
+      mounted = false;
+    };
+  }, [resolvedProductId]);
 
   // ✅ COMPANY NAME CLICK HANDLER
   const handleCompanyClick = (e) => {
@@ -442,80 +442,92 @@ useEffect(() => {
 
   // ✅ Chat handler
   const handleChat = useCallback(
-  async (e) => {
-    e.stopPropagation();
-    if (!product) return;
+    async (e) => {
+      e.stopPropagation();
+      if (!product) return;
 
-    const token =
-      localStorage.getItem("token") ||
-      sessionStorage.getItem("token");
-    const userType = localStorage.getItem("userType");
+      const token =
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token");
+      const userType = localStorage.getItem("userType");
 
-    const companyId =
-      typeof product.company_id === "object"
-        ? product.company_id?.id
-        : product.company_id;
+      const companyId =
+        typeof product.company_id === "object"
+          ? product.company_id?.id
+          : product.company_id;
 
-    if (!companyId) {
-      logError("Chat: invalid company ID", product);
-showToast(fw.chat_unavailable || "Chat unavailable");
+      if (!companyId) {
+        logError("Chat: invalid company ID", product);
+        showToast(fw.chat_unavailable || "Chat unavailable");
 
-      return;
-    }
-
-    // 🚫 Guest → login with intent
-    if (!token || userType !== "customer") {
-      navigate(`/sign?redirect=/chat-intent/company/${companyId}`);
-      return;
-    }
-
-    // ✅ Logged-in customer → create/open chat
-    try {
-      const res = await createCustomerConversation({
-        is_group: false,
-        participant_ids: [Number(companyId)],
-      });
-
-      const conversationId =
-        res.data?.data?.id ||
-        res.data?.conversation?.id ||
-        res.data?.id;
-
-      if (!conversationId) {
-        logError("Chat: conversation ID missing");
-showToast(fw.chat_failed || "Unable to start chat");
         return;
       }
 
-      navigate(`/customer-login/chat/${conversationId}`);
-    } catch (err) {
-      logError("Chat creation failed", err);
-showToast(fw.chat_failed || "Unable to start chat");
+      // 🚫 Guest → login with intent
+      if (!token || userType !== "customer") {
+        navigate(`/sign?redirect=/chat-intent/company/${companyId}`);
+        return;
+      }
 
-    }
-  },
-  [product, navigate]
-);
+      // ✅ Logged-in customer → create/open chat
+      try {
+        const res = await createCustomerConversation({
+          is_group: false,
+          participant_ids: [Number(companyId)],
+        });
+
+        const conversationId =
+          res.data?.data?.id ||
+          res.data?.conversation?.id ||
+          res.data?.id;
+
+        if (!conversationId) {
+          logError("Chat: conversation ID missing");
+          showToast(fw.chat_failed || "Unable to start chat");
+          return;
+        }
+
+        navigate(`/customer-login/chat/${conversationId}`);
+      } catch (err) {
+        logError("Chat creation failed", err);
+        showToast(fw.chat_failed || "Unable to start chat");
+
+      }
+    },
+    [product, navigate]
+  );
 
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum, r) => sum + getSafeRating(r.rating), 0) /
-        reviews.length
+      reviews.length
       : product?.rating || 0;
 
   const handleShare = async () => {
     if (!product) return;
 
+    let shareUrl = window.location.href; // Default to current URL
+
+    try {
+      const res = await shareProduct(product.id);
+      if (res.data?.status && res.data?.data?.share_url) {
+        shareUrl = res.data.data.share_url;
+      }
+    } catch (err) {
+      logError("Share API failed, falling back to local URL", err);
+    }
+
     const shareData = {
       title: product.name,
       text: `Check out ${product.name} from ${product.company_name}`,
-      url: window.location.href,
+      url: shareUrl,
     };
+
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(shareUrl);
         showToast(fw.link_copied || "Link copied to clipboard");
       }
     } catch (err) {
@@ -523,50 +535,50 @@ showToast(fw.chat_failed || "Unable to start chat");
     }
   };
 
-const handleReviewSubmit = async () => {
-  if (!reviewText || reviewRating === 0) {
-    showToast(
-  fw.fill_all_fields || "Please enter rating and comment",
-  { type: "warning" }
-);
+  const handleReviewSubmit = async () => {
+    if (!reviewText || reviewRating === 0) {
+      showToast(
+        fw.fill_all_fields || "Please enter rating and comment",
+        { type: "warning" }
+      );
 
-    return;
-  }
+      return;
+    }
 
-  try {
-    // 🔥 SAVE TO BACKEND
-    await addProductReview(
-      resolvedProductId,
-      reviewRating,
-      reviewText.trim()
-    );
+    try {
+      // 🔥 SAVE TO BACKEND
+      await addProductReview(
+        resolvedProductId,
+        reviewRating,
+        reviewText.trim()
+      );
 
-    // ✅ Optimistic UI update
-    const newReview = {
-      id: Date.now(),
-      name: auth?.user?.name || "You",
-      rating: reviewRating,
-      comment: reviewText,
-      date: new Date().toLocaleDateString(),
-    };
+      // ✅ Optimistic UI update
+      const newReview = {
+        id: Date.now(),
+        name: auth?.user?.name || "You",
+        rating: reviewRating,
+        comment: reviewText,
+        date: new Date().toLocaleDateString(),
+      };
 
-    setReviews((prev) => [newReview, ...prev]);
+      setReviews((prev) => [newReview, ...prev]);
 
-    setShowReviewModal(false);
-    setReviewText("");
-    setReviewRating(0);
+      setShowReviewModal(false);
+      setReviewText("");
+      setReviewRating(0);
 
-  } catch (error) {
-    logError("Review submit failed", error);
-showToast(
-  error?.response?.data?.message ||
-  fw.review_failed ||
-  "Failed to submit review",
-  { type: "error" }
-);
+    } catch (error) {
+      logError("Review submit failed", error);
+      showToast(
+        error?.response?.data?.message ||
+        fw.review_failed ||
+        "Failed to submit review",
+        { type: "error" }
+      );
 
-  }
-};
+    }
+  };
 
   const handleImageClick = (imgData) => {
     setSelectedImage(imgData);
@@ -605,19 +617,19 @@ showToast(
   ].filter(Boolean);
 
   useEffect(() => {
-  if (!auth?.user) return;
-  if (!product) return;
+    if (!auth?.user) return;
+    if (!product) return;
 
-  const params = new URLSearchParams(location.search);
-  const action = params.get("action");
+    const params = new URLSearchParams(location.search);
+    const action = params.get("action");
 
-  if (action === "review") {
-    setShowReviewModal(true);
+    if (action === "review") {
+      setShowReviewModal(true);
 
-    //  clean URL after opening modal
-    navigate(location.pathname, { replace: true });
-  }
-}, [auth?.user, product]);
+      //  clean URL after opening modal
+      navigate(location.pathname, { replace: true });
+    }
+  }, [auth?.user, product]);
 
   return (
     <>
@@ -639,7 +651,7 @@ showToast(
         <div className="relative flex flex-col md:sticky md:top-24 h-fit w-full ">
           {/* MAIN IMAGE WRAPPER */}
           <div className="relative w-full h-[520px] md:h-[620px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm ">
-            
+
             {/* ✅ MAIN IMAGE with SmartImage */}
             {product ? (
               <SmartImage
@@ -661,42 +673,41 @@ showToast(
             {/* RIGHT SIDE ICONS - Show immediately */}
             <div className={`absolute top-4 right-4 flex flex-col gap-3 z-30 ${!product ? 'opacity-40' : ''}`}>
               <PremiumIconButton
-  title={isFavourite ? "Remove from favourites" : "Add to favourites"}
-  disabled={!product}
-  onClick={() => {
-    if (!product) return;
+                title={isFavourite ? "Remove from favourites" : "Add to favourites"}
+                disabled={!product}
+                onClick={() => {
+                  if (!product) return;
 
-    const payload = {
-      ...product,
-      name: product.name || "Unnamed Product",
-      company_name: product.company_name || "Company",
-      company_id: product.company_id || null,
-      price: product.price || 0,
-      category_name: product.category_name || "",
-      image: product.image || "/api/placeholder/400/400",
+                  const payload = {
+                    ...product,
+                    name: product.name || "Unnamed Product",
+                    company_name: product.company_name || "Company",
+                    company_id: product.company_id || null,
+                    price: product.price || 0,
+                    category_name: product.category_name || "",
+                    image: product.image || "/api/placeholder/400/400",
 
-      // ✅ REQUIRED
-      source: "product_profile",
-    };
+                    // ✅ REQUIRED
+                    source: "product_profile",
+                  };
 
-    const alreadyFav = favourites.some((f) => f.id === product.id);
+                  const alreadyFav = favourites.some((f) => f.id === product.id);
 
-    // 🔄 toggle always
-    dispatch(toggleFavourite(payload));
+                  // 🔄 toggle always
+                  dispatch(toggleFavourite(payload));
 
-    // 🔐 popup only when logged in & adding
-    if (auth?.user && !alreadyFav) {
-      dispatch(openListPopup(payload));
-    }
-  }}
->
+                  // 🔐 popup only when logged in & adding
+                  if (auth?.user && !alreadyFav) {
+                    dispatch(openListPopup(payload));
+                  }
+                }}
+              >
 
                 <HeartIcon
                   filled={isFavourite}
                   className={`w-[clamp(12px,1.1vw,16px)]
-              h-[clamp(12px,1.1vw,16px)] ${
-                    isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
-                  }`}
+              h-[clamp(12px,1.1vw,16px)] ${isFavourite ? "text-red-500" : "text-gray-600 hover:text-red-400"
+                    }`}
                 />
               </PremiumIconButton>
 
@@ -781,9 +792,9 @@ showToast(
         <div className="flex flex-col gap-6 ">
           {/* Category + Title + Company */}
           <div className="space-y-2 ">
-  <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500">
-  {fw.product}
-</p>
+            <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500">
+              {fw.product}
+            </p>
 
 
 
@@ -815,21 +826,21 @@ showToast(
             {product ? (
               <>
                 <div className="flex items-baseline gap-2 ">
-                <span className="text-3xl font-semibold text-gray-900">
-                {i18n.language === "ar"
-                  ? `${fw.qar || "QAR"} ${product.price}`
-                  : `${product.price} ${fw.qar || "QAR"}`
-                }
-              </span>
+                  <span className="text-3xl font-semibold text-gray-900">
+                    {i18n.language === "ar"
+                      ? `${fw.qar || "QAR"} ${product.price}`
+                      : `${product.price} ${fw.qar || "QAR"}`
+                    }
+                  </span>
 
 
                   {product.oldPrice && (
-                  <span className="text-sm line-through text-gray-400 ">
-                  {i18n.language === "ar"
-                    ? `${fw.qar || "QAR"} ${product.oldPrice}`
-                    : `${product.oldPrice} ${fw.qar || "QAR"}`
-                  }
-                </span>
+                    <span className="text-sm line-through text-gray-400 ">
+                      {i18n.language === "ar"
+                        ? `${fw.qar || "QAR"} ${product.oldPrice}`
+                        : `${product.oldPrice} ${fw.qar || "QAR"}`
+                      }
+                    </span>
                   )}
 
                   {product.discount_percent && (
@@ -845,11 +856,10 @@ showToast(
                     <StarIcon
                       key={i}
                       filled={i < Math.round(averageRating)}
-                      className={`w-4 h-4  ${
-                        i < Math.round(averageRating)
-                          ? "text-gray-900"
-                          : "text-gray-400"
-                      }`}
+                      className={`w-4 h-4  ${i < Math.round(averageRating)
+                        ? "text-gray-900"
+                        : "text-gray-400"
+                        }`}
                     />
                   ))}
                   <span className="text-sm text-gray-600 ">
@@ -887,76 +897,74 @@ showToast(
           </div>
 
           {/* Write Review Button */}
-<button
-  onClick={(e) => {
-    e.stopPropagation();
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
 
-    // 🚫 Guest user → redirect to login with intent
-    if (!auth?.user) {
-      navigate(
-        `/sign?redirect=/product/${resolvedProductId}&action=review`
-      );
-      return;
-    }
+              // 🚫 Guest user → redirect to login with intent
+              if (!auth?.user) {
+                navigate(
+                  `/sign?redirect=/product/${resolvedProductId}&action=review`
+                );
+                return;
+              }
 
-    // ✅ Logged-in customer → open review modal
-    setShowReviewModal(true);
-  }}
-  disabled={!product}
-  className={`inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl transition active:scale-95 ${
-    product
-      ? "bg-gray-900 text-white hover:bg-gray-800"
-      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-  }`}
->
-  {product ? (fw.write_review || "Write a Review") : "Loading..."}
-</button>
+              // ✅ Logged-in customer → open review modal
+              setShowReviewModal(true);
+            }}
+            disabled={!product}
+            className={`inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium rounded-xl transition active:scale-95 ${product
+              ? "bg-gray-900 text-white hover:bg-gray-800"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+          >
+            {product ? (fw.write_review || "Write a Review") : "Loading..."}
+          </button>
 
-         {/* Customer Reviews */}
-<div className="space-y-3 transform-gpu">
-  <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between">
-    {fw.customer_reviews}
-  
-  </h3>
+          {/* Customer Reviews */}
+          <div className="space-y-3 transform-gpu">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center justify-between">
+              {fw.customer_reviews}
 
-  {product && reviews.length > 0 ? (
-    <>
-      {/* Show only first 2 reviews */}
-      {reviews.slice(0, 2).map((rev) => (
-        <div
-          key={rev.id}
-          className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
-        >
-          <div className="flex justify-between mb-1">
-            <span className="font-semibold text-gray-800">{rev.name}</span>
-            <span className="text-gray-500 text-xs">{rev.date}</span>
-          </div>
+            </h3>
 
-          <div className="flex items-center  gap-1 mb-1">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <StarIcon
-                key={i}
-                filled={i < getSafeRating(rev.rating)}
-                className={`w-4 h-4 ${
-                  i < getSafeRating(rev.rating)
-                    ? "text-gray-900"
-                    : "text-gray-400"
-                }`}
-              />
-            ))}
-          </div>
+            {product && reviews.length > 0 ? (
+              <>
+                {/* Show only first 2 reviews */}
+                {reviews.slice(0, 2).map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
+                  >
+                    <div className="flex justify-between mb-1">
+                      <span className="font-semibold text-gray-800">{rev.name}</span>
+                      <span className="text-gray-500 text-xs">{rev.date}</span>
+                    </div>
 
-          <p className="text-gray-700 text-sm">{rev.comment}</p>
-        </div>
-      ))}
+                    <div className="flex items-center  gap-1 mb-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          filled={i < getSafeRating(rev.rating)}
+                          className={`w-4 h-4 ${i < getSafeRating(rev.rating)
+                            ? "text-gray-900"
+                            : "text-gray-400"
+                            }`}
+                        />
+                      ))}
+                    </div>
 
-      {/* 🔗 VIEW ALL REVIEWS BUTTON */}
-       {reviews.length > 2 && (
-        <button
-          onClick={() =>
-            navigate(`/product/${resolvedProductId}/reviews`)
-          }
-          className="
+                    <p className="text-gray-700 text-sm">{rev.comment}</p>
+                  </div>
+                ))}
+
+                {/* 🔗 VIEW ALL REVIEWS BUTTON */}
+                {reviews.length > 2 && (
+                  <button
+                    onClick={() =>
+                      navigate(`/product/${resolvedProductId}/reviews`)
+                    }
+                    className="
            group
     w-full mt-2 py-2
     text-sm font-medium
@@ -969,18 +977,18 @@ showToast(
     ltr:flex-row
   
           "
-        >
-{(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
-  
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="
+                  >
+                    {(fw.view_all || "View all")} {reviews.length} {(fw.reviews || "reviews")}
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="
       w-4 h-4
       transition-transform duration-200
       transform-gpu
@@ -990,40 +998,40 @@ showToast(
 
       rtl:scale-x-[-1]
     "
-    aria-hidden="true"
-  >
-    <path d="M5 12h14" />
-    <path d="M13 5l6 7-6 7" />
-  </svg>
-        </button>
-      )}
-    </>
-  ) : (
-    <p className="text-sm text-gray-500">{fw.no_reviews}</p>
-  )}
-</div>
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="M13 5l6 7-6 7" />
+                    </svg>
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">{fw.no_reviews}</p>
+            )}
+          </div>
         </div>
       </section>
 
       {/* ⭐ Similar Products Section - Using imported component */}
       <SimilarProducts
-  products={similarProducts}
-  favourites={favourites}
-  toggleFavourite={(item) => {
-    const payload = {
-      ...item,
-      source: "product_profile",
-    };
+        products={similarProducts}
+        favourites={favourites}
+        toggleFavourite={(item) => {
+          const payload = {
+            ...item,
+            source: "product_profile",
+          };
 
-    const alreadyFav = favourites.some((f) => f.id === item.id);
+          const alreadyFav = favourites.some((f) => f.id === item.id);
 
-    dispatch(toggleFavourite(payload));
+          dispatch(toggleFavourite(payload));
 
-    if (auth?.user && !alreadyFav) {
-      dispatch(openListPopup(payload));
-    }
-  }}
-/>
+          if (auth?.user && !alreadyFav) {
+            dispatch(openListPopup(payload));
+          }
+        }}
+      />
 
       <Faq />
       <CallToAction />

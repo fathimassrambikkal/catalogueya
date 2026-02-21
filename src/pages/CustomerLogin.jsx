@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../Customer/Sidebar.jsx";
+import Sidebar from "../Customer/CustomerSidebar.jsx";
 import Messages from "../Customer/Messages.jsx";
 import Notifications from "../Customer/Notifications.jsx";
 import Reviews from "../Customer/Reviews.jsx";
@@ -22,7 +22,7 @@ function CustomerLogin() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
- 
+
 
   /* ✅ ensure a default tab */
   useEffect(() => {
@@ -90,10 +90,9 @@ bg-gradient-to-br from-blue-500 to-sky-400
           className={`
             fixed inset-0 bg-black/40 z-30
             transition-opacity duration-300
-            ${
-              sidebarOpen
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
+            ${sidebarOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
             }
           `}
         />
@@ -101,10 +100,10 @@ bg-gradient-to-br from-blue-500 to-sky-400
 
       {/* ================= Mobile Menu Button ================= */}
       {isMobile && !sidebarOpen && (
-      <button
-  onClick={() => setSidebarOpen(true)}
-  aria-label="Open menu"
-  className="
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+          className="
     fixed top-14 left-6 z-50
     h-10 w-10
     flex items-center justify-center
@@ -119,9 +118,9 @@ bg-gradient-to-br from-blue-500 to-sky-400
     transition-all duration-300 ease-out
     active:scale-95
   "
->
-  <RiMenu2Fill className="w-4 h-4 text-slate-600" />
-</button>
+        >
+          <RiMenu2Fill className="w-4 h-4 text-slate-600" />
+        </button>
 
       )}
 

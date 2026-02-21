@@ -149,76 +149,71 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
 
   const renderMainView = () => {
     return (
-      <div className="min-h-full 
-      
- p-4 sm:p-6 ">
+      <div className="min-h-full p-4 sm:p-6 mt-28 md:mt-20">
         
-        {/* ===== Updated Header Section ===== */}
-        <div className="relative mt-10 mb-6">
-          {/* Center title */}
-          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 text-center">
-            My Reviews
-          </h1>
+        {/* ===== Header Section - Same line for all devices ===== */}
+        <div className=" mb-6 ">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 whitespace-nowrap">
+              Reviews
+            </h1>
+            <div className="flex">
+              <div className="
+                flex
+                bg-white/70 backdrop-blur-md
+                rounded-2xl
+                border border-gray-200/60
+                shadow-sm
+                p-1
+                gap-1
+              ">
+                {/* Awaiting Reviews Button */}
+                <button
+                  onClick={() => {
+                    log("Reviews: switched to awaiting tab");
+                    setActiveTab('awaiting');
+                  }}
+                  className={`
+                    relative
+                    px-3 sm:px-4 md:px-8 py-2.5
+                    rounded-xl
+                    text-[11px] xs:text-xs sm:text-sm md:text-base
+                    font-semibold
+                    transition-all duration-300
+                    whitespace-nowrap
+                    ${
+                      activeTab === "awaiting"
+                        ? "bg-blue-500/15 text-blue-600 shadow-inner"
+                        : "text-gray-600 hover:text-gray-800"
+                    }
+                  `}
+                >
+                  Awaiting Reviews
+                </button>
 
-          {/* Tabs */}
-          <div
-            className="
-              mt-4 md:mt-0
-              flex justify-center md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2
-            "
-          >
-            <div className="
-              flex
-              bg-white/70 backdrop-blur-md
-              rounded-2xl
-              border border-gray-200/60
-              shadow-sm
-              p-1
-              gap-1
-            ">
-              {/* Awaiting Reviews Button */}
-              <button
-                onClick={() => {
-                  log("Reviews: switched to awaiting tab");
-                  setActiveTab('awaiting');
-                }}
-                className={`
-                  relative
-                  px-5 md:px-8 py-2.5
-                  rounded-xl
-                  text-[10px] md:text-base font-semibold
-                  transition-all duration-300
-                  ${
-                    activeTab === "awaiting"
-                      ? "bg-blue-500/15 text-blue-600 shadow-inner"
-                      : "text-gray-600 hover:text-gray-800"
-                  }
-                `}
-              >
-                Awaiting Reviews
-              </button>
-
-              {/* Reviewed Button */}
-              <button
-                onClick={() => {
-                  log("Reviews: switched to reviewed tab");
-
-                  setActiveTab('reviewed');
-                }}
-                className={`
-                  px-5 md:px-8 py-2.5
-                  rounded-xl
-                  text-[10px] md:text-base font-semibold
-                  transition-all duration-300
-                  ${
-                    activeTab === "reviewed"
-                      ? "bg-blue-500/15 text-blue-600 shadow-inner"
-                      : "text-gray-600 hover:text-gray-800"
-                  }
-                `}
-              >
-                Reviewed
-              </button>
+                {/* Reviewed Button */}
+                <button
+                  onClick={() => {
+                    log("Reviews: switched to reviewed tab");
+                    setActiveTab('reviewed');
+                  }}
+                  className={`
+                    px-3 sm:px-4 md:px-8 py-2.5
+                    rounded-xl
+                    text-[11px] xs:text-xs sm:text-sm md:text-base
+                    font-semibold
+                    transition-all duration-300
+                    whitespace-nowrap
+                    ${
+                      activeTab === "reviewed"
+                        ? "bg-blue-500/15 text-blue-600 shadow-inner"
+                        : "text-gray-600 hover:text-gray-800"
+                    }
+                  `}
+                >
+                  Reviewed
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -230,13 +225,12 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
 
         {activeTab === 'reviewed' && (
           <ReviewedItems
-  reviewedItems={reviewedItems}
-  setReviewedItems={setReviewedItems}
-  onStartEditReview={startEditReview}
-  onDeleteReview={handleDeleteReview}
-  refreshTrigger={refreshTrigger}
-/>
-
+            reviewedItems={reviewedItems}
+            setReviewedItems={setReviewedItems}
+            onStartEditReview={startEditReview}
+            onDeleteReview={handleDeleteReview}
+            refreshTrigger={refreshTrigger}
+          />
         )}
       </div>
     );
@@ -262,7 +256,7 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
       onSubmit={() => {
         log("Reviews: saving review");
         if (selectedItem?.review_id) {
-         log("Reviews: edit operation");
+          log("Reviews: edit operation");
           handleEditReview(selectedItem, selectedItem.updateCallback);
         } else {
           log("Reviews: new review submission");

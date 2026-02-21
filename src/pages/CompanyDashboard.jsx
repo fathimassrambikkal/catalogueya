@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../dashboard/Sidebar.jsx";
 import Products from "../dashboard/Products.jsx";
 import Sales from "../dashboard/Sales.jsx";
@@ -12,8 +13,13 @@ import Notifications from "../dashboard/Notifications.jsx";
 import Bills from "../dashboard/Bills.jsx";
 import { RiMenu2Fill } from "react-icons/ri";
 import Messages from "../dashboard/Messages.jsx";
+import DashboardReviews from "../dashboard/DashboardReviews.jsx";
 
 import { getCompany } from "../api";
+import Pusher from "pusher-js";
+import { getConversations, getNotifications, getUnreadNotificationsCount, markAllNotificationsAsRead, getFollowers, getCompanyReviewsDashboard } from "../companyDashboardApi";
+import { updateProfile } from "../store/authSlice";
+
 
 /* ================= Utilities ================= */
 const useIsMobile = () => {
@@ -30,8 +36,11 @@ const useIsMobile = () => {
 
 export default function CompanyDashboard() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const isMobile = useIsMobile();
-
+const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Products");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [companyId, setCompanyId] = useState(null);
@@ -39,6 +48,7 @@ export default function CompanyDashboard() {
 
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [targetConversationId, setTargetConversationId] = useState(null);
 
   const [companyInfo, setCompanyInfo] = useState({
     companyName: "",
@@ -50,21 +60,49 @@ export default function CompanyDashboard() {
     coverPhoto: null,
   });
 
-  /* Restore tab when coming back from details */
+  /* Restore tab when coming back from details - CONSUME AND CLEAR */
   useEffect(() => {
     if (location.state?.restoreTab) {
       setActiveTab(location.state.restoreTab);
-    }
-  }, [location.state]);
 
-  /* Load companyId */
-  useEffect(() => {
-    const company = JSON.parse(localStorage.getItem("company") || "null");
-    if (!company?.id) {
-      setLoading(false);
-      return;
+      if (location.state?.targetConversationId) {
+        setTargetConversationId(location.state.targetConversationId);
+      }
+
+      // 🗑 Clear state so it doesn't re-trigger on page refresh
+      navigate(location.pathname, { replace: true, state: {} });
     }
-    setCompanyId(String(company.id));
+  }, [location.state, navigate, location.pathname]);
+
+  /* Load companyId & stored details */
+  useEffect(() => {
+    // 1. Get basic company info from login session
+    const company = JSON.parse(localStorage.getItem("company") || "null");
+    if (company?.id) {
+      setCompanyId(String(company.id));
+    }
+
+    // 2. Try to get cached details
+    const stored = JSON.parse(localStorage.getItem("company_details") || "null");
+
+    // 3. Fallback to company session if details are missing
+    if (stored) {
+      setCompanyInfo(stored);
+      setLoading(false);
+    } else if (company) {
+      // If we have login info but no details cache, use login info as initial state
+      const initialInfo = {
+        ...company,
+        companyName: company.name || company.name_en || "",
+        companyDescription: company.description || company.description_en || "",
+        coverPhoto: company.cover_photo || company.banner || null,
+        logo: company.logo || null,
+      };
+      setCompanyInfo(initialInfo);
+      setLoading(false);
+    } else if (!company?.id) {
+      setLoading(false);
+    }
   }, []);
 
   /* Fetch company */
@@ -72,31 +110,158 @@ export default function CompanyDashboard() {
     if (!companyId) return;
 
     let mounted = true;
-    setLoading(true);
+    if (!companyInfo.companyName) setLoading(true);
 
     getCompany(companyId)
       .then((res) => {
         if (!mounted) return;
 
-        const company =
-          res?.data?.data?.company || res?.data?.company || res?.data;
+        const companyData = res?.data?.data?.company || res?.data?.company || res?.data;
+        if (!companyData) return;
 
-        if (!company) return;
+        setProducts(companyData.products || []);
 
-        setProducts(company.products || []);
-        setCompanyInfo({
-          companyName: company.name || "",
-          companyDescription: company.description || "",
-          coverPhoto: company.cover_photo || null,
-          logo: company.logo || null,
-        });
+        const info = {
+          ...companyData,
+          companyName: companyData.name || companyData.name_en || "",
+          companyDescription: companyData.description || companyData.description_en || "",
+          coverPhoto: companyData.cover_photo || companyData.banner || null,
+          logo: companyData.logo || null,
+          phone: companyData.phone || "",
+          contactMobile: companyData.phone || companyData.mobile || "",
+          address: companyData.address || "",
+        };
+
+        setCompanyInfo(info);
+        // Ensure Redux is also in sync with latest API data
+        dispatch(updateProfile(info));
+        localStorage.setItem("company_details", JSON.stringify(info));
       })
-      .finally(() => mounted && setLoading(false));
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
 
     return () => {
       mounted = false;
     };
-  }, [companyId]);
+  }, [companyId, user?.id]); // Also react if user ID changes
+
+  /* ================= PUSHER & COUNTS ================= */
+  const [unreadCounts, setUnreadCounts] = useState({ messages: 0, notifications: 0, followers: 0, reviews: 0 });
+  const [lastMessageEvent, setLastMessageEvent] = useState(null);
+
+  // Fetch initial counts
+  const fetchCounts = async () => {
+    if (!companyId) return;
+    try {
+      // Notifications
+      const notifRes = await getNotifications();
+      let notifList = [];
+      if (notifRes.data?.data) {
+        notifList = Array.isArray(notifRes.data.data) ? notifRes.data.data : (notifRes.data.data.notifications || []);
+      } else if (Array.isArray(notifRes.data)) {
+        notifList = notifRes.data;
+      }
+      const notifCount = notifList.filter(n => !n.read && !n.read_at).length;
+
+      // Messages (Only if Messages component is NOT active, otherwise it handles it)
+      if (activeTab !== "Messages") {
+        const convRes = await getConversations();
+        let convList = [];
+
+        // Handle various response structures
+        const rawData = convRes.data;
+        if (rawData?.data) {
+          convList = Array.isArray(rawData.data) ? rawData.data : (rawData.data.conversations || []);
+        } else if (Array.isArray(rawData)) {
+          convList = rawData;
+        }
+
+        const msgCount = convList.reduce((acc, c) => acc + (c.unread_count || 0), 0);
+        setUnreadCounts(prev => ({ ...prev, messages: msgCount, notifications: notifCount }));
+      } else {
+        setUnreadCounts(prev => ({ ...prev, notifications: notifCount }));
+      }
+
+      // 👥 Followers Count - FETCH ALWAYS
+      const followersRes = await getFollowers();
+      let followersCount = 0;
+      if (followersRes.data?.data) {
+        const list = Array.isArray(followersRes.data.data) ? followersRes.data.data : (followersRes.data.data.followers || []);
+        followersCount = list.length;
+      } else if (Array.isArray(followersRes.data)) {
+        followersCount = followersRes.data.length;
+      }
+
+      // ⭐ Reviews Count - FETCH ALWAYS
+      const reviewsRes = await getCompanyReviewsDashboard(companyId, user?.id);
+      const reviewsCount = reviewsRes.data?.data?.total_reviews_count || reviewsRes.data?.total_reviews_count || 0;
+
+      setUnreadCounts(prev => ({
+        ...prev,
+        followers: followersCount,
+        reviews: reviewsCount
+      }));
+
+    } catch (e) {
+      console.error("Error fetching dashboard counts", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 60000);
+    return () => clearInterval(interval);
+  }, [companyId, activeTab]);
+
+
+  useEffect(() => {
+  if (activeTab !== "Messages") {
+    setIsChatOpen(false);
+  }
+}, [activeTab]);
+  // Initialize Pusher
+  useEffect(() => {
+    if (!companyId) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Use a unique socket ID if possible or just standard init
+    const pusher = new Pusher("a613271cbafcf4059d6b", {
+      cluster: "ap2",
+      encrypted: true,
+      authEndpoint: "https://catalogueyanew.com.awu.zxu.temporary.site/broadcasting/auth",
+      auth: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      },
+    });
+
+    const channelName = `private-company.${companyId}`;
+    const channel = pusher.subscribe(channelName);
+
+    channel.bind("message.sent", (data) => {
+      console.log("📨 Global Pusher Event:", data);
+
+      // Pass event strictly to children who need it
+      setLastMessageEvent(data);
+
+      // If Messages tab is NOT active, we must increment the count ourselves
+      if (activeTab !== "Messages") {
+        setUnreadCounts(prev => ({ ...prev, messages: prev.messages + 1 }));
+        // Optional: Play sound or toast
+      }
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+      pusher.disconnect();
+    };
+  }, [companyId, activeTab]);
 
   if (loading) {
     return (
@@ -109,7 +274,7 @@ export default function CompanyDashboard() {
   return (
     <>
       {/* 🔒 LOCK VIEWPORT */}
-      <div className="relative flex w-full h-[calc(100vh-64px)] overflow-hidden bg-gray-100">
+      <div className="relative flex w-full h-[calc(100vh-64px)]  overflow-hidden bg-gray-100 ">
         {/* ================= Sidebar ================= */}
         <aside
           className={`
@@ -129,6 +294,9 @@ export default function CompanyDashboard() {
             }}
             onCloseSidebar={() => setSidebarOpen(false)}
             isMobile={isMobile}
+            companyInfo={companyInfo}
+            unreadCounts={unreadCounts}
+            setTargetConversationId={setTargetConversationId}
           />
         </aside>
 
@@ -141,7 +309,7 @@ export default function CompanyDashboard() {
         )}
 
         {/* ================= Mobile Menu Button ================= */}
-        {isMobile && !sidebarOpen && (
+        {isMobile && !sidebarOpen && !isChatOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Open menu"
@@ -160,46 +328,73 @@ export default function CompanyDashboard() {
         )}
 
         {/* ================= Main ================= */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-y-auto ">
           {/* Fixed header / cover */}
-          {activeTab === "Products" && (
-            <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
-          )}
+        {activeTab === "Products" && (
+  <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
+)}
 
-          {/* 🔥 ONLY SCROLL AREA */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            {activeTab === "Products" && (
-              <Products
-                products={products}
-                setProducts={setProducts}
-                editingProduct={editingProduct}
-                setEditingProduct={setEditingProduct}
-                companyId={companyId}
-              />
-            )}
+          {/* 🔥 ONLY SCROLL AREA - Conditional for Messages */}
+          <div >
+            <div className={`max-w-[1600px] mx-auto ${activeTab === "Messages" ? "h-full" : "space-y-6"}`}>
+              {activeTab === "Products" && (
+                <Products
+                  products={products}
+                  setProducts={setProducts}
+                  editingProduct={editingProduct}
+                  setEditingProduct={setEditingProduct}
+                  companyId={companyId}
+                  companyInfo={companyInfo}
+                />
+              )}
 
-            {activeTab === "Sales" && <Sales products={products} />}
-            {activeTab === "Analytics" && <Analytics products={products} />}
-            {activeTab === "Contacts" && (
-              <Contacts companyInfo={companyInfo} products={products} />
-            )}
-            {activeTab === "Followers" && <Followers />}
-            {activeTab === "Notifications" && <Notifications />}
-            {activeTab === "Messages" && <Messages />}
-            {activeTab === "Bills" && (
-              <Bills
-                companyId={companyId}
-                companyInfo={companyInfo}
-                products={products}
-              />
-            )}
-            {activeTab === "Settings" && (
-              <Settings
-                companyId={companyId}
-                companyInfo={companyInfo}
-                setCompanyInfo={setCompanyInfo}
-              />
-            )}
+              {activeTab === "Product Highlights" && (
+                <Sales
+                  companyId={companyId}
+                  companyInfo={companyInfo}
+                  user={user}
+                  setActiveTab={setActiveTab}
+                  setTargetConversationId={setTargetConversationId}
+                />
+              )}
+              {activeTab === "Analytics" && <Analytics companyId={companyId} companyInfo={companyInfo} />}
+              {activeTab === "Contacts" && <Contacts companyId={companyId} />}
+              {activeTab === "Messages" && (
+  <Messages
+    companyId={companyId}
+    companyInfo={companyInfo}
+    lastMessageEvent={lastMessageEvent}
+    onUnreadChange={(count) =>
+      setUnreadCounts(prev => ({ ...prev, messages: count }))
+    }
+    targetConversationId={targetConversationId}
+    setTargetConversationId={setTargetConversationId}
+    onChatOpen={setIsChatOpen}   
+  />
+)}
+              {activeTab === "Followers" && <Followers companyId={companyId} />}
+              {activeTab === "Notifications" && (
+                <Notifications
+                  setActiveTab={setActiveTab}
+                  setTargetConversationId={setTargetConversationId}
+                />
+              )}
+              {activeTab === "Reviews" && <DashboardReviews companyId={companyId} />}
+              {activeTab === "Bills" && (
+                <Bills
+                  companyId={companyId}
+                  companyInfo={companyInfo}
+                  products={products}
+                />
+              )}
+              {activeTab === "Settings" && (
+                <Settings
+                  companyId={companyId}
+                  companyInfo={companyInfo}
+                  setCompanyInfo={setCompanyInfo}
+                />
+              )}
+            </div>
           </div>
         </main>
       </div>

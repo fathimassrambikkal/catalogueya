@@ -9,8 +9,10 @@ export default {
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
       },
+
       colors: {
         customGray: '#f3f4f6',
+        
       },
       // 8px Grid Spacing System (Apple-inspired)
       spacing: {

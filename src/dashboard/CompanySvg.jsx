@@ -315,6 +315,14 @@ export const IconDownload = ({ className }) => (
     <path d="M4 21h16" />
   </IconBase>
 );
+
+export const IconSend = ({ className }) => (
+  <IconBase className={className}>
+    {/* Plane body */}
+    <path d="M22 2L11 13" />
+    <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+  </IconBase>
+);
 export const IconLogout = ({ className }) => (
   <IconBase className={className}>
     {/* Door */}
@@ -333,7 +341,11 @@ export const IconChevronDown = ({ className }) => (
   </IconBase>
 );
 
-
+export const IconChevronUp = ({ className }) => (
+  <IconBase className={className}>
+    <path d="M6 15l6-6 6 6" />
+  </IconBase>
+);
 /* ===============================
    UI / Action Icons
 ================================ */
