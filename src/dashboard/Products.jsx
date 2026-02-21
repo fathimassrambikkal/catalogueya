@@ -638,8 +638,7 @@ return (
           focus:ring-blue-500 
           focus:border-blue-500 
           outline-none
-          px-3 
-          py-2
+        p-2
           w-1/2
           sm:w-auto
           min-w-0
@@ -662,8 +661,7 @@ return (
           items-center 
           justify-center 
           gap-1.5 
-          px-4 
-          py-2
+        p-2
           text-[11px] md:text-sm
           font-medium 
           tracking-tight
@@ -690,9 +688,46 @@ return (
     </div>
   </div>
 
-  {loading ? (
-    <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div></div>
-  ) : (
+{loading ? (
+  <div className="w-full pb-8">
+    
+    {/* Grid Skeleton */}
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 w-full animate-pulse">
+      
+      {[...Array(8)].map((_, i) => (
+        <div
+          key={i}
+          className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col"
+        >
+          {/* Image Skeleton */}
+          <div className="aspect-[4/3] bg-gray-200 w-full" />
+
+          {/* Content */}
+          <div className="p-2 space-y-2">
+            
+            {/* Title */}
+            <div className="h-3 w-3/4 bg-gray-200 rounded" />
+
+            {/* Price + Stock */}
+            <div className="flex justify-between">
+              <div className="h-3 w-1/3 bg-gray-200 rounded" />
+              <div className="h-3 w-1/4 bg-gray-200 rounded" />
+            </div>
+
+            {/* Actions */}
+            <div className="border-t border-gray-100 pt-2 flex justify-between">
+              <div className="h-3 w-1/4 bg-gray-200 rounded" />
+              <div className="h-3 w-1/4 bg-gray-200 rounded" />
+              <div className="h-3 w-3 bg-gray-200 rounded-full" />
+            </div>
+
+          </div>
+        </div>
+      ))}
+
+    </div>
+  </div>
+) : (
     /* CONTENT AREA */
     <div className="w-full pb-8">
         {viewMode === 'back_in_stock' ? (

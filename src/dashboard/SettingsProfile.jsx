@@ -552,15 +552,38 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
 
   // Show loading state
   if (isLoading && !form.companyName) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading settings...</p>
+  return (
+    <div className="min-h-screen bg-white p-6 animate-pulse">
+      <div className="max-w-4xl mx-auto space-y-6">
+
+        {/* Cover Skeleton */}
+        <div className="h-40 bg-gray-200 rounded-xl" />
+
+        {/* Logo Skeleton */}
+        <div className="h-24 w-24 bg-gray-200 rounded-xl" />
+
+        {/* Input Skeletons */}
+        <div className="space-y-4">
+          <div className="h-12 bg-gray-200 rounded-xl" />
+          <div className="h-20 bg-gray-200 rounded-xl" />
+          <div className="h-12 bg-gray-200 rounded-xl" />
         </div>
+
+        {/* Social Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-12 bg-gray-200 rounded-xl" />
+          <div className="h-12 bg-gray-200 rounded-xl" />
+          <div className="h-12 bg-gray-200 rounded-xl" />
+          <div className="h-12 bg-gray-200 rounded-xl" />
+        </div>
+
+        {/* Button Skeleton */}
+        <div className="h-12 bg-gray-300 rounded-xl" />
+
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 return (
   <div

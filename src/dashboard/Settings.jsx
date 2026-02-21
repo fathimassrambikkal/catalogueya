@@ -72,14 +72,14 @@ function Settings({ companyId, companyInfo, setCompanyInfo }) {
   /* ================= SETTINGS DASHBOARD ================= */
 
   return (
-    <div className="w-full min-h-screen flex flex-col overflow-x-hidden p-4 sm:p-6 bg-white pt-16 md:pt-0  ">
+    <div className="w-full min-h-screen flex flex-col overflow-x-hidden p-4 sm:p-6 bg-white pt-16 md:pt-0  mt-4 ">
       <div className="flex-1 flex flex-col min-h-0 ">
         <div className="
          flex-1 overflow-hidden flex flex-col
         ">
           {/* Header */}
           <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-5 border-b border-gray-200/60">
-            <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">
+            <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">
               Settings
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">

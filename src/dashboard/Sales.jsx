@@ -245,7 +245,7 @@ return (
                   key={type.id}
                   onClick={() => { setSelectedType(type.id); setView("list"); }}
                   className={`
-                    relative px-[clamp(0.5rem,1vw,0.625rem)] py-[clamp(0.125rem,0.5vw,0.25rem)] rounded-full text-[clamp(0.675rem,1.2vw,0.75rem)] font-medium transition-all duration-200
+                    relative px-[clamp(0.9rem,1.4vw,0.625rem)] py-[clamp(0.3rem,1.4vw,0.25rem)] rounded-full text-[clamp(0.675rem,1.2vw,0.75rem)] font-medium transition-all duration-200
                     ${isSelected 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-[#f8f8fc] text-gray-600 hover:bg-[#e8e8ed]'
@@ -277,7 +277,7 @@ return (
               onClick={() => setView("add")}
               className=" sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-blue-600 rounded-xl text-[clamp(0.6rem,1.2vw,0.875rem)] font-medium text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2"
             >
-              <FaPlus className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(0.875rem,1.2vw,1rem)]" />
+              <FaPlus className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(1.1rem,1.2vw,1rem)]" />
               <span>Add Highlights</span>
             </button>
 
@@ -285,7 +285,7 @@ return (
               onClick={() => setView("notify")}
               className="flex-1 sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-white/80 backdrop-blur-sm rounded-xl text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700 hover:bg-white hover:shadow-md transition-all duration-200 border border-blue-100/50 flex items-center justify-center gap-2"
             >
-              <FaBell className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(0.875rem,1.2vw,1rem)] text-blue-500" />
+              <FaBell className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(1.1rem,1.2vw,1rem)] text-blue-500" />
               <span>Notify</span>
             </button>
 
@@ -293,7 +293,7 @@ return (
               onClick={() => setView("history")}
               className="flex-1 sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-white/80 backdrop-blur-sm rounded-xl text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700 hover:bg-white hover:shadow-md transition-all duration-200 border border-blue-100/50 flex items-center justify-center gap-2"
             >
-              <FaHistory className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(0.875rem,1.2vw,1rem)] text-blue-500" />
+              <FaHistory className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(1.1rem,1.2vw,1rem)] text-blue-500" />
               <span>History</span>
             </button>
           </div>

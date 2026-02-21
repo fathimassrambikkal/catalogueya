@@ -200,19 +200,95 @@ export default function SettingsBillingPage({ onBack }) {
 
   const displayedInvoices = showAllInvoices ? invoices : invoices.slice(0, 5);
 
-  if (loading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+if (loading) {
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 lg:px-8 pt-20">
+      <div className="max-w-[1920px] mx-auto space-y-6 animate-pulse">
+
+        {/* Header Skeleton */}
+        <div className="space-y-2">
+          <div className="h-8 w-32 sm:w-40 bg-gray-200 rounded-lg" />
+          <div className="h-4 w-48 sm:w-64 bg-gray-200 rounded-md" />
+        </div>
+
+        {/* Current Plan Card Skeleton */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-8 space-y-6">
+
+          {/* Top Section */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="space-y-2">
+              <div className="h-5 w-32 sm:w-40 bg-gray-200 rounded-md" />
+              <div className="h-4 w-40 sm:w-52 bg-gray-200 rounded-md" />
+            </div>
+            <div className="h-5 w-20 bg-gray-200 rounded-full" />
+          </div>
+
+          {/* Content Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
+            <div className="space-y-3">
+              <div className="h-7 w-40 sm:w-56 bg-gray-200 rounded-lg" />
+              <div className="h-4 w-full sm:w-64 bg-gray-200 rounded-md" />
+              <div className="h-4 w-32 sm:w-48 bg-gray-200 rounded-md" />
+            </div>
+
+            <div className="space-y-3">
+              <div className="h-5 w-36 sm:w-40 bg-gray-200 rounded-md" />
+              <div className="h-10 w-full sm:w-40 bg-gray-200 rounded-xl" />
+            </div>
+          </div>
+        </div>
+
+        {/* Billing History Skeleton */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-8 space-y-6">
+
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="h-5 w-40 bg-gray-200 rounded-md" />
+              <div className="h-4 w-32 bg-gray-200 rounded-md" />
+            </div>
+            <div className="h-8 w-full sm:w-32 bg-gray-200 rounded-xl" />
+          </div>
+
+          {/* MOBILE CARD SKELETON */}
+          <div className="space-y-4 sm:hidden">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="border border-gray-100 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between">
+                  <div className="h-4 w-20 bg-gray-200 rounded" />
+                  <div className="h-4 w-16 bg-gray-200 rounded" />
+                </div>
+                <div className="h-5 w-32 bg-gray-200 rounded" />
+                <div className="h-4 w-24 bg-gray-200 rounded" />
+              </div>
+            ))}
+          </div>
+
+          {/* DESKTOP TABLE SKELETON */}
+          <div className="hidden sm:block space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="grid grid-cols-6 gap-4">
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded" />
+              </div>
+            ))}
+          </div>
+
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 return (
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-white px-[clamp(0.75rem,4vw,2rem)] sm:px-[clamp(1rem,5vw,2.5rem)] lg:px-[clamp(1.5rem,6vw,3rem)] pt-[clamp(3rem,8vw,4rem)] md:pt-0">
       <div className="max-w-[1920px] mx-auto">
         {/* Header */}
         <div className="py-[clamp(1.5rem,4vw,2rem)]">
-          <div className="flex items-center gap-2 mb-[clamp(0.75rem,2vw,1rem)] mt-[clamp(3rem,8vw,4rem)] md:mt-0">
+          <div className="flex items-center gap-2 mb-6 mt-4 md:mt-0">
             {onBack && (
               <button
                 onClick={onBack}

@@ -96,27 +96,75 @@ function SettingsPlan({ onBack, onTabChange }) {
     setAutoRenew(!autoRenew);
   };
 
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+ if (loading) {
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-white px-6 pt-16 animate-pulse">
+      <div className="max-w-7xl mx-auto space-y-8">
+
+        {/* Header Skeleton */}
+        <div className="space-y-3">
+          <div className="h-8 w-48 bg-gray-200 rounded-lg" />
+          <div className="h-4 w-72 bg-gray-200 rounded-lg" />
+        </div>
+
+        {/* Main Card Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Left Card */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-6 space-y-6">
+
+            {/* Price Row */}
+            <div className="flex justify-between items-center">
+              <div className="h-6 w-32 bg-gray-200 rounded-md" />
+              <div className="h-6 w-24 bg-gray-200 rounded-md" />
+            </div>
+
+            {/* Info Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="h-4 w-20 bg-gray-200 rounded" />
+                <div className="h-5 w-40 bg-gray-200 rounded" />
+                <div className="h-4 w-20 bg-gray-200 rounded" />
+                <div className="h-5 w-32 bg-gray-200 rounded" />
+              </div>
+
+              <div className="space-y-4">
+                <div className="h-4 w-24 bg-gray-200 rounded" />
+                <div className="h-5 w-36 bg-gray-200 rounded" />
+                <div className="h-4 w-20 bg-gray-200 rounded" />
+                <div className="h-5 w-28 bg-gray-200 rounded" />
+              </div>
+            </div>
+
+            {/* Toggle Skeleton */}
+            <div className="h-10 w-40 bg-gray-200 rounded-full" />
+          </div>
+
+          {/* Right Action Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <div className="h-6 w-32 bg-gray-200 rounded" />
+            <div className="h-10 w-full bg-gray-200 rounded-xl" />
+            <div className="h-10 w-full bg-gray-200 rounded-xl" />
+          </div>
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 return (
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-white px-[clamp(0.75rem,4vw,2rem)] sm:px-[clamp(1rem,5vw,2.5rem)] lg:px-[clamp(1.5rem,6vw,3rem)] pt-[clamp(3rem,8vw,4rem)] md:pt-0">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="py-[clamp(1.5rem,4vw,2rem)] px-[clamp(0.75rem,4vw,1rem)] sm:px-0">
+        <div className="py-[clamp(1.5rem,4vw,2rem)] px-[clamp(0.75rem,4vw,1rem)] sm:px-0 ">
           {onBack && (
             <button
-              onClick={onBack}
-              className="inline-flex items-center gap-2 text-[clamp(0.75rem,1vw,0.875rem)] text-gray-600 hover:text-gray-900 transition-colors mb-[clamp(1rem,2vw,1.5rem)] group"
-            >
-              <BackIcon className="w-[clamp(0.875rem,1.5vw,1rem)] h-[clamp(0.875rem,1.5vw,1rem)] group-hover:-translate-x-0.5 transition-transform" />
-              Back
-            </button>
+                      onClick={onBack}
+                      className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6 mt-4 group"
+                      >
+                      <BackIcon className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                      Back
+                      </button>
           )}
           
           <div className="max-w-3xl">

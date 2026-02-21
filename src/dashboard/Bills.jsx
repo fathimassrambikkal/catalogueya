@@ -133,7 +133,7 @@ return (
       className={`
         relative flex-1
         px-[clamp(6px,1.2vw,16px)]
-        py-[clamp(4px,0.9vw,10px)]
+        py-[clamp(4px,1.5vw,10px)]
         rounded-full
         text-[clamp(9px,1vw,14px)]
         font-medium
