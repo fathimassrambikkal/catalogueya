@@ -395,6 +395,7 @@ export const FaTimes = ({ className = "" }) => (
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <path d="M6 6l12 12M6 18L18 6" />
   </svg>

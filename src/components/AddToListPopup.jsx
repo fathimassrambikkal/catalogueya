@@ -28,7 +28,10 @@ export default function AddToListPopup() {
   const { showListPopup, pendingProduct, lists } = useSelector(
     (state) => state.favourites
   );
-  const isLoggedIn = useSelector((state) => !!state.auth.user);
+const { user, userType } = useSelector((state) => state.auth);
+
+const isLoggedInCustomer =
+  !!user && userType === "customer";
 
   const [selectedList, setSelectedList] = useState(null);
   const [sending, setSending] = useState(false);
@@ -49,7 +52,7 @@ export default function AddToListPopup() {
 
   // ================= LOAD GROUPS =================
   useEffect(() => {
-    if (!showListPopup || !isLoggedIn) return;
+      if (!showListPopup || !isLoggedInCustomer) return;
 
     setSelectedList(null);
     setIsClosing(false);
@@ -64,7 +67,7 @@ export default function AddToListPopup() {
       .catch((err) =>
         error("Failed to load favourite groups", err)
       );
-  }, [showListPopup, isLoggedIn, dispatch]);
+  },  [showListPopup, isLoggedInCustomer, dispatch]);
 
   // ================= ESC KEY =================
   useEffect(() => {
@@ -164,7 +167,8 @@ export default function AddToListPopup() {
     isCreating ? e.stopPropagation() : handleClose();
   };
 
-  if (!isLoggedIn || !showListPopup || !pendingProduct) return null;
+if (!isLoggedInCustomer || !showListPopup || !pendingProduct)
+  return null;
 
   
 

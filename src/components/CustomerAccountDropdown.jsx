@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { performLogout } from "../lib/authUtils";
 import { setCustomerTab } from "../store/authSlice";
 import { useFixedWords } from "../hooks/useFixedWords";
-
+import { getImageUrl } from "../companyDashboardApi";
+import iosBadge from "../assets/ios.png";
+import androidBadge from "../assets/android.png";
+import { FaTimes } from "../components/SvgIcon";
 /* ================================
    SAFE SVG BASE COMPONENT
 ================================ */
@@ -145,21 +148,6 @@ const ChevronIcon = () => (
   </svg>
 );
 
-const WelcomeIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-5 h-5"
-  >
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-
 /* ================================
    MAIN COMPONENT
 ================================ */
@@ -167,6 +155,7 @@ const WelcomeIcon = () => (
 export default function CustomerAccountDropdown({
   onClose,
   isAuthenticated,
+  userType,
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -206,7 +195,7 @@ export default function CustomerAccountDropdown({
         }
       `}
     >
-      <span className="flex items-center justify-center w-6 h-6 ltr:mr-2 rtl:ml-2 flex-shrink-0 text-gray-500 group-hover:text-gray-700">
+      <span className="flex items-center justify-center w-6 h-6 ltr:mr-2 rtl:ml-2 flex-shrink-0 text-gray-900 group-hover:text-gray-700">
         {icon}
       </span>
 
@@ -223,40 +212,55 @@ export default function CustomerAccountDropdown({
   );
 
   return (
-    <div className="absolute top-full mt-1 ltr:right-0 rtl:left-0 w-[240px] bg-white  rounded-xl   border-2 border-gray-200 z-50 py-1 shadow-lg">
- {/* Welcome Section - Visible ONLY when logged in */}
-{isAuthenticated && (
-  <div className="px-3 py-3">
-    <div className="flex flex-col gap-3">
+    <div className="absolute top-full mt-1 ltr:right-0 rtl:left-0 w-[240px] bg-white rounded-xl border-2 border-gray-200 z-50 py-1 shadow-lg">
+      {/* Welcome Section - Visible ONLY when logged in */}
+      {isAuthenticated && (
+        <div className="px-3 py-3">
+          <div className="flex flex-col gap-3">
+            
+            {/* Welcome */}
+            <p className="text-[14px] font-semibold text-gray-900 tracking-tight">
+              {fw.welcome || "Welcome"}
+            </p>
+
+            <div className="flex items-start gap-3">
+              
+              {/* Avatar */}
+              <div className="w-9 h-9 rounded-full bg-blue-700 flex items-center justify-center text-white shadow-sm overflow-hidden">
+                {userType === "company" ? (
+                  getImageUrl(user?.logo || user?.image) ? (
+                    <img
+                      src={getImageUrl(user?.logo || user?.image)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium tracking-tight">
+                      {displayName?.charAt(0)?.toUpperCase()}
+                    </span>
+                  )
+                ) : (
+                  <span className="text-sm font-medium tracking-tight">
+                    {displayName?.charAt(0)?.toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              {/* Name + Email */}
+              <div className="flex flex-col leading-tight">
+                <p className="text-[13px] font-semibold text-gray-900 tracking-tight">
+                  {displayName}
+                </p>
+                <p className="text-[12px] text-gray-600 truncate">
+                  {user?.email}
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
       
-      {/* Welcome */}
-      <p className="text-[14px] font-semibold text-gray-900 tracking-tight">
-        {fw.welcome || "Welcome"}
-      </p>
-
-      <div className="flex items-start gap-3">
-        
-        {/* Avatar */}
-        <div className="w-9 h-9 rounded-full bg-blue-700 flex items-center justify-center text-white shadow-sm">
-          <span className="text-sm font-medium tracking-tight">
-            {displayName?.charAt(0)?.toUpperCase()}
-          </span>
-        </div>
-
-        {/* Name + Email */}
-        <div className="flex flex-col leading-tight">
-          <p className="text-[13px] font-semibold text-gray-900 tracking-tight">
-            {displayName}
-          </p>
-          <p className="text-[12px] text-gray-600 truncate">
-            {user?.email}
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </div>
-)}
       {isAuthenticated && (
         <>
           <div className="px-3 py-2"></div>
@@ -265,16 +269,61 @@ export default function CustomerAccountDropdown({
       )}
 
       <div className="py-0.5">
-        {isAuthenticated ? (
+        {/* ===================== */}
+        {/*  CUSTOMER MENU */}
+        {/* ===================== */}
+        {isAuthenticated && userType === "customer" && (
           <>
-            <MenuItem icon={<BellIcon />} label={fw.notifications || "Notifications"} onClick={() => goToTab("notifications")} />
-            <MenuItem icon={<DashboardIcon />} label={fw.my_dashboard || "Dashboard"} onClick={() => { navigate("/customer-login"); onClose?.(); }} />
-            <MenuItem icon={<SettingsIcon />} label={fw.settings || "Settings"} onClick={() => goToTab("settings")} />
+            <MenuItem 
+              icon={<BellIcon />} 
+              label={fw.notifications || "Notifications"} 
+              onClick={() => goToTab("notifications")} 
+            />
+            <MenuItem 
+              icon={<DashboardIcon />} 
+              label={fw.my_dashboard || "Dashboard"} 
+              onClick={() => { 
+                navigate("/customer-login"); 
+                onClose?.(); 
+              }} 
+            />
+            <MenuItem 
+              icon={<SettingsIcon />} 
+              label={fw.settings || "Settings"} 
+              onClick={() => goToTab("settings")} 
+            />
           </>
-        ) : (
+        )}
+
+        {/* ===================== */}
+        {/*  COMPANY MENU */}
+        {/* ===================== */}
+        {isAuthenticated && userType === "company" && (
           <>
-            <MenuItem icon={<LoginIcon />} label={fw.login || "Sign In"} onClick={() => { navigate("/sign"); onClose?.(); }} />
-            {/* Sign Up removed from here - moved to bottom */}
+            <MenuItem 
+              icon={<DashboardIcon />} 
+              label="Company Dashboard" 
+              onClick={() => { 
+                navigate("/company-dashboard"); 
+                onClose?.(); 
+              }} 
+            />
+          </>
+        )}
+
+        {/* ===================== */}
+        {/* NOT LOGGED IN */}
+        {/* ===================== */}
+        {!isAuthenticated && (
+          <>
+            <MenuItem 
+              icon={<LoginIcon />} 
+              label={`${fw.login || "Login"} / ${fw.singup || "Sign Up"}`} 
+              onClick={() => { 
+                navigate("/sign"); 
+                onClose?.(); 
+              }} 
+            />
           </>
         )}
       </div>
@@ -282,42 +331,35 @@ export default function CustomerAccountDropdown({
       <div className="my-1 border-t border-gray-200/70" />
 
       <div className="py-0.5">
-        <MenuItem icon={<HomeIcon />} label={fw.home || "Home"} onClick={() => { navigate("/"); onClose?.(); }} />
-        <MenuItem icon={<InfoIcon />} label={fw.aboute || "About"} onClick={() => { navigate("/about"); onClose?.(); }} />
-        <MenuItem icon={<MailIcon />} label={fw.contact_us || "Contact"} onClick={() => { navigate("/contact"); onClose?.(); }} />
+        <MenuItem 
+          icon={<HomeIcon />} 
+          label={fw.home || "Home"} 
+          onClick={() => { 
+            navigate("/"); 
+            onClose?.(); 
+          }} 
+        />
+        <MenuItem 
+          icon={<InfoIcon />} 
+          label={fw.aboute || "About"} 
+          onClick={() => { 
+            navigate("/about"); 
+            onClose?.(); 
+          }} 
+        />
+        <MenuItem 
+          icon={<MailIcon />} 
+          label={fw.contact_us || "Contact"} 
+          onClick={() => { 
+            navigate("/contact"); 
+            onClose?.(); 
+          }} 
+        />
       </div>
 
-      {!isAuthenticated && (
-        <>
-          <div className="my-1 border-t border-gray-200/70" />
-          <div className="px-3 py-2">
-            <button
-              onClick={() => {
-                navigate("/signup");
-                onClose?.();
-              }}
-              className="
-                w-full
-                bg-blue-500
-                text-white
-                text-[13px]
-                font-semibold
-                py-2.5
-                rounded-3xl
-                shadow-lg
-                hover:shadow-lg
-                hover:scale-[1.02]
-                active:scale-[0.98]
-                transition-all duration-200
-                tracking-tight
-              "
-            >
-              {fw.singup || "Sign Up"}
-            </button>
-          </div>
-        </>
-      )}
+     
 
+      {/* Logout - Only for authenticated users (both customer and company) */}
       {isAuthenticated && (
         <>
           <div className="my-1 border-t border-gray-200/70" />
@@ -327,11 +369,81 @@ export default function CustomerAccountDropdown({
               label={fw.logout || "Log out"} 
               isDestructive 
               showChevron={false} 
-              onClick={() => performLogout(dispatch, navigate, "customer")} 
+              onClick={() => performLogout(
+                dispatch, 
+                navigate, 
+                userType === "company" ? "company" : "customer"
+              )} 
             />
           </div>
         </>
       )}
+
+      {/* ================================= */}
+      {/*  COMPANY + APP PROMO SECTION */}
+      {/* ================================= */}
+      <div className="border-t border-gray-200/70 mt-2">
+        
+        {/*  Are you a company? */}
+        <div className="px-3 pt-3 pb-2">
+          <button
+            onClick={() => {
+                navigate("/", { state: { scrollTo: "pricing" } });
+              onClose?.();
+            }}
+            className="w-full text-center text-[13px] font-semibold text-gray-900 hover:text-blue-600 transition-colors py-1"
+          >
+            {fw.are_you_company} 
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-200/70 mx-3" />
+
+        {/* 📱 Download App Section */}
+        <div className="px-3 py-3">
+          <div className="text-center space-y-2">
+            <p className="text-[12px] font-semibold text-gray-800">
+              {fw.download_app}
+            </p>
+            <p className="text-[11px] text-gray-500">
+               {fw.from_customer}
+            </p>
+
+            <div className="flex items-center justify-center gap-2 pt-1">
+
+              {/*  iOS - Using imported asset */}
+              <a
+                href="https://apps.apple.com/qa/app/catalogueya/id6757309240"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block"
+              >
+                <img
+                  src={iosBadge}
+                  alt="Download on App Store"
+                  className="h-8 w-auto object-contain hover:opacity-80 transition-opacity"
+                />
+              </a>
+
+              {/*  Android - Using imported asset */}
+              <a
+                href="https://play.google.com/store/apps/details?id=com.catalogueya.app&pcampaignid=web_share"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block"
+              >
+                <img
+                  src={androidBadge}
+                  alt="Get it on Google Play"
+                  className="h-8 w-auto object-contain hover:opacity-80 transition-opacity"
+                />
+              </a>
+
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

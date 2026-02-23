@@ -418,213 +418,264 @@ export default function CompanyRegisterModal({ onClose, planId }) {
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[1001] flex items-center justify-center px-4">
-            <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md" onClick={onClose} />
+return (
+    <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+        {/* Simple backdrop - just blur, no color overlay */}
+        <div className="absolute inset-0 backdrop-blur-sm" onClick={onClose} />
 
-            <div className="relative bg-white w-full max-w-6xl rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] flex flex-col font-sans">
-                <button onClick={onClose} className="absolute top-6 right-8 text-gray-400 hover:text-gray-600 transition z-20">
-                    <FaTimes size={24} />
-                </button>
+        {/* Modal - Apple/Stripe style */}
+        <div className="relative bg-white w-full max-w-7xl rounded-3xl shadow-2xl max-h-[90vh] flex flex-col mx-auto border border-gray-100">
+            {/* Close button - minimal */}
+            <button 
+                onClick={onClose} 
+                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center z-20"
+            >
+                <FaTimes size={18} />
+            </button>
 
-                <div className="p-8 sm:p-12 overflow-y-auto">
-                    <div className="text-center mb-8">
-                        <h2 className="text-4xl font-black text-gray-900 mb-2">Company Registration</h2>
-                        <div className="inline-block px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-wider shadow-sm border border-blue-100">
-                            Plan: {planId === 1 ? 'Monthly' : 'Yearly'}
+            <div className="p-6 sm:p-8 lg:p-10 overflow-y-auto">
+                {/* Header - minimal */}
+                <div className="text-center mb-8 sm:mb-10">
+                    <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-3 tracking-tight">Company Registration</h2>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        <span className="text-xs font-medium text-gray-600">Plan: {planId === 1 ? 'Monthly' : 'Yearly'}</span>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                    {/* Left Column */}
+                    <div className="space-y-6">
+                        {/* Company Name Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <input
+                                    type="text"
+                                    name="name"
+                                    placeholder="Company name (EN) *"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.name ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                {errors.name && <p className="text-red-500 text-xs px-3">{errors.name[0]}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <input
+                                    type="text"
+                                    name="name_ar"
+                                    placeholder="Company name (AR)"
+                                    value={formData.name_ar}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.name_ar ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                {errors.name_ar && <p className="text-red-500 text-xs px-3">{errors.name_ar[0]}</p>}
+                            </div>
+                        </div>
+
+                        {/* Email & Phone Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    placeholder="Email address *"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.email ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                {errors.email && <p className="text-red-500 text-xs px-3">{errors.email[0]}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    placeholder="Phone number *"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.phone ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                {errors.phone && <p className="text-red-500 text-xs px-3">{errors.phone[0]}</p>}
+                            </div>
+                        </div>
+
+                        {/* Password Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <input
+                                    type="password"
+                                    name="password"
+                                    placeholder="Password *"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.password ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                {errors.password && <p className="text-red-500 text-xs px-3">{errors.password[0]}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <input
+                                    type="password"
+                                    name="password_confirmation"
+                                    placeholder="Confirm password *"
+                                    value={formData.password_confirmation}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.password_confirmation ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                {errors.password_confirmation && <p className="text-red-500 text-xs px-3">{errors.password_confirmation[0]}</p>}
+                            </div>
+                        </div>
+
+                        {/* Business Location */}
+                        <div className="space-y-3">
+                            <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <FaMapMarkerAlt className="text-blue-500" size={14} />
+                                Business location
+                            </h4>
+                            
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <FaMapMarkerAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                    <input
+                                        id="reg-address-input-google"
+                                        type="text"
+                                        placeholder="Search or enter address..."
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition"
+                                        value={searchQuery}
+                                        onChange={(e) => {
+                                            setSearchQuery(e.target.value);
+                                            setShowPredictions(true);
+                                            setFormData(prev => ({ ...prev, address: e.target.value, formatted_address: e.target.value }));
+                                        }}
+                                        onFocus={() => setShowPredictions(true)}
+                                    />
+                                    {showPredictions && predictions.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto z-[60]">
+                                            {predictions.map((p, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition text-sm"
+                                                    onClick={() => handlePredictionSelect(p)}
+                                                >
+                                                    {p.description}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={getLiveLocation}
+                                    className="px-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white transition flex items-center justify-center"
+                                    title="Get current location"
+                                >
+                                    <FaSearch size={16} />
+                                </button>
+                            </div>
+
+                            <div id="reg-map-leaflet" className="w-full h-64 rounded-xl border border-gray-200 overflow-hidden bg-gray-50" />
+
+                            {/* Coordinates - minimal */}
+                            <div className="flex gap-4 px-4 py-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-400">Lat:</span>
+                                    <span className="text-xs font-medium text-gray-700">{formData.lat || '—'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-400">Lng:</span>
+                                    <span className="text-xs font-medium text-gray-700">{formData.lng || '—'}</span>
+                                </div>
+                            </div>
+                            {(errors.lat || errors.lng || errors.place_id) && (
+                                <p className="text-red-500 text-xs px-2">Valid location is required</p>
+                            )}
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5 w-full">
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        placeholder="Company Name (EN) *"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className={`w-full px-6 py-4 rounded-2xl bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 transition-all outline-none text-sm font-medium ${errors.name ? 'border-red-400' : ''}`}
-                                    />
-                                    {errors.name && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.name[0]}</p>}
-                                </div>
-                                <div className="space-y-1.5 w-full">
-                                    <input
-                                        type="text"
-                                        name="name_ar"
-                                        placeholder="Company Name (AR)"
-                                        value={formData.name_ar}
-                                        onChange={handleChange}
-                                        className={`w-full px-6 py-4 rounded-2xl bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 transition-all outline-none text-sm font-medium ${errors.name_ar ? 'border-red-400' : ''}`}
-                                    />
-                                    {errors.name_ar && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.name_ar[0]}</p>}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5 w-full">
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        placeholder="Email Address *"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        className={`w-full px-6 py-4 rounded-2xl bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 transition-all outline-none text-sm font-medium ${errors.email ? 'border-red-400' : ''}`}
-                                    />
-                                    {errors.email && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.email[0]}</p>}
-                                </div>
-                                <div className="space-y-1.5 w-full">
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        placeholder="Phone Number *"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className={`w-full px-6 py-4 rounded-2xl bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 transition-all outline-none text-sm font-medium ${errors.phone ? 'border-red-400' : ''}`}
-                                    />
-                                    {errors.phone && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.phone[0]}</p>}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5 w-full">
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        placeholder="Password *"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        className={`w-full px-6 py-4 rounded-2xl bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 transition-all outline-none text-sm font-medium ${errors.password ? 'border-red-400' : ''}`}
-                                    />
-                                    {errors.password && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.password[0]}</p>}
-                                </div>
-                                <div className="space-y-1.5 w-full">
-                                    <input
-                                        type="password"
-                                        name="password_confirmation"
-                                        placeholder="Confirm Password *"
-                                        value={formData.password_confirmation}
-                                        onChange={handleChange}
-                                        className={`w-full px-6 py-4 rounded-2xl bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 transition-all outline-none text-sm font-medium ${errors.password_confirmation ? 'border-red-400' : ''}`}
-                                    />
-                                    {errors.password_confirmation && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.password_confirmation[0]}</p>}
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-black text-gray-900 ml-4 flex items-center gap-2">
-                                    <FaMapMarkerAlt className="text-blue-500" />
-                                    Business Location
-                                </h4>
-                                <div className="space-y-4">
-                                    <div className="flex gap-2 relative z-[50]">
-                                        <div className="relative flex-1">
-                                            <FaMapMarkerAlt className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                id="reg-address-input-google"
-                                                type="text"
-                                                placeholder="Search or enter business address..."
-                                                className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 outline-none text-sm transition-all shadow-inner font-medium"
-                                                value={searchQuery}
-                                                onChange={(e) => {
-                                                    setSearchQuery(e.target.value);
-                                                    setShowPredictions(true);
-                                                    setFormData(prev => ({ ...prev, address: e.target.value, formatted_address: e.target.value }));
-                                                }}
-                                                onFocus={() => setShowPredictions(true)}
-                                            />
-                                            {showPredictions && predictions.length > 0 && (
-                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto z-[60] divide-y divide-gray-50">
-                                                    {predictions.map((p, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
-                                                            onClick={() => handlePredictionSelect(p)}
-                                                        >
-                                                            <span className="text-sm font-medium text-gray-800">{p.description}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={getLiveLocation}
-                                            className="px-5 aspect-square bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition flex items-center justify-center shadow-md shadow-blue-500/20 active:scale-95"
-                                            title="Get My Live Location"
-                                        >
-                                            <FaSearch size={18} />
-                                        </button>
-                                    </div>
-
-                                    <div id="reg-map-leaflet" className="w-full h-72 rounded-[24px] border border-gray-100 overflow-hidden z-0 shadow-inner bg-gray-50" />
-                                </div>
-                                <div className="flex gap-4 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100 -mt-2">
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Current Latitude</label>
-                                        <div className="text-xs font-bold text-blue-600">{formData.lat || "Waiting..."}</div>
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Current Longitude</label>
-                                        <div className="text-xs font-bold text-blue-600">{formData.lng || "Waiting..."}</div>
-                                    </div>
-                                </div>
-                                {(errors.lat || errors.lng || errors.place_id) && <p className="text-red-500 text-[10px] font-bold ml-4">Valid position and Place ID is required.</p>}
-                            </div>
-                        </div>
-                        <div className="space-y-6">
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-black text-gray-900 ml-4 flex items-center gap-2">
-                                    <FaUpload className="text-blue-500" />
-                                    Legal Documents
-                                </h4>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {[
-                                        { label: "Commercial License", name: "commercial_license" },
-                                        { label: "Establishment Card", name: "establishment_card" },
-                                        { label: "Commercial Registration", name: "commercial_registration" },
-                                        { label: "QID Authorized Signatories", name: "qid_authorized_signatories" }
-                                    ].map(doc => (
-                                        <div key={doc.name} className={`relative p-6 rounded-[24px] border-2 border-dashed flex flex-col items-center justify-center text-center group transition-all cursor-pointer ${errors[doc.name] ? 'border-red-400 bg-red-50/50' : 'border-gray-200 bg-gray-50/50 hover:border-blue-400 hover:bg-blue-50/30'}`}>
-                                            <input type="file" name={doc.name} onChange={handleFileChange} accept="image/*,.pdf" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 group-hover:text-blue-500 transition-colors">{doc.label}</span>
+                    {/* Right Column */}
+                    <div className="space-y-6">
+                        {/* Documents */}
+                        <div className="space-y-3">
+                            <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <FaUpload className="text-blue-500" size={14} />
+                                Legal documents
+                            </h4>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: "Commercial License", name: "commercial_license" },
+                                    { label: "Establishment Card", name: "establishment_card" },
+                                    { label: "Commercial Registration", name: "commercial_registration" },
+                                    { label: "QID Authorized Signatories", name: "qid_authorized_signatories" }
+                                ].map(doc => (
+                                    <div 
+                                        key={doc.name} 
+                                        className={`relative p-4 rounded-xl border ${errors[doc.name] ? 'border-red-200 bg-red-50/20' : 'border-gray-200 bg-gray-50'} hover:border-gray-300 transition cursor-pointer group`}
+                                    >
+                                        <input 
+                                            type="file" 
+                                            name={doc.name} 
+                                            onChange={handleFileChange} 
+                                            accept="image/*,.pdf" 
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                                        />
+                                        <div className="flex flex-col items-center text-center">
                                             {formData[doc.name] ? (
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <div className="px-3 py-1 bg-blue-500 text-white rounded-full text-[9px] font-black uppercase tracking-tighter shadow-md">READY</div>
-                                                    <span className="text-[10px] font-bold truncate max-w-[80px]">{formData[doc.name].name}</span>
-                                                </div>
+                                                <>
+                                                    <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center mb-2">
+                                                        <span className="text-white text-xs">✓</span>
+                                                    </div>
+                                                    <span className="text-xs font-medium text-gray-700 truncate max-w-full">
+                                                        {formData[doc.name].name}
+                                                    </span>
+                                                </>
                                             ) : (
-                                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-                                                    <FaUpload className="text-gray-300" />
-                                                </div>
+                                                <>
+                                                    <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center mb-2 group-hover:border-gray-300 transition">
+                                                        <FaUpload className="text-gray-300" size={14} />
+                                                    </div>
+                                                    <span className="text-xs text-gray-500">{doc.label}</span>
+                                                </>
                                             )}
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <h4 className="text-sm font-black text-gray-900 ml-4 mb-2">Company Description</h4>
-                                <textarea
-                                    name="description"
-                                    placeholder="Tell us about your business... *"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    rows="4"
-                                    className={`w-full px-6 py-4 rounded-[28px] bg-gray-50/50 border border-transparent focus:bg-white focus:border-blue-400 outline-none text-sm font-medium resize-none transition-all shadow-inner ${errors.description ? 'border-red-400' : ''}`}
-                                />
-                                {errors.description && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.description[0]}</p>}
-                            </div>
-                            <div className="pt-6">
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-5 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white rounded-[28px] font-black text-lg shadow-xl shadow-blue-500/40 hover:shadow-2xl transition transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
-                                >
-                                    {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "COMPLETE REGISTRATION"}
-                                </button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </form>
-                </div>
+
+                        {/* Description */}
+                        <div className="space-y-1">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Company description</h4>
+                            <textarea
+                                name="description"
+                                placeholder="Tell us about your business... *"
+                                value={formData.description}
+                                onChange={handleChange}
+                                rows="4"
+                                className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition resize-none ${errors.description ? 'border-red-300 bg-red-50/30' : ''}`}
+                            />
+                            {errors.description && <p className="text-red-500 text-xs px-3">{errors.description[0]}</p>}
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className="pt-4">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl font-medium text-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Processing...</span>
+                                    </>
+                                ) : (
+                                    'Complete registration'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
-    );
+    </div>
+);
 }

@@ -128,7 +128,7 @@ function Settings() {
             ))}
           </div>
 
-          {/* Notifications */}
+          {/* Notifications
           <div className="flex items-center justify-between p-4 rounded-2xl bg-white/60  border-b  border-gray-100 ">
             <span className="text-sm sm:text-base font-medium text-gray-900 ">
               Notifications
@@ -143,10 +143,10 @@ function Settings() {
               />
               <span className="text-xs text-gray-400 hidden sm:inline">ON</span>
             </div>
-          </div>
+          </div> */}
 
           {/* Language */}
-          <div className="p-4 rounded-2xl bg-white/60   border-b  border-gray-100 ">
+          <div className="p-4 rounded-2xl bg-white/60   border-b   ">
             <div className="flex justify-between items-center ">
               <span className="text-sm font-medium">Language</span>
               <span className="text-sm text-gray-600">English</span>

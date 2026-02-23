@@ -14,7 +14,7 @@ const Notifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingRead, setMarkingRead] = useState(false);
   const notificationsRef = useRef(null);
-  const [showUnmuteModal, setShowUnmuteModal] = useState(false);
+  
   const [showReadAllModal, setShowReadAllModal] = useState(false);
 
   const token = localStorage.getItem("token") || "";
@@ -351,52 +351,15 @@ const Notifications = () => {
                 {/* SECOND ROW: Actions (right aligned) */}
             <div className="flex justify-end">
               <div
-                className="
-                  flex items-center
-                  gap-[clamp(0.25rem,1.5vw,0.5rem)]
-                bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl shadow-lg shadow-blue-500/5
-                  p-[clamp(0.25rem,1.5vw,0.5rem)]
-                 
-                "
+              
               >
-                {/* Unmute */}
-                <button
-                  onClick={() => setShowUnmuteModal(true)}
-                  className="
-                   items-center
-                    gap-[clamp(0.25rem,1.2vw,0.5rem)]
-                    px-[clamp(0.4rem,2vw,1rem)]
-                    py-[clamp(0.35rem,1.5vw,0.5rem)]
-                 flex  text-slate-600 hover:bg-blue-600/10 hover:text-blue-700 rounded-xl transition-all
-                    min-w-0
-                  "
-                >
-                  <UnmuteIcon className="w-[clamp(0.9rem,3vw,1.25rem)] h-[clamp(0.9rem,3vw,1.25rem)]" />
-                  <span className="text-[clamp(0.65rem,2.4vw,0.875rem)] font-medium whitespace-nowrap">
-                    Unmute
-                  </span>
-                </button>
+             
+            
 
-                <div className="w-px h-[clamp(1rem,4vw,1.5rem)] bg-gray-200" />
+          
+           
 
-                {/* Mute */}
-                <button
-                  className="
-                    inline-flex items-center
-                    gap-[clamp(0.25rem,1.2vw,0.5rem)]
-                    px-[clamp(0.4rem,2vw,1rem)]
-                    py-[clamp(0.35rem,1.5vw,0.5rem)]
-                   text-slate-600 hover:bg-blue-600/10 hover:text-blue-700 rounded-xl transition-all
-                    min-w-0
-                  "
-                >
-                  <MuteIcon className="w-[clamp(0.9rem,3vw,1.25rem)] h-[clamp(0.9rem,3vw,1.25rem)]" />
-                  <span className="text-[clamp(0.65rem,2.4vw,0.875rem)] font-medium whitespace-nowrap">
-                    Mute
-                  </span>
-                </button>
-
-                <div className="w-px h-[clamp(1rem,4vw,1.5rem)] bg-gray-200" />
+       
 
                 {/* Read all */}
                 <button
@@ -666,17 +629,7 @@ const Notifications = () => {
         confirmText="Read all"
       />
 
-      <GlassModal
-        show={showUnmuteModal}
-        onClose={() => setShowUnmuteModal(false)}
-        onConfirm={() => {
-          // unmute logic
-          setShowUnmuteModal(false);
-        }}
-        title="Unmute notifications?"
-        description="You will start receiving push alerts again."
-        confirmText="Unmute"
-      />
+      
     </div>
   );
 };

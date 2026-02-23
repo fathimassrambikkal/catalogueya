@@ -49,8 +49,8 @@ function CustomerLogin() {
   };
 
   return (
-    <div className="flex w-full h-[calc(100vh-64px)] overflow-hidden  /* 🌊 Apple-style soft blue gradient */
-    bg-[radial-gradient(1200px_circle_at_20%_10%,rgba(56,189,248,0.18),transparent_40%),radial-gradient(900px_circle_at_80%_20%,rgba(99,102,241,0.14),transparent_45%),linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.96))]
+    <div className="flex w-full h-[calc(100vh-64px)] overflow-hidden 
+  
 
     /* 🧊 Glass feel */
     backdrop-blur-xl

@@ -112,7 +112,7 @@ return (
       {/* Row 1 → Analytics + Calendar (same line mobile + desktop) */}
       <div className="flex items-center justify-between">
 
-        <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">
+        <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight ">
           Analytics
         </h1>
 

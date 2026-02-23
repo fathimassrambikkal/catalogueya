@@ -106,289 +106,199 @@ export default function Messages() {
     });
   };
 
-  /* ───────── RENDER ───────── */
-  return (
-    <div className="min-h-screen w-full px-[clamp(12px,3vw,32px)] mt-28 md:mt-20">
-      {/* 🏆 HEADER SECTION */}
-      <div className="sticky top-0 z-40 pt-[clamp(16px,4vh,24px)] pb-[clamp(12px,2vh,16px)] backdrop-blur-xl bg-gradient-to-b from-white via-white/95 to-white/90">
-        <div className="w-full">
-          {/* Title */}
-          <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-[clamp(8px,2vw,16px)] mb-[clamp(16px,3vh,24px)] px-[clamp(4px,1vw,8px)]">
-            <div className="flex items-center gap-[clamp(8px,2vw,12px)]">
-              <div>
-                <h1 className="text-2xl sm:text-3xl  font-semibold text-gray-900 leading-tight  ">
-                  Messages
-                </h1>
-                <p className="text-[clamp(12px,3vw,14px)] text-gray-500 mt-[clamp(2px,0.5vh,4px)]">
-                  {filtered.length} conversation{filtered.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
+/* ───────── RENDER ───────── */
+return (
+  <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 mt-20 md:mt-16 bg-white">
+    {/* 🏆 HEADER SECTION */}
+    <div className="sticky top-0 z-40 pt-4 pb-3 bg-white/80 backdrop-blur-xl border-b border-gray-100/50">
+      <div className=" w-full">
+        {/* Title */}
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">
+              Messages
+            </h1>
+            <span className="text-sm font-medium text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">
+              {filtered.length}
+            </span>
           </div>
+          
+        
+        </div>
 
-          {/* 🔍 SEARCH BAR */}
-          <div className="px-[clamp(4px,1vw,8px)]">
-            <div className="relative">
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by company or message..."
+        {/* 🔍 SEARCH BAR */}
+        <div className="px-1">
+          <div className="relative">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search"
+              className="
+                w-full h-12
+                pl-11 pr-10
+                bg-gray-50
+                border-0
+                rounded-full
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+                text-[15px] placeholder:text-gray-400
+                transition-all duration-200
+              "
+            />
+            <svg
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <circle cx="8" cy="8" r="6" />
+              <path d="M14 14L17 17" />
+            </svg>
+            {search && (
+              <button
+                onClick={() => setSearch("")}
                 className="
-                  w-full h-[clamp(44px,8vh,56px)]
-                  pl-[clamp(48px,10vw,56px)] pr-[clamp(40px,8vw,48px)]
-                  bg-white/95 backdrop-blur-xl
-                  rounded-[clamp(12px,2vw,16px)] xs:rounded-[clamp(16px,3vw,20px)]
-                  border border-white/80
-                  shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.03)]
-                  hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_12px_48px_rgba(0,0,0,0.08)]
-                  text-[clamp(14px,3vw,16px)]
-                  focus:outline-none
-                  focus:ring-3 focus:ring-blue-500/30
-                  transition-all duration-300
+                  absolute right-3 top-1/2 -translate-y-1/2
+                  w-6 h-6
+                  rounded-full
+                  bg-gray-200
+                  flex items-center justify-center
+                  text-gray-500
+                  hover:bg-gray-300
+                  transition-colors
                 "
-              />
-              <svg
-                className="absolute left-[clamp(16px,3vw,20px)] top-1/2 -translate-y-1/2 text-gray-400"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
               >
-                <circle cx="9" cy="9" r="7" />
-                <path d="M15 15L19 19" />
-              </svg>
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="
-                    absolute right-[clamp(16px,3vw,20px)] top-1/2 -translate-y-1/2
-                    w-[clamp(28px,5vw,32px)] h-[clamp(28px,5vw,32px)]
-                    rounded-full
-                    bg-gray-100
-                    flex items-center justify-center
-                    text-gray-400
-                    hover:text-gray-600
-                    hover:bg-gray-200
-                    transition-colors
-                  "
-                >
-                  <svg 
-                    className="w-[clamp(14px,3vw,16px)] h-[clamp(14px,3vw,16px)]" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
-
-      {/* 💬 CONVERSATIONS LIST */}
-      <div className="w-full mt-[clamp(16px,3vh,24px)]">
-        {filtered.length === 0 ? (
-          <div className="
-            text-center py-[clamp(48px,10vh,80px)]
-            rounded-[clamp(12px,2vw,16px)]
-            bg-gradient-to-br from-gray-50/50 to-white/50
-            backdrop-blur-sm
-            border border-white/70
-            shadow-[0_4px_24px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.8)]
-          ">
-            <div className="
-              w-[clamp(64px,15vw,80px)] h-[clamp(64px,15vw,80px)] 
-              mx-auto mb-[clamp(16px,4vh,24px)] 
-              rounded-[clamp(12px,2vw,16px)] 
-              bg-gradient-to-br from-gray-200 to-gray-100 
-              flex items-center justify-center 
-              shadow-inner
-            ">
-              <svg 
-                className="w-[clamp(32px,6vw,40px)] h-[clamp(32px,6vw,40px)] text-gray-400" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-            </div>
-            <h3 className="text-[clamp(18px,4vw,24px)] font-semibold text-gray-700 mb-[clamp(8px,2vh,12px)]">
-              {search ? "No matches found" : "No conversations yet"}
-            </h3>
-            <p className="text-gray-500 mx-auto text-[clamp(14px,3vw,16px)] px-[clamp(16px,3vw,24px)] max-w-[512px]">
-              {search 
-                ? "Try searching with different keywords" 
-                : "Start a conversation with a company to see messages here"}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-[clamp(12px,2vh,16px)] px-[clamp(4px,1vw,8px)]">
-            {filtered.map((conv) => {
-              const company = conv.participants?.find(
-                (p) => p.participant_type === "App\\Models\\company"
-              )?.participant;
-
-              const unread = conv.unread_count || 0;
-              const last = conv.last_message;
-
-              return (
-                <div
-                  key={conv.id}
-                  onClick={() => openConversation(conv)}
-                  className="
-                    group cursor-pointer
-                    rounded-[clamp(12px,2vw,16px)]
-                    bg-gradient-to-br from-white to-gray-50
-                    backdrop-blur-xl
-                    border border-white/90
-                    p-[clamp(12px,2vw,20px)]
-                    flex gap-[clamp(12px,2vw,20px)]
-                    transition-all duration-300
-                    transform
-                    hover:scale-[1.02]
-                    active:scale-[0.995]
-                    relative
-                    overflow-hidden
-                    before:absolute
-                    before:inset-0
-                    before:bg-gradient-to-br
-                    before:from-white/70
-                    before:to-transparent
-                    before:opacity-0
-                    before:transition-opacity
-                    before:duration-300
-                    hover:before:opacity-100
-                    after:absolute
-                    after:inset-0
-                    after:rounded-[clamp(12px,2vw,16px)]
-                    after:border
-                    after:border-white/40
-                    after:pointer-events-none
-                  "
-                  style={{
-                    boxShadow: `
-                      0 2px 0 rgba(255, 255, 255, 0.9),
-                      0 4px 6px -1px rgba(0, 0, 0, 0.05),
-                      0 10px 20px -2px rgba(0, 0, 0, 0.04),
-                      0 0 0 1px rgba(255, 255, 255, 0.5),
-                      inset 0 1px 0 rgba(255, 255, 255, 0.8),
-                      inset 0 -2px 10px rgba(0, 0, 0, 0.03)
-                    `,
-                  }}
-                >
-                  {/* 3D Avatar Container */}
-                  <div className="relative flex-shrink-0">
-                    <div 
-                      className="
-                        w-[clamp(48px,10vw,64px)] h-[clamp(48px,10vw,64px)]
-                        rounded-[clamp(8px,1.5vw,12px)]
-                        bg-gradient-to-br from-white to-gray-100
-                        overflow-hidden
-                        relative
-                        before:absolute
-                        before:inset-0
-                        before:rounded-[clamp(8px,1.5vw,12px)]
-                        before:border
-                        before:border-white/60
-                        before:pointer-events-none
-                      "
-                      style={{
-                        boxShadow: `
-                          0 4px 12px rgba(0, 0, 0, 0.08),
-                          0 2px 4px rgba(0, 0, 0, 0.04),
-                          inset 0 1px 0 rgba(255, 255, 255, 0.8),
-                          inset 0 -2px 0 rgba(0, 0, 0, 0.05)
-                        `
-                      }}
-                    >
-                      <SmartImage
-                        image={company?.logo}
-                        alt={company?.name_en}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    
-                    {/* Subtle reflection effect */}
-                    <div className="
-                      absolute top-0 left-0
-                      w-full h-1/2
-                      bg-gradient-to-b from-white/40 to-transparent
-                      rounded-t-[clamp(8px,1.5vw,12px)]
-                      pointer-events-none
-                    " />
-                  </div>
-
-          {/* Content */}
-                  <div className="flex-1 min-w-0 pt-1 relative z-10">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-gray-900 truncate text-lg">
-                        {company?.name_en || company?.name_ar}
-                      </h3>
-                      <div className="flex flex-col items-end gap-1.5">
-                        <span className="text-xs text-gray-500 font-medium px-2 py-1 rounded-full bg-white/80 shadow-sm">
-                          {timeAgo(last?.created_at)}
-                        </span>
-                        {unread > 0 && (
-                          <span
-                            className="
-                              min-w-[24px] h-6 px-2
-                              rounded-full
-                              text-xs font-bold
-                              text-white
-                              bg-gradient-to-br from-blue-500 to-blue-600
-                              flex items-center justify-center
-                              shadow-badge
-                              relative
-                              before:absolute
-                              before:inset-0
-                              before:rounded-full
-                              before:border
-                              before:border-white/30
-                              before:pointer-events-none
-                            "
-                            style={{
-                              boxShadow: `
-                                0 3px 8px rgba(59, 130, 246, 0.4),
-                                0 1px 0 rgba(255, 255, 255, 0.3),
-                                inset 0 1px 0 rgba(255, 255, 255, 0.4)
-                              `
-                            }}
-                          >
-                            {unread > 99 ? "99+" : unread}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <p className="text-sm text-gray-700 mt-1 line-clamp-2 pl-2 border-l-2 border-blue-200/50">
-                        {last?.body || " "}
-                      </p>
-                      
-                      {/* Subtle text gradient */}
-                      <div className="
-                        absolute -inset-x-[clamp(8px,1.5vw,12px)] 
-                        -inset-y-[clamp(4px,1vw,6px)]
-                        bg-gradient-to-r from-transparent via-white/5 to-transparent
-                        opacity-0
-                        group-hover:opacity-100
-                        transition-opacity duration-300
-                        rounded-[clamp(8px,1.5vw,12px)]
-                        pointer-events-none
-                      " />
-                    </div>
-                  </div>
-
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
     </div>
-  );
+
+    {/* 💬 CONVERSATIONS LIST */}
+    <div className=" w-full py-2">
+      {filtered.length === 0 ? (
+        <div className="text-center py-20 px-4">
+          <div className="
+            w-16 h-16 
+            mx-auto mb-4 
+            rounded-full 
+            bg-gray-50 
+            flex items-center justify-center 
+            border border-gray-100
+          ">
+            <svg 
+              className="w-7 h-7 text-gray-400" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            {search ? "No Results" : "No Messages"}
+          </h3>
+          <p className="text-sm text-gray-500 max-w-sm mx-auto">
+            {search 
+              ? "No conversations match your search" 
+              : "Start a conversation to connect with companies"}
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-100">
+          {filtered.map((conv) => {
+            const company = conv.participants?.find(
+              (p) => p.participant_type === "App\\Models\\company"
+            )?.participant;
+
+            const unread = conv.unread_count || 0;
+            const last = conv.last_message;
+
+            return (
+              <div
+                key={conv.id}
+                onClick={() => openConversation(conv)}
+                className={`
+                  group cursor-pointer
+                  py-3 px-1
+                  flex gap-3
+                  transition-colors duration-200
+                  ${unread > 0 ? 'bg-blue-50/30' : 'hover:bg-gray-50/50'}
+                `}
+              >
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
+                  <div className="
+                    w-12 h-12 
+                    rounded-full 
+                    bg-gray-100 
+                    flex items-center justify-center 
+                    overflow-hidden
+                    border border-gray-200
+                  ">
+                    <SmartImage
+                      image={company?.logo}
+                      alt={company?.name_en}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  
+                 
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className={`
+                      font-semibold truncate pr-2
+                      ${unread > 0 ? 'text-gray-900' : 'text-gray-700'}
+                    `}>
+                      {company?.name_en || company?.name_ar}
+                    </h3>
+                    <span className="text-xs text-gray-400 whitespace-nowrap">
+                      {timeAgo(last?.created_at)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <p className={`
+                      text-sm 
+                      line-clamp-1 
+                      pr-2
+                      ${unread > 0 
+                        ? 'text-gray-900 font-medium' 
+                        : 'text-gray-500'
+                      }
+                    `}>
+                      {last?.body || "Start a conversation..."}
+                    </p>
+                    
+                    {unread > 0 && (
+                      <span className="
+                        w-5 h-5
+                        rounded-full
+                        text-xs font-semibold
+                        text-white
+                        bg-blue-500
+                        flex items-center justify-center
+                        flex-shrink-0
+                      ">
+                        {unread > 9 ? "9+" : unread}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+);
 }

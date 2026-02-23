@@ -223,6 +223,7 @@ const yearlySavings =
   if (isLoading) {
     return (
       <section
+      id="pricing"
         dir={isRTL ? "rtl" : "ltr"}
         className="bg-white py-8 xs:py-10 sm:py-12 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20 font-inter flex flex-col items-center relative overflow-hidden"
       >
@@ -237,6 +238,7 @@ const yearlySavings =
 
   return (
     <section
+       id="pricing"
       dir={isRTL ? "rtl" : "ltr"}
       className="bg-white py-8 xs:py-10 sm:py-12 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20 font-inter flex flex-col items-center relative overflow-hidden"
     >
@@ -320,12 +322,19 @@ const yearlySavings =
       {tabs.length > 0 ? (
         <div 
           ref={containerRef}
-          className="relative flex items-center justify-center gap-1 xs:gap-2 mb-8 xs:mb-10 sm:mb-12 bg-white/70 rounded-xl xs:rounded-2xl p-1 xs:p-2 backdrop-blur shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]"
+          className=" relative flex items-center
+                  bg-gray-50/50
+                  p-1 xs:p-1.5 sm:p-2
+                  rounded-xl xs:rounded-2xl
+                  border border-gray-100
+                  mb-6 xs:mb-7 sm:mb-8
+                  w-full
+                  overflow-hidden"
         >
           {/* Sliding Background - Dynamic Width */}
           {tabs.length > 0 && activeTab !== null && (
             <div 
-              className={`absolute top-1 xs:top-2 bottom-1 xs:bottom-2 rounded-xl xs:rounded-2xl bg-blue-500 transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]`}
+              className={`absolute top-1 xs:top-2 bottom-1 xs:bottom-2 rounded-xl xs:rounded-2xl bg-blue-500 transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]   duration-300 shadow-lg shadow-blue-500/20`}
               style={{ 
                 width: `${getSliderWidth()}px`,
                 left: isRTL ? 'auto' : `${getSliderLeftPosition()}px`,
@@ -380,7 +389,7 @@ const yearlySavings =
 
             {/* Right Content - Feature Card */}
             <div className="w-full md:w-1/2">
-              <div className="bg-white/90 backdrop-blur-xl text-gray-900 rounded-2xl xs:rounded-3xl p-4 xs:p-6 sm:p-8 border border-white/60 min-h-[240px] xs:min-h-[280px] sm:min-h-[300px] flex flex-col justify-center shadow-[8px_8px_25px_rgba(0,0,0,0.08),-8px_-8px_25px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]">
+              <div className="bg-white/90 backdrop-blur-xl text-gray-900  xs:rounded-3xl p-4 xs:p-6 sm:p-8 border border-white/60 min-h-[240px] xs:min-h-[280px] sm:min-h-[300px] flex flex-col justify-center shadow-[8px_8px_25px_rgba(0,0,0,0.08),-8px_-8px_25px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)]      rounded-[28px]   border-gray-100">
                 {currentFeatures.length === 0 ? (
                   <div className="text-center text-gray-500 py-6 xs:py-8 text-sm xs:text-base">
                     No features available for this category
@@ -399,7 +408,7 @@ const yearlySavings =
                           bg-blue-500
                           flex items-center justify-center 
                           ${isRTL ? 'order-2 ml-1 xs:ml-2' : 'mr-1 xs:mr-2'}
-                          shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_2px rgba(255,255,255,0.8)]
+                        shadow-lg shadow-blue-500/20     
                         `}>
                           <ChevronIcon isRTL={isRTL} />
                         </div>

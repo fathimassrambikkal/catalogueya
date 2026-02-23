@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  FaTimes,
+ 
   FaCheckCircle,
   FaTag
 } from "react-icons/fa";
@@ -13,7 +13,7 @@ import {
   updateSalesProduct,
   deleteSalesProduct
 } from "../companyDashboardApi";
-
+import { FaTimes } from "./SvgIcons";
 import { showToast } from "../utils/showToast";
 
 export default function AddToHighlightsModalSales({
@@ -26,7 +26,7 @@ export default function AddToHighlightsModalSales({
   const [highlightProducts, setHighlightProducts] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSending, setIsSending] = useState(false);
-
+  const isSalesType = selectedType === "sales";
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [discountData, setDiscountData] = useState({
@@ -93,21 +93,21 @@ export default function AddToHighlightsModalSales({
       setIsSending(true);
 
       if (editingProduct) {
-        await updateSalesProduct(editingProduct.id, {
-          type: selectedType,
-          discount: discountData.discount,
-          discount_from: discountData.from,
-          discount_to: discountData.to
-        });
+  await updateSalesProduct(editingProduct.id, {
+    type: selectedType,
+    ...(isSalesType && { discount: discountData.discount }),
+    discount_from: discountData.from,
+    discount_to: discountData.to
+  });
         showToast("Updated successfully", { type: "success" });
       } else {
         for (const pid of selectedIds) {
           await addSalesProduct(pid, {
-            type: selectedType,
-            discount: discountData.discount,
-            discount_from: discountData.from,
-            discount_to: discountData.to
-          });
+  type: selectedType,
+  ...(isSalesType && { discount: discountData.discount }),
+  discount_from: discountData.from,
+  discount_to: discountData.to
+});
         }
         showToast(
           `Added to ${selectedType.replace(/_/g, " ")} successfully`,
@@ -240,29 +240,59 @@ export default function AddToHighlightsModalSales({
     {/* DISCOUNT MODAL */}
     {showDiscountModal && (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-3 sm:p-4">
-        <div className="bg-white rounded-xl w-full max-w-[95%] sm:max-w-md mx-auto p-4 sm:p-6 shadow-xl border border-gray-100">
+        <div className=" relative  bg-white rounded-xl w-full max-w-[95%] sm:max-w-md mx-auto p-4 sm:p-6 shadow-xl border border-gray-100">
+      <button
+  onClick={() => {
+    setShowDiscountModal(false);
+    setEditingProduct(null);
+  }}
+  className="
+    absolute 
+    top-4 
+    right-4 
+    w-8 
+    h-8 
+    flex 
+    items-center 
+    justify-center 
+    rounded-full 
+    bg-gray-100/80 
+    backdrop-blur-md 
+    text-gray-500 
+    hover:text-gray-800 
+    hover:bg-gray-200 
+    active:scale-90
+    transition-all 
+    duration-200
+  "
+>
+  <FaTimes className="w-3.5 h-3.5" />
+</button>
+          
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             Highlight Details
           </h3>
 
           <div className="space-y-4 sm:space-y-5">
-            <div>
-              <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase flex items-center gap-1.5 mb-1.5">
-                <FaTag size={10} /> Discount %
-              </label>
-              <input
-                type="number"
-                value={discountData.discount}
-                onChange={(e) =>
-                  setDiscountData({
-                    ...discountData,
-                    discount: e.target.value
-                  })
-                }
-                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm bg-gray-50 rounded-lg border border-gray-100 focus:border-gray-200 focus:outline-none"
-                placeholder="0"
-              />
-            </div>
+           {isSalesType && (
+  <div>
+    <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase flex items-center gap-1.5 mb-1.5">
+      <FaTag size={10} /> Discount %
+    </label>
+    <input
+      type="number"
+      value={discountData.discount}
+      onChange={(e) =>
+        setDiscountData({
+          ...discountData,
+          discount: e.target.value
+        })
+      }
+      className="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm bg-gray-50 rounded-lg border border-gray-100 focus:border-gray-200 focus:outline-none"
+      placeholder="0"
+    />
+  </div>
+)}
 
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>

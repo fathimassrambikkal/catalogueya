@@ -77,145 +77,152 @@ export default function CustomerRegisterModal({ isOpen, onClose, onShowLogin }) 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[1001] flex items-center justify-center px-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <button 
-          onClick={onClose}
-          className="absolute top-6 right-8 text-gray-400 hover:text-gray-600 transition z-10"
-        >
-          <FaTimes size={24} />
-        </button>
-
-        <div className="p-8 sm:p-12">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-black text-gray-900 mb-2">Create Account</h2>
-            <p className="text-gray-500 font-medium">Join Catalogueya today and start exploring</p>
-          </div>
-
-          <form onSubmit={handleCustomerSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-4">First Name</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  placeholder="John"
-                  value={customerData.firstName}
-                  onChange={handleCustomerChange}
-                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-400 transition outline-none text-sm font-medium"
-                />
-                {customerErrors.firstName && <p className="text-red-500 text-[10px] font-bold ml-4">{customerErrors.firstName}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-4">Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  placeholder="Doe"
-                  value={customerData.lastName}
-                  onChange={handleCustomerChange}
-                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-400 transition outline-none text-sm font-medium"
-                />
-                {customerErrors.lastName && <p className="text-red-500 text-[10px] font-bold ml-4">{customerErrors.lastName}</p>}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-4">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                placeholder="john@example.com"
-                value={customerData.email}
-                onChange={handleCustomerChange}
-                className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-400 transition outline-none text-sm font-medium"
-              />
-              {customerErrors.email && <p className="text-red-500 text-[10px] font-bold ml-4">{customerErrors.email}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-4">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="+974 XXXX XXXX"
-                value={customerData.phone}
-                onChange={handleCustomerChange}
-                className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-400 transition outline-none text-sm font-medium"
-              />
-              {customerErrors.phone && <p className="text-red-500 text-[10px] font-bold ml-4">{customerErrors.phone}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-4">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="••••••••"
-                    value={customerData.password}
-                    onChange={handleCustomerChange}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-400 transition outline-none text-sm font-medium"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-                  </button>
-                </div>
-                {customerErrors.password && <p className="text-red-500 text-[10px] font-bold ml-4">{customerErrors.password}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-4">Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    placeholder="••••••••"
-                    value={customerData.confirmPassword}
-                    onChange={handleCustomerChange}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-400 transition outline-none text-sm font-medium"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-                  </button>
-                </div>
-                {customerErrors.confirmPassword && <p className="text-red-500 text-[10px] font-bold ml-4">{customerErrors.confirmPassword}</p>}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-5 rounded-2xl text-base font-black shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+return (
+    <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+        {/* Simple backdrop - just blur */}
+        <div 
+            className="absolute inset-0 backdrop-blur-sm bg-gray-900/60 "
+            onClick={onClose}
+        />
+        
+        {/* Modal - Apple/Stripe style */}
+        <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-gray-100">
+            {/* Close button - minimal */}
+            <button 
+                onClick={onClose}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center z-10"
             >
-              {loading ? "Creating Account..." : "Create Account"}
+                <FaTimes size={18} />
             </button>
-          </form>
 
-          <div className="text-center mt-8">
-            <p className="text-sm font-bold text-gray-400">
-              Already have an account?{" "}
-              <button onClick={onShowLogin} className="text-blue-500 hover:underline">Sign In</button>
-            </p>
-          </div>
+            <div className="p-6 sm:p-8">
+                {/* Header */}
+                <div className="text-center mb-6">
+                    <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 tracking-tight">Create account</h2>
+                    <p className="text-sm text-gray-500">Join Catalogueya today and start exploring</p>
+                </div>
+
+                <form onSubmit={handleCustomerSubmit} className="space-y-4">
+                    {/* Name Row */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <input
+                                type="text"
+                                name="firstName"
+                                placeholder="First name"
+                                value={customerData.firstName}
+                                onChange={handleCustomerChange}
+                                className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${customerErrors.firstName ? 'border-red-300 bg-red-50/30' : ''}`}
+                            />
+                            {customerErrors.firstName && <p className="text-red-500 text-xs px-3">{customerErrors.firstName}</p>}
+                        </div>
+                        <div className="space-y-1">
+                            <input
+                                type="text"
+                                name="lastName"
+                                placeholder="Last name"
+                                value={customerData.lastName}
+                                onChange={handleCustomerChange}
+                                className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${customerErrors.lastName ? 'border-red-300 bg-red-50/30' : ''}`}
+                            />
+                            {customerErrors.lastName && <p className="text-red-500 text-xs px-3">{customerErrors.lastName}</p>}
+                        </div>
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-1">
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Email address"
+                            value={customerData.email}
+                            onChange={handleCustomerChange}
+                            className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${customerErrors.email ? 'border-red-300 bg-red-50/30' : ''}`}
+                        />
+                        {customerErrors.email && <p className="text-red-500 text-xs px-3">{customerErrors.email}</p>}
+                    </div>
+
+                    {/* Phone */}
+                    <div className="space-y-1">
+                        <input
+                            type="tel"
+                            name="phone"
+                            placeholder="Phone number"
+                            value={customerData.phone}
+                            onChange={handleCustomerChange}
+                            className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${customerErrors.phone ? 'border-red-300 bg-red-50/30' : ''}`}
+                        />
+                        {customerErrors.phone && <p className="text-red-500 text-xs px-3">{customerErrors.phone}</p>}
+                    </div>
+
+                    {/* Password Row */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    placeholder="Password"
+                                    value={customerData.password}
+                                    onChange={handleCustomerChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition pr-10 ${customerErrors.password ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                                </button>
+                            </div>
+                            {customerErrors.password && <p className="text-red-500 text-xs px-3">{customerErrors.password}</p>}
+                        </div>
+                        <div className="space-y-1">
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    name="confirmPassword"
+                                    placeholder="Confirm"
+                                    value={customerData.confirmPassword}
+                                    onChange={handleCustomerChange}
+                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition pr-10 ${customerErrors.confirmPassword ? 'border-red-300 bg-red-50/30' : ''}`}
+                                />
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                                </button>
+                            </div>
+                            {customerErrors.confirmPassword && <p className="text-red-500 text-xs px-3">{customerErrors.confirmPassword}</p>}
+                        </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full mt-2 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white py-3.5 rounded-xl text-sm font-medium transition disabled:opacity-50"
+                    >
+                        {loading ? "Creating account..." : "Create account"}
+                    </button>
+                </form>
+
+                {/* Footer */}
+                <div className="text-center mt-6">
+                    <p className="text-sm text-gray-500">
+                        Already have an account?{" "}
+                        <button 
+                            onClick={onShowLogin} 
+                            className="text-blue-500 hover:text-blue-600 font-medium"
+                        >
+                            Sign in
+                        </button>
+                    </p>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  );
+);
 }
