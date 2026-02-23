@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { registerCompany, getGoogleMap } from "../../api";
-import { FaTimes, FaMapMarkerAlt, FaUpload, FaTrash, FaSearch } from "react-icons/fa";
+import { FaTimes, FaMapMarkerAlt, FaUpload, FaSearch } from "react-icons/fa";
 export async function getAddressFromLatLng(lat, lng) {
     const API_KEY = "AIzaSyCPaRykDl0CWuNR-9GjN0lhJrzhKoew9p8";
 
