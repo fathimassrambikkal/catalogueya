@@ -219,7 +219,7 @@ export default function Favourite() {
     <div className="max-w-6xl mx-auto px-6 py-16  relative">
     
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 mt-8">
         Your Favourites ({normalizedFavourites.length})
       </h1>
 
