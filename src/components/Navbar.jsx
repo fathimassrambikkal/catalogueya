@@ -17,7 +17,7 @@ import { FaBell as FaRegBell, FaHistory } from "react-icons/fa";
 /* =============================
    LOGO COMPONENT
 ============================= */
-const Logo = memo(function Logo({ settings }) {
+const Logo = memo(function Logo({ settings , scrolled }) {
   const getLogoUrl = () => {
     if (!settings?.logo) return null;
 
@@ -41,15 +41,20 @@ const Logo = memo(function Logo({ settings }) {
   return (
     <Link to="/" className="flex items-center flex-shrink-0">
       {logoUrl ? (
-        <img
-          src={logoUrl}
-          alt="Catalogueya"
-          className="h-12 lg:h-14 w-auto object-contain"
-          width="160"
-          height="56"
-          decoding="async"
-          fetchpriority="high"
-        />
+       <img
+  src={logoUrl}
+  alt="Catalogueya"
+  className={`
+    w-auto object-contain
+    transition-all duration-500
+    ease-[cubic-bezier(0.16,1,0.3,1)]
+    ${scrolled ? "h-10 lg:h-12" : "h-12 lg:h-14"}
+  `}
+  width="160"
+  height="56"
+  decoding="async"
+  fetchpriority="high"
+/>
       ) : (
         <div className="h-12 w-32 bg-gray-200 animate-pulse rounded" />
       )}
@@ -300,12 +305,14 @@ export default function Navbar() {
     >
       {/* Container */}
       <div className="mx-auto w-full max-w-[1440px] pl-6 pr-4 sm:pl-8 sm:pr-6">
-        <div
-          className={`flex items-center justify-between transition-all duration-300 ${scrolled ? "h-16" : "h-16"
-            }`}
-        >
+ <div
+  className={`flex items-center justify-between 
+    transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+    ${scrolled ? "h-14" : "h-16"}
+  `}
+>
           {/* Logo */}
-          <Logo settings={settings} />
+          <Logo settings={settings} scrolled={scrolled} />
 
           {/* RIGHT: Actions */}
           <div className="flex items-center gap-3 ltr:ml-auto rtl:mr-auto">
@@ -404,12 +411,12 @@ export default function Navbar() {
             )}
 
             {/*  Language - Hidden for company */}
-            {userType !== 'company' && (
-              <LanguageToggle
-                toggleLanguage={toggleLanguage}
-                language={i18n.language}
-              />
-            )}
+          {!isAuthenticated && (
+  <LanguageToggle
+    toggleLanguage={toggleLanguage}
+    language={i18n.language}
+  />
+)}
 
             {/*  Avatar Dropdown with Animated Hamburger */}
             <div className="relative customer-account-container flex items-center gap-2">

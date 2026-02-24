@@ -325,7 +325,7 @@ function NotificationCard({
                     <span className="text-[8px]">{isExpanded ? "▲" : "▼"}</span>
                   </button>
                 ) : (
-                  <span className="text-[10px] text-gray-300">💬 Message</span>
+                  <span className="text-[10px] text-gray-300"> Message</span>
                 )}
                 <span className="text-[9px] text-gray-300">
                   {formatDate(notification.created_at)}
@@ -483,7 +483,7 @@ function NotificationCard({
       </div>
 
       {/* CSS Animations */}
-      <style jsx>{`
+      <style >{`
         @keyframes slideDown {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }

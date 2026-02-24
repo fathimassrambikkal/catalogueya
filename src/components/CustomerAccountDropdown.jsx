@@ -7,6 +7,8 @@ import { getImageUrl } from "../companyDashboardApi";
 import iosBadge from "../assets/ios.png";
 import androidBadge from "../assets/android.png";
 import { FaTimes } from "../components/SvgIcon";
+
+
 /* ================================
    SAFE SVG BASE COMPONENT
 ================================ */
@@ -186,7 +188,7 @@ export default function CustomerAccountDropdown({
       onClick={onClick}
       className={`
         group flex items-center w-full px-2 py-1.5
-        text-[13px] font-semibold rounded-2xl 
+        text-[13px] font-semibold  
         transition-all duration-150 tracking-tight
         ${
           isDestructive
@@ -264,11 +266,11 @@ export default function CustomerAccountDropdown({
       {isAuthenticated && (
         <>
           <div className="px-3 py-2"></div>
-          <div className="my-1 border-t border-gray-200/70" />
+          <div className=" border-t border-gray-200/70" />
         </>
       )}
 
-      <div className="py-0.5">
+      <div className="">
         {/* ===================== */}
         {/*  CUSTOMER MENU */}
         {/* ===================== */}
@@ -328,9 +330,9 @@ export default function CustomerAccountDropdown({
         )}
       </div>
 
-      <div className="my-1 border-t border-gray-200/70" />
+      <div className=" border-t border-gray-200/70" />
 
-      <div className="py-0.5">
+      <div className="">
         <MenuItem 
           icon={<HomeIcon />} 
           label={fw.home || "Home"} 
@@ -362,8 +364,8 @@ export default function CustomerAccountDropdown({
       {/* Logout - Only for authenticated users (both customer and company) */}
       {isAuthenticated && (
         <>
-          <div className="my-1 border-t border-gray-200/70" />
-          <div className="py-0.5">
+          <div className=" border-t border-gray-200/70" />
+          <div className="">
             <MenuItem 
               icon={<LogoutIcon />} 
               label={fw.logout || "Log out"} 

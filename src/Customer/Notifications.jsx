@@ -284,7 +284,7 @@ const Notifications = () => {
     return null;
   };
 
-  // 🧊 BLUE GLASS MODAL
+  //  BLUE GLASS MODAL
   const GlassModal = ({ show, onClose, title, description, onConfirm, confirmText = "Confirm" }) => {
     if (!show) return null;
 

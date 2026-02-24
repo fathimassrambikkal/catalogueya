@@ -137,7 +137,7 @@ const CallToAction = React.memo(() => {
           <p className="text-gray-700 text-sm sm:text-base font-medium">
             {fw?.business_owner}{" "}
             <Link
-              to="/register"
+              to="/sign"
               className="text-blue-600 underline font-semibold whitespace-nowrap"
             >
               {fw?.register}

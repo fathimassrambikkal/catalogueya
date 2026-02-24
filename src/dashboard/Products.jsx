@@ -579,11 +579,11 @@ export default function Products({
 };
 
 return (
-     <div className="w-full overflow-hidden max-w-full min-w-0">
+     <div className="w-full overflow-hidden max-w-full min-w-0  p-4 ">
       {/* COMPANY HEADER */}
 
 {/* Header */}
-<div className="w-full max-w-full min-w-0 mt-4 sm:mt-6 mb-6">
+<div className="w-full  min-w-0 mt-4 sm:mt-6 mb-6">
   
   <div className="
     flex 
@@ -733,9 +733,9 @@ return (
         {viewMode === 'back_in_stock' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-px bg-gray-100 flex-1"></div>
+              <div className="h-px bg-white flex-1"></div>
               <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Low Stock (≤5)</span>
-              <div className="h-px bg-gray-100 flex-1"></div>
+              <div className="h-px bg-white flex-1"></div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
               {products.filter(p => (Number(p.quantity) || 0) <= 5).map(p => renderProductCard(p))}
@@ -798,7 +798,7 @@ return (
     </div>
   )}
 
-  {/* MODAL - Apple Style Minimal */}
+  {/* MODAL  */}
   {editingProduct && (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center p-3 z-[1000]">
       <div
@@ -871,14 +871,17 @@ return (
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
-                placeholder="Price"
-                value={formData.price}
-                onChange={e => setFormData({ ...formData, price: e.target.value })}
-              />
-              <input
+             <input
+            type="text"
+            inputMode="decimal" 
+            className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
+            placeholder="Price"
+            value={formData.price}
+            onChange={(e) =>
+              setFormData({ ...formData, price: e.target.value })
+            }
+          />
+                        <input
                 type="number"
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
                 placeholder="Stock"
