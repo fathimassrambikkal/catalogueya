@@ -154,14 +154,14 @@ const NotificationsProducts = () => {
   const pageTitle = getPageTitle(type);
 
 return (
-  <div className="min-h-screen mt-14">
+  <div className="min-h-screen mt-14 ">
     <div className="max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
 
       {/* Header */}
       <div className="mb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-4">
               {pageTitle}
             </h1>
             {companyName && (
@@ -171,9 +171,6 @@ return (
             )}
           </div>
 
-          <div className="text-[11px] sm:text-xs md:text-sm text-gray-600 bg-white px-2.5 sm:px-3 py-1 rounded-md border">
-            {products.length} {products.length === 1 ? "product" : "products"}
-          </div>
         </div>
       </div>
 

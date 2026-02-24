@@ -93,12 +93,7 @@ function Fav() {
 
 
 
-  const SmallDeleteIcon = () => (
-    <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
-      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-      <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-    </svg>
-  );
+ 
 
   // ================= INITIAL LOAD =================
   useEffect(() => {
@@ -668,16 +663,26 @@ function Fav() {
                             e.stopPropagation();
                             handleRemoveProduct(product.id, list.id);
                           }}
-                          className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full
-                            bg-white/90 backdrop-blur-md border border-gray-200
-                            shadow-[0_4px_12px_rgba(0,0,0,0.15)]
-                            text-gray-700 hover:text-red-600
-                            flex items-center justify-center
-                            hover:bg-red-50 hover:scale-110
-                            transition-all duration-200 z-10"
+                          className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full
+    bg-white/90 backdrop-blur-md border border-gray-200
+    shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+    text-gray-500 hover:text-red-600
+    flex items-center justify-center
+    hover:bg-red-50 hover:scale-110
+    transition-all duration-200 z-10"
                           title="Remove from list"
                         >
-                          <SmallDeleteIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                         <svg
+    viewBox="0 0 24 24"
+    className="w-2.5 h-2.5 sm:w-3 sm:h-3"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+  >
+    <path d="M6 6l12 12" />
+    <path d="M18 6l-12 12" />
+  </svg>
                         </button>
                       </div>
                     );

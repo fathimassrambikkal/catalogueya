@@ -176,7 +176,7 @@ export default function InvoicePreviewModal({ open, onClose, publicToken }) {
 
         <div className="overflow-y-auto max-h-[90vh] p-3 sm:p-4 md:p-6 lg:p-8">
           {/* HEADER */}
-          <div className="mb-4 sm:mb-6 md:mb-8 lg:mb-10">
+          <div className="mb-4 sm:mb-6 md:mb-8 lg:mb-10 mt-24 md:mt-4">
             <div className="flex flex-col lg:flex-row justify-between gap-4 sm:gap-6 md:gap-8">
               {/* LEFT SECTION */}
               <div className="lg:flex-1">

@@ -54,7 +54,7 @@ function PersonalInformation({ onBack }) {
       "
     >
       {/* Header */}
-      <div className="flex items-center  sm:mb-6 gap-3 mt-10 mb-6">
+      <div className="flex items-center  sm:mb-6 gap-3 mt-24 sm:mt-20  md:mt-4 mb-6">
         <button
           onClick={onBack}
           className="mr-3   hover:text-blue-500 

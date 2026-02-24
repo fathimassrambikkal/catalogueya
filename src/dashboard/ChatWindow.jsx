@@ -170,22 +170,36 @@ export default function ChatWindow({
                   {msg.attachments &&
                     msg.attachments.length > 0 && (
                       <div className="mt-2 space-y-1">
-                        {msg.attachments.map((att, idx) => (
-                          <a
-                            key={idx}
-                            href={att.path || att.url || att}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`block text-xs underline ${
-                              isMe
-                                ? "text-blue-100"
-                                : "text-blue-500"
-                            }`}
-                          >
-                            {att.name ||
-                              `Attachment ${idx + 1}`}
-                          </a>
-                        ))}
+                       {msg.attachments.map((att, idx) => {
+  const fileUrl =
+    att.path ||
+    att.url ||
+    att;
+
+  const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileUrl);
+
+  return isImage ? (
+    <img
+      key={idx}
+      src={fileUrl}
+      alt="attachment"
+      className="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer"
+      onClick={() => window.open(fileUrl, "_blank")}
+    />
+  ) : (
+    <a
+      key={idx}
+      href={fileUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`block text-xs underline ${
+        isMe ? "text-blue-100" : "text-blue-500"
+      }`}
+    >
+      {att.name || `Attachment ${idx + 1}`}
+    </a>
+  );
+})}
                       </div>
                     )}
 
