@@ -650,10 +650,10 @@ export default function CompanyPage() {
       {/* ============ Banner Section ============ */}
 <>
   <div className="relative h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent z-10" />
+<div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent z-10 pointer-events-none" />
 
     <div
-      className="w-full h-full bg-center bg-cover scale-105 transform-gpu transition-transform duration-[2000ms] hover:scale-110"
+      className="w-full h-full bg-center bg-cover "
       style={{
         backgroundImage: bannerUrl
           ? `url(${bannerUrl})`
