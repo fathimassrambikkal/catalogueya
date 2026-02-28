@@ -3,6 +3,7 @@ import { useEffect, useRef, useState  } from "react";
 import { Send, Paperclip, Check, CheckCheck } from "lucide-react";
 import { FaUserPlus } from "react-icons/fa";
 import LinkPreview from "../components/LinkPreview";
+import { getContacts } from "../companyDashboardApi";
 
 const extractUrl = (text) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -28,6 +29,24 @@ export default function ChatWindow({
 }) {
   const messagesEndRef = useRef(null);
   const [isAdded, setIsAdded] = useState(false);
+  const [contacts, setContacts] = useState([]);
+
+  useEffect(() => {
+    getContacts().then(res => {
+      const list = res.data?.data || res.data || [];
+      setContacts(list);
+    }).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (selectedChat && contacts.length > 0) {
+      const participantId = selectedChat.other_participant?.id;
+      if (participantId) {
+        const found = contacts.some(c => String(c.contact_user_id) === String(participantId));
+        setIsAdded(found);
+      }
+    }
+  }, [selectedChat, contacts]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -112,13 +131,23 @@ export default function ChatWindow({
 
         {/* Add Contact Button */}
         <div className="ml-auto">
-          <button
-            onClick={handleAddContact}
-            className="flex items-center bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-xs sm:text-sm shadow whitespace-nowrap"
-          >
-            <FaUserPlus size={14} />
-            <span className="inline ml-1">Add</span>
-          </button>
+          {isAdded ? (
+            <div className="flex items-center text-green-500 bg-green-50 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium">
+              <CheckCheck size={16} className="mr-1" />
+              <span>Added</span>
+            </div>
+          ) : (
+              <button
+                onClick={async (e) => {
+                  await handleAddContact(e);
+                  setIsAdded(true);
+                }}
+                className="flex items-center bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-xs sm:text-sm shadow whitespace-nowrap"
+              >
+                <FaUserPlus size={14} />
+                <span className="inline ml-1">Add</span>
+              </button>
+          )}
         </div>
       </div>
 
