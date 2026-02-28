@@ -168,6 +168,8 @@ export default function CustomerAccountDropdown({
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
     user?.name ||
+    user?.companyName ||
+    user?.company_name ||
     "Guest";
 
   const goToTab = (tab) => {

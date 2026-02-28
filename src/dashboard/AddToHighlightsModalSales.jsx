@@ -11,7 +11,8 @@ import {
   getImageUrl,
   addSalesProduct,
   updateSalesProduct,
-  deleteSalesProduct
+  getHighlightsTabs,
+  addHighlightToProduct,
 } from "../companyDashboardApi";
 import { FaTimes } from "./SvgIcons";
 import { showToast } from "../utils/showToast";
@@ -34,6 +35,19 @@ export default function AddToHighlightsModalSales({
     from: "",
     to: ""
   });
+  const [tabId, setTabId] = useState(null);
+
+  // Fetch tabs to match ID
+  const fetchTabs = async () => {
+    try {
+      const res = await getHighlightsTabs();
+      const tabs = res.data?.special_marks || [];
+      const currentTab = tabs.find(t => t.key === selectedType);
+      if (currentTab) setTabId(currentTab.id);
+    } catch (err) {
+      console.error("Error fetching tabs:", err);
+    }
+  };
 
   const currentUserId =
     companyId || localStorage.getItem("company_id") || "13";
@@ -55,9 +69,13 @@ export default function AddToHighlightsModalSales({
     }
   };
 
-  // 🔹 Fetch Already Highlighted
+  // 🔹 Fetch Already Highlighted (Compare with selectedType)
   const fetchHighlighted = async () => {
     try {
+      if (selectedType === 'back_in_stock') {
+        setHighlightProducts([]);
+        return;
+      }
       const res = await getHighlightProducts(selectedType, currentUserId);
       const data =
         res.data?.data?.products ||
@@ -75,6 +93,7 @@ export default function AddToHighlightsModalSales({
   useEffect(() => {
     fetchAllProducts();
     fetchHighlighted();
+    fetchTabs();
   }, [selectedType]);
 
   // 🔹 Confirm Add
@@ -83,8 +102,13 @@ export default function AddToHighlightsModalSales({
       showToast("Please select at least one product", { type: "error" });
       return;
     }
-    setDiscountData({ discount: "", from: "", to: "" });
-    setShowDiscountModal(true);
+
+    if (isSalesType) {
+      setDiscountData({ discount: "", from: "", to: "" });
+      setShowDiscountModal(true);
+    } else {
+      handleFinalSave();
+    }
   };
 
   // 🔹 Final Save
@@ -92,27 +116,38 @@ export default function AddToHighlightsModalSales({
     try {
       setIsSending(true);
 
-      if (editingProduct) {
-  await updateSalesProduct(editingProduct.id, {
-    type: selectedType,
-    ...(isSalesType && { discount: discountData.discount }),
-    discount_from: discountData.from,
-    discount_to: discountData.to
-  });
-        showToast("Updated successfully", { type: "success" });
-      } else {
-        for (const pid of selectedIds) {
-          await addSalesProduct(pid, {
-  type: selectedType,
-  ...(isSalesType && { discount: discountData.discount }),
-  discount_from: discountData.from,
-  discount_to: discountData.to
-});
+      if (isSalesType) {
+        if (editingProduct) {
+          const res = await updateSalesProduct(editingProduct.id, {
+            type: selectedType,
+            discount: discountData.discount,
+            discount_from: discountData.from,
+            discount_to: discountData.to
+          });
+          showToast(res?.data?.message || "Updated successfully", { type: "success" });
+        } else {
+          let lastRes;
+          for (const pid of selectedIds) {
+            lastRes = await addSalesProduct(pid, {
+              type: selectedType,
+              discount: discountData.discount,
+              discount_from: discountData.from,
+              discount_to: discountData.to
+            });
+          }
+          showToast(lastRes?.data?.message || `Added to Sales successfully`, { type: "success" });
         }
-        showToast(
-          `Added to ${selectedType.replace(/_/g, " ")} successfully`,
-          { type: "success" }
-        );
+      } else {
+        // Non-Sales regular highlight save
+        if (!tabId) {
+          showToast("Invalid tab selected", { type: "error" });
+          return;
+        }
+        let lastRes;
+        for (const pid of selectedIds) {
+          lastRes = await addHighlightToProduct(pid, [tabId]);
+        }
+        showToast(lastRes?.data?.message || `Added to ${selectedType.replace(/_/g, " ")} successfully`, { type: "success" });
       }
 
       setShowDiscountModal(false);
@@ -121,7 +156,15 @@ export default function AddToHighlightsModalSales({
       onClose();
     } catch (err) {
       console.error(err);
-      showToast("Failed to add highlight", { type: "error" });
+      let errorMsg = "Failed to add highlight";
+      if (err.response?.data?.errors) {
+        errorMsg = Object.values(err.response.data.errors).flat().join('\n');
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      showToast(errorMsg, { type: "error" });
     } finally {
       setIsSending(false);
     }
@@ -136,8 +179,8 @@ export default function AddToHighlightsModalSales({
 
         {/* HEADER */}
         <div className="p-3 sm:p-4 md:p-5 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-            Add to {selectedType.replace(/_/g, " ")}
+             <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 capitalize">
+               Add to {selectedType.replace(/_/g, " ")}
           </h3>
           <button
             onClick={onClose}
@@ -273,8 +316,7 @@ export default function AddToHighlightsModalSales({
             Highlight Details
           </h3>
 
-          <div className="space-y-4 sm:space-y-5">
-           {isSalesType && (
+             <div className="space-y-4 sm:space-y-5">
   <div>
     <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase flex items-center gap-1.5 mb-1.5">
       <FaTag size={10} /> Discount %
@@ -291,8 +333,7 @@ export default function AddToHighlightsModalSales({
       className="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm bg-gray-50 rounded-lg border border-gray-100 focus:border-gray-200 focus:outline-none"
       placeholder="0"
     />
-  </div>
-)}
+               </div>
 
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>

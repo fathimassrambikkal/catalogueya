@@ -129,6 +129,25 @@ export const getHighlightProducts = (type, userId) => {
   return api.get(`/company/products/${type}/${userId}`);
 };
 
+// Get highlights tabs
+export const getHighlightsTabs = () => {
+  return api.get("/company/show_heighlights");
+};
+
+// Add product to highlight (non-sales)
+export const addHighlightToProduct = (productId, tabIds) => {
+  return api.post(`/company/add_heighlights/${productId}`, {
+    special_mark_ids: tabIds,
+  });
+};
+
+// Delete product from highlight (non-sales)
+export const deleteHighlightFromProduct = (productId, tabIds) => {
+  return api.delete(`/company/delete_heighlights/${productId}`, {
+    data: { special_mark_ids: tabIds },
+  });
+};
+
 
 // ==================== ANALYTICS ====================
 
