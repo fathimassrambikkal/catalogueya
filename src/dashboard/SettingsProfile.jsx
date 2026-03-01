@@ -22,7 +22,7 @@ import {
   DeleteIcon
   
 } from "./CompanySvg";
-import { editCompanyPost, getCategories } from "../api";
+import { editCompanyPost, getCategories, changeCompanyPassword } from "../api";
 
 
 import { getImageUrl } from "../companyDashboardApi";
@@ -66,8 +66,17 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
   const [isSpecialtiesOpen, setIsSpecialtiesOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("Settings have been saved successfully");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false); // false | "confirm" | "success"
   const [isLoading, setIsLoading] = useState(true);
+
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    old_password: "",
+    new_password: "",
+    new_password_confirmation: "",
+  });
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   /* ---------- RESET FORM WHEN COMPANY CHANGES ---------- */
   useEffect(() => {
@@ -319,13 +328,52 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
     try {
       setIsLoading(true);
 
+      const phoneDigits = (form.contactMobile || "").replace(/\D/g, "");
+      if (phoneDigits.length < 10 && form.contactMobile) {
+        alert("Phone number must be at least 10 digits.");
+        setIsLoading(false);
+        return;
+      }
+
       // Prepare data according to backend API requirements
       const apiData = new FormData();
       apiData.append("_method", "PUT");
 
-      // Mandatory fields
+      // Mandatory fields (always sent)
       apiData.append("name", form.companyName || "");
       apiData.append("phone", form.contactMobile || "");
+
+      // Only append other string fields if they changed from companyInfo
+      if (form.companyDescription !== (companyInfo.companyDescription || companyInfo.description || "")) {
+        apiData.append("description", form.companyDescription || "");
+      }
+      if (form.address !== (companyInfo.address || "")) {
+        apiData.append("address", form.address || "");
+      }
+
+      // Map conditionally
+      if (form.lat && form.lat !== (companyInfo.lat || "")) apiData.append("lat", form.lat.toString());
+      if (form.lng && form.lng !== (companyInfo.lng || "")) apiData.append("lng", form.lng.toString());
+      if (form.place_id && form.place_id !== (companyInfo.place_id || "")) apiData.append("place_id", form.place_id);
+      if (form.formatted_address && form.formatted_address !== (companyInfo.formatted_address || "")) apiData.append("formatted_address", form.formatted_address);
+
+      // Social conditionally
+      ['whatsapp', 'snapchat', 'pinterest', 'instagram', 'tweeter', 'facebook', 'youtube', 'linkedin'].forEach(k => {
+        if (form[k] !== (companyInfo[k] || "")) {
+          apiData.append(k, form[k] || "");
+        }
+      });
+
+      // Specialties conditionally
+      const origSpecialties = [...(Array.isArray(companyInfo.specialties) ? companyInfo.specialties : [])].sort();
+      const newSpecialties = [...(Array.isArray(form.specialties) ? form.specialties : [])].sort();
+      if (JSON.stringify(origSpecialties) !== JSON.stringify(newSpecialties)) {
+        if (newSpecialties.length === 0) {
+          apiData.append("specialties[]", ""); // explicit clear
+        } else {
+          form.specialties.forEach(s => apiData.append("specialties[]", s));
+        }
+      }
 
       // Files
       if (form.logo && form.logo instanceof File) {
@@ -344,7 +392,13 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
 
       console.log('📤 Sending to API for company:', companyId);
 
-      await editCompanyPost(companyId, apiData);
+      const res = await editCompanyPost(companyId, apiData);
+
+      if (res?.data?.status === "error" || res?.data?.errors) {
+        throw { response: { data: res.data } };
+      }
+
+      const apiMessage = res?.data?.message || res?.data?.msg || "Settings have been saved successfully";
 
       // Update Local
       const logoUrl = (form.logo instanceof File || form.logo instanceof Blob) ? URL.createObjectURL(form.logo) : (companyInfo.logo || form.logo);
@@ -396,16 +450,24 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
       localStorage.setItem('company_details', JSON.stringify(updatedLocalCompany));
       localStorage.setItem('user', JSON.stringify(updatedLocalUser));
 
+      setSuccessMessage(apiMessage);
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
 
     } catch (err) {
       console.error('❌ Save error:', err);
-      if (err.response) {
-        alert(`Server error: ${err.response.status} - ${err.response.data?.message || 'Unknown error'}`);
-      } else {
-        alert(`Failed to save settings: ${err.message}`);
+      let errorMsg = "Failed to save settings.";
+      const data = err.response?.data || err.data;
+      if (data?.errors && typeof data.errors === 'object') {
+        errorMsg = Object.values(data.errors).flat().join('\n');
+      } else if (data?.errors && typeof data.errors === 'string') {
+        errorMsg = data.errors;
+      } else if (data?.message) {
+        errorMsg = data.message;
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -433,7 +495,6 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
       apiData.append("tweeter", "");
       apiData.append("facebook", "");
       apiData.append("youtube", "");
-      apiData.append("google", "");
       apiData.append("linkedin", "");
       apiData.append("specialties[]", ""); // Clear specialties
 
@@ -460,7 +521,6 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
           tweeter: "",
           facebook: "",
           youtube: "",
-          google: "",
           linkedin: "",
           specialties: [],
         };
@@ -475,6 +535,41 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
       alert("Failed to delete settings");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  /* ---------- CHANGE PASSWORD ---------- */
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      setIsPasswordLoading(true);
+      const res = await changeCompanyPassword(passwordForm);
+      if (res?.data?.status === "error" || res?.data?.errors) {
+        throw { response: { data: res.data } };
+      }
+      alert(res?.data?.message || res?.data?.msg || "Password changed successfully");
+      setShowPasswordModal(false);
+      setPasswordForm({ old_password: "", new_password: "", new_password_confirmation: "" });
+    } catch (err) {
+      console.error('❌ Password change error:', err);
+      let errorMsg = "Failed to change password";
+      const data = err.response?.data || err.data;
+      if (data?.errors && typeof data.errors === 'object') {
+        errorMsg = Object.values(data.errors).flat().join('\n');
+      } else if (data?.errors && typeof data.errors === 'string') {
+        errorMsg = data.errors;
+      } else if (data?.message) {
+        errorMsg = data.message;
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      alert(errorMsg);
+    } finally {
+      setIsPasswordLoading(false);
     }
   };
 
@@ -605,7 +700,7 @@ return (
 
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-gray-900 text-lg">Success</h3>
-              <p className="text-gray-600 text-sm truncate">Settings have been saved successfully</p>
+              <p className="text-gray-600 text-sm truncate">{successMessage}</p>
             </div>
 
             <button onClick={() => setShowAlert(false)} className="text-gray-400 hover:text-gray-600 p-1">
@@ -663,6 +758,72 @@ return (
       onClose={() => setShowDeleteAlert(false)}
       onConfirm={handleDeleteAll}
     />
+
+    {/* Change Password Modal */}
+    {showPasswordModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-blue-900/10">
+          <h3 className="font-bold text-xl mb-6 text-gray-900">Change Password</h3>
+          <div className="space-y-4 sm:space-y-5">
+            <div>
+              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">Old Password</label>
+              <input
+                type="password"
+                name="old_password"
+                value={passwordForm.old_password}
+                onChange={handlePasswordChange}
+                placeholder="Enter old password"
+                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200"
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">New Password</label>
+              <input
+                type="password"
+                name="new_password"
+                value={passwordForm.new_password}
+                onChange={handlePasswordChange}
+                placeholder="Enter new password"
+                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200"
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">Confirm New Password</label>
+              <input
+                type="password"
+                name="new_password_confirmation"
+                value={passwordForm.new_password_confirmation}
+                onChange={handlePasswordChange}
+                placeholder="Confirm new password"
+                className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-8">
+            <button
+              onClick={() => setShowPasswordModal(false)}
+              className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-100/80 text-gray-700 font-semibold text-sm sm:text-base hover:bg-gray-200 transition-all duration-200 border border-gray-200/50 shadow-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleChangePassword}
+              disabled={isPasswordLoading}
+              className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex justify-center items-center"
+            >
+              {isPasswordLoading ? (
+                <span className="flex items-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  Saving...
+                </span>
+              ) : (
+                "Change Password"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* Main Content - All in one scrollable div */}
     <div className="w-full min-h-screen bg-white flex flex-col pt-16 md:pt-0">
@@ -826,8 +987,10 @@ return (
 
             {/* Contact Mobile */}
             <input
+              type="tel"
               name="contactMobile"
-              placeholder="Contact Mobile"
+              maxLength="12"
+              placeholder="WhatsApp number"
               value={form.contactMobile}
               onChange={handleChange}
               className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200 disabled:opacity-50"
@@ -958,6 +1121,14 @@ return (
                   "Save Settings"
                 )}
               </button>
+{/* 
+              <button
+                type="button"
+                onClick={() => setShowPasswordModal(true)}
+                className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold text-sm sm:text-base hover:from-gray-600 hover:to-gray-700 transition-all duration-200 transform shadow-lg shadow-gray-500/30 hover:shadow-gray-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                Change Password
+              </button> */}
 
               <button
                 type="button"

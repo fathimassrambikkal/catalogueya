@@ -1,64 +1,91 @@
 import React, { useState, useEffect, useRef } from "react";
 import { registerCompany, getGoogleMap } from "../../api";
 import { FaTimes, FaMapMarkerAlt, FaUpload, FaSearch } from "react-icons/fa";
-export async function getAddressFromLatLng(lat, lng) {
+
+let isGoogleMapsLoading = false;
+const callbacks = [];
+
+function loadGoogleMaps(callback) {
+    if (window.google && window.google.maps && window.google.maps.places) {
+        callback();
+        return;
+    }
+    callbacks.push(callback);
+    if (isGoogleMapsLoading) return;
+
+    isGoogleMapsLoading = true;
+    const script = document.createElement("script");
     const API_KEY = "AIzaSyCPaRykDl0CWuNR-9GjN0lhJrzhKoew9p8";
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+        callbacks.forEach(cb => cb());
+        callbacks.length = 0;
+    };
+    script.onerror = () => {
+        isGoogleMapsLoading = false;
+        console.error("Failed to load Google Maps script");
+    };
+    document.head.appendChild(script);
+}
 
-    // Use the local proxy defined in vite.config.js to avoid CORS errors
-    const url = `/google-api/place/nearbysearch/json?location=${lat},${lng}&radius=50&key=${API_KEY}`;
+export function getAddressFromLatLng(lat, lng) {
+    return new Promise((resolve) => {
+        loadGoogleMaps(() => {
+            const dummyNode = document.createElement('div');
+            const service = new window.google.maps.places.PlacesService(dummyNode);
+            const request = {
+                location: { lat, lng },
+                radius: 50
+            };
+            service.nearbySearch(request, async (results, status) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                    const firstResult = results[0];
+                    const placeId = firstResult.place_id;
 
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
+                    console.log(`📍 [Places API] Found Place ID: ${placeId} (${firstResult.name})`);
 
-        if (data.status === "OK" && data.results && data.results.length > 0) {
-            const firstResult = data.results[0];
-            const placeId = firstResult.place_id;
+                    // Fetch detailed/formatted address from backend enrichment API
+                    try {
+                        const details = await getGoogleMap(placeId);
+                        const respData = details?.data;
+                        console.log("🔍 [Backend Enrichment] Response data:", respData);
 
-            console.log(`📍 [Places API] Found Place ID: ${placeId} (${firstResult.name})`);
+                        if (respData?.data) {
+                            const enriched = respData.data;
+                            let finalAddress = "";
 
-            // Fetch detailed/formatted address from backend enrichment API
-            try {
-                const details = await getGoogleMap(placeId);
-                const respData = details.data;
-                console.log("🔍 [Backend Enrichment] Response data:", respData);
+                            if (enriched.address && typeof enriched.address === 'object') {
+                                finalAddress = enriched.address.formatted || enriched.address.line1 || firstResult.name || firstResult.vicinity;
+                            } else if (typeof enriched.address === 'string') {
+                                finalAddress = enriched.address;
+                            } else {
+                                finalAddress = firstResult.name || firstResult.vicinity;
+                            }
 
-                // Use the data structure from your response example: details.data.data.address.formatted
-                if (respData?.data) {
-                    const enriched = respData.data;
-                    let finalAddress = "";
-
-                    if (enriched.address && typeof enriched.address === 'object') {
-                        finalAddress = enriched.address.formatted || enriched.address.line1 || firstResult.name || firstResult.vicinity;
-                    } else if (typeof enriched.address === 'string') {
-                        finalAddress = enriched.address;
-                    } else {
-                        finalAddress = firstResult.name || firstResult.vicinity;
+                            return resolve({
+                                address: String(finalAddress),
+                                place_id: placeId,
+                                raw: enriched
+                            });
+                        }
+                    } catch (err) {
+                        console.warn("⚠️ Backend enrichment failed, using Places API fallback:", err);
                     }
 
-                    return {
-                        address: String(finalAddress),
+                    resolve({
+                        address: String(firstResult.name || firstResult.vicinity),
                         place_id: placeId,
-                        raw: enriched
-                    };
+                        raw: firstResult
+                    });
+                } else {
+                    console.error("Places Search failed:", status);
+                    resolve(null);
                 }
-            } catch (err) {
-                console.warn("⚠️ Backend enrichment failed, using Places API fallback:", err);
-            }
-
-            return {
-                address: String(firstResult.name || firstResult.vicinity),
-                place_id: placeId,
-                raw: firstResult
-            };
-        } else {
-            console.error("Places Search failed:", data.error_message || data.status);
-            return null;
-        }
-    } catch (error) {
-        console.error("Places Search failed:", error.message);
-        return null;
-    }
+            });
+        });
+    });
 }
 
 export default function CompanyRegisterModal({ onClose, planId }) {
@@ -92,6 +119,14 @@ export default function CompanyRegisterModal({ onClose, planId }) {
         establishment_card: null,
         commercial_registration: null,
         qid_authorized_signatories: null,
+        // Optional Info
+        whatsapp: "",
+        instagram: "",
+        tweeter: "", // backend calls it 'tweeter'
+        facebook: "",
+        youtube: "",
+        logo: "",
+        cover_photo: "",
     });
 
     const defaultCenter = [25.2854, 51.5310]; // Doha [lat, lng]
@@ -109,12 +144,17 @@ export default function CompanyRegisterModal({ onClose, planId }) {
 
         const initMap = () => {
             if (!window.L) {
-                console.warn("❌ Leaflet not ready.");
+                console.warn("⏳ Leaflet not ready, retrying...");
+                setTimeout(initMap, 200);
                 return;
             }
 
             const mapElement = document.getElementById("reg-map-leaflet");
-            if (!mapElement || mapRef.current) return;
+            if (!mapElement) {
+                setTimeout(initMap, 200);
+                return;
+            }
+            if (mapRef.current) return;
 
             // Initialize map (Default center: Doha)
             const map = window.L.map(mapElement).setView(defaultCenter, 12);
@@ -188,11 +228,11 @@ export default function CompanyRegisterModal({ onClose, planId }) {
 
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                const msg = "✅ [MODAL PAGE ENTRY] User Current Location: Lat " + lat + ", Lon " + lng;
-                console.error(msg);
-                console.log(msg);
+                // const msg = "✅ [MODAL PAGE ENTRY] User Current Location: Lat " + lat + ", Lon " + lng;
+                // console.error(msg);
+                // console.log(msg);
                 window.__CURRENT_LOCATION__ = { lat, lng };
-                window.alert(msg);
+                // window.alert(msg);
 
                 const pos = [lat, lng];
                 try {
@@ -247,62 +287,62 @@ export default function CompanyRegisterModal({ onClose, planId }) {
 
     // Fetch Autocomplete Predictions
     useEffect(() => {
-        if (!searchQuery || searchQuery.length < 3) {
+        if (!formData.address || formData.address.length < 3) {
             setPredictions([]);
             return;
         }
 
-        const fetchPredictions = async () => {
-            try {
-                const API_KEY = "AIzaSyCPaRykDl0CWuNR-9GjN0lhJrzhKoew9p8";
-                const url = `/google-api/place/autocomplete/json?input=${encodeURIComponent(searchQuery)}&key=${API_KEY}`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.status === "OK") {
-                    setPredictions(data.predictions);
-                }
-            } catch (err) {
-                console.error("Autocomplete error:", err);
-            }
+        const fetchPredictions = () => {
+            loadGoogleMaps(() => {
+                const service = new window.google.maps.places.AutocompleteService();
+                service.getPlacePredictions({ input: formData.address }, (preds, status) => {
+                    if (status === window.google.maps.places.PlacesServiceStatus.OK && preds) {
+                        setPredictions(preds);
+                    } else {
+                        setPredictions([]);
+                    }
+                });
+            });
         };
 
         const timeout = setTimeout(fetchPredictions, 300);
         return () => clearTimeout(timeout);
-    }, [searchQuery]);
+    }, [formData.address]);
 
-    const handlePredictionSelect = async (p) => {
-        setSearchQuery(p.description);
+    const handlePredictionSelect = (p) => {
+        setSearchQuery(p.description); // Deprecated but cleanly kept for backup just in case
+        setFormData(prev => ({ ...prev, address: p.description }));
         setShowPredictions(false);
         const placeId = p.place_id;
 
-        try {
-            const API_KEY = "AIzaSyCPaRykDl0CWuNR-9GjN0lhJrzhKoew9p8";
-            const url = `/google-api/place/details/json?place_id=${placeId}&key=${API_KEY}`;
-            const res = await fetch(url);
-            const data = await res.json();
+        loadGoogleMaps(() => {
+            const dummyNode = document.createElement('div');
+            const service = new window.google.maps.places.PlacesService(dummyNode);
+            service.getDetails({ placeId: placeId, fields: ['geometry'] }, (place, status) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && place && place.geometry && place.geometry.location) {
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+                    const formattedAddress = p.description;
 
-            if (data.status === "OK" && data.result.geometry) {
-                const { lat, lng } = data.result.geometry.location;
-                const formattedAddress = p.description;
+                    setFormData(prev => ({
+                        ...prev,
+                        lat,
+                        lng,
+                        address: formattedAddress,
+                        formatted_address: formattedAddress,
+                        place_id: placeId
+                    }));
 
-                setFormData(prev => ({
-                    ...prev,
-                    lat,
-                    lng,
-                    address: formattedAddress,
-                    formatted_address: formattedAddress,
-                    place_id: placeId
-                }));
-
-                // Update Map
-                if (mapRef.current) {
-                    mapRef.current.setView([lat, lng], 17);
-                    markerRef.current.setLatLng([lat, lng]);
+                    // Update Map
+                    if (mapRef.current) {
+                        mapRef.current.setView([lat, lng], 17);
+                        markerRef.current.setLatLng([lat, lng]);
+                    }
+                } else {
+                    console.error("Error resolving place details:", status);
                 }
-            }
-        } catch (err) {
-            console.error("Error resolving place details:", err);
-        }
+            });
+        });
     };
 
     const getLiveLocation = () => {
@@ -382,6 +422,12 @@ export default function CompanyRegisterModal({ onClose, planId }) {
             return;
         }
 
+        if (!formData.phone || formData.phone.replace(/\D/g, "").length < 10) {
+            alert("Phone number must be at least 10 digits.");
+            setLoading(false);
+            return;
+        }
+
         const data = new FormData();
         data.append("name", formData.name || "");
         data.append("name_ar", formData.name_ar || "");
@@ -401,6 +447,25 @@ export default function CompanyRegisterModal({ onClose, planId }) {
         if (formData.establishment_card) data.append("establishment_card", formData.establishment_card);
         if (formData.commercial_registration) data.append("commercial_registration", formData.commercial_registration);
         if (formData.qid_authorized_signatories) data.append("qid_authorized_signatories", formData.qid_authorized_signatories);
+
+        data.append("whatsapp", formData.whatsapp || "");
+        data.append("instagram", formData.instagram || "");
+        data.append("tweeter", formData.tweeter || "");
+        data.append("facebook", formData.facebook || "");
+        data.append("youtube", formData.youtube || "");
+
+        // Backend seems to expect these fields even if empty
+        if (formData.logo) {
+            data.append("logo", formData.logo);
+        } else {
+            data.append("logo", "");
+        }
+
+        if (formData.cover_photo) {
+            data.append("cover_photo", formData.cover_photo);
+        } else {
+            data.append("cover_photo", "");
+        }
 
         try {
             await registerCompany(data);
@@ -489,6 +554,7 @@ return (
                                 <input
                                     type="tel"
                                     name="phone"
+                                    maxLength="12"
                                     placeholder="Phone number *"
                                     value={formData.phone}
                                     onChange={handleChange}
@@ -539,21 +605,29 @@ return (
                                         type="text"
                                         placeholder="Search or enter address..."
                                         className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition"
-                                        value={searchQuery}
+                                        value={formData.address}
                                         onChange={(e) => {
-                                            setSearchQuery(e.target.value);
+                                            const val = e.target.value;
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                address: val
+                                            }));
+                                            setSearchQuery(val);
                                             setShowPredictions(true);
-                                            setFormData(prev => ({ ...prev, address: e.target.value, formatted_address: e.target.value }));
                                         }}
                                         onFocus={() => setShowPredictions(true)}
                                     />
                                     {showPredictions && predictions.length > 0 && (
-                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto z-[60]">
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-[9999]">
                                             {predictions.map((p, idx) => (
                                                 <div
                                                     key={idx}
-                                                    className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition text-sm"
-                                                    onClick={() => handlePredictionSelect(p)}
+                                                    className="px-4 py-3 hover:bg-gray-100 cursor-pointer transition text-sm text-gray-900 font-medium border-b border-gray-50 last:border-0"
+                                                    onMouseDown={(e) => {
+                                                        // use onMouseDown instead of onClick to fire before input blur event
+                                                        e.preventDefault();
+                                                        handlePredictionSelect(p);
+                                                    }}
                                                 >
                                                     {p.description}
                                                 </div>

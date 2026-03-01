@@ -40,7 +40,12 @@ export default function CustomerRegisterModal({ isOpen, onClose, onShowLogin }) 
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) {
       errors.email = "Invalid email address";
     }
-    if (!customerData.phone.trim()) errors.phone = "Phone number is required";
+      const phoneDigits = customerData.phone.replace(/\D/g, "");
+      if (!customerData.phone.trim()) {
+          errors.phone = "Phone number is required";
+      } else if (phoneDigits.length < 10) {
+          errors.phone = "Phone number must be at least 10 digits";
+      }
     if (!customerData.password) {
       errors.password = "Password is required";
     }
@@ -147,7 +152,8 @@ return (
                         <input
                             type="tel"
                             name="phone"
-                            placeholder="Phone number"
+                            maxLength="12"
+                            placeholder="Phone number *"
                             value={customerData.phone}
                             onChange={handleCustomerChange}
                             className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${customerErrors.phone ? 'border-red-300 bg-red-50/30' : ''}`}

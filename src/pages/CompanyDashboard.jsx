@@ -276,13 +276,17 @@ const [isChatOpen, setIsChatOpen] = useState(false);
       {/* 🔒 LOCK VIEWPORT */}
       <div className="relative flex w-full h-[calc(100vh-64px)]  overflow-hidden bg-gray-100 ">
         {/* ================= Sidebar ================= */}
-        <aside
+<aside
           className={`
             ${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"}
             bg-white
             transform transition-transform duration-300 ease-out
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            lg:translate-x-0
+          ${isMobile
+  ? sidebarOpen
+    ? "translate-x-0"
+    : "-translate-x-full"
+  : "translate-x-0"
+}
             shadow-lg
           `}
         >
@@ -309,23 +313,23 @@ const [isChatOpen, setIsChatOpen] = useState(false);
         )}
 
         {/* ================= Mobile Menu Button ================= */}
-        {isMobile && !sidebarOpen && !isChatOpen && (
-          <button
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open menu"
-            className="
-              fixed top-20 left-3 z-50
-              h-10 w-10
-              flex items-center justify-center
-              rounded-2xl
-              bg-white/70 backdrop-blur-xl
-              shadow-lg
-              active:scale-95
-            "
-          >
-            <RiMenu2Fill className="w-4 h-4 text-gray-700" />
-          </button>
-        )}
+    {isMobile && !sidebarOpen && !isChatOpen && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+              className="
+                fixed top-20 left-3 z-50
+                h-10 w-10
+                flex items-center justify-center
+                rounded-2xl
+                bg-white/70 backdrop-blur-xl
+                shadow-lg
+                active:scale-95
+              "
+            >
+              <RiMenu2Fill className="w-4 h-4 text-gray-700" />
+            </button>
+          )}
 
         {/* ================= Main ================= */}
         <main className="flex-1 flex flex-col overflow-y-auto ">

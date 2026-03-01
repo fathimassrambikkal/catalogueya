@@ -21,7 +21,9 @@ import {
   getCompanyProducts,
   getImageUrl,
   updateSalesProduct,
-  deleteSalesProduct
+  deleteSalesProduct,
+  getHighlightsTabs,
+  deleteHighlightFromProduct
 } from "../companyDashboardApi";
 
 import AddToHighlightsModalSales from "./AddToHighlightsModalSales";
@@ -48,8 +50,29 @@ export default function Sales({ companyId, companyInfo, user, setActiveTab, setT
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [discountData, setDiscountData] = useState({ discount: '', from: '', to: '' });
   const [editingProduct, setEditingProduct] = useState(null);
+  const [tabMap, setTabMap] = useState({});
 
   const currentUserId = companyId || localStorage.getItem("company_id") || "13";
+
+  // Fetch mapping of Tab keys to their correct IDs 
+  useEffect(() => {
+    const fetchTabs = async () => {
+      try {
+        const res = await getHighlightsTabs();
+        const tabs = res.data?.special_marks || [];
+        const map = {};
+        tabs.forEach(t => {
+          if (t.key) {
+            map[t.key] = t.id;
+          }
+        });
+        setTabMap(map);
+      } catch (err) {
+        console.error("Failed to load generic highlights tabs", err);
+      }
+    };
+    fetchTabs();
+  }, []);
 
   const fetchProducts = useCallback(async (type) => {
     try {
@@ -126,7 +149,15 @@ export default function Sales({ companyId, companyInfo, user, setActiveTab, setT
     if (!window.confirm("Are you sure you want to remove this from highlights?")) return;
     try {
       setIsSending(true);
-      await deleteSalesProduct(id);
+      if (selectedType === "sales") {
+        await deleteSalesProduct(id);
+      } else {
+        const tabId = tabMap[selectedType];
+        if (!tabId) {
+          throw new Error("Invalid tab ID mapping for: " + selectedType);
+        }
+        await deleteHighlightFromProduct(id, [tabId]);
+      }
       showToast("Removed successfully", { type: "success" });
       fetchProducts(selectedType);
     } catch (error) {
@@ -204,12 +235,16 @@ return (
 
       {/* Actions - Minimal */}
       <div className="flex items-center justify-between border-t border-gray-50 pt-1.5">
-        <button
-          onClick={() => handleEditClick(p)}
-          className="text-[10px] text-blue-500 hover:text-blue-600 font-medium px-1 py-0.5 rounded-md hover:bg-blue-50/50 transition-colors"
-        >
-          Edit
-        </button>
+        {selectedType === "sales" ? (
+          <button
+            onClick={() => handleEditClick(p)}
+            className="text-[10px] text-blue-500 hover:text-blue-600 font-medium px-1 py-0.5 rounded-md hover:bg-blue-50/50 transition-colors"
+          >
+            Edit
+          </button>
+        ) : (
+          <div />
+        )}
         
         <button
           onClick={() => handleDeleteClick(p.id)}

@@ -6,7 +6,8 @@ import { HashRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./store";
 
-
+import { PersistGate } from "redux-persist/integration/react";
+import { persistor } from "./store";
 
 
 
@@ -63,19 +64,15 @@ const Main = () => {
 
   return (
     <ErrorBoundary>
-      <Provider store={store}> {/* REDUX WRAPPER */}
-        <HashRouter>
-
-
-
-          <LenisProvider>
-            <App />
-          </LenisProvider>
-
-
-
-        </HashRouter>
-      </Provider>
+  <Provider store={store}>
+  <PersistGate loading={null} persistor={persistor}>
+    <HashRouter>
+      <LenisProvider>
+        <App />
+      </LenisProvider>
+    </HashRouter>
+  </PersistGate>
+</Provider>
     </ErrorBoundary>
   );
 };

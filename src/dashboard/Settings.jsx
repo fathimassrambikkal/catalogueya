@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import SettingsProfile from "./SettingsProfile";
 import SettingsPlan from "./SettingsPlan";
 import SettingsBillingPage from "./SettingsBillingPage";
-
+import SettingsChangePassword from "./SettingsChangePassword";
 function Settings({ companyId, companyInfo, setCompanyInfo }) {
   const [activePage, setActivePage] = useState("dashboard");
 
@@ -46,6 +46,19 @@ function Settings({ companyId, companyInfo, setCompanyInfo }) {
         </svg>
       ),
     },
+   {
+  id: "changePassword",
+  label: "changePassword",
+  icon: (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2h-1V9a5 5 0 10-10 0v2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+      />
+    </svg>
+  ),
+},
   ];
 
   /* ================= SUB PAGES ================= */
@@ -68,7 +81,9 @@ function Settings({ companyId, companyInfo, setCompanyInfo }) {
   return <SettingsBillingPage onBack={() => setActivePage("dashboard")} />;
 }
 
-
+if (activePage === "changePassword") {
+  return <SettingsChangePassword onBack={() => setActivePage("dashboard")} />;
+}
   /* ================= SETTINGS DASHBOARD ================= */
 
   return (

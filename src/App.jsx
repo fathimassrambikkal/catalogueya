@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, Suspense, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import "./i18n";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ import { Toaster } from "react-hot-toast";
 import { showToast } from "./utils/showToast.jsx";
 import { fetchFavourites } from "./store/favouritesSlice";
 import PageLayout from "./components/PageLayout";
+import SessionExpiredModal from "./components/SessionExpiredModal";
 
 
 
@@ -119,9 +120,29 @@ useEffect(() => {
   };
 }, []);
 
+  const [showSessionModal, setShowSessionModal] = useState(false);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setShowSessionModal(true);
+    };
+    window.addEventListener("sessionExpired", handleSessionExpired);
+    return () => window.removeEventListener("sessionExpired", handleSessionExpired);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
+      <SessionExpiredModal
+        isOpen={showSessionModal}
+        onLogin={() => {
+          localStorage.clear();
+          window.location.href = "/sign";
+        }}
+        onHome={() => {
+          localStorage.clear();
+          window.location.href = "/";
+        }}
+      />
          {/* global  TOAST CONTAINER */}
     <Toaster
   position="top-center"

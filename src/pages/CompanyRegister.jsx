@@ -51,11 +51,11 @@ export default function CompanyRegister() {
     // 1. Initial Geolocation on Page Entry
     const handleGeoSuccess = (position) => {
       const { latitude, longitude } = position.coords;
-      const msg = "✅ [PAGE ENTRY] User Current Location: Lat " + latitude + ", Lon " + longitude;
-      console.error(msg); // Error level is rarely filtered
-      console.log(msg);
+      // const msg = "✅ [PAGE ENTRY] User Current Location: Lat " + latitude + ", Lon " + longitude;
+      // console.error(msg); // Error level is rarely filtered
+      // console.log(msg);
       window.__USER_CURRENT_LOC__ = { latitude, longitude };
-      window.alert(msg);
+      // window.alert(msg);
 
       const pos = [latitude, longitude];
       map.setView(pos, 15);

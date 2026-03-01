@@ -41,6 +41,8 @@ export default function Sign() {
   const redirectPath = params.get("redirect");
   const action = params.get("action");
 
+
+
   useEffect(() => {
     if (auth.userType === "customer") {
       import("../pages/CustomerLogin");
@@ -122,11 +124,18 @@ export default function Sign() {
         })
       );
 
+
+
+
       // ✅ SAVE FOR REHYDRATION
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("userType", "customer");
       log("Redux updated");
+
+
+
+
 
 
       // 🔥 HANDLE CHAT INTENT REDIRECT

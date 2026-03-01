@@ -168,6 +168,8 @@ export default function CustomerAccountDropdown({
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
     user?.name ||
+    user?.companyName ||
+    user?.company_name ||
     "Guest";
 
   const goToTab = (tab) => {
@@ -384,7 +386,7 @@ export default function CustomerAccountDropdown({
       {/* ================================= */}
       {/*  COMPANY + APP PROMO SECTION */}
       {/* ================================= */}
-      <div className="border-t border-gray-200/70 mt-2">
+      <div className="border-t border-gray-200/70 ">
         
         {/*  Are you a company? */}
         <div className="px-3 pt-3 pb-2">

@@ -24,8 +24,13 @@ function PersonalInformation({ onBack }) {
       alert("Session expired. Please login again.");
       return;
     }
-    
     try {
+      const phoneDigits = (formData.mobile || "").replace(/\D/g, "");
+      if (formData.mobile && phoneDigits.length < 10) {
+        alert("Mobile number must be at least 10 digits");
+        return;
+      }
+
       await updateCustomerSettings({
         customerId: currentUser.id,
         first_name: formData.name || undefined,
@@ -181,6 +186,8 @@ function PersonalInformation({ onBack }) {
             </div>
 
             <input
+              type="tel"
+              maxLength="12"
               value={formData.mobile}
               onChange={(e) => handleChange("mobile", e.target.value)}
               className="flex-1 p-3 rounded-xl border text-sm sm:text-base"
