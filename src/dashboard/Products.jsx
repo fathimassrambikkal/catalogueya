@@ -40,7 +40,7 @@ export default function Products({
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contacts, setContacts] = useState([]);
-
+const [deleteProductId, setDeleteProductId] = useState(null);
   const [formData, setFormData] = useState({
     id: null,
     name: "",
@@ -331,16 +331,19 @@ export default function Products({
     }
   };
 
-  const handleDelete = async (productId) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
-    try {
-      await deleteProduct(productId);
-      setProducts(prev => prev.filter(p => p.id !== productId));
-    } catch (error) {
-      console.error("Error deleting product", error);
-      alert("Failed to delete product");
-    }
+  const handleDelete = async () => {
+  if (!deleteProductId) return;
+
+  try {
+    await deleteProduct(deleteProductId);
+    setProducts(prev => prev.filter(p => p.id !== deleteProductId));
+    setDeleteProductId(null);
+    showToast("Product deleted successfully", { type: "success" });
+  } catch (error) {
+    console.error("Error deleting product", error);
+    showToast("Failed to delete product", { type: "error" });
   }
+};
 
   const handleSave = async () => {
     if (isSubmitting) return;
@@ -556,7 +559,7 @@ export default function Products({
         </button>
         
         <button
-          onClick={() => handleDelete(p.id)}
+          onClick={() => setDeleteProductId(p.id)}
           className="text-[10px] text-red-400 hover:text-red-500 font-medium px-1 py-0.5 rounded-md hover:bg-red-50/50 transition-colors"
         >
           Delete
@@ -1062,7 +1065,37 @@ return (
       </div>
     </div>
   )}
-  
+  {/* DELETE CONFIRM MODAL */}
+{deleteProductId && (
+  <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center p-3 z-[1100]">
+    <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5 animate-in fade-in zoom-in duration-300">
+      
+      <h3 className="text-sm font-semibold text-gray-900 mb-2">
+        Delete Product?
+      </h3>
+
+      <p className="text-xs text-gray-500 mb-4">
+        This action cannot be undone.
+      </p>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => setDeleteProductId(null)}
+          className="flex-1 py-2 bg-gray-50 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleDelete}
+          className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
   {/* History Modal */}
   <NotificationHistoryModal
     isOpen={showHistoryModal}

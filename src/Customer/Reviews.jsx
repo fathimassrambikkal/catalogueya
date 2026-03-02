@@ -175,9 +175,9 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
                   }}
                   className={`
                     relative
-                    px-3 sm:px-4 md:px-8 py-2.5
+                    px-2.5 sm:px-4 md:px-8 py-2
                     rounded-xl
-                    text-[11px] xs:text-xs sm:text-sm md:text-base
+                    text-[10px] xs:text-xs sm:text-sm md:text-base
                     font-semibold
                     transition-all duration-300
                     whitespace-nowrap
@@ -198,9 +198,9 @@ const handleEditReview = async (item, updateReviewedItemCallback) => {
                     setActiveTab('reviewed');
                   }}
                   className={`
-                    px-3 sm:px-4 md:px-8 py-2.5
+                    px-2.5 sm:px-4 md:px-8 py-2
                     rounded-xl
-                    text-[11px] xs:text-xs sm:text-sm md:text-base
+                    text-[10px] xs:text-xs sm:text-sm md:text-base
                     font-semibold
                     transition-all duration-300
                     whitespace-nowrap

@@ -8,7 +8,7 @@ import { store } from "./store";
 
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor } from "./store";
-
+import { Toaster } from "react-hot-toast";
 
 
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -62,19 +62,24 @@ const Main = () => {
     init();
   }, []);
 
-  return (
-    <ErrorBoundary>
-  <Provider store={store}>
-  <PersistGate loading={null} persistor={persistor}>
-    <HashRouter>
-      <LenisProvider>
-        <App />
-      </LenisProvider>
-    </HashRouter>
-  </PersistGate>
-</Provider>
-    </ErrorBoundary>
-  );
+return (
+  <ErrorBoundary>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <HashRouter>
+          <LenisProvider>
+
+            {/* ✅ ADD THIS LINE */}
+            <Toaster position="top-center" />
+
+            <App />
+
+          </LenisProvider>
+        </HashRouter>
+      </PersistGate>
+    </Provider>
+  </ErrorBoundary>
+);
 };
 
 ReactDOM.createRoot(document.getElementById("root")).render(

@@ -1122,13 +1122,13 @@ return (
                 )}
               </button>
 
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setShowPasswordModal(true)}
                 className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold text-sm sm:text-base hover:from-gray-600 hover:to-gray-700 transition-all duration-200 transform shadow-lg shadow-gray-500/30 hover:shadow-gray-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 Change Password
-              </button>
+              </button> */}
 
               <button
                 type="button"

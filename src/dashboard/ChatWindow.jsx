@@ -132,8 +132,8 @@ export default function ChatWindow({
         {/* Add Contact Button */}
         <div className="ml-auto">
           {isAdded ? (
-            <div className="flex items-center text-green-500 bg-green-50 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium">
-              <CheckCheck size={16} className="mr-1" />
+            <div className="flex items-center  bg-blue-500 text-white p-2  hover:bg-blue-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium">
+              
               <span>Added</span>
             </div>
           ) : (

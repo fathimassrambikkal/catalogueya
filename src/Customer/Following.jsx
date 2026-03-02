@@ -137,35 +137,19 @@ export default function Following() {
     }
   };
 
-  if (loading) return null;
+ 
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <FaTimes className="text-red-500 mr-2" />
-        {error}
-      </div>
-    );
-  }
 
-  if (!following.length) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <HiOutlineUserRemove className="text-3xl text-gray-400 mr-2" />
-        No companies followed
-      </div>
-    );
-  }
 
 
 /* ----------------------------------
    MAIN UI 
 ----------------------------------- */
 return (
-  <div className="min-h-full p-3 sm:p-6 lg:p-10  mt-28 md:mt-20">
+  <div className="min-h-full p-3 sm:p-6 lg:p-10 mt-28 md:mt-20">
     
     {/* Header */}
-    <h1 className="text-2xl sm:text-3xl font-semibold  text-gray-900 mb-8">
+    <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-8">
       Following
     </h1>
 
@@ -177,109 +161,139 @@ return (
         max-w-[2000px] mx-auto
       "
     >
-      {following.map((company) => (
-        <div
-          key={company.id}
-          className="
-            group relative
-            rounded-2xl
-            bg-white/70 backdrop-blur-xl
-            border border-black/[0.04]
-            shadow-[0_8px_24px_-14px_rgba(0,0,0,0.25)]
-            hover:shadow-[0_14px_40px_-18px_rgba(0,0,0,0.35)]
-            transition-all duration-300
-            overflow-hidden
-          "
-        >
-          <div className="relative p-4 sm:p-5">
-            
-            {/* Header */}
-            <div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => navigate(`/company/${company.id}`)}
-            >
+      {/* ✅ Skeleton Loader */}
+      {loading &&
+        Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={`skeleton-${i}`}
+            className="
+              group relative
+              rounded-2xl
+              bg-white/70 backdrop-blur-xl
+              border border-black/[0.04]
+              shadow-[0_8px_24px_-14px_rgba(0,0,0,0.25)]
+              p-4 sm:p-5
+              animate-pulse
+            "
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-gray-200" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-gray-200 rounded w-3/4" />
+                <div className="h-2 bg-gray-200 rounded w-1/2" />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="h-2 bg-gray-200 rounded w-full" />
+              <div className="h-2 bg-gray-200 rounded w-5/6" />
+            </div>
+
+            <div className="mt-6 h-8 bg-gray-200 rounded-xl" />
+          </div>
+        ))}
+
+      {/* ✅ Real Data */}
+      {!loading &&
+        following.map((company) => (
+          <div
+            key={company.id}
+            className="
+              group relative
+              rounded-2xl
+              bg-white/70 backdrop-blur-xl
+              border border-black/[0.04]
+              shadow-[0_8px_24px_-14px_rgba(0,0,0,0.25)]
+              hover:shadow-[0_14px_40px_-18px_rgba(0,0,0,0.35)]
+              transition-all duration-300
+              overflow-hidden
+            "
+          >
+            <div className="relative p-4 sm:p-5">
+              
               <div
-                className="
-                  w-11 h-11 rounded-xl overflow-hidden
-                  border border-black/[0.06]
-                  bg-white
-                  shadow-sm
-                  flex-shrink-0
-                "
+                className="flex items-center gap-3 cursor-pointer"
+                onClick={() => navigate(`/company/${company.id}`)}
               >
-                <CompanyLogo image={company.logo} alt={company.name} />
+                <div
+                  className="
+                    w-11 h-11 rounded-xl overflow-hidden
+                    border border-black/[0.06]
+                    bg-white
+                    shadow-sm
+                    flex-shrink-0
+                  "
+                >
+                  <CompanyLogo image={company.logo} alt={company.name} />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-gray-900 truncate">
+                    {company.name}
+                  </h3>
+
+                  {company.rating > 0 && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <FaStar className="text-[11px] text-gray-700" />
+                      <span className="text-xs text-gray-600 font-medium">
+                        {company.rating.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <FaExternalLinkAlt className="text-xs text-gray-400 group-hover:text-gray-700 transition-colors" />
               </div>
 
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-gray-900 truncate">
-                  {company.name}
-                </h3>
+              {company.description && (
+                <p
+                  className="mt-3 text-xs leading-relaxed text-gray-600 line-clamp-2"
+                  dangerouslySetInnerHTML={{ __html: company.description }}
+                />
+              )}
 
-                {company.rating > 0 && (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <FaStar className="text-[11px] text-gray-700" />
-                    <span className="text-xs text-gray-600 font-medium">
-                      {company.rating.toFixed(1)}
-                    </span>
+              <div className="mt-4 space-y-1.5 text-xs text-gray-500">
+                {company.address && (
+                  <div className="flex items-center gap-1.5">
+                    <FaMapMarkerAlt className="text-[11px]" />
+                    <span className="truncate">{company.address}</span>
+                  </div>
+                )}
+                {company.phone && (
+                  <div className="flex items-center gap-1.5">
+                    <FaPhone className="text-[11px]" />
+                    <span>{company.phone}</span>
                   </div>
                 )}
               </div>
-
-              <FaExternalLinkAlt className="text-xs text-gray-400 group-hover:text-gray-700 transition-colors" />
             </div>
 
-            {/* Description */}
-            {company.description && (
-              <p
-                className="mt-3 text-xs leading-relaxed text-gray-600 line-clamp-2"
-                dangerouslySetInnerHTML={{ __html: company.description }}
-              />
-            )}
-
-            {/* Meta */}
-            <div className="mt-4 space-y-1.5 text-xs text-gray-500">
-              {company.address && (
-                <div className="flex items-center gap-1.5">
-                  <FaMapMarkerAlt className="text-[11px]" />
-                  <span className="truncate">{company.address}</span>
-                </div>
-              )}
-              {company.phone && (
-                <div className="flex items-center gap-1.5">
-                  <FaPhone className="text-[11px]" />
-                  <span>{company.phone}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div
-            className="
-              relative flex items-center justify-between
-              px-4 py-3
-              border-t border-black/[0.04]
-              bg-white/50 backdrop-blur-md
-              text-xs
-            "
-          >
-            <span className="text-gray-400">Followed</span>
-
-            <button
-              onClick={() => handleUnfollow(company)}
-              disabled={unfollowLoading[company.id]}
+            <div
               className="
-                font-medium
-                text-red-500 hover:text-red-600
-                transition
-                disabled:opacity-50
+                relative flex items-center justify-between
+                px-4 py-3
+                border-t border-black/[0.04]
+                bg-white/50 backdrop-blur-md
+                text-xs
               "
             >
-              {unfollowLoading[company.id] ? "Removing…" : "Unfollow"}
-            </button>
+              <span className="text-gray-400">Followed</span>
+
+              <button
+                onClick={() => handleUnfollow(company)}
+                disabled={unfollowLoading[company.id]}
+                className="
+                  font-medium
+                  text-red-500 hover:text-red-600
+                  transition
+                  disabled:opacity-50
+                "
+              >
+                {unfollowLoading[company.id] ? "Removing…" : "Unfollow"}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   </div>
 );

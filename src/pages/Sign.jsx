@@ -5,7 +5,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginSuccess } from "../store/authSlice";
 import logo from "../assets/logo.png";
 import { useLocation } from "react-router-dom";
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 // Modals
 import CustomerRegisterModal from "../components/auth/CustomerRegisterModal";
 import PlanModal from "../components/auth/PlanModal";
@@ -29,7 +30,8 @@ export default function Sign() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showCompanyPassword, setShowCompanyPassword] = useState(false);
-
+  const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
   // Registration Modal States
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -40,7 +42,8 @@ export default function Sign() {
   const params = new URLSearchParams(location.search);
   const redirectPath = params.get("redirect");
   const action = params.get("action");
-
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
 
 
   useEffect(() => {
@@ -346,7 +349,7 @@ export default function Sign() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
                     </svg>
                   </div>
-                  <span className="font-medium">Registration successful! Please sign in to continue.</span>
+                  <span className="font-medium">{fw.register || "Registration successful!"}</span>
                 </div>
               </div>
             )}
@@ -360,7 +363,7 @@ export default function Sign() {
                   : "text-gray-500 hover:text-gray-700 hover:bg-white/30"
                   }`}
               >
-                Customer
+                {fw.customer || "Customer"}
               </button>
 
               <button
@@ -370,7 +373,7 @@ export default function Sign() {
                   : "text-gray-500 hover:text-gray-700 hover:bg-white/30"
                   }`}
               >
-                Business
+                {fw.business || "Business"}
               </button>
             </div>
 
@@ -404,7 +407,7 @@ export default function Sign() {
                   {/* Email */}
                   <input
                     type="email"
-                    placeholder="Email address"
+                   placeholder={fw.email || "Email"}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50
@@ -417,20 +420,20 @@ export default function Sign() {
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Password"
+                      placeholder={fw.password || "Password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-4 pr-12 rounded-2xl bg-white/50
-                   border border-gray-200/50 text-sm
-                   focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
-                   transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+                    className={`w-full px-4 py-4 ${isRTL ? "pl-12" : "pr-12"}
+  rounded-2xl bg-white/50 border border-gray-200/50 text-sm
+  focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+  transition-all duration-300 backdrop-blur-sm placeholder-gray-500`}
                       required
                     />
 
                     <button
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2
+                      className="absolute ltr:right-4 rtl:left-4 top-1/2 -translate-y-1/2
                    text-gray-400 hover:text-gray-700 transition"
                       aria-label="Toggle password visibility"
                     >
@@ -490,7 +493,7 @@ export default function Sign() {
                     to="/forgot-password"
                     className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
                   >
-                    Forgot Password?
+                    {fw.forgot_password|| "Forgot Password?"}
                   </Link>
                 </div>
 
@@ -504,14 +507,14 @@ export default function Sign() {
                disabled:opacity-50 disabled:transform-none
                shadow-lg hover:shadow-xl"
                 >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                      Signing In...
-                    </div>
-                  ) : (
-                    "Sign In"
-                  )}
+                 {loading ? (
+  <div className="flex items-center justify-center">
+    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+    {fw.signin || "Sign In"}...
+  </div>
+) : (
+  fw.signin || "Sign In"
+)}
                 </button>
               </form>
 
@@ -545,7 +548,7 @@ export default function Sign() {
                   {/* Company Email */}
                   <input
                     type="email"
-                    placeholder="Company email address"
+                    placeholder={fw.email || "Email"}
                     value={companyEmail}
                     onChange={(e) => setCompanyEmail(e.target.value)}
                     className="w-full px-4 py-4 rounded-2xl bg-white/50
@@ -559,20 +562,20 @@ export default function Sign() {
                   <div className="relative">
                     <input
                       type={showCompanyPassword ? "text" : "password"}
-                      placeholder="Company password"
+                      placeholder={fw.password || "Password"}
                       value={companyPassword}
                       onChange={(e) => setCompanyPassword(e.target.value)}
-                      className="w-full px-4 py-4 pr-12 rounded-2xl bg-white/50
-                   border border-gray-200/50 text-sm
-                   focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
-                   transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+                   className={`w-full px-4 py-4 ${isRTL ? "pl-12" : "pr-12"}
+  rounded-2xl bg-white/50 border border-gray-200/50 text-sm
+  focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+  transition-all duration-300 backdrop-blur-sm placeholder-gray-500`}
                       required
                     />
 
                     <button
                       type="button"
                       onClick={() => setShowCompanyPassword(v => !v)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2
+                      className="absolute ltr:right-4 rtl:left-4 top-1/2 -translate-y-1/2
                    text-gray-400 hover:text-gray-700 transition"
                       aria-label="Toggle password visibility"
                     >
@@ -632,7 +635,7 @@ export default function Sign() {
                     to="/company-forgot-password"
                     className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
                   >
-                    Forgot Password?
+                    {fw.forgot_password || "Forgot Password?"}
                   </Link>
                 </div>
 
@@ -646,14 +649,14 @@ export default function Sign() {
                disabled:opacity-50 disabled:transform-none
                shadow-lg hover:shadow-xl"
                 >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                      Signing In...
-                    </div>
-                  ) : (
-                    "Sign In"
-                  )}
+            {loading ? (
+          <div className="flex items-center justify-center">
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+            {fw.signin || "Sign In"}...
+          </div>
+        ) : (
+          fw.signin || "Sign In"
+        )}
                 </button>
               </form>
 
@@ -661,20 +664,20 @@ export default function Sign() {
 
             {/* Registration link */}
             <p className="mt-8 text-center text-gray-600 text-sm">
-              Don&apos;t have an account?{" "}
+              {fw.dont_have_account || "Don't have an account?"}{" "}
               {loginType === "customer" ? (
                 <button
                   onClick={handleRegisterClick}
                   className="text-blue-600 font-semibold hover:text-blue-800 transition"
                 >
-                  Register
+                  {fw.register || "Register"}
                 </button>
               ) : (
                 <button
                   onClick={handleRegisterClick}
                   className="text-blue-600 font-semibold hover:text-blue-800 transition"
                 >
-                  Register
+                  {fw.register || "Register"}
                 </button>
               )}
             </p>

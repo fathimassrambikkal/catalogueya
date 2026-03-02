@@ -98,13 +98,16 @@ const Bills = ({ companyId, companyInfo, products }) => {
         return null;
     }
   };
-
 return (
-  <div className="min-h-screen bg-white w-full  ">
-    <div className="flex items-center px-6 sm:px-10 lg:px-16 py-4 sm:py-6 ">
-      <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">Bills Status</h1>
+  <div className="min-h-screen bg-white w-full">
+    {/* Header */}
+    <div className="flex items-center justify-between px-4 sm:px-8 lg:px-16 py-4 sm:py-6">
+      <h1 className="text-lg sm:text-2xl lg:text-3xl font-semibold text-gray-900 tracking-tight mt-16 md:mt-4">
+        Bills Status
+      </h1>
+
       <button
-        onClick={() => setActivePage('draftBills')}
+        onClick={() => setActivePage("draftBills")}
         className="text-xs sm:text-sm font-semibold text-gray-500 hover:text-blue-500 transition"
       >
         {/* View Drafts ({counts.draftBills}) */}
@@ -112,53 +115,73 @@ return (
     </div>
 
     {/* GHOST PILL WITH SLIDING INDICATOR */}
-    <div className="flex justify-start mb-8 sm:mb-12 px-6 sm:px-10 lg:px-16">
-      <div className="relative inline-flex bg-gray-100 p-1 rounded-full w-full max-w-md sm:max-w-lg md:max-w-xl">
-        {/* Sliding background indicator */}
-        <div 
-          className="absolute top-1 bottom-1 rounded-full bg-blue-500 shadow-sm transition-all duration-300 ease-in-out"
+    <div className="flex justify-start mb-8 sm:mb-12 px-4 sm:px-8 lg:px-16">
+      <div className="relative flex w-full max-w-md sm:max-w-lg md:max-w-xl bg-gray-100 p-1 rounded-full overflow-hidden">
+
+        {/* Sliding Indicator */}
+        <div
+          className="absolute top-1 bottom-1 left-1 rounded-full bg-blue-500 shadow-sm transition-all duration-300 ease-in-out"
           style={{
-            width: `${100 / tabs.length}%`,
-            transform: `translateX(${tabs.findIndex(tab => tab.id === activePage) * 100}%)`,
+            width: `calc((100% - 8px) / ${tabs.length})`,
+            transform: `translateX(${
+              tabs.findIndex((tab) => tab.id === activePage) * 100
+            }%)`,
           }}
         />
-        
-  {/* Tabs */}
-{tabs.map((tab) => {
-  const isActive = activePage === tab.id;
-  return (
-    <button
-      key={tab.id}
-      onClick={() => setActivePage(tab.id)}
-      className={`
-        relative flex-1
-        px-[clamp(6px,1.2vw,16px)]
-        py-[clamp(4px,1.5vw,10px)]
-        rounded-full
-        text-[clamp(9px,1vw,14px)]
-        font-medium
-        transition-colors duration-200
-        z-10
-        whitespace-nowrap
-        ${isActive ? 'text-white' : 'text-gray-500 hover:text-gray-900'}
-      `}
-    >
-      <span className="flex items-center justify-center gap-[clamp(4px,0.6vw,8px)]">
-        {tab.label}
-        {tab.count > 0 && (
-          <div className="absolute top-1 right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full animate-pulse">
-            {tab.count}
-          </div>
-        )}
-      </span>
-    </button>
-  );
-})}
+
+        {/* Tabs */}
+        {tabs.map((tab) => {
+          const isActive = activePage === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActivePage(tab.id)}
+              className={`
+                relative flex-1
+                px-2 sm:px-4
+                py-1.5 sm:py-2
+                rounded-full
+                text-[10px] sm:text-sm
+                font-medium
+                transition-colors duration-200
+                z-10
+                whitespace-nowrap
+                flex items-center justify-center gap-1 sm:gap-2
+                ${isActive ? "text-white" : "text-gray-500 hover:text-gray-900"}
+              `}
+            >
+              {tab.label}
+
+              {/* Count Badge */}
+              {tab.count > 0 && (
+                <span
+                  className={`
+                    min-w-[16px] h-[16px]
+                    sm:min-w-[20px] sm:h-[20px]
+                    px-1
+                    flex items-center justify-center
+                    text-[9px] sm:text-[11px]
+                    rounded-full
+                    transition-all duration-300
+                    ${
+                      isActive
+                        ? "bg-white text-blue-600"
+                        : "bg-blue-600 text-white"
+                    }
+                  `}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
 
     {/* CONTENT */}
-    <div className="mt-4 sm:mt-6 px-6 sm:px-10 lg:px-16">
+    <div className="mt-4 sm:mt-6 px-4 sm:px-8 lg:px-16">
       {renderContent()}
     </div>
   </div>

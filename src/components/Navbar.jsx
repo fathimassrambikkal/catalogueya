@@ -470,15 +470,17 @@ export default function Navbar() {
               />
 
               {/* Unified Dropdown */}
-              <div
-                className={`
-                  absolute right-0 mt-3 origin-top-right
-                  transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-                  ${accountOpen
-                    ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
-                    : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}
-                `}
-              >
+             <div
+  className={`
+    absolute mt-3
+    ltr:right-0 rtl:left-0
+    ltr:origin-top-right rtl:origin-top-left
+    transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
+    ${accountOpen
+      ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+      : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}
+  `}
+>
                 <CustomerAccountDropdown
                   isAuthenticated={isAuthenticated}
                   userType={userType}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { registerCompany, getGoogleMap } from "../../api";
 import { FaTimes, FaMapMarkerAlt, FaUpload, FaSearch } from "react-icons/fa";
-
+import { useTranslation } from "react-i18next";
+import { useFixedWords } from "../../hooks/useFixedWords";
 let isGoogleMapsLoading = false;
 const callbacks = [];
 
@@ -91,7 +92,11 @@ export function getAddressFromLatLng(lat, lng) {
 export default function CompanyRegisterModal({ onClose, planId }) {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
 
+const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
     // Leaflet Refs & Google Services State
     const mapRef = useRef(null);
     const markerRef = useRef(null);
@@ -489,22 +494,28 @@ return (
         <div className="absolute inset-0 backdrop-blur-sm" onClick={onClose} />
 
         {/* Modal - Apple/Stripe style */}
-        <div className="relative bg-white w-full max-w-7xl rounded-3xl shadow-2xl max-h-[90vh] flex flex-col mx-auto border border-gray-100">
+        <div className={`relative bg-white w-full max-w-7xl rounded-3xl shadow-2xl max-h-[90vh] flex flex-col mx-auto border border-gray-100 ${
+  isRTL ? "text-right" : "text-left"
+}`}>
             {/* Close button - minimal */}
-            <button 
-                onClick={onClose} 
-                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center z-20"
-            >
+         <button 
+  onClick={onClose} 
+  className={`absolute top-5 ${
+    isRTL ? "left-5" : "right-5"
+  } w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center z-20`}
+>
                 <FaTimes size={18} />
             </button>
 
             <div className="p-6 sm:p-8 lg:p-10 overflow-y-auto">
                 {/* Header - minimal */}
                 <div className="text-center mb-8 sm:mb-10">
-                    <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-3 tracking-tight">Company Registration</h2>
+                    <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-3 tracking-tight">{fw.company_registration || "Company Registration"}</h2>
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        <span className="text-xs font-medium text-gray-600">Plan: {planId === 1 ? 'Monthly' : 'Yearly'}</span>
+                        <span className="text-xs font-medium text-gray-600">{planId === 1
+    ? fw.monthly || "Monthly"
+    : fw.yearly || "Yearly"}</span>
                     </div>
                 </div>
 
@@ -517,7 +528,7 @@ return (
                                 <input
                                     type="text"
                                     name="name"
-                                    placeholder="Company name (EN) *"
+                                    placeholder={`${fw.Company_name_en || "Company name (EN)"} *`}
                                     value={formData.name}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.name ? 'border-red-300 bg-red-50/30' : ''}`}
@@ -528,7 +539,7 @@ return (
                                 <input
                                     type="text"
                                     name="name_ar"
-                                    placeholder="Company name (AR)"
+                                    placeholder={fw.company_name_ar || "Company name (AR)"}
                                     value={formData.name_ar}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.name_ar ? 'border-red-300 bg-red-50/30' : ''}`}
@@ -543,7 +554,7 @@ return (
                                 <input
                                     type="email"
                                     name="email"
-                                    placeholder="Email address *"
+                                    placeholder={`${fw.company_email || "Company email address"} *`}
                                     value={formData.email}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.email ? 'border-red-300 bg-red-50/30' : ''}`}
@@ -551,15 +562,25 @@ return (
                                 {errors.email && <p className="text-red-500 text-xs px-3">{errors.email[0]}</p>}
                             </div>
                             <div className="space-y-1">
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    maxLength="12"
-                                    placeholder="Phone number *"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.phone ? 'border-red-300 bg-red-50/30' : ''}`}
-                                />
+                               <input
+  type="tel"
+  name="phone"
+  maxLength="12"
+  inputMode="numeric"
+  pattern="[0-9]*"
+  placeholder={
+    isRTL
+      ? `* ${fw.phone_number || "Phone Number"}`
+      : `${fw.phone_number || "Phone Number"} *`
+  }
+  value={formData.phone}
+  onChange={handleChange}
+  className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 
+  focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 
+  outline-none text-sm transition ${
+    isRTL ? "text-right" : "text-left"
+  } ${errors.phone ? 'border-red-300 bg-red-50/30' : ''}`}
+/>
                                 {errors.phone && <p className="text-red-500 text-xs px-3">{errors.phone[0]}</p>}
                             </div>
                         </div>
@@ -570,7 +591,7 @@ return (
                                 <input
                                     type="password"
                                     name="password"
-                                    placeholder="Password *"
+                                    placeholder={`${fw.password || "Password"} *`}
                                     value={formData.password}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.password ? 'border-red-300 bg-red-50/30' : ''}`}
@@ -581,7 +602,7 @@ return (
                                 <input
                                     type="password"
                                     name="password_confirmation"
-                                    placeholder="Confirm password *"
+                                    placeholder={`${fw.confirm_password || "Confirm password"} *`}
                                     value={formData.password_confirmation}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition ${errors.password_confirmation ? 'border-red-300 bg-red-50/30' : ''}`}
@@ -594,7 +615,7 @@ return (
                         <div className="space-y-3">
                             <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                                 <FaMapMarkerAlt className="text-blue-500" size={14} />
-                                Business location
+                                {fw.business_location || "Business location"}
                             </h4>
                             
                             <div className="flex gap-2">
@@ -603,7 +624,7 @@ return (
                                     <input
                                         id="reg-address-input-google"
                                         type="text"
-                                        placeholder="Search or enter address..."
+                                        placeholder={fw.search_address || "Search or enter address..."}
                                         className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm transition"
                                         value={formData.address}
                                         onChange={(e) => {
@@ -650,11 +671,11 @@ return (
                             {/* Coordinates - minimal */}
                             <div className="flex gap-4 px-4 py-2">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-400">Lat:</span>
+                                    <span className="text-xs text-gray-400">{fw.lat || "Lat"}:</span>
                                     <span className="text-xs font-medium text-gray-700">{formData.lat || '—'}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-400">Lng:</span>
+                                    <span className="text-xs text-gray-400"> {fw.lng || "Lng"}:</span>
                                     <span className="text-xs font-medium text-gray-700">{formData.lng || '—'}</span>
                                 </div>
                             </div>
@@ -670,15 +691,15 @@ return (
                         <div className="space-y-3">
                             <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                                 <FaUpload className="text-blue-500" size={14} />
-                                Legal documents
+                                {fw.legal_documents || "Legal documents"}
                             </h4>
                             
                             <div className="grid grid-cols-2 gap-3">
                                 {[
-                                    { label: "Commercial License", name: "commercial_license" },
-                                    { label: "Establishment Card", name: "establishment_card" },
-                                    { label: "Commercial Registration", name: "commercial_registration" },
-                                    { label: "QID Authorized Signatories", name: "qid_authorized_signatories" }
+                                { label: fw.commercial_license || "Commercial License", name: "commercial_license" },
+                                { label: fw.establishment_card || "Establishment Card", name: "establishment_card" },
+                                { label: fw.commercial_registration || "Commercial Registration", name: "commercial_registration" },
+                                { label: fw.qid_authorized_signatories || "Qid Authorized Signatories", name: "qid_authorized_signatories" }
                                 ].map(doc => (
                                     <div 
                                         key={doc.name} 
@@ -717,10 +738,10 @@ return (
 
                         {/* Description */}
                         <div className="space-y-1">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Company description</h4>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">{fw.company_description || "Company description"}</h4>
                             <textarea
                                 name="description"
-                                placeholder="Tell us about your business... *"
+                                placeholder={fw.tell_us || "Tell us about your business... *"}
                                 value={formData.description}
                                 onChange={handleChange}
                                 rows="4"
@@ -736,14 +757,18 @@ return (
                                 disabled={loading}
                                 className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl font-medium text-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                {loading ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>Processing...</span>
-                                    </>
-                                ) : (
-                                    'Complete registration'
-                                )}
+                             {loading ? (
+  <>
+    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+    <span>
+      {fw.processing || "Processing..."}
+    </span>
+  </>
+) : (
+  <span>
+    {fw.create_account || fw.register || "Complete registration"}
+  </span>
+)}
                             </button>
                         </div>
                     </div>
