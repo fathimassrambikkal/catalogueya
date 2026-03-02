@@ -650,10 +650,10 @@ export default function CompanyPage() {
       {/* ============ Banner Section ============ */}
 <>
   <div className="relative h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent z-10" />
+<div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent z-10 pointer-events-none" />
 
     <div
-      className="w-full h-full bg-center bg-cover scale-105 transform-gpu transition-transform duration-[2000ms] hover:scale-110"
+      className="w-full h-full bg-center bg-cover "
       style={{
         backgroundImage: bannerUrl
           ? `url(${bannerUrl})`
@@ -812,7 +812,13 @@ export default function CompanyPage() {
         </div>
 
         {/* ===== Bottom Floating Navigation ===== */}
-        <div className="mt-8 pt-6 border-t border-white/30 flex flex-wrap items-center justify-between gap-4">
+       <div className="
+  mt-8 pt-6 border-t border-white/30
+  flex flex-col sm:flex-row
+  items-start sm:items-center
+  justify-start sm:justify-between
+  gap-4
+">
 
           {/* Left Buttons */}
           <div className="flex items-center gap-2 backdrop-blur-xl bg-white/30 rounded-2xl p-1.5">
@@ -843,18 +849,22 @@ export default function CompanyPage() {
 
           {/* Social Icons */}
           {socialLinks.length > 0 && (
-            <div className="flex items-center gap-2">
-              {socialLinks.map(({ key, url, Icon }) => (
-                <a
-                  key={key}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-xl bg-white/50 backdrop-blur-xl flex items-center justify-center hover:bg-white/80 transition-all duration-200 shadow-sm"
-                >
-                  <Icon className="w-4 h-4 text-gray-700" />
-                </a>
-              ))}
+            <div className="flex items-center gap-2 flex-wrap max-w-full">
+             {socialLinks.length > 0 && (
+  <div className="flex flex-wrap gap-2 max-w-full">
+    {socialLinks.map(({ key, url, Icon }) => (
+      <a
+        key={key}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-9 h-9 rounded-xl bg-white/50 backdrop-blur-xl flex items-center justify-center hover:bg-white/80 transition-all duration-200 shadow-sm"
+      >
+        <Icon className="w-4 h-4 text-gray-700" />
+      </a>
+    ))}
+  </div>
+)}
             </div>
           )}
         </div>

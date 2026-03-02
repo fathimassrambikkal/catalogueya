@@ -80,6 +80,7 @@ const mapped = paginated.data.map(product => ({
   company_name: product.company_name || "Company",
   category_id: product.category_id,
   category_name: product.category_name || "New Arrival",
+   whatsapp: product.whatsapp || null,
 }));
 
 

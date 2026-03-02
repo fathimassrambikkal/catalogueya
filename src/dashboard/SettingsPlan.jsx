@@ -98,7 +98,7 @@ function SettingsPlan({ onBack, onTabChange }) {
 
  if (loading) {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-white px-6 pt-16 animate-pulse">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-white px-6 pt-16 ">
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header Skeleton */}
