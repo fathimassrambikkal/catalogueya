@@ -250,21 +250,8 @@ export const ProductCard = memo(({
     aria-label="WhatsApp"
     title="WhatsApp"
     className="
-<<<<<<< HEAD
-        relative
-      flex-shrink-0
-      flex items-center justify-center
 
- w-[clamp(25px,6vw,40px)]
-  h-[clamp(25px,6vw,40px)]
 
-      rounded-full
-      bg-white/40
-      backdrop-blur-2xl
-      border border-white/30
-      shadow-[0_8px_24px_rgba(0,0,0,0.18)]
-
-=======
       relative
       flex-shrink-0
       flex items-center justify-center
@@ -274,18 +261,14 @@ export const ProductCard = memo(({
       backdrop-blur-2xl
       border border-[rgba(255,255,255,0.28)]
       shadow-[0_8px_24px_rgba(0,0,0,0.18)]
->>>>>>> faad0835484899115f28d8bbd28ad7506708f6ba
+
       hover:bg-white/55
       transition-all duration-300
       hover:scale-105
     "
   >
   <WhatsappIcon className="w-[clamp(12px,3.5vw,18px)] h-[clamp(12px,3.5vw,18px)] relative z-10" />
-    <WhatsappIcon
-      size={18}
-      className="relative z-10"
-    />
- faad0835484899115f28d8bbd28ad7506708f6ba
+
   </button>
 )}
 
