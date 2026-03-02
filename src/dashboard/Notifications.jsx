@@ -219,7 +219,7 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
             {filteredNotifications.map((n, idx) => (
               <div
                 key={n.batch_id}
-                className="animate-fadeIn"
+                className="animate-fadeIn relative z-10 hover:z-[100]"
                 style={{ animationDelay: `${idx * 50}ms` }}
               >
                 <NotificationCard
@@ -380,9 +380,12 @@ function NotificationCard({
                       <div
                         onMouseEnter={() => setShowUsersSheet(true)}
                         onMouseLeave={() => setShowUsersSheet(false)}
-                      className="absolute right-full mr-2 bottom-0 w-[clamp(220px,25vw,320px)]
-                          max-h-[clamp(240px,40vh,420px)] bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden animate-fadeIn"
-
+                          className="absolute z-[999] right-0 top-full mt-3 w-[clamp(220px,25vw,320px)]
+                          max-h-[clamp(200px,35vh,350px)] bg-white rounded-xl shadow-[0_15px_60px_-15px_rgba(0,0,0,0.3)] border border-gray-100 overflow-hidden flex flex-col"
+                          style={{
+                            animation: 'fadeIn 0.2s ease-out forwards',
+                            transformOrigin: 'top right'
+                          }}
                       >
                         <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                           <h4 className="text-xs font-medium text-gray-900">Viewed by</h4>

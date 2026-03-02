@@ -146,19 +146,20 @@ return (
       <span className="flex items-center justify-center gap-[clamp(4px,0.6vw,8px)]">
         {tab.label}
         {tab.count > 0 && (
-          <span
-            className={`
-              text-[clamp(8px,0.8vw,12px)]
-              px-[clamp(4px,0.6vw,6px)]
-              py-[2px]
-              rounded-full
-              ${isActive 
-                ? 'bg-white/20 text-white' 
-                : 'bg-gray-200 text-gray-700'}
-            `}
-          >
+          <div
+    className={`
+      absolute top-1 right-1
+      text-[10px] w-5 h-5
+      flex items-center justify-center
+      rounded-full
+      transition-colors duration-200
+      ${isActive
+        ? "bg-white text-blue-500"
+        : "bg-blue-500 text-white"}
+    `}
+  >
             {tab.count}
-          </span>
+          </div>
         )}
       </span>
     </button>

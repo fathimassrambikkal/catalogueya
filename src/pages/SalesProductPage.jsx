@@ -86,6 +86,7 @@ function SalesProductPageComponent() {
           company_name: product.company_name || product.company_id?.name || "Company",
           category_id: product.category_id,
           category_name: product.category_name || "Sale",
+           whatsapp: product.whatsapp || null,
         }));
 
         setProducts(prev => {

@@ -35,17 +35,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Check if the response exists and the status is 401 Unauthorized/Unauthenticated
-    if (error.response && error.response.status === 401) {
-      window.dispatchEvent(new CustomEvent("sessionExpired"));
-    }
-    return Promise.reject(error);
-  }
-);
-
 
 // ==================== GENERAL API FUNCTIONS ====================
 
@@ -579,27 +568,23 @@ export const loginCompany = (email, password) =>
 export const registerCompany = (data) => {
   const token = localStorage.getItem("token");
 
-  // Determine if data is a FormData object or a plain object
-  let formData = data;
-  if (!(data instanceof FormData)) {
-    formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== "") {
-        formData.append(key, value);
-      }
-    });
+  if (!token) {
+    return Promise.reject(new Error("Unauthorized: Token required"));
   }
 
-  const headers = {
-    "Content-Type": "multipart/form-data",
-  };
+  const formData = new FormData();
 
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") {
+      formData.append(key, value);
+    }
+  });
 
   return api.post("/company/register", formData, {
-    headers
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`, // 🔒 FORCE TOKEN
+    },
   });
 };
 
@@ -608,73 +593,45 @@ export const registerCompany = (data) => {
 
 
 export const logoutCompany = () => api.post("/company/logout");
-
-export const changeCompanyPassword = (data) => {
-  return api.post("/company/change_password", data);
-};
-
 // ==================== COMPANY DASHBOARD - EDIT ====================
 
 
 export const editCompanyPost = (companyId, data) => {
-  let formData = data;
-
-  if (!(data instanceof FormData)) {
-    formData = new FormData();
-    const fields = [
-      'logo', 'cover_photo', 'name', 'address', 'phone', 'description',
-      'whatsapp', 'snapchat', 'pinterest', 'instagram', 'tweeter',
-      'facebook', 'youtube', 'google', 'linkedin',
-      'commercial_license', 'establishment_card', 'commercial_registration', 'qid_authorized_signatories',
-      'lat', 'lng', 'place_id', 'formatted_address'
-    ];
-    
-    fields.forEach(field => {
-      if (data[field] !== null && data[field] !== undefined) {
-        formData.append(field, data[field]);
-      }
-    });
-  }
+  const formData = new FormData();
   
-  const token = localStorage.getItem("token");
-  const authHeader = token ? { 'Authorization': `Bearer ${token}` } : {};
-
+  const fields = [
+    'logo', 'cover_photo', 'name', 'address', 'phone', 'description',
+    'whatsapp', 'snapchat', 'pinterest', 'instagram', 'tweeter',
+    'facebook', 'youtube', 'google', 'linkedin'
+  ];
+  
+  fields.forEach(field => {
+    if (data[field] !== null && data[field] !== undefined) {
+      formData.append(field, data[field]);
+    }
+  });
+  
   return api.post(`/company/edit_company_post`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
-      ...authHeader
     },
     withCredentials: false,
   }).catch(async (error) => {
     if (error.response?.status === 404) {
       throw new Error('Endpoint not found. Contact backend developer.');
     }
-    // Don't swallow validation errors
-    if (error.response?.status === 422 || error.response?.data?.errors) {
-      throw error;
-    }
     
-    // Fallback JSON attempt if put fails and we somehow need json
     const jsonData = {};
-    if (data instanceof FormData) {
-        for (let [key, value] of data.entries()) {
-            if (!(value instanceof File)) {
-                jsonData[key] = value;
-            }
-        }
-    } else {
-        Object.keys(data).forEach(field => {
-          if (data[field] !== null && data[field] !== undefined && !(data[field] instanceof File)) {
-            jsonData[field] = data[field];
-          }
-        });
-    }
+    fields.forEach(field => {
+      if (data[field] !== null && data[field] !== undefined && !(data[field] instanceof File)) {
+        jsonData[field] = data[field];
+      }
+    });
     
     try {
       return await api.post(`/company/edit_company_post`, jsonData, {
         headers: {
           'Content-Type': 'application/json',
-          ...authHeader
         },
       });
     } catch (jsonError) {
@@ -682,7 +639,6 @@ export const editCompanyPost = (companyId, data) => {
         return await api.post(`/company/edit_company_post`, jsonData, {
           headers: {
             'Content-Type': 'application/json',
-            ...authHeader
           },
         });
       } catch (postError) {
@@ -693,7 +649,6 @@ export const editCompanyPost = (companyId, data) => {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
-              ...authHeader
             },
             mode: 'cors',
             credentials: 'omit',

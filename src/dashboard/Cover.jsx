@@ -285,12 +285,12 @@ return (
       {/* Contact row - compact */}
 <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-gray-500">
 
-  {contactMobile && (
+  {/* {contactMobile && (
     <span className="flex items-center gap-1.5">
       <IconPhoneModern className="w-3.5 h-3.5 text-gray-900" />
       {contactMobile}
     </span>
-  )}
+  )} */}
 
   {address && (
     <span className="flex items-center gap-1.5 truncate max-w-[150px]">

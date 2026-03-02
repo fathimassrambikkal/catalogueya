@@ -431,7 +431,7 @@ export default function Navbar() {
                     navigate("/customer-login");
                   }
                 }}
-                className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white overflow-hidden hover:border-gray-300 transition-colors duration-200"
+                className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white/50 hover:bg-white overflow-hidden hover:border-gray-300 transition-colors duration-200"
               >
                 {/*  BEFORE LOGIN → Show Outline Icon */}
                 {!isAuthenticated && (
@@ -440,7 +440,7 @@ export default function Navbar() {
 
                 {/*  CUSTOMER LOGIN → Show First Letter */}
                 {isAuthenticated && userType === "customer" && (
-                  <span className="text-xs font-semibold p-4 border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow">
+                  <span className="text-xs font-semibold p-4 rounded-xl border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow">
                     {displayName?.charAt(0)?.toUpperCase()}
                   </span>
                 )}

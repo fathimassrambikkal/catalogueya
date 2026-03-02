@@ -21,6 +21,7 @@ import {
   StarIcon,
   ShareIcon,
   ChatIcon,
+  WhatsappIcon 
 } from "../components/SvgIcon";
 
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
@@ -253,8 +254,8 @@ export default function SalesProductProfile() {
           : null,
 
         discount_percent: sale?.discount_value || null,
-
-        image: normalizeImage(productData.image), // ✅ Store object format
+        whatsapp: productData.whatsapp || null, 
+        image: normalizeImage(productData.image),
         rating: parseFloat(productData.rating) || 0,
         description: productData.description,
 
@@ -374,6 +375,7 @@ export default function SalesProductProfile() {
 
           image: normalizeImage(productData.image), // ✅ Store object format
           rating: parseFloat(productData.rating) || 0,
+          whatsapp: productData.whatsapp || null,
           description: productData.description,
           company_id: productData.company_id,
           company_name: productData.company_name || "Company",
@@ -767,6 +769,23 @@ export default function SalesProductProfile() {
                 <ChatIcon className="w-[clamp(13px,1.1vw,17px)]
              h-[clamp(13px,1.1vw,17px)] text-[rgba(18,18,18,0.88)] transform-gpu" />
               </PremiumIconButton>
+
+  
+   <PremiumIconButton
+     title="WhatsApp"
+     onClick={() => {
+       const cleanNumber = product.whatsapp.replace(/\D/g, "");
+       window.open(`https://wa.me/${cleanNumber}`, "_blank");
+     }}
+     disabled={!product}
+   >
+     <WhatsappIcon
+       className="w-[clamp(15px,1.2vw,18px)]
+                  h-[clamp(15px,1.2vw,18px)]
+                  opacity-90"
+     />
+   </PremiumIconButton>
+
             </div>
 
             {/* THUMBNAIL PREVIEW STRIP */}

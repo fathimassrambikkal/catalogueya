@@ -142,7 +142,7 @@ const inactiveTabStyles =
   }, [showBarcode, companyId]);
 
   return (
-    <aside className="w-52 h-full bg-white/90 backdrop-blur-sm border-r border-gray-200">
+    <aside className="w-52 h-full bg-white border-r border-gray-200">
       {/* GRID LAYOUT */}
       <div className="h-full grid grid-rows-[auto_1fr_auto] px-3 py-3">
 
@@ -160,7 +160,7 @@ const inactiveTabStyles =
             </div>
 
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold text-gray-900 truncate">
+              <h2 className="text-sm font-semibold text-gray-900 leading-tight line-clamp-2 break-words">
                 {companyInfo?.companyName || user?.name || user?.company_name || "Company"}
               </h2>
               <p className="text-[11px] text-gray-500 truncate">
