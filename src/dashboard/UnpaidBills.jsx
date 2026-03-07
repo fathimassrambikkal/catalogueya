@@ -9,7 +9,8 @@ import BillDetailsModal from "./BillDetailsModal";
 import { showToast } from "../utils/showToast";
 import {  X } from "lucide-react";
 import toast from "react-hot-toast";
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 
 import ConfirmationDialog from "./ConfirmationDialog";
 
@@ -23,6 +24,11 @@ function UnpaidBills({ onBack }) {
 
   const [reactionReason, setReactionReason] = useState("");
   const [showReasonModal, setShowReasonModal] = useState(false);
+const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
+
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
 
   useEffect(() => {
     fetchBills();
@@ -108,25 +114,30 @@ function UnpaidBills({ onBack }) {
   }
 
 return (
-    <div className="animate-fadeIn">
+    <div dir={isRTL ? "rtl" : "ltr"} className="animate-fadeIn">
       {/* Reason Modal */}
     {showReasonModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
-                  <IconInvoice className="w-3.5 h-3.5" />
-                </div>
-                <h3 className="text-sm font-medium text-gray-700">Unpaid Reason</h3>
-              </div>
-              <button 
-                onClick={() => setShowReasonModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-500 rounded-lg hover:bg-gray-50 transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+  <div className="flex items-center gap-2.5">
+    <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
+      <IconInvoice className="w-3.5 h-3.5" />
+    </div>
+
+    <h3 className="text-sm font-medium text-gray-700">
+      {fw.unpaid_reason || "Unpaid Reason"} 
+  
+    </h3>
+  </div>
+
+  <button
+    onClick={() => setShowReasonModal(false)}
+    className="p-1 text-gray-400 hover:text-gray-500 rounded-lg hover:bg-gray-50 transition"
+  >
+    <X className="w-4 h-4" />
+  </button>
+</div>
             <div className="p-4">
               <p className="text-xs text-gray-600 bg-gray-50/50 p-3 rounded-lg border border-gray-100/80 leading-relaxed">
                 {reactionReason}
@@ -154,19 +165,19 @@ return (
 
       <div className="bg-white rounded-xl border border-gray-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
         {/* Table Header - Mobile Optimized */}
-        <div className="hidden sm:grid grid-cols-12 bg-gray-50 text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider py-3 px-5 border-b border-gray-100 items-center">
-          <div className="col-span-2">Bill Number</div>
-          <div className="col-span-2">Customer</div>
-          <div className="col-span-2">Issued on</div>
-          <div className="col-span-1">Method</div>
-          <div className="col-span-2">Amount</div>
-          <div className="col-span-1">Status</div>
-          <div className="col-span-2 text-right">Action</div>
-        </div>
+       <div className="hidden sm:grid grid-cols-12 bg-gray-50 text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider py-3 px-5 border-b border-gray-100 items-center">
+  <div className="col-span-2">{fw.bill_number || "Bill Number"}</div>
+  <div className="col-span-2">{fw.customer || "Customer"}</div>
+  <div className="col-span-2">{fw.issued_on || "Issued On"}</div>
+  <div className="col-span-1">{fw.method || "Method"}</div>
+  <div className="col-span-2">{fw.amount || "Amount"}</div>
+  <div className="col-span-1">{fw.status || "Status"}</div>
+  <div className="col-span-2 text-right">{fw.action || "Action"}</div>
+</div>
 
         <div className="divide-y divide-gray-100">
           {bills.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-sm">No unpaid bills found.</div>
+            <div className="p-8 text-center text-gray-400 text-sm">{fw.no_unpaid_bills || "No unpaid bills found"}</div>
           ) : (
             bills.map((bill) => (
               <div key={bill.id} className="p-3 sm:p-0 sm:grid sm:grid-cols-12 sm:items-center sm:px-5 sm:py-3 hover:bg-gray-50/30 transition-colors">
@@ -179,13 +190,13 @@ return (
                       <div className="text-[10px] text-gray-400 mt-0.5">{bill.customer_name}</div>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">{bill.status}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">{fw[bill.status] || bill.status}</span>
                       {bill.unpaid_reason && (
                         <button 
                           onClick={() => { setReactionReason(bill.unpaid_reason); setShowReasonModal(true); }}
                           className="text-[8px] text-red-500 underline mt-1"
                         >
-                          View Reason
+                          {fw.view_reason || "View Reason"}
                         </button>
                       )}
                     </div>
@@ -195,14 +206,14 @@ return (
                     <div className="flex items-center gap-2 text-[10px] text-gray-500">
                       <span>{bill.issued_at || bill.created_at?.split('T')[0]}</span>
                       <span>•</span>
-                      <span className="capitalize">{bill.payment_method || 'Cash'}</span>
+                      <span className="capitalize">{fw[bill.payment_method?.toLowerCase()] || bill.payment_method || fw.cash || "Cash"}</span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700">{bill.total_amount || bill.amount} {bill.currency || 'QR'}</span>
+                    <span className="text-xs font-medium text-gray-700">{bill.total_amount || bill.amount} {fw[bill.currency?.toLowerCase()] || bill.currency || "QAR"}</span>
                   </div>
 
                   <div className="flex items-center justify-end pt-1 border-t border-gray-100">
                     <div className="flex flex-col items-center">
-                      <span className="text-[8px] text-gray-400 mb-1">View</span>
+                      <span className="text-[8px] text-gray-400 mb-1">{fw.view || "View"}</span>
                       <div 
                         onClick={() => handleViewBill(bill.id)}
                         className="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center shadow-sm"
@@ -232,12 +243,12 @@ return (
 
                   {/* Method */}
                   <div className="col-span-1 text-xs text-gray-500 capitalize">
-                    {bill.payment_method || 'Cash'}
+                    {fw[bill.payment_method?.toLowerCase()] || bill.payment_method || fw.cash || "Cash"}
                   </div>
 
                   {/* Amount */}
                   <div className="col-span-2 text-xs font-medium text-gray-700">
-                    {bill.total_amount || bill.amount} {bill.currency || 'QR'}
+                    {bill.total_amount || bill.amount} {fw[bill.currency?.toLowerCase()] || bill.currency || "QAR"}
                   </div>
 
                   {/* Status */}
@@ -250,7 +261,7 @@ return (
                         onClick={() => { setReactionReason(bill.unpaid_reason); setShowReasonModal(true); }}
                         className="text-[8px] text-red-500 underline mt-1 hover:text-red-600 transition-colors"
                       >
-                        View Reason
+                         {fw.view_reason || "View Reason"}
                       </button>
                     )}
                   </div>
@@ -258,7 +269,7 @@ return (
                   {/* Actions */}
                   <div className="col-span-2 flex justify-end items-center">
                     <div className="flex flex-col items-center">
-                      <span className="text-[8px] text-gray-400 mb-1">View</span>
+                      <span className="text-[8px] text-gray-400 mb-1"></span>
                       <div 
                         onClick={() => handleViewBill(bill.id)}
                         className="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center shadow-sm"

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useSelector } from "react-redux";
 import { getAnalytics } from "../companyDashboardApi";
-
+import { useFixedWords } from "../hooks/useFixedWords";
 /* ===== Import Revenue and Summary directly (not lazy) ===== */
 import AnalyticsRevenue from "./AnalyticsRevenue";
 import AnalyticsSummary from "./AnalyticsSummary";
 import AnalyticsCalendar from "./AnalyticsCalendar"; 
+import { useTranslation } from "react-i18next";
 
 /* ===== Lazy-loaded sections ===== */
 const AnalyticsImgCards = lazy(() => import("./AnalyticsImgCards"));
@@ -13,13 +14,26 @@ const AnalyticsAllProductCard = lazy(() => import("./AnalyticsAllProductCard"));
 const AnalyticsProductDetail = lazy(() => import("./AnalyticsProductDetail"));
 
 const Analytics = ({ companyId, companyInfo }) => {
-  const companyName = companyInfo?.companyName || "Company Dashboard";
+    const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
+const { i18n } = useTranslation();
+const isRTL = i18n.language === "ar";
+  const companyName = companyInfo?.companyName || fw.company || "Company";
 
-  const [range, setRange] = useState("Last 7 days");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+const [range, setRange] = useState("Last 7 days");
+
+useEffect(() => {
+  if (fw.last_7_days && range === "Last 7 days") {
+    setRange(fw.last_7_days);
+  }
+}, [fw.last_7_days]);
+
+
+  
   useEffect(() => {
     if (companyId) {
       fetchAnalytics();
@@ -32,10 +46,10 @@ const Analytics = ({ companyId, companyInfo }) => {
 
       // Correct mapping based on user request
       let days = 7;
-      if (range === "Last 7 days") days = 7;
-      if (range === "Last month") days = 30;
-      if (range === "Last 3 months") days = 90;
-      if (range === "Last year") days = 365;
+if (range === fw.last_7_days || range === "Last 7 days") days = 7;
+if (range === fw.last_month || range === "Last month") days = 30;
+if (range === fw.last_3_months || range === "Last 3 months") days = 90;
+if (range === fw.last_year || range === "Last year") days = 365;
       if (typeof range === 'number') days = range;
 
       // Call API with the required body
@@ -79,10 +93,10 @@ const Analytics = ({ companyId, companyInfo }) => {
   }
 return (
   <div
-    className={`${
-      selectedProduct ? "h-full overflow-hidden" : "min-h-full"
-    } relative flex flex-col px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-8 sm:pb-10`}
-  >
+className={`${
+  selectedProduct ? "h-full overflow-hidden" : "min-h-full"
+} relative flex flex-col px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-8 sm:pb-10 overflow-x-hidden`}
+>
     {/* Premium Glass Blur Overlay  */}
     <div className="absolute inset-0 backdrop-blur-[120px] bg-gradient-to-br from-white/40 via-white/30 to-blue-50/20 pointer-events-none" />
     
@@ -101,7 +115,7 @@ return (
     <div className="flex items-center gap-2 mb-4 sm:mb-5 mt-20 md:mt-4">
       <div className="h-0.5 w-6 sm:w-8 bg-blue-600/30 rounded-full" />
       <span className="text-[10px] sm:text-xs font-medium text-blue-600/70 uppercase tracking-[0.2em]">
-        Dashboard Overview
+        {fw.dashboard_overview || "Dashboard Overview"}
       </span>
       <div className="h-0.5 w-6 sm:w-8 bg-blue-600/30 rounded-full" />
     </div>
@@ -113,7 +127,7 @@ return (
       <div className="flex items-center justify-between">
 
         <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight ">
-          Analytics
+          {fw.analytics || "Analytics"}
         </h1>
 
         <div className="relative">
@@ -141,7 +155,7 @@ return (
       {/* Description */}
       <div className="relative max-w-2xl">
         <p className="text-xs sm:text-sm md:text-base text-gray-500 leading-relaxed">
-          Track your business performance with real-time insights and detailed analytics
+          {fw.track_business_performance || "Track your business performance with real-time insights and detailed analytics"}
         </p>
         <div className="absolute -bottom-2 left-0 w-16 sm:w-24 h-0.5 bg-gradient-to-r from-blue-600/40 via-indigo-600/40 to-transparent rounded-full" />
       </div>
@@ -188,7 +202,7 @@ return (
           {/* Section header */}
           <div className="flex items-center gap-3 mb-4 sm:mb-5 md:mb-6">
             <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 tracking-tight">
-              Top Performing Products
+              {fw.top_performing_products || "Top Performing Products"}
             </h2>
             <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent" />
             <span className="text-[10px] sm:text-xs text-gray-400 font-medium">
@@ -212,12 +226,13 @@ return (
           {/* Section header */}
           <div className="flex items-center gap-3">
             <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 tracking-tight">
-              All Products Overview
+              {fw.all_products_overview || "All Products Overview"}
             </h2>
             <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent" />
-            <button className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
-              View all →
-            </button>
+          <button className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors flex items-center gap-1">
+  {fw.view_all || "View All"}
+  <span>{isRTL ? "←" : "→"}</span>
+</button>
           </div>
 
           <AnalyticsAllProductCard

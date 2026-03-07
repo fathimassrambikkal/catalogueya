@@ -1,14 +1,23 @@
 import React from "react";
 import { ReviewIcon, StarIcon } from "./AnalyticsIcons";
+import { useFixedWords } from "../hooks/useFixedWords";
 
-function AnalyticsReviews({ data,range  }) {
+function AnalyticsReviews({ data, range }) {
+  const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
+
   const { number_of_reviews: total = 0, rating = 0, reviews = [] } = data || {};
   const latestReview = reviews[0] || null;
-  const reviewer = latestReview?.user?.name || "No reviews yet";
-  const text = latestReview?.comment || "No comment provided for this rating.";
+
+  const reviewer = latestReview?.user?.name || fw.no_reviews || "No reviews yet";
+  const text =
+    latestReview?.comment ||
+    fw.no_comment ||
+    "No comment provided for this rating.";
+
   const filledStars = Math.floor(rating);
 
- return (
+  return (
     <div
       className="
         relative
@@ -31,7 +40,7 @@ function AnalyticsReviews({ data,range  }) {
           </span>
 
           <span className="text-sm sm:text-base font-semibold sm:font-bold text-gray-900">
-            Reviews ({total})
+            {fw.reviews || "Reviews"} ({total})
           </span>
         </div>
 
@@ -43,7 +52,7 @@ function AnalyticsReviews({ data,range  }) {
       {/* ===== Rating Summary ===== */}
       <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
         <span className="text-xs sm:text-sm font-semibold sm:font-black text-gray-900 bg-gray-50 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-gray-100">
-          Rating {rating}
+          {fw.global_rating || "Rating"} {rating}
         </span>
 
         <div className="flex items-center gap-0.5">
@@ -52,9 +61,7 @@ function AnalyticsReviews({ data,range  }) {
               key={i}
               fill={i < filledStars ? "currentColor" : "none"}
               className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                i < filledStars
-                ? "text-blue-400"
-                : "text-gray-200"
+                i < filledStars ? "text-blue-400" : "text-gray-200"
               }`}
             />
           ))}
@@ -83,7 +90,11 @@ function AnalyticsReviews({ data,range  }) {
                   <StarIcon
                     key={i}
                     fill={i < latestReview.rating ? "currentColor" : "none"}
-                    className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${i < latestReview.rating ? "text-blue-400" : "text-gray-200"}`}
+                    className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
+                      i < latestReview.rating
+                        ? "text-blue-400"
+                        : "text-gray-200"
+                    }`}
                   />
                 ))}
               </div>
@@ -94,13 +105,14 @@ function AnalyticsReviews({ data,range  }) {
             </p>
 
             <button className="mt-auto text-[9px] sm:text-[10px] font-semibold sm:font-black text-blue-600 hover:text-blue-700 transition uppercase tracking-wide sm:tracking-wider flex items-center gap-0.5 sm:gap-1">
-              Read More <span className="text-[7px] sm:text-[8px]">▼</span>
+              {fw.view_more || "Read More"}{" "}
+              <span className="text-[7px] sm:text-[8px]">▼</span>
             </button>
           </div>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-gray-400 text-[11px] sm:text-xs italic">
-          No recent reviews to display.
+          {fw.no_reviews || "No recent reviews to display."}
         </div>
       )}
     </div>

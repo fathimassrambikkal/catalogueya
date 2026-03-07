@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 
+import { useFixedWords } from "../hooks/useFixedWords";
 /* ===============================
    Rolling Digit Component
 ================================ */
 
 function RollingDigit({ digit }) {
+
+
   return (
     <div className="relative h-[1em] w-[0.65em] overflow-hidden">
       <div
@@ -42,6 +45,9 @@ function formatToDigits(value) {
 ================================ */
 
 export default function AnalyticsRevenue({
+
+
+  
   value = 1200,
   currency = "QR",
   trend = "up",
@@ -49,6 +55,8 @@ export default function AnalyticsRevenue({
 }) {
   const [displayValue, setDisplayValue] = useState(0);
 
+    const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   useEffect(() => {
     let start = 0;
     const duration = 900;
@@ -70,6 +78,13 @@ export default function AnalyticsRevenue({
 
   const digits = formatToDigits(displayValue);
 
+  const rangeLabel = {
+  "Last 7 days": fw.last_7_days || "Last 7 days",
+  "Last month": fw.last_month || "Last month",
+  "Last 3 months": fw.last_3_months || "Last 3 months",
+  "Last year": fw.last_year || "Last year",
+}[range] || range;
+
 return (
     <div className="relative h-full rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
 
@@ -81,8 +96,8 @@ return (
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-[10px] xs:text-xs sm:text-sm text-gray-500">Total Revenue</p>
-            <p className="text-[8px] xs:text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5">{range}</p>
+            <p className="text-[10px] xs:text-xs sm:text-sm text-gray-500">{fw.total_revenue|| "Total Revenue"}</p>
+            <p className="text-[8px] xs:text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5">{rangeLabel}</p>
           </div>
           <span className={`text-sm xs:text-base sm:text-lg ${trend === "up" ? "text-blue-500" : "text-gray-400"}`}>
             {trend === "up" ? "↑" : "↓"}
@@ -100,7 +115,7 @@ return (
               )
             )}
             <span className="text-xl xs:text-2xl sm:text-3xl text-gray-300 ml-1 xs:ml-2 sm:ml-3 self-end">
-              {currency}
+              {fw.qar || currency}
             </span>
           </div>
         </div>

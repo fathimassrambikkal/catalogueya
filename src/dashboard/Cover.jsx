@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { FaMapMarkerAlt } from "react-icons/fa";
-
+import { useFixedWords } from "../hooks/useFixedWords";
 import {
   YoutubeIcon,
   InstagramIcon,
@@ -13,9 +13,13 @@ import {
 } from "../components/SocialSvg";
 import { FiEdit } from "react-icons/fi";
 import { getImageUrl } from "../companyDashboardApi";
- import {IconPhoneModern} from "./SvgIcons"
+
 export default function Cover({ companyInfo = {}, setActiveTab }) {
   // Use local state to prevent stale data
+
+
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   const [localCompanyInfo, setLocalCompanyInfo] = useState({
     companyName: "",
     companyDescription: "",
@@ -214,7 +218,7 @@ return (
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white/60 text-xs">
-                Logo
+                {fw.logo || "Logo"}
               </div>
             )}
           </div>
@@ -230,7 +234,7 @@ return (
                 text-base sm:text-lg
                 truncate
               ">
-                {companyName || "Company Name"}
+                {companyName || fw.company_name || "Company Name"}
               </h2>
               
               {/* EDIT BUTTON - small */}
@@ -259,7 +263,7 @@ return (
               line-clamp-2
               leading-relaxed
             ">
-              {companyDescription || "Company Description"}
+              {companyDescription || fw.company_description || "Company Description"}
             </p>
 
             {/* Specialties - tiny chips */}

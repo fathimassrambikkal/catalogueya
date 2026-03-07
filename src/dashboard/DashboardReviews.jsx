@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import {  FaUser, FaBox, FaCogs, FaQuoteLeft } from "react-icons/fa";
 import { FaStar, FaPlus } from "./SvgIcons";
 import ReviewRequestModal from "./ReviewRequestModal";
+import { useFixedWords } from "../hooks/useFixedWords";
 
 import { getCompanyReviewsDashboard, getImageUrl } from "../companyDashboardApi";
 
@@ -13,7 +14,8 @@ const DashboardReviews = ({ companyId }) => {
     const [loading, setLoading] = useState(true);
     const [activeType, setActiveType] = useState("services"); 
     const [isRequestOpen, setIsRequestOpen] = useState(false);
-
+    const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
 
     useEffect(() => {
         fetchReviews();
@@ -115,14 +117,14 @@ return (
             <div className="space-y-0.5 sm:space-y-1 flex-1 sm:flex-none">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     <h2 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">
-                        Reviews
+                    {fw.reviews || "Reviews"}
                     </h2>
                     <span className="px-2 py-0.5 sm:px-2 sm:py-1 bg-blue-50 rounded-lg text-blue-600 text-[10px] xs:text-xs sm:text-xs font-medium">
                         {reviewList.length}
                     </span>
                 </div>
                 <p className="text-[10px] xs:text-xs sm:text-xs text-gray-500 leading-tight sm:leading-normal">
-                    Real feedback from customers
+                    {fw.real_feedback_customers || "Real feedback from customers"}
                 </p>
             </div>
 
@@ -133,7 +135,7 @@ return (
                <FaPlus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
 
               
-                <span className="inline">Request Review</span>
+                <span className="inline">{fw.request_review || "Request Review"}</span>
                 
             </button>
         </div>
@@ -149,7 +151,7 @@ return (
                 }`}
             >
                 <FaCogs className="text-sm sm:text-sm" />
-                <span>Service</span>
+                <span>{fw.service || "Service"}</span>
             </button>
             <button
                 onClick={() => setActiveType("products")}
@@ -160,7 +162,7 @@ return (
                 }`}
             >
                 <FaBox className="text-sm sm:text-sm" />
-                <span>Product</span>
+                <span>{fw.product || "Product"}</span>
             </button>
         </div>
     </div>
@@ -174,7 +176,7 @@ return (
         <div className="flex items-start justify-between">
             <div>
                 <p className="text-[clamp(0.6rem,2vw,0.75rem)] text-gray-500 font-medium mb-1 sm:mb-2">
-                    Global Rating
+                    {fw.global_rating || "Global Rating"}
                 </p>
                 <div className="flex items-end gap-1 sm:gap-2">
                     <h3 className="text-[clamp(1rem,4vw,1.5rem)] font-semibold text-gray-900 tracking-tight">
@@ -194,7 +196,7 @@ return (
         <div className="flex items-start justify-between">
             <div>
                 <p className="text-[clamp(0.6rem,2vw,0.75rem)] text-gray-500 font-medium mb-1 sm:mb-2">
-                    Total Reviews
+                    {fw.total_reviews || "Total Reviews"}
                 </p>
                 <h3 className="text-[clamp(1rem,4vw,1.5rem)] font-semibold text-gray-900 tracking-tight">
                     {data?.total_reviews_count || 0}
@@ -211,7 +213,9 @@ return (
         <div className="flex items-start justify-between">
             <div>
                 <p className="text-[clamp(0.6rem,2vw,0.75rem)] text-gray-500 font-medium mb-1 sm:mb-2">
-                    {activeType === "services" ? "Service Avg" : "Product Avg"}
+                {activeType === "services"
+  ? (fw.service_avg || "Service Avg")
+  : (fw.product_avg || "Product Avg")}
                 </p>
                 <div className="flex items-end gap-1 sm:gap-2">
                     <h3 className="text-[clamp(1rem,4vw,1.5rem)] font-semibold text-gray-900 tracking-tight">
@@ -234,8 +238,8 @@ return (
                     <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
                         <FaQuoteLeft className="text-gray-300 text-xl sm:text-2xl md:text-3xl" />
                     </div>
-                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">No reviews yet</h3>
-                    <p className="text-[10px] sm:text-xs text-gray-400 mt-1">When customers leave reviews, they will appear here.</p>
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">{fw.no_reviews || "No reviews yet"}</h3>
+
                 </div>
             ) : (
                 <div className="divide-y divide-gray-100">
@@ -253,7 +257,7 @@ return (
                                             {review.user?.image ? (
                                                 <img
                                                     src={getImageUrl(review.user.image)}
-                                                    alt={review.user.name || "User"}
+                                                    alt={review.user?.name || fw.customer || "Customer"}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
                                                         e.target.onerror = null;
@@ -309,7 +313,7 @@ return (
                                 <div className="sm:w-48 md:w-56 flex-shrink-0 sm:border-l border-gray-100 sm:pl-4 md:pl-5">
                                     {activeType === "services" ? (
                                         <div>
-                                            <span className="text-[8px] font-semibold text-blue-500 uppercase tracking-wider">Service</span>
+                                            <span className="text-[8px] font-semibold text-blue-500 uppercase tracking-wider">{fw.service || "Service"}</span>
                                             <h5 className="text-xs sm:text-sm font-medium text-gray-900 mt-0.5 truncate">
                                                 {review.service_name}
                                             </h5>
@@ -319,12 +323,12 @@ return (
                                             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100">
                                                 <img
                                                     src={getImageUrl(review.product?.image)}
-                                                    alt={review.product?.name}
+                                                    alt={review.product?.name || fw.product || "Product"}
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
                                             <div className="min-w-0">
-                                                <span className="text-[8px] font-semibold text-blue-500 uppercase tracking-wider">Product</span>
+                                                <span className="text-[8px] font-semibold text-blue-500 uppercase tracking-wider">{fw.product || "Product"}</span>
                                                 <h5 className="text-[10px] sm:text-xs font-medium text-gray-900 truncate">
                                                     {review.product?.name}
                                                 </h5>

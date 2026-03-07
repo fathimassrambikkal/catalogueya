@@ -12,7 +12,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl, sendReviewRequest, getCompanyProducts, getCategories } from '../companyDashboardApi';
 import { toast } from 'react-hot-toast';
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 const ReviewRequestModal = ({
     isOpen,
     onClose,
@@ -25,8 +26,12 @@ const ReviewRequestModal = ({
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedItem, setSelectedItem] = useState(null); // { id: 13, type: 'product' } or { name: 'Category', type: 'service' }
+    const [selectedItem, setSelectedItem] = useState(null);
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
 
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
     useEffect(() => {
         if (isOpen) {
             fetchData();
@@ -102,7 +107,7 @@ const ReviewRequestModal = ({
 
     const handleSubmit = async () => {
         if (!selectedItem) {
-            toast.error("Please select a product or service");
+            toast.error(fw.select_product_or_service || "Please select a product or service");
             return;
         }
 
@@ -119,12 +124,12 @@ const ReviewRequestModal = ({
             }
 
             await sendReviewRequest(payload);
-            toast.success("Review request sent successfully!");
+            toast.success(fw.review_request_sent || "Review request sent successfully!");
             onClose();
             setSelectedItem(null);
         } catch (err) {
             console.error("Error sending review request:", err);
-            toast.error("Failed to send review request");
+            toast.error(fw.failed_send_review_request || "Failed to send review request");
         } finally {
             setLoading(false);
         }
@@ -142,7 +147,7 @@ return (
             <div className="px-6 pt-6 pb-3 shrink-0">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-base font-semibold text-gray-900">
-                        Review Request
+                     {fw.request_review || "Review Request"}
                     </h2>
                     <button
                         onClick={onClose}
@@ -162,7 +167,7 @@ return (
                 : 'text-gray-400 hover:text-gray-600'
         }`}
     >
-        Products
+      {fw.products || "Products"}
     </button>
     <button
         onClick={() => { setActiveTab('service'); setSelectedItem(null); }}
@@ -172,14 +177,18 @@ return (
                 : 'text-gray-400 hover:text-gray-600'
         }`}
     >
-        Service
+       {fw.service || "Service"}
     </button>
 </div>
                 {/* Minimal Search */}
                 <div className="mb-2">
                     <input
                         type="text"
-                        placeholder={`Search ${activeTab}...`}
+          placeholder={
+  activeTab === "products"
+    ? (fw.search_products || "Search products...")
+    : (fw.search_service || "Search service...")
+}
                         className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none text-xs focus:border-blue-500 transition-colors"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -192,19 +201,29 @@ return (
                 {initialLoading ? (
                     <div className="flex flex-col items-center justify-center py-16 gap-2">
                         <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-gray-400 text-xs">Loading items...</p>
+                       <p className="text-gray-400 text-xs">
+    {fw.loading_items || "Loading items..."}
+</p>
                     </div>
                 ) : filteredItems.length === 0 ? (
                     <div className="text-center py-16">
-                        <p className="text-gray-300 text-xs">No {activeTab} found</p>
+                        <p className="text-gray-300 text-xs">{fw.no_products_found || "No items found"}</p>
                     </div>
                 ) : (
                     <div className="space-y-1">
                         {filteredItems.map((item) => {
                             const isSelected = selectedItem?.type === activeTab && String(selectedItem?.id) === String(item.id);
-                            const name = activeTab === 'products'
-                                ? (item.name || item.name_en || item.name_ar || "Unnamed Product")
-                                : (item.title || item.title_en || item.name_en || item.name || item.category_name_en || "Unnamed Service");
+                            const name = activeTab === "products"
+  ? (
+      isRTL
+        ? (item.name_ar || item.name_en || item.name || fw.unnamed_product || "Unnamed Product")
+        : (item.name_en || item.name_ar || item.name || fw.unnamed_product || "Unnamed Product")
+    )
+  : (
+      isRTL
+        ? (item.name_ar || item.name_en || item.title || fw.unnamed_service || "Unnamed Service")
+        : (item.name_en || item.name_ar || item.title || fw.unnamed_service || "Unnamed Service")
+    );
 
                             const image = activeTab === 'products' ? item.image : (item.icon || item.image || item.title_image);
 
@@ -233,7 +252,7 @@ return (
                                             {name}
                                         </h4>
                                         {activeTab === 'products' && (
-                                            <p className="text-[10px] text-blue-500 mt-0.5">QAR {item.price}</p>
+                                            <p className="text-[10px] text-blue-500 mt-0.5">{fw.qar || "QAR"} {item.price}</p>
                                         )}
                                     </div>
                                     <div className={`w-4 h-4 rounded-full border transition-colors ${isSelected 
@@ -255,17 +274,17 @@ return (
 
             {/* Minimal Footer */}
             <div className="px-6 py-4 border-t border-gray-100 shrink-0">
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading || !selectedItem}
-                    className="w-full py-2.5 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:hover:bg-blue-500"
-                >
-                    {loading ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
-                    ) : (
-                        'Send Review Request'
-                    )}
-                </button>
+             <button
+  onClick={handleSubmit}
+  disabled={loading || !selectedItem}
+  className="w-full py-2.5 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:hover:bg-blue-500"
+>
+  {loading ? (
+    <span>{fw.sending || "Sending..."}</span>
+  ) : (
+    fw.send_review_request || "Send Review Request"
+  )}
+</button>
             </div>
         </div>
     </div>

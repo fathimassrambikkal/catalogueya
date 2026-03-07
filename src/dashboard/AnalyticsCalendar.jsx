@@ -1,60 +1,59 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaChevronDown, FaCalendarAlt } from "./SvgIcons";
+import { useFixedWords } from "../hooks/useFixedWords";
 
 function AnalyticsCalendar({ range, setRange }) {
+  const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
+
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   const ranges = [
-    "Last 7 days",
-    "Last month",
-    "Last 3 months",
-    "Last year",
+    fw.last_7_days || "Last 7 days",
+    fw.last_month || "Last month",
+    fw.last_3_months || "Last 3 months",
+    fw.last_year || "Last year",
   ];
 
+  /* Close dropdown when clicking outside */
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={dropdownRef} className="relative max-w-full">
+      
       {/* Button */}
       <button
         onClick={() => setOpen(!open)}
         className="
-          group relative flex items-center gap-2 sm:gap-3
-          rounded-xl
-          bg-white/90 backdrop-blur-sm
-          px-2.5 sm:px-4
-          py-2 sm:py-2.5
-          text-[12px] sm:text-sm font-medium
-          text-gray-900
-          shadow-sm ring-1 ring-gray-200/50
-          hover:ring-blue-200 hover:shadow-md
-          transition-all duration-200
-          whitespace-nowrap
+       group relative flex items-center gap-2
+  rounded-xl
+  bg-white/90 backdrop-blur-sm
+  px-3 py-2
+  text-[11px] sm:text-xs font-medium
+  text-gray-900
+  shadow-sm ring-1 ring-gray-200/50
+  hover:ring-blue-200 hover:shadow-md
+  transition-all duration-200
+  whitespace-nowrap
         "
       >
         {/* Calendar Icon */}
-        <div
-          className="
-            p-1 sm:p-1.5
-            rounded-lg
-            
-            flex items-center justify-center
-          "
-        >
+        <div className="p-1 sm:p-1.5 rounded-lg flex items-center justify-center">
           <FaCalendarAlt className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-500" />
         </div>
 
         {/* Range Text */}
-        <span className="truncate max-w-[110px] sm:max-w-none">
+        <span className="whitespace-nowrap text-[11px] sm:text-xs">
           {range}
         </span>
 
@@ -71,19 +70,19 @@ function AnalyticsCalendar({ range, setRange }) {
 
       {/* Dropdown */}
       {open && (
-        <div
-          className="
-            absolute right-0 mt-1.5
-            w-44 sm:w-48
-            rounded-xl
-            bg-white/95 backdrop-blur-xl
-            shadow-2xl
-            ring-1 ring-gray-200/30
-            z-50
-            overflow-hidden
-            border border-white/50
-          "
-        >
+   <div
+className="
+absolute right-0 mt-1.5
+min-w-[160px]
+rounded-xl
+bg-white/95 backdrop-blur-xl
+shadow-2xl
+ring-1 ring-gray-200/30
+z-50
+overflow-hidden
+border border-white/50
+"
+>
           <div className="py-1">
             {ranges.map((item) => (
               <button
@@ -97,7 +96,7 @@ function AnalyticsCalendar({ range, setRange }) {
                   px-3 sm:px-4
                   py-2 sm:py-2.5
                   text-left
-                  text-[12px] sm:text-sm
+                  text-[11px] sm:text-xs
                   transition-all duration-150
                   flex items-center gap-2
                   ${
@@ -120,6 +119,7 @@ function AnalyticsCalendar({ range, setRange }) {
                     />
                   </svg>
                 )}
+
                 <span className="truncate">{item}</span>
               </button>
             ))}

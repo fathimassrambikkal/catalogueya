@@ -1,6 +1,7 @@
 // src/dashboard/Messages.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Send, Paperclip, Check, CheckCheck, MoreHorizontal, UserPlus, Star } from "lucide-react";
+import { Search } from "lucide-react";
+import { useFixedWords } from "../hooks/useFixedWords";
 import {
   getConversations,
   getConversation,
@@ -24,6 +25,8 @@ const extractUrl = (text) => {
 export default function Messages({ companyId, lastMessageEvent, onUnreadChange, targetConversationId, setTargetConversationId,onChatOpen  }) {
   const [conversations, setConversations] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   
 const navigate = useNavigate();
   // Auto-select conversation based on targetConversationId from Notifications
@@ -180,17 +183,17 @@ useEffect(() => {
       // Try falling back to sender_id logic if participant info missing or chat structure different
       // This depends on how `getParticipantInfo` works.
       // Keep simple for now.
-      toast.error("Contact information missing");
+      toast.error(fw.contact_missing || "Contact information missing");
       return;
     }
 
     try {
       await addContact(participant.id);
-      toast.success("Contact added successfully");
+      toast.success(fw.added || "Added");
       setShowMenu(false);
     } catch (error) {
       console.error("Error adding contact", error);
-      toast.error("Failed to add contact");
+      toast.error(fw.failed_add_contact || "Failed to add contact");
     }
   };
 
@@ -224,7 +227,7 @@ useEffect(() => {
       fetchChatMessages(selectedChat.id, true);
     } catch (error) {
       console.error("Error sending message", error);
-      alert("Failed to send message");
+      toast.error(fw.failed_send_message || "Failed to send message");
     }
   };
 
@@ -270,14 +273,14 @@ useEffect(() => {
         {/* Header */}
         <div className="p-4 border-b border-gray-100">
           <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4 ">
-            Messages
+            {fw.messages || "Messages"}
           </h1>
 
           <div className="mt-4 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={fw.searsh || "Search..."}
               className="w-full pl-10 pr-4 py-2 bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -288,13 +291,13 @@ useEffect(() => {
         {/* List */}
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
           {loadingList ? (
-            <div className="text-center p-4 text-gray-500">Loading...</div>
+            <div className="text-center p-4 text-gray-500">{fw.loading || "Loading..."}</div>
           ) : filteredConversations.length === 0 ? (
-            <div className="text-center p-4 text-gray-500">No conversations</div>
+            <div className="text-center p-4 text-gray-500">{fw.no_messages || "No conversations"}</div>
           ) : (
             filteredConversations.map(chat => {
               const name = getName(chat);
-              const lastMsg = chat.last_message?.body || "No messages";
+              const lastMsg = chat.last_message?.body || fw.no_messages || "No messages";
               const time = chat.last_message?.created_at || chat.updated_at;
               const unread = chat.unread_count || 0;
               const avatar = getAvatar(chat);

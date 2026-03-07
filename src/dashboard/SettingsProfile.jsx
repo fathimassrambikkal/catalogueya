@@ -12,6 +12,8 @@ import {
   WhatsappIcon,
   TwitterIcon,
 } from "../components/SocialSvg"; 
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 
 import {
   BackIcon,
@@ -32,6 +34,12 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
   const prevCompanyIdRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
+
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
 
   // Initialize with empty values
   const emptyForm = {
@@ -592,9 +600,9 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
-          <h3 className="font-bold mb-2">Delete All Settings?</h3>
+          <h3 className="font-bold mb-2">{fw.delete_all_settings || "Delete All Settings?"}</h3>
           <p className="text-gray-600 text-sm mb-4">
-            This will clear all settings but keep you on this page. Continue?
+            {fw.delete_settings_warning || "This will clear all settings but keep you on this page. Continue?"}
           </p>
           <div className="flex gap-3">
             <button
@@ -602,7 +610,7 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
               onClick={handleSave}
               className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl  text-white font-semibold"
             >
-              Save Settings
+             {fw.save_settings || "Save Settings"}
             </button>
 
             <button
@@ -610,7 +618,7 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
               onClick={() => setShowDeleteAlert('confirm')}
               className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold"
             >
-              Delete All
+             {fw.delete_all || "Delete All"}
             </button>
 
 
@@ -648,7 +656,9 @@ export default function SettingsProfile({ companyId, companyInfo = {}, setCompan
   // Show loading state
   if (isLoading && !form.companyName) {
   return (
-    <div className="min-h-screen bg-white p-6 animate-pulse">
+    <div 
+    dir={isRTL ? "rtl" : "ltr"}
+    className="min-h-screen bg-white p-6 animate-pulse">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Cover Skeleton */}
@@ -699,7 +709,7 @@ return (
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-lg">Success</h3>
+              <h3 className="font-semibold text-gray-900 text-lg">{fw.success || "Success"}</h3>
               <p className="text-gray-600 text-sm truncate">{successMessage}</p>
             </div>
 
@@ -733,8 +743,8 @@ return (
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-lg">Cleared</h3>
-              <p className="text-gray-600 text-sm truncate">All form data has been cleared</p>
+              <h3 className="font-semibold text-gray-900 text-lg">{fw.cleared || "Cleared"}</h3>
+              <p className="text-gray-600 text-sm truncate">{fw.all_form_data_cleared || "All form data has been cleared"}</p>
             </div>
 
             <button onClick={() => setShowDeleteAlert(false)} className="text-gray-400 hover:text-gray-600 p-1">
@@ -763,10 +773,10 @@ return (
     {showPasswordModal && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
         <div className="bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-blue-900/10">
-          <h3 className="font-bold text-xl mb-6 text-gray-900">Change Password</h3>
+          <h3 className="font-bold text-xl mb-6 text-gray-900">{fw.change_password || "Change Password"}</h3>
           <div className="space-y-4 sm:space-y-5">
             <div>
-              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">Old Password</label>
+              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">{fw.old_password || "Old Password"}</label>
               <input
                 type="password"
                 name="old_password"
@@ -777,7 +787,8 @@ return (
               />
             </div>
             <div>
-              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">New Password</label>
+              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">{fw.new_password || "New Password"}
+</label>
               <input
                 type="password"
                 name="new_password"
@@ -788,7 +799,7 @@ return (
               />
             </div>
             <div>
-              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">Confirm New Password</label>
+              <label className="font-semibold text-gray-900 block mb-2 text-sm sm:text-base">{fw.confirm_new_password || "Confirm New Password"}</label>
               <input
                 type="password"
                 name="new_password_confirmation"
@@ -804,7 +815,7 @@ return (
               onClick={() => setShowPasswordModal(false)}
               className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-100/80 text-gray-700 font-semibold text-sm sm:text-base hover:bg-gray-200 transition-all duration-200 border border-gray-200/50 shadow-sm"
             >
-              Cancel
+              {fw.cancel || "Cancel"}
             </button>
             <button
               onClick={handleChangePassword}
@@ -814,7 +825,7 @@ return (
               {isPasswordLoading ? (
                 <span className="flex items-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                  Saving...
+                  {fw.saving || "Saving..."}
                 </span>
               ) : (
                 "Change Password"
@@ -831,13 +842,18 @@ return (
 
       {/* Main Card Container */}
       <div className="p-6">
-           <button
-            onClick={onBack}
-            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6 group"
-            >
-            <BackIcon className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Back
-            </button>
+              <div className={`flex items-center gap-2 mb-6 mt-4 md:mt-0 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      {onBack && (
+                      <button
+                onClick={onBack}
+                className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6 mt-4 group ltr"
+                dir="ltr"
+              >
+                <BackIcon className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                {fw.back || "Back"}
+              </button>
+                      )}
+                    </div>
 
 
         {/* All Form Fields in a Single Div - No Scroll */}
@@ -847,7 +863,7 @@ return (
             {/* Cover Photo */}
             <div>
               <label className="font-semibold text-gray-900 block mb-2 sm:mb-3 text-sm sm:text-base break-words">
-                Cover Photo
+              {fw.cover_photo || "Cover Photo"}
               </label>
 
               {form.coverPhoto && (
@@ -886,7 +902,7 @@ return (
             {/* Logo */}
             <div>
               <label className="font-semibold text-gray-900 block mb-2 sm:mb-3 text-sm sm:text-base break-words">
-                Logo
+                {fw.logo || "Logo"}
               </label>
 
               {form.logo && (
@@ -925,12 +941,12 @@ return (
 
           {/* LEGAL DOCUMENTS */}
           <div className="mb-8 p-6 rounded-2xl bg-gray-50/50 border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-5">Legal Documents</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-5">{fw.legal_documents || "Legal Documents"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {["commercial_license", "establishment_card", "commercial_registration", "qid_authorized_signatories"].map(key => (
                 <div key={key}>
                   <label className="text-sm font-bold text-gray-700 block mb-2 capitalize">
-                    {key.replace(/_/g, ' ')}
+                    {fw[key] || key.replace(/_/g, " ")}
                   </label>
                   <div className="relative">
                     <input
@@ -965,7 +981,7 @@ return (
             {/* Company Name */}
             <input
               name="companyName"
-              placeholder="Company Name"
+              placeholder={fw.company_name || "Company Name"}
               value={form.companyName}
               onChange={handleChange}
               className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200 disabled:opacity-50"
@@ -976,7 +992,7 @@ return (
             {/* Company Description */}
             <textarea
               name="companyDescription"
-              placeholder="Company Description"
+              placeholder={fw.company_description || "Company Description"}
               value={form.companyDescription}
               onChange={handleChange}
               rows="3"
@@ -990,7 +1006,7 @@ return (
               type="tel"
               name="contactMobile"
               maxLength="12"
-              placeholder="Contact Mobile"
+              placeholder={fw.contact_mobile || "Contact Mobile"}
               value={form.contactMobile}
               onChange={handleChange}
               className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200/60 bg-white/50 text-sm sm:text-base placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.05)] transition-all duration-200 disabled:opacity-50"
@@ -1001,7 +1017,7 @@ return (
             {/* SPECIALTIES DROPDOWN */}
             <div className="relative" style={{ minWidth: 0 }}>
               <label className="font-semibold text-gray-900 block mb-2 sm:mb-3 text-sm sm:text-base break-words">
-                Specialties
+                {fw.specialties || "Specialties"}
               </label>
 
               <button
@@ -1072,7 +1088,7 @@ return (
             {/* SOCIAL MEDIA */}
             <div>
               <label className="font-semibold text-gray-900 block mb-2 sm:mb-3 text-sm sm:text-base break-words">
-                Social Media
+                {fw.social_media || "Social Media"}
               </label>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 w-full">
@@ -1107,20 +1123,20 @@ return (
 
             {/* BUTTONS */}
             <div className="flex flex-col md:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
-              <button
-                type="button"
-                onClick={handleSave}
-                className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                    Saving...
-                  </span>
-                ) : (
-                  "Save Settings"
-                )}
-              </button>
+            <button
+  type="button"
+  onClick={handleSave}
+  className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+>
+  {isLoading ? (
+    <span className="flex items-center justify-center">
+      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+      {fw.saving || "Saving..."}
+    </span>
+  ) : (
+    fw.save_settings || "Save Settings"
+  )}
+</button>
 
               {/* <button
                 type="button"
@@ -1135,7 +1151,7 @@ return (
                 onClick={() => setShowDeleteAlert("confirm")}
                 className="flex-1 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold text-sm sm:text-base hover:from-red-600 hover:to-red-700 transition-all duration-200 transform shadow-lg shadow-red-500/30 hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                Delete All
+                {fw.delete_all || "Delete All"}
               </button>
             </div>
           </form>

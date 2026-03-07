@@ -411,12 +411,10 @@ export default function Navbar() {
             )}
 
             {/*  Language - Hidden for company */}
-          {!isAuthenticated && (
-  <LanguageToggle
-    toggleLanguage={toggleLanguage}
-    language={i18n.language}
-  />
-)}
+<LanguageToggle
+  toggleLanguage={toggleLanguage}
+  language={i18n.language}
+/>
 
             {/*  Avatar Dropdown with Animated Hamburger */}
             <div className="relative customer-account-container flex items-center gap-2">

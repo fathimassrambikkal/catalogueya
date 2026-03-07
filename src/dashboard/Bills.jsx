@@ -6,7 +6,8 @@ import PaidBills from "./PaidBills";
 
 import UnpaidBills from "./UnpaidBills";
 import DraftBills from "./DraftBills";
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 
 import {
   getPendingBills,
@@ -18,6 +19,11 @@ import {
 const Bills = ({ companyId, companyInfo, products }) => {
   const [activePage, setActivePage] = useState("create");
   const [editingBillId, setEditingBillId] = useState(null);
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
+
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
 
   const [counts, setCounts] = useState({
     pending: 0,
@@ -69,12 +75,18 @@ const Bills = ({ companyId, companyInfo, products }) => {
   };
 
   const tabs = [
-    { id: "create", label: "CREATING", count: null, color: "bg-blue-600" }, 
-    { id: "pending", label: "PENDING", count: counts.pending, color: "bg-gray-400" },
-    { id: "unpaid", label: "UNPAID", count: counts.unpaid, color: "bg-gray-400" },
-    { id: "past", label: "PAID", count: counts.past, color: "bg-gray-400" },
-    
-  ];
+  { id: "create", label: fw.creating || "Creating", count: null },
+  { id: "pending", label: fw.pending || "Pending", count: counts.pending },
+  { id: "unpaid", label: fw.unpaid || "Unpaid", count: counts.unpaid },
+  { id: "past", label: fw.paid || "Paid", count: counts.past }
+];
+
+
+const activeIndex = tabs.findIndex((tab) => tab.id === activePage);
+const indicatorPosition = isRTL
+  ? tabs.length - 1 - activeIndex
+  : activeIndex;
+
 
   const renderContent = () => {
     switch (activePage) {
@@ -103,7 +115,7 @@ return (
     {/* Header */}
     <div className="flex items-center justify-between px-4 sm:px-8 lg:px-16 py-4 sm:py-6">
       <h1 className="text-lg sm:text-2xl lg:text-3xl font-semibold text-gray-900 tracking-tight mt-16 md:mt-4">
-        Bills Status
+        {fw.bills_status || "Bills Status"}
       </h1>
 
       <button
@@ -123,9 +135,7 @@ return (
           className="absolute top-1 bottom-1 left-1 rounded-full bg-blue-500 shadow-sm transition-all duration-300 ease-in-out"
           style={{
             width: `calc((100% - 8px) / ${tabs.length})`,
-            transform: `translateX(${
-              tabs.findIndex((tab) => tab.id === activePage) * 100
-            }%)`,
+           transform: `translateX(${indicatorPosition * 100}%)`,
           }}
         />
 

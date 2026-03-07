@@ -4,6 +4,7 @@ import { Send, Paperclip, Check, CheckCheck } from "lucide-react";
 import { FaUserPlus } from "react-icons/fa";
 import LinkPreview from "../components/LinkPreview";
 import { getContacts } from "../companyDashboardApi";
+import { useFixedWords } from "../hooks/useFixedWords";
 
 const extractUrl = (text) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -30,7 +31,8 @@ export default function ChatWindow({
   const messagesEndRef = useRef(null);
   const [isAdded, setIsAdded] = useState(false);
   const [contacts, setContacts] = useState([]);
-
+const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   useEffect(() => {
     getContacts().then(res => {
       const list = res.data?.data || res.data || [];
@@ -58,11 +60,13 @@ export default function ChatWindow({
         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
           <Send className="text-gray-300 ml-1" size={32} />
         </div>
-        <p>Select a conversation to start messaging</p>
+        <p>{fw.select_conversation || "Select a conversation to start messaging"}</p>
       </div>
     );
   }
 
+
+  const isRTL = document?.dir === "rtl";
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
 
@@ -123,8 +127,8 @@ export default function ChatWindow({
               }`}
             >
               {selectedChat.other_participant_status === "online"
-                ? "Online"
-                : "Offline"}
+                ? (fw.online || "Online")
+: (fw.offline || "Offline")}
             </span>
           </div>
         </div>
@@ -134,7 +138,7 @@ export default function ChatWindow({
           {isAdded ? (
             <div className="flex items-center  bg-blue-500 text-white p-2  hover:bg-blue-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium">
               
-              <span>Added</span>
+              <span>{fw.added || "Added"}</span>
             </div>
           ) : (
               <button
@@ -145,7 +149,7 @@ export default function ChatWindow({
                 className="flex items-center bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-xs sm:text-sm shadow whitespace-nowrap"
               >
                 <FaUserPlus size={14} />
-                <span className="inline ml-1">Add</span>
+                <span className="inline ml-1">{fw.add || "Add"}</span>
               </button>
           )}
         </div>
@@ -155,11 +159,11 @@ export default function ChatWindow({
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30">
         {loadingChat ? (
           <div className="text-center text-gray-400 text-sm mt-10">
-            Loading messages...
+             {fw.loading_messages || "Loading messages..."}
           </div>
         ) : messages?.length === 0 ? (
           <div className="text-center text-gray-400 text-sm mt-10">
-            No messages yet
+            {fw.no_messages || "No messages yet"}
           </div>
         ) : (
           messages.map((msg, i) => {
@@ -225,7 +229,7 @@ export default function ChatWindow({
         isMe ? "text-blue-100" : "text-blue-500"
       }`}
     >
-      {att.name || `Attachment ${idx + 1}`}
+      {att.name || `${fw.attachment || "Attachment"} ${idx + 1}`}
     </a>
   );
 })}
@@ -298,12 +302,12 @@ export default function ChatWindow({
             </div>
           )}
 
-          <textarea
+          <textarea  dir={isRTL ? "rtl" : "ltr"}
             value={messageBody}
             onChange={(e) =>
               setMessageBody(e.target.value)
             }
-            placeholder="Type a message..."
+            placeholder={fw.type_message || "Type a message..."}
             className="bg-transparent border-none focus:ring-0 focus:outline-none text-sm resize-none max-h-32"
             rows="1"
             onKeyDown={(e) => {

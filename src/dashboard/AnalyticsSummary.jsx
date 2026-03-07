@@ -7,28 +7,32 @@ import {
   ReviewIcon,
   ShareIcon,
 } from "./AnalyticsIcons";
+import { useFixedWords } from "../hooks/useFixedWords";
 
 const iconMap = {
-  Products: ProductIcon,
-  Views: ViewsIcon,
-  Followers: FollowersIcon,
-  Favourite: HeartIcon,
-  Reviews: ReviewIcon,
-  Shares: ShareIcon,
+  products: ProductIcon,
+  views: ViewsIcon,
+  followers: FollowersIcon,
+  favourite: HeartIcon,
+  reviews: ReviewIcon,
+  shares: ShareIcon,
 };
 
 function AnalyticsSummary({ range, data, hideFollowers = false }) {
+
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   const summaryData = useMemo(() => {
     const metrics = data?.summary || data || {};
 
-    const items = [
-      { key: "products", label: "Products", value: metrics.products_count || metrics.products || 0, trend: "up" },
-      { key: "views", label: "Views", value: metrics.views_count || metrics.views || 0, trend: metrics.views_trend || "up" },
-      { key: "followers", label: "Followers", value: metrics.followers_count || metrics.followers || 0, trend: metrics.followers_trend || "up" },
-      { key: "favourite", label: "Favourite", value: metrics.favourites_count || metrics.favourites || metrics.favourite || 0, trend: metrics.favourites_trend || "down" },
-      { key: "reviews", label: "Reviews", value: metrics.reviews_count || metrics.reviews || 0, trend: metrics.reviews_trend || "down" },
-      { key: "shares", label: "Shares", value: metrics.shares_count || metrics.shares || 0, trend: "neutral" },
-    ];
+   const items = [
+  { key: "products", label: fw.products || "Products", value: metrics.products_count || metrics.products || 0, trend: "up" },
+  { key: "views", label: fw.views || "Views", value: metrics.views_count || metrics.views || 0, trend: metrics.views_trend || "up" },
+  { key: "followers", label: fw.followers || "Followers", value: metrics.followers_count || metrics.followers || 0, trend: metrics.followers_trend || "up" },
+  { key: "favourite", label: fw.favourite || "Favourite", value: metrics.favourites_count || metrics.favourites || metrics.favourite || 0, trend: metrics.favourites_trend || "down" },
+  { key: "reviews", label: fw.reviews || "Reviews", value: metrics.reviews_count || metrics.reviews || 0, trend: metrics.reviews_trend || "down" },
+  { key: "shares", label: fw.shares || "Shares", value: metrics.shares_count || metrics.shares || 0, trend: "neutral" },
+];
 
     return hideFollowers
       ? items.filter(item => item.key !== "followers")
@@ -41,14 +45,14 @@ function AnalyticsSummary({ range, data, hideFollowers = false }) {
     
     <div className="mb-6">
       <h3 className="text-sm font-semibold text-gray-600">
-        Summary
+        {fw.summary || "Summary"}
       </h3>
-      <p className="text-xs text-gray-400">{range}</p>
+      <p className="text-xs text-gray-400">{range === "Last 7 days" ? fw.last_7_days || range : range}</p>
     </div>
 
     <div className="flex-1 space-y-3">
       {summaryData.map((item) => {
-        const Icon = iconMap[item.label] || ProductIcon;
+        const Icon = iconMap[item.key] || ProductIcon;
 
         return (
           <div

@@ -2,7 +2,8 @@ import React, { useMemo, lazy, Suspense, useState, useEffect } from "react";
 import { getImageUrl } from "../companyDashboardApi";
 import { BackIcon } from "./CompanySvg";
 import { getProductReviews } from "../api";
-
+import { useTranslation } from "react-i18next";
+import { useFixedWords } from "../hooks/useFixedWords";
 /* ===== Lazy-loaded Analytics Cards ===== */
 const AnalyticsRevenue = lazy(() => import("./AnalyticsRevenue"));
 const AnalyticsSummary = lazy(() => import("./AnalyticsSummary"));
@@ -13,6 +14,8 @@ import AnalyticsCalendar from "./AnalyticsCalendar";
 export default function AnalyticsProductDetail({ product, onBack, range, setRange, summaryData }) {
     const [reviewData, setReviewData] = useState(null);
     const [loadingReviews, setLoadingReviews] = useState(true);
+    const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
 
     // Derived Data from product stats
     const productPrice = parseFloat(product.price || 0);
@@ -42,10 +45,10 @@ export default function AnalyticsProductDetail({ product, onBack, range, setRang
     const productImage = getImageUrl(product.image);
 
 return (
-  <div className="h-full flex flex-col gap-6 animate-in fade-in duration-500 relative p-4 sm:p-6 md:p-8">
+ <div className="h-full flex flex-col gap-6 animate-in fade-in duration-500 relative p-4 sm:p-6 md:p-8 max-w-full overflow-x-hidden">
 
     {/* ================= SMALL TOP COVER ================= */}
-    <div className="relative w-full h-28 sm:h-36 md:h-40  overflow-hidden shadow-md">
+    <div className="relative w-full h-28 sm:h-36 md:h-40 overflow-hidden shadow-md max-w-full">
 
       {productImage ? (
         <img
@@ -60,12 +63,12 @@ return (
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="absolute inset-0 flex items-center px-6 sm:px-10">
-        <button
-          onClick={onBack}
-          className="p-2 sm:p-3 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-white/30 transition-all border border-white/20 active:scale-95"
-        >
-          <BackIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
+          <button
+    onClick={onBack}
+    className="absolute left-6 sm:left-10 p-2 sm:p-3 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-white/30 transition-all border border-white/20 active:scale-95"
+  >
+    <BackIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+  </button>
 
         <h1 className="ml-4 text-lg sm:text-2xl md:text-3xl font-bold text-white tracking-tight">
           {product.name}
@@ -80,7 +83,7 @@ return (
       {/* Left Title */}
       <div>
         <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900">
-          Detail Analysis
+          {fw.analytics || "Analytics"}
         </h2>
        
       </div>
@@ -94,15 +97,14 @@ return (
 
 
     {/* ================= REVENUE + SUMMARY ================= */}
-    <div
-      className="
-        grid 
-        grid-cols-1 
-        lg:grid-cols-[1fr_1.5fr] 
-        gap-4 sm:gap-5 md:gap-6
-        items-stretch
-      "
-    >
+  <div className="
+grid
+grid-cols-1
+lg:grid-cols-2
+gap-4 sm:gap-5 md:gap-6
+items-stretch
+max-w-full
+">
 
       {/* Revenue */}
       <EnterpriseCard className="p-5 sm:p-6">
@@ -132,10 +134,10 @@ return (
 
         <div className="mb-4">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-            Customer Reviews
+           {fw.customer_reviews || "Customer Reviews"}
           </h2>
           <p className="text-xs text-gray-400 mt-1">
-            Recent feedback for this product
+           {fw.real_feedback_customers || "Recent feedback for this product"}
           </p>
         </div>
 

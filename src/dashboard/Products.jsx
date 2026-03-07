@@ -24,7 +24,8 @@ import {
 } from "../companyDashboardApi";
 import SendNotificationModal from "./SendNotificationModal";
 import NotificationHistoryModal from "./NotificationHistoryModal";
-
+import { useTranslation } from "react-i18next";
+import { useFixedWords } from "../hooks/useFixedWords";
 
 export default function Products({
   companyId,
@@ -41,6 +42,11 @@ export default function Products({
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contacts, setContacts] = useState([]);
 const [deleteProductId, setDeleteProductId] = useState(null);
+
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
+const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   const [formData, setFormData] = useState({
     id: null,
     name: "",
@@ -349,12 +355,12 @@ const [deleteProductId, setDeleteProductId] = useState(null);
     if (isSubmitting) return;
 
     if (!formData.name.trim() || !formData.price || !formData.quantity || formData.category_ids.length === 0) {
-      showToast("Please fill focus fields (Name, Price, Quantity, Category)", { type: 'error' });
+      showToast(fw.required_fields || "Please fill required fields", { type: 'error' });
       return;
     }
 
     if (formData.media.length === 0 && (!formData.existingMedia || formData.existingMedia.length === 0)) {
-      showToast("Please upload at least one image/video (albums)", { type: 'error' });
+      showToast("Please upload at least one image", { type: 'error' });
       return;
     }
 
@@ -479,29 +485,50 @@ const [deleteProductId, setDeleteProductId] = useState(null);
     const isHidden = p.status === 'inactive' || p.status === 'hidden' || p.status === '0' || p.status === 0;
     const imgSrc = getProductImage(p);
 
-    let tags = [];
-    try {
-      if (p.special_marks) {
-        const tagIds = typeof p.special_marks === 'string' ? JSON.parse(p.special_marks) : p.special_marks;
-        if (Array.isArray(tagIds)) {
-          tags = tagIds.map(tid => {
-            let name = "";
-            if (typeof tid === 'object' && tid !== null) {
-              name = tid.name || tid.name_en || tid.title || "";
-            } else {
-              // Only show if it exists in our filtered availableTags list so we don't show "sale" tags
-              name = availableTags.find(t => String(t.id) === String(tid))?.name;
-            }
+  let tags = [];
 
-            if (name) {
-              const n = name.toLowerCase();
-              if (n.includes('sale') || n.includes('limited stock') || n.includes('out of stock') || n.includes('out in stock')) return null;
-            }
-            return name;
-          }).filter(Boolean);
-        }
-      }
-    } catch (e) { }
+try {
+  if (p.special_marks) {
+    const tagIds =
+      typeof p.special_marks === "string"
+        ? JSON.parse(p.special_marks)
+        : p.special_marks;
+
+    if (Array.isArray(tagIds)) {
+      tags = tagIds
+        .map((tid) => {
+          let name = "";
+
+          // If API sends object
+          if (typeof tid === "object" && tid !== null) {
+            name = tid.name || tid.name_en || tid.title || "";
+          } 
+          // If API sends id
+          else {
+            const foundTag = availableTags.find(
+              (t) => String(t.id) === String(tid)
+            );
+            name = foundTag?.name || "";
+          }
+
+          if (!name) return null;
+
+          // convert to fixed_words key format
+          const key = name.toLowerCase().replace(/\s+/g, "_");
+
+          // ONLY show if exists in fixed_words
+          if (fw[key]) {
+            return fw[key];
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+    }
+  }
+} catch (e) {
+  console.error("Tag parsing error:", e);
+}
 
    return (
   <article
@@ -514,11 +541,11 @@ const [deleteProductId, setDeleteProductId] = useState(null);
         <img
           src={imgSrc}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-          alt={p.name_en || p.name}
+          alt={isRTL ? (p.name_ar || p.name_en) : (p.name_en || p.name_ar)}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-gray-200 text-xs">
-          No image
+          {fw.no_image || "No image"}
         </div>
       )}
 
@@ -532,7 +559,7 @@ const [deleteProductId, setDeleteProductId] = useState(null);
         {isHidden && (
           <span className="px-1.5 py-0.5 text-[8px] font-medium bg-white/80 backdrop-blur-sm text-gray-500 rounded-full border border-gray-200/50 flex items-center gap-0.5">
             <div className="w-1 h-1 rounded-full bg-gray-400" />
-            Hidden
+            {fw.hidden || "Hidden"}
           </span>
         )}
       </div>
@@ -540,13 +567,15 @@ const [deleteProductId, setDeleteProductId] = useState(null);
 
     {/* Content Section - Ultra compact */}
     <div className="p-2 flex-grow flex flex-col">
-      <h3 className="font-medium text-xs text-gray-900 line-clamp-1 mb-0.5">
-        {p.name_en || p.name}
-      </h3>
+   <h3 className="font-medium text-xs text-gray-900 line-clamp-1 mb-0.5">
+  {isRTL
+    ? (p.name_ar || p.name_en || p.name)
+    : (p.name_en || p.name_ar || p.name)}
+</h3>
       
       <div className="flex items-center justify-between text-[10px] mb-1.5">
-        <span className="font-medium text-gray-900">QAR {p.price}</span>
-        <span className="text-gray-400">Stock:{p.quantity}</span>
+        <span className="font-medium text-gray-900">{fw.qar} {p.price}</span>
+        <span className="text-gray-400">{fw.quantity || "Stock"}:{p.quantity}</span>
       </div>
 
       {/* Actions - Minimal */}
@@ -555,14 +584,14 @@ const [deleteProductId, setDeleteProductId] = useState(null);
           onClick={() => setEditingProduct(p)}
           className="text-[10px] text-blue-500 hover:text-blue-600 font-medium px-1 py-0.5 rounded-md hover:bg-blue-50/50 transition-colors"
         >
-          Edit
+          {fw.edit || "Edit"}
         </button>
         
         <button
           onClick={() => setDeleteProductId(p.id)}
           className="text-[10px] text-red-400 hover:text-red-500 font-medium px-1 py-0.5 rounded-md hover:bg-red-50/50 transition-colors"
         >
-          Delete
+          {fw.delete || "Delete"}
         </button>
         
         <button
@@ -611,7 +640,7 @@ return (
       w-full
       sm:w-auto
     ">
-      Our Products ({products.length})
+      {fw.our_products} ({products.length})
     </h2>
 {/* right content */}
 <div className="
@@ -647,13 +676,17 @@ return (
           min-w-0
         "
       >
-        <option value="all">All Products</option>
-        <option value="back_in_stock">Back in Stock</option>
-        {availableTags.map(tag => (
-          <option key={tag.id} value={String(tag.id)}>
-            {tag.name}
-          </option>
-        ))}
+       <option value="all">{fw.all_products}</option>
+<option value="back_in_stock">{fw.back_in_stock || "Back in Stock"}</option>
+     {availableTags.map(tag => {
+  const key = tag.name?.toLowerCase().replace(/\s+/g, "_");
+
+  return (
+    <option key={tag.id} value={String(tag.id)}>
+      {fw[key] || tag.name}
+    </option>
+  );
+})}
       </select>
 
       {/* Add Product Button */}
@@ -684,7 +717,7 @@ return (
         "
       >
         <FaPlus className="text-sm shrink-0" />
-        <span className="truncate">Add Product</span>
+        <span className="truncate">{fw.add_product}</span>
       </button>
 
     </div>
@@ -737,7 +770,7 @@ return (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-px bg-white flex-1"></div>
-              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Low Stock (≤5)</span>
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{fw.low_in_stock || "Low Stock"}</span>
               <div className="h-px bg-white flex-1"></div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
@@ -745,7 +778,7 @@ return (
             </div>
             {products.filter(p => (Number(p.quantity) || 0) <= 5).length === 0 && (
               <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-                <p className="text-xs text-gray-400">No low stock items</p>
+                <p className="text-xs text-gray-400">{fw.no_products_found || "No products found"}</p>
               </div>
             )}
           </div>
@@ -762,7 +795,7 @@ return (
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center mb-2 text-gray-300">
                 <FaPlus className="text-xs" />
               </div>
-              <span className="text-gray-400 text-[10px] font-medium">Add Product</span>
+              <span className="text-gray-400 text-[10px] font-medium">{fw.add_product}</span>
             </div>
           </div>
         ) : (
@@ -775,7 +808,7 @@ return (
                   if (tagProducts.length === 0) {
                     return (
                       <div key={tag.id} className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-                        <p className="text-xs text-gray-400">No products found for "{tag.name}"</p>
+                        <p className="text-xs text-gray-400">{fw.no_products_found || "No products found"} "{tag.name}"</p>
                       </div>
                     );
                   }
@@ -811,7 +844,9 @@ return (
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center shrink-0">
           <h2 className="text-sm font-medium text-gray-900">
-            {formData.id ? "Edit Product" : "New Product"}
+            {formData.id
+  ? (fw.edit_product || "Edit Product")
+  : (fw.add_product || "New Product")}
           </h2>
           <button
             className="text-gray-400 hover:text-gray-500 w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-50 transition-colors"
@@ -827,8 +862,9 @@ return (
           {/* SECTION: Upload Images */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Images</h3>
-              <span className="text-[9px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">Main first</span>
+              <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">{fw.images || "Images"}</h3>
+              <span className="text-[9px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">  {fw.main_first}
+</span>
             </div>
 
             <div className="flex gap-2 items-start overflow-x-auto pb-2 scrollbar-none">
@@ -839,7 +875,7 @@ return (
                 <div className="w-5 h-5 rounded bg-white flex items-center justify-center mb-0.5">
                   <FaPlus className="text-[8px] text-gray-400" />
                 </div>
-                <span className="text-[7px] text-gray-400">Add</span>
+                <span className="text-[7px] text-gray-400">{fw.add || "Add"}</span>
                 <input id="album-upload" type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleMediaFiles(e.target.files)} />
               </label>
 
@@ -862,12 +898,12 @@ return (
 
           {/* SECTION: Product Information */}
           <div className="space-y-3">
-            <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Details</h3>
+            <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">{fw.product_details || "Details"}</h3>
 
             <div className="space-y-2">
               <input
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
-                placeholder="Product name"
+                placeholder={fw.name || "Product name"}
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
               />
@@ -878,7 +914,7 @@ return (
             type="text"
             inputMode="decimal" 
             className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
-            placeholder="Price"
+            placeholder={fw.price || "Price"}
             value={formData.price}
             onChange={(e) =>
               setFormData({ ...formData, price: e.target.value })
@@ -887,7 +923,7 @@ return (
                         <input
                 type="number"
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
-                placeholder="Stock"
+                placeholder={fw.quantity || "Stock"}
                 value={formData.quantity}
                 onChange={e => setFormData({ ...formData, quantity: e.target.value })}
               />
@@ -896,7 +932,7 @@ return (
             <textarea
               rows="3"
               className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400 resize-none"
-              placeholder="Description (optional)"
+              placeholder={fw.description || "Description"}
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
             />
@@ -904,7 +940,7 @@ return (
 {/* SECTION: Category */}
 <div className="space-y-2">
   <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-    Category
+   {fw.category}
   </h3>
 
   <div className="relative">
@@ -933,7 +969,7 @@ return (
         cursor-pointer
       "
     >
-      <option value="">Select category</option>
+      <option value="">{fw.select_category || "Select category"}</option>
       {categories.map((cat) => (
         <option key={cat.id} value={String(cat.id)}>
           {cat.title}
@@ -970,65 +1006,64 @@ return (
      {/* SECTION: Tags */}
 <div className="space-y-2">
   <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-    Highlights
+    {fw.product_highlights}
   </h3>
 
   <div className="flex flex-wrap gap-2">
-    {availableTags.map(tag => {
-      const tid = String(tag.id);
-      const isActive = formData.tags.includes(tid);
+{availableTags.map(tag => {
+  const tid = String(tag.id);
+  const isActive = formData.tags.includes(tid);
 
-      return (
-        <button
-          key={tag.id}
-          onClick={() => {
-            const exists = formData.tags.includes(tid);
-            const newTags = exists
-              ? formData.tags.filter(t => t !== tid)
-              : [...formData.tags, tid];
+  // convert tag name to fixed_words key
+  const key = tag.name?.toLowerCase().replace(/\s+/g, "_");
 
-            setFormData({ ...formData, tags: newTags });
-          }}
-          className={`
-            flex items-center gap-1.5
-            px-2.5 py-1
-            rounded-full
-            text-[10px]
-            font-medium
-            border
-            transition-all
-            duration-200
-            ${
-              isActive
-                ? "bg-blue-50 text-blue-600 border-blue-200"
-                : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-gray-100"
-            }
-          `}
-        >
-          {/* Small Check Indicator */}
-          <span
-            className={`
-              w-3 h-3
-              rounded-full
-              border
-              flex items-center justify-center
-              transition-all
-              ${
-                isActive
-                  ? "bg-blue-500 border-blue-500"
-                  : "border-gray-300"
-              }
-            `}
-          >
-            {isActive && (
-              <FaCheck className="text-white text-[7px]" />
-            )}
-          </span>
+  return (
+    <button
+      key={tag.id}
+      onClick={() => {
+        const exists = formData.tags.includes(tid);
+        const newTags = exists
+          ? formData.tags.filter(t => t !== tid)
+          : [...formData.tags, tid];
 
-          {tag.name}
-        </button>
-      );
-    })}
+        setFormData({ ...formData, tags: newTags });
+      }}
+      className={`
+        flex items-center gap-1.5
+        px-2.5 py-1
+        rounded-full
+        text-[10px]
+        font-medium
+        border
+        transition-all
+        duration-200
+        ${
+          isActive
+            ? "bg-blue-50 text-blue-600 border-blue-200"
+            : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-gray-100"
+        }
+      `}
+    >
+      <span
+        className={`
+          w-3 h-3
+          rounded-full
+          border
+          flex items-center justify-center
+          ${
+            isActive
+              ? "bg-blue-500 border-blue-500"
+              : "border-gray-300"
+          }
+        `}
+      >
+        {isActive && <FaCheck className="text-white text-[7px]" />}
+      </span>
+
+      {fw[key] || tag.name}
+    </button>
+  );
+})}
   </div>
 </div>
 
@@ -1040,7 +1075,7 @@ return (
             onClick={closeModal}
             className="flex-1 py-2 bg-gray-50 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
           >
-            Cancel
+            {fw.cancel || "Cancel"}
           </button>
           <button 
             onClick={handleSave}
@@ -1052,12 +1087,12 @@ return (
             {isSubmitting ? (
               <>
                 <div className="w-3 h-3 border-1.5 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Saving</span>
+                <span>{fw.save || "Saving"}</span>
               </>
             ) : (
               <>
                 <FaCheck className="text-[10px]" />
-                {formData.id ? "Update" : "Save"}
+                {formData.id ? (fw.update || "Update") : (fw.save || "Save")}
               </>
             )}
           </button>
@@ -1071,11 +1106,11 @@ return (
     <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5 animate-in fade-in zoom-in duration-300">
       
       <h3 className="text-sm font-semibold text-gray-900 mb-2">
-        Delete Product?
+        {fw.delete_product || "Delete Product?"}
       </h3>
 
       <p className="text-xs text-gray-500 mb-4">
-        This action cannot be undone.
+        {fw.delete_warning || "This action cannot be undone."}
       </p>
 
       <div className="flex gap-2">
@@ -1083,14 +1118,14 @@ return (
           onClick={() => setDeleteProductId(null)}
           className="flex-1 py-2 bg-gray-50 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100"
         >
-          Cancel
+          {fw.cancel || "Cancel"}
         </button>
 
         <button
           onClick={handleDelete}
           className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600"
         >
-          Delete
+         {fw.delete || "Delete"}
         </button>
       </div>
     </div>
