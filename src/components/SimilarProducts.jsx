@@ -35,7 +35,7 @@ const SimilarProducts = memo(function SimilarProducts({
       </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {products.map((sp) => {
+        {products.slice(0, 4).map((sp) => {
           const isFav = favourites.some((f) => f.id === sp.id);
 
           return (
@@ -86,40 +86,33 @@ const SimilarProducts = memo(function SimilarProducts({
               </button>
 
               {/* ✅ Image with SmartImage */}
-              <div className="relative w-full h-[180px] sm:h-[220px] overflow-hidden rounded-t-3xl">
-                <SmartImage
-                  image={sp.image}
-                  alt={sp.name}
-                  className="
-                     w-full h-full object-cover 
-      transition-transform duration-500
-      group-hover:scale-105
-      border-b border-white/20
-                  "
-                  loading="lazy"
-                  decoding="async"
-                onError={(e) => {
-                warn("SimilarProducts: image failed to load", {
-                  productId: sp.id,
-                  image: sp.image,
-                });
-                e.target.src = "/api/placeholder/400/400";
-              }}
+         {/* Image */}
+<div className="relative w-full h-[120px] xs:h-[150px] sm:h-[190px] lg:h-[210px] overflow-hidden rounded-t-3xl">
+  <SmartImage
+    image={sp.image}
+    alt={sp.name}
+    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 border-b border-white/20"
+    loading="lazy"
+    decoding="async"
+    onError={(e) => {
+      warn("SimilarProducts: image failed to load", {
+        productId: sp.id,
+        image: sp.image,
+      });
+      e.target.src = "/api/placeholder/400/400";
+    }}
+  />
+</div>
 
-                />
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-1 truncate
-                         text-[11px] xs:text-[10px] sm:text-[14px] md:text-xs">
-                  {sp.name}
-                </h3>
-                <span className="font-bold text-gray-900
-                            text-[10px] xs:text-[10px] sm:text-[11px] md:text-xs">
-                  {fw.qar} {sp.price}
-                </span>
-              </div>
+{/* Content */}
+<div className="p-2 sm:p-4">
+  <h3 className="font-semibold text-gray-900 mb-1 truncate text-[10px] sm:text-[13px] md:text-sm">
+    {sp.name}
+  </h3>
+  <span className="font-bold text-gray-900 text-[10px] sm:text-[12px] md:text-sm">
+    {fw.qar} {sp.price}
+  </span>
+</div>
             </Link>
           );
         })}

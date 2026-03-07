@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 import { getImageUrl } from "../companyDashboardApi";
 import AnalyticsGraph from "./AnalyticsGraph";
 
@@ -34,6 +34,10 @@ function AnalyticsAllProductCard({ range, data = [], onProductClick }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+const { i18n } = useTranslation();
+const isRTL = i18n.language === "ar";
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   // Process and Sort
   const processedProducts = React.useMemo(() => {
     let items = data.map(p => ({
@@ -103,10 +107,10 @@ return (
       {/* Title Section */}
       <div className="space-y-1 xs:space-y-1.5 sm:space-y-2">
         <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
-          Product's Analytics
+          {fw.products_analytics || "Product's Analytics"}
         </h3>
         <p className="text-[10px] xs:text-xs sm:text-sm text-blue-500">
-          YOUR TOP PRODUCT
+         {fw.your_top_product || "Your Top Product"}
         </p>
         <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400">
           {typeof range === "string" ? range : "Custom Range"}
@@ -126,7 +130,7 @@ return (
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            Highest 
+            {fw.highest || "Highest"}
           </button>
           <button
             onClick={() => handleOrderChange('asc')}
@@ -136,20 +140,20 @@ return (
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            Lowest
+            {fw.lowest || "Lowest"}
           </button>
         </div>
 
         {/* View Toggle */}
         <div className="flex items-center gap-1 xs:gap-2 sm:gap-3 text-[9px] xs:text-[10px] sm:text-xs text-gray-500">
-          <span className="hidden xs:inline">View</span>
+          <span className="hidden xs:inline">{fw.view || "View"}</span>
           <select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
             className="bg-gray-50 border border-gray-200 rounded-lg px-2 xs:px-3 py-1.5 xs:py-2 outline-none focus:ring-0 text-gray-700 text-[9px] xs:text-[10px] sm:text-xs w-auto"
           >
-            <option value="table">Table</option>
-            <option value="graph">Graph</option>
+            <option value="table">{fw.table || "Table"}</option>
+            <option value="graph">{fw.graph || "graph"} </option>
           </select>
         </div>
 
@@ -161,10 +165,10 @@ return (
             onChange={handleSortBy}
             className="bg-gray-50 border border-gray-200 rounded-lg px-2 xs:px-3 py-1.5 xs:py-2 outline-none focus:ring-0 text-gray-700 text-[9px] xs:text-[10px] sm:text-xs w-auto"
           >
-            <option value="views">View</option>
-            <option value="sold">Sold</option>
-            <option value="fav">Favoured</option>
-            <option value="shares">Shared</option>
+           <option value="views">{fw.views || "Views"}</option>
+          <option value="sold">{fw.sold || "sold"}</option>
+          <option value="fav">{fw.favourite || "Favourite"}</option>
+          <option value="shares">{fw.shares || "Shares"}</option>
           </select>
         </div>
 
@@ -175,18 +179,21 @@ return (
     <div className="flex-1 w-full overflow-x-hidden">
       {viewMode === 'table' ? (
         <div className="w-full">
-          <table className="w-full text-left border-collapse table-auto">
+          <table
+  dir={isRTL ? "rtl" : "ltr"}
+  className="w-full border-collapse table-auto text-left"
+>
             
             {/* Desktop Header */}
             <thead className="hidden sm:table-header-group bg-gray-50 border-b border-gray-100">
               <tr className="text-[10px] xs:text-xs uppercase tracking-wide text-gray-400">
-                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 w-8 xs:w-10 sm:w-12 text-center"></th>
-                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4">Product</th>
-                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Views</th>
-                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Sold</th>
-                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Favoured</th>
-                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Shares</th>
-                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">Details</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 w-8 xs:w-10 sm:w-12  "></th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4">{fw.product || "Product"}</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">{fw.views || "Views"}</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">{fw.sold || "sold"}</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">{fw.favourite || "Favourite"}</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">{fw.shares || "Shares"}</th>
+                <th className="px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 text-right">{fw.details|| "details"}</th>
               </tr>
             </thead>
 
@@ -194,7 +201,7 @@ return (
               {paginatedProducts.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center py-8 xs:py-12 sm:py-16 text-gray-400 text-[10px] xs:text-xs">
-                    No products found
+                    {fw.no_products_found || "No products found"}
                   </td>
                 </tr>
               ) : (
@@ -210,7 +217,11 @@ return (
 
                     {/* Product */}
                     <td className="px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5">
-                      <div className="flex gap-2 xs:gap-3 sm:gap-4 items-center">
+                      <div
+  className={`flex items-center gap-3 ${
+    isRTL ? "flex-row-reverse justify-start text-right" : "justify-start"
+  }`}
+>
                         <div className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                           <img
                             src={p.image}
@@ -226,16 +237,16 @@ return (
                       {/* Mobile Stats Grid - Shows on very small screens */}
                       <div className="grid grid-cols-2 gap-1 xs:gap-1.5 mt-2 xs:mt-3 sm:hidden text-[8px] xs:text-[10px] text-gray-500">
                         <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
-                          <span className="font-medium text-gray-700">Views:</span> {p.views}
+                          <span className="font-medium text-gray-700">{fw.views || "Views"}</span> {p.views}
                         </div>
                         <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
-                          <span className="font-medium text-gray-700">Sold:</span> {p.sold}
+                          <span className="font-medium text-gray-700">{fw.sold || "sold"}</span> {p.sold}
                         </div>
                         <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
-                          <span className="font-medium text-gray-700">Fav:</span> {p.fav}
+                          <span className="font-medium text-gray-700">{fw.favourite || "Favourite"}</span> {p.fav}
                         </div>
                         <div className="flex items-center gap-1 bg-gray-50/80 px-2 py-1 rounded">
-                          <span className="font-medium text-gray-700">Shares:</span> {p.shares}
+                          <span className="font-medium text-gray-700">{fw.shares || "Shares"}</span> {p.shares}
                         </div>
                       </div>
                     </td>
@@ -260,7 +271,7 @@ return (
                         onClick={() => onProductClick(p)}
                         className="text-[9px] xs:text-[10px] sm:text-xs text-blue-500 hover:text-blue-600 transition underline whitespace-nowrap"
                       >
-                        View 
+                       {fw.view|| "view"}
                       </button>
                     </td>
                   </tr>

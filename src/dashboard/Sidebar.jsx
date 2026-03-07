@@ -6,7 +6,8 @@ import { performLogout } from "../lib/authUtils";
 import { getBarcode } from "../api";
 import { printBarcode, getImageUrl, } from "../companyDashboardApi";
 
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 
 import {
  
@@ -64,6 +65,12 @@ const Sidebar = ({ activeTab, setActiveTab, onCloseSidebar, isMobile, companyInf
   const [loadingBarcode, setLoadingBarcode] = useState(false);
   const [showBarcode, setShowBarcode] = useState(false);
 
+    const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
+  
+  const { i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
+
   // Props now provide counts. 
   // We can keep local polling as fallback or just rely on props. 
   // For this refactor, we rely on parent "CompanyDashboard" to provide these values.
@@ -77,23 +84,17 @@ const Sidebar = ({ activeTab, setActiveTab, onCloseSidebar, isMobile, companyInf
   const handleSignOut = () =>
     performLogout(dispatch, navigate, userType);
 
-  const tabs = [
-    { label: "Products", icon: <FaTags className="w-3 h-3" /> },
-    { label: "Product Highlights", icon: <FaShoppingCart className="w-3 h-3" /> },
-    { label: "Analytics", icon: <FaChartLine className="w-3 h-3" /> },
-    { label: "Contacts", icon: <FaUsers className="w-4 h-4" /> },
-    { label: "Messages", icon: <FaCommentDots className="w-4 h-4" /> },
-    { label: "Followers", icon: <FaUserFriends className="w-4 h-3" /> },
-    { label: "Reviews", icon: <FaStar className="w-3 h-3" /> },
-    // { label: "Notifications", icon: <FaBell className="w-3 h-3" /> },
-
-    {
-      label: "Bills",
-      icon: <IconBills className="w-3 h-3" />,
-    },
-
-    { label: "Settings", icon: <FaCog className="w-3 h-3" /> },
-  ];
+const tabs = [
+  { key: "products", label: fw.products || "Products", icon: <FaTags className="w-3 h-3" /> },
+  { key: "highlights", label: fw.product_highlights || "Product Highlights", icon: <FaShoppingCart className="w-3 h-3" /> },
+  { key: "analytics", label: fw.analytics || "Analytics", icon: <FaChartLine className="w-3 h-3" /> },
+  { key: "contacts", label: fw.contacts || "Contacts", icon: <FaUsers className="w-4 h-4" /> },
+  { key: "messages", label: fw.messages || "Messages", icon: <FaCommentDots className="w-4 h-4" /> },
+  { key: "followers", label: fw.followers || "Followers", icon: <FaUserFriends className="w-4 h-3" /> },
+  { key: "reviews", label: fw.reviews || "Reviews", icon: <FaStar className="w-3 h-3" /> },
+  { key: "bills", label: fw.bills || "Bills", icon: <IconBills className="w-3 h-3" /> },
+  { key: "settings", label: fw.settings || "Settings", icon: <FaCog className="w-3 h-3" /> },
+];
 
   const getFollowersCount = () => unreadCounts.followers || 0;
   const getReviewsCount = () => unreadCounts.reviews || 0;
@@ -142,7 +143,7 @@ const inactiveTabStyles =
   }, [showBarcode, companyId]);
 
   return (
-    <aside className="w-52 h-full bg-white/90 backdrop-blur-sm border-r border-gray-200">
+    <aside className="w-52 h-full bg-white border-r border-gray-200">
       {/* GRID LAYOUT */}
       <div className="h-full grid grid-rows-[auto_1fr_auto] px-3 py-3">
 
@@ -160,11 +161,11 @@ const inactiveTabStyles =
             </div>
 
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold text-gray-900 truncate">
+              <h2 className="text-sm font-semibold text-gray-900 leading-tight line-clamp-2 break-words">
                 {companyInfo?.companyName || user?.name || user?.company_name || "Company"}
               </h2>
               <p className="text-[11px] text-gray-500 truncate">
-                Business Account
+               {fw.business || "Business"}
               </p>
             </div>
 
@@ -183,13 +184,13 @@ const inactiveTabStyles =
         {/* ================= MENU ================= */}
         <nav className="flex flex-col gap-1 pt-3">
           {tabs.map((t) => {
-            const isActive = activeTab === t.label;
+            const isActive = activeTab === t.key;
             const isBills = t.label === "Bills";
 
             return (
               <button
                 key={t.label}
-                onClick={() => setActiveTab(t.label)}
+                onClick={() => setActiveTab(t.key)}
                 className={`group flex items-center gap-1 p-2 rounded-xl transition-all duration-200 ease-out w-full ${isActive ? activeTabStyles : inactiveTabStyles
                   }`}
               >
@@ -262,7 +263,7 @@ const inactiveTabStyles =
             }`}
           />
         </div>
-              <span className="text-[13px] font-medium">Barcode</span>
+              <span className="text-[13px] font-medium">{fw.barcode || "Barcode"}</span>
               <FaChevronDown
                 className={`ml-auto w-3 h-3 transition-transform ${showBarcode ? "rotate-180" : ""
                   }`}
@@ -287,7 +288,7 @@ const inactiveTabStyles =
             onClick={handleDownloadBarcode}
             className="w-full py-1.5 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition"
           >
-            Download
+            {fw.download || "Download"}
           </button>
         </>
       ) : (
@@ -309,7 +310,7 @@ const inactiveTabStyles =
           <div className="w-5 h-5 rounded-md flex items-center justify-center bg-blue-50">
             <FaSignOutAlt className="w-4 h-4 text-gray-600 hover:text-red-500" />
           </div>
-          <span className="text-[13px] font-medium">Log out</span>
+          <span className="text-[13px] font-medium">{fw.logout || "Logout"}</span>
         </button>
         </div>
       

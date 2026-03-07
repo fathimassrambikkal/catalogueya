@@ -71,6 +71,7 @@ rating: parseFloat(product.rating) || 0,
   company_id: product.company_id?.id,
   company_name: product.company_name?.name || "Company",
   category_id: product.category_id,
+   whatsapp: product.whatsapp || null,
 }));
 
 

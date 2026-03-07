@@ -4,7 +4,7 @@ import {
   FaCheckCircle,
   FaTag
 } from "react-icons/fa";
-
+import { useTranslation } from "react-i18next";
 import {
   getCompanyProducts,
   getHighlightProducts,
@@ -16,7 +16,7 @@ import {
 } from "../companyDashboardApi";
 import { FaTimes } from "./SvgIcons";
 import { showToast } from "../utils/showToast";
-
+import { useFixedWords } from "../hooks/useFixedWords";
 export default function AddToHighlightsModalSales({
   selectedType,
   companyId,
@@ -24,6 +24,11 @@ export default function AddToHighlightsModalSales({
   onSuccess
 }) {
   const [allProducts, setAllProducts] = useState([]);
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
+
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
   const [highlightProducts, setHighlightProducts] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSending, setIsSending] = useState(false);
@@ -99,16 +104,12 @@ export default function AddToHighlightsModalSales({
   // 🔹 Confirm Add
   const handleConfirm = () => {
     if (selectedIds.length === 0) {
-      showToast("Please select at least one product", { type: "error" });
+      showToast(fw.select_one_product || "Select at least one product", { type: "error" });
       return;
     }
 
-    if (isSalesType) {
-      setDiscountData({ discount: "", from: "", to: "" });
-      setShowDiscountModal(true);
-    } else {
-      handleFinalSave();
-    }
+   setDiscountData({ discount: "", from: "", to: "" });
+setShowDiscountModal(true);
   };
 
   // 🔹 Final Save
@@ -124,7 +125,12 @@ export default function AddToHighlightsModalSales({
             discount_from: discountData.from,
             discount_to: discountData.to
           });
-          showToast(res?.data?.message || "Updated successfully", { type: "success" });
+          showToast(
+  res?.data?.message ||
+  fw.updated_successfully ||
+  "Updated successfully",
+  { type: "success" }
+);
         } else {
           let lastRes;
           for (const pid of selectedIds) {
@@ -135,19 +141,27 @@ export default function AddToHighlightsModalSales({
               discount_to: discountData.to
             });
           }
-          showToast(lastRes?.data?.message || `Added to Sales successfully`, { type: "success" });
+          showToast(
+  lastRes?.data?.message ?? fw.added_to_sales_successfully,
+  { type: "success" }
+);
         }
       } else {
         // Non-Sales regular highlight save
         if (!tabId) {
-          showToast("Invalid tab selected", { type: "error" });
+          showToast(fw.invalid_tab_selected, { type: "error" });
           return;
         }
         let lastRes;
         for (const pid of selectedIds) {
           lastRes = await addHighlightToProduct(pid, [tabId]);
         }
-        showToast(lastRes?.data?.message || `Added to ${selectedType.replace(/_/g, " ")} successfully`, { type: "success" });
+        showToast(
+  lastRes?.data?.message ||
+  fw.added_to_highlights_successfully ||
+  `Added to ${selectedType.replace(/_/g, " ")} successfully`,
+  { type: "success" }
+);
       }
 
       setShowDiscountModal(false);
@@ -156,7 +170,10 @@ export default function AddToHighlightsModalSales({
       onClose();
     } catch (err) {
       console.error(err);
-      let errorMsg = "Failed to add highlight";
+      let errorMsg =
+  fw.failed_add_highlight ||
+  fw.failed_send_notification ||
+  "Failed to add highlight";
       if (err.response?.data?.errors) {
         errorMsg = Object.values(err.response.data.errors).flat().join('\n');
       } else if (err.response?.data?.message) {
@@ -180,7 +197,7 @@ export default function AddToHighlightsModalSales({
         {/* HEADER */}
         <div className="p-3 sm:p-4 md:p-5 border-b border-gray-100 flex justify-between items-center">
              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 capitalize">
-               Add to {selectedType.replace(/_/g, " ")}
+               {fw.add || "Add"} {fw[selectedType] ?? selectedType.replace(/_/g, " ")}
           </h3>
           <button
             onClick={onClose}
@@ -193,8 +210,7 @@ export default function AddToHighlightsModalSales({
         {/* CONTENT */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 bg-white">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 md:gap-4">
-              {allProducts.map((p) => {
+            <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 md:gap-4">              {allProducts.map((p) => {
                 const isSelected = selectedIds.includes(p.id);
                 const isAlreadyIn = highlightProducts.some(
                   (hp) => hp.id === p.id
@@ -230,7 +246,7 @@ export default function AddToHighlightsModalSales({
                     {/* Label with requested style */}
                     {isAlreadyIn && (
                       <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[8px] font-medium bg-white/80 backdrop-blur-sm text-gray-700 rounded-full border border-gray-200/50">
-                        Added
+                        {fw.added || "Added"}
                       </div>
                     )}
 
@@ -241,11 +257,13 @@ export default function AddToHighlightsModalSales({
                     )}
 
                     <div className="space-y-0.5">
-                      <p className="text-[10px] sm:text-xs font-medium text-gray-900 truncate">
-                        {p.name_en || p.name}
-                      </p>
+                     <p className="text-[10px] sm:text-xs font-medium text-gray-900 truncate">
+  {isRTL
+    ? (p.name_ar || p.name_en || p.name)
+    : (p.name_en || p.name_ar || p.name)}
+</p>
                       <p className="text-[9px] sm:text-[10px] font-semibold text-blue-600">
-                        QAR {p.price}
+                        {fw.qar || "QAR"} {p.price}
                       </p>
                     </div>
                   </div>
@@ -261,7 +279,8 @@ export default function AddToHighlightsModalSales({
             <div className="flex items-center justify-between gap-3 sm:gap-4 max-w-7xl mx-auto">
               <div className="flex items-baseline gap-1 sm:gap-2">
                 <span className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase">
-                  Selected
+                  {fw.items_selected|| "Items selected"}
+
                 </span>
                 <span className="text-sm sm:text-base font-semibold text-blue-600">
                   {selectedIds.length}
@@ -272,7 +291,7 @@ export default function AddToHighlightsModalSales({
                 disabled={isSending}
                 className="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSending ? "Processing..." : "Add to Highlight"}
+                {isSending ? (fw.processing || "Processing...") : (fw.add_highlights || "Add to Highlight")}
               </button>
             </div>
           </div>
@@ -292,7 +311,8 @@ export default function AddToHighlightsModalSales({
   className="
     absolute 
     top-4 
-    right-4 
+   ltr:right-4 
+rtl:left-4
     w-8 
     h-8 
     flex 
@@ -313,13 +333,14 @@ export default function AddToHighlightsModalSales({
 </button>
           
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
-            Highlight Details
+            {fw.product_highlights || "Highlight Details"}
           </h3>
 
              <div className="space-y-4 sm:space-y-5">
+{isSalesType && (
   <div>
     <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase flex items-center gap-1.5 mb-1.5">
-      <FaTag size={10} /> Discount %
+      <FaTag size={10} /> {fw.discount || "Discount"} %
     </label>
     <input
       type="number"
@@ -331,14 +352,15 @@ export default function AddToHighlightsModalSales({
         })
       }
       className="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm bg-gray-50 rounded-lg border border-gray-100 focus:border-gray-200 focus:outline-none"
-      placeholder="0"
+      placeholder={fw.enter_discount || "0"}
     />
-               </div>
+  </div>
+)}
 
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>
                 <label className="text-[8px] sm:text-[10px] font-medium text-gray-400 uppercase mb-1 block">
-                  From
+                  {fw.from || "From"}
                 </label>
                 <input
                   type="date"
@@ -354,7 +376,7 @@ export default function AddToHighlightsModalSales({
               </div>
               <div>
                 <label className="text-[8px] sm:text-[10px] font-medium text-gray-400 uppercase mb-1 block">
-                  To
+                  {fw.to || "To"}
                 </label>
                 <input
                   type="date"
@@ -375,7 +397,7 @@ export default function AddToHighlightsModalSales({
               disabled={isSending}
               className="w-full py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {isSending ? "Saving..." : "Finish & Add"}
+              {isSending ? (fw.saving || "Saving...") : (fw.save || "Save")}
             </button>
           </div>
         </div>

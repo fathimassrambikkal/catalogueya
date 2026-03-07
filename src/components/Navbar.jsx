@@ -411,12 +411,10 @@ export default function Navbar() {
             )}
 
             {/*  Language - Hidden for company */}
-          {!isAuthenticated && (
-  <LanguageToggle
-    toggleLanguage={toggleLanguage}
-    language={i18n.language}
-  />
-)}
+<LanguageToggle
+  toggleLanguage={toggleLanguage}
+  language={i18n.language}
+/>
 
             {/*  Avatar Dropdown with Animated Hamburger */}
             <div className="relative customer-account-container flex items-center gap-2">
@@ -431,7 +429,7 @@ export default function Navbar() {
                     navigate("/customer-login");
                   }
                 }}
-                className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white overflow-hidden hover:border-gray-300 transition-colors duration-200"
+                className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white/50 hover:bg-white overflow-hidden hover:border-gray-300 transition-colors duration-200"
               >
                 {/*  BEFORE LOGIN → Show Outline Icon */}
                 {!isAuthenticated && (
@@ -440,7 +438,7 @@ export default function Navbar() {
 
                 {/*  CUSTOMER LOGIN → Show First Letter */}
                 {isAuthenticated && userType === "customer" && (
-                  <span className="text-xs font-semibold p-4 border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow">
+                  <span className="text-xs font-semibold p-4 rounded-xl border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow">
                     {displayName?.charAt(0)?.toUpperCase()}
                   </span>
                 )}
@@ -470,15 +468,17 @@ export default function Navbar() {
               />
 
               {/* Unified Dropdown */}
-              <div
-                className={`
-                  absolute right-0 mt-3 origin-top-right
-                  transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-                  ${accountOpen
-                    ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
-                    : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}
-                `}
-              >
+             <div
+  className={`
+    absolute mt-3
+    ltr:right-0 rtl:left-0
+    ltr:origin-top-right rtl:origin-top-left
+    transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
+    ${accountOpen
+      ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+      : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}
+  `}
+>
                 <CustomerAccountDropdown
                   isAuthenticated={isAuthenticated}
                   userType={userType}

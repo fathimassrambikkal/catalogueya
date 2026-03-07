@@ -9,7 +9,7 @@ import Sales from "../components/Sales";
 import Pricing from "../components/Pricing";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
-
+import AppDescribingSection from "../components/AppDescribingSection";
 export default function Home() {
   const location = useLocation();
 
@@ -33,6 +33,7 @@ export default function Home() {
       <Pricing />
       <Faq />
       <CallToAction />
+       <AppDescribingSection/>
     </div>
   );
 }

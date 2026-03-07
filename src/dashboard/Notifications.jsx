@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 
-
+import { useFixedWords } from "../hooks/useFixedWords";
 import { FaUserFriends, FaEye } from "./SvgIcons";
 
 import { useNavigate } from "react-router-dom";
@@ -14,14 +14,6 @@ import {
 } from "../companyDashboardApi";
 import { toast } from "react-hot-toast";
 
-const TABS = [
-  { id: "all", label: "All" },
-  { id: "limited_edition", label: "Limited Edition" },
-  { id: "best_seller", label: "Best Seller" },
-  { id: "new_arrivals", label: "New Arrivals" },
-  { id: "sales", label: "Sales" },
-  { id: "back_in_stock", label: "Back in Stock" },
-];
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
@@ -41,6 +33,19 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
   const [contacts, setContacts] = useState([]);
   const [companyDetails, setCompanyDetails] = useState(null);
   const navigate = useNavigate();
+const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
+
+
+const isRTL = document?.dir === "rtl";
+const TABS = useMemo(() => [
+  { id: "all", label: fw.all || "All" },
+  { id: "limited_edition", label: fw.limited_edition || "Limited Edition" },
+  { id: "best_seller", label: fw.best_seller || "Best Seller" },
+  { id: "new_arrivals", label: fw.new_arrivals || "New Arrivals" },
+  { id: "sales", label: fw.sales || "Sales" },
+  { id: "back_in_stock", label: fw.back_in_stock || "Back in Stock" },
+], [fw]);
 
   useEffect(() => {
     const savedCompany = localStorage.getItem("company_details");
@@ -77,7 +82,9 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
 
   const handleExpandAction = async (batchId, type) => {
     if (type === 'message') {
-      const loadingToast = toast.loading("Opening conversation...");
+      const loadingToast = toast.loading(
+  fw.opening_conversation || "Opening conversation..."
+);
       try {
         const res = await getSentNotificationDetails(batchId);
         const conversationId = res.data?.notification?.data?.conversationId;
@@ -87,9 +94,13 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
           setParentActiveTab("Messages");
           return;
         }
-        toast.error("Conversation not found");
+        toast.error(
+  fw.conversation_not_found || "Conversation not found"
+);
       } catch (e) {
-        toast.error("Failed to open message");
+        toast.error(
+  fw.failed_open_message || "Failed to open message"
+);
       } finally {
         toast.dismiss(loadingToast);
       }
@@ -129,10 +140,14 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
   const handleAddContact = async (userId) => {
     try {
       await addContact(userId);
-      toast.success("Added to contacts");
+      toast.success(
+  fw.added_to_contacts || "Added to contacts"
+);
       fetchContacts();
     } catch (e) {
-      toast.error("Failed to add contact");
+      toast.error(
+  fw.failed_add_contact || "Failed to add contact"
+);
     }
   };
 
@@ -154,16 +169,7 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
     return notifications.filter(n => n.type === targetType);
   }, [notifications, activeTab]);
 
-  if (loading && notifications.length === 0) {
-    return (
-      <div className="h-full min-h-[400px] flex items-center justify-center bg-white rounded-[40px]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#1A6FBA] border-t-transparent"></div>
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Loading history...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="h-full overflow-hidden bg-white flex flex-col ">
@@ -172,16 +178,16 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
           {/* Header - Minimal */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 sm:mb-6">
             <div>
-              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Notifications</h1>
-              <p className="text-gray-400 text-xs sm:text-sm mt-0.5">Track your sent alerts</p>
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">{fw.notifications || "Notifications"}</h1>
+              <p className="text-gray-400 text-xs sm:text-sm mt-0.5">{fw.history || "Track your sent alerts"}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-gray-100 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                <span className="text-xs font-medium text-gray-600">{notifications.length} total</span>
+                <span className="text-xs font-medium text-gray-600">{notifications.length}{fw.total || "total"}</span>
               </div>
               <button className="text-xs font-medium text-blue-500 hover:text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-                Mark all read
+               {fw.mark_all_read || "Mark all read"}
               </button>
             </div>
           </div>
@@ -231,6 +237,7 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
                   isUserInContacts={isUserInContacts}
                   companyDetails={companyDetails}
                   navigate={navigate}
+                   isRTL={isRTL}
                 />
               </div>
             ))}
@@ -239,10 +246,10 @@ export default function Notifications({ setActiveTab: setParentActiveTab, setTar
             {filteredNotifications.length === 0 && (
               <div className="bg-white/80 backdrop-blur-sm rounded-xl py-16 sm:py-20 text-center border border-dashed border-gray-200 animate-fadeIn">
                 <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-gray-300 text-xl">📬</span>
+                  
                 </div>
-                <h3 className="text-sm font-medium text-gray-900">No notifications</h3>
-                <p className="text-xs text-gray-400 mt-1">Nothing to show in this category</p>
+                <h3 className="text-sm font-medium text-gray-900">{fw.no_notifications || "No notifications"}</h3>
+                <p className="text-xs text-gray-400 mt-1">{fw.no_products_found || "Nothing to show"}</p>
               </div>
             )}
           </div>
@@ -271,7 +278,8 @@ function NotificationCard({
   onAddContact,
   isUserInContacts,
   companyDetails,
-  navigate
+  navigate,
+   isRTL
 }) {
   const [showUsersSheet, setShowUsersSheet] = useState(false);
   const isMessage = notification.type === 'message';
@@ -282,7 +290,24 @@ function NotificationCard({
   const recipient = details?.users?.[0];
   const entityImage = isMessage ? recipient?.image : (companyDetails?.logo || companyDetails?.image);
   const entityName = isMessage ? (recipient?.name || "User") : (companyDetails?.name || "Company");
+  const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
+const CATEGORY_LABELS = {
+  sales: fw.sales || "Sales",
 
+  new_arrivals: fw.new_arrivals || "New Arrivals",
+
+  best_seller: fw.best_seller || "Best Seller",
+  best_sellers: fw.best_seller || "Best Seller",
+
+  limited_stocks: fw.limited_edition || "Limited Edition",
+
+  back_in_stock: fw.back_in_stock || "Back in Stock",
+  back_in_stocks: fw.back_in_stock || "Back in Stock",
+
+  low_in_stock: fw.low_in_stock || "Low in Stock",
+  low_in_stocks: fw.low_in_stock || "Low in Stock"
+};
   return (
     <div className={`bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 transition-all duration-300 ${
       isExpanded ? 'shadow-sm ring-1 ring-blue-500/20' : 'hover:border-gray-200'
@@ -300,20 +325,22 @@ function NotificationCard({
                 onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(entityName)}&background=f0f0f0&color=666&size=40`; }}
               />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1  w-full min-w-0">
               <h3 className="font-medium text-sm text-gray-900 truncate">{entityName}</h3>
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">
-                {notification.category?.replace(/_/g, ' ')}
+                {CATEGORY_LABELS[notification.category] || notification.category?.replace(/_/g, " ")}
               </p>
             </div>
           </div>
 
           {/* Message Content */}
-          <div className="flex-1 min-w-0">
-            <div className="bg-gray-50/80 rounded-lg p-4">
-              <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 pr-8">
-                {notification.body}
-              </p>
+          <div className="flex-1 w-full min-w-0">
+            <div className="bg-gray-50/80 rounded-lg p-4  w-full">
+            <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 pr-8">
+  {notification.type === "message"
+    ? (fw.new_message_received || "You have received a new message")
+    : notification.body}
+</p>
 
               <div className="flex items-center justify-between mt-3">
                 {!isMessage ? (
@@ -321,11 +348,15 @@ function NotificationCard({
                     onClick={onExpandAction}
                     className="flex items-center gap-1.5 text-blue-500 text-[10px] font-medium hover:text-blue-600 transition-colors"
                   >
-                    <span>{isExpanded ? "Hide" : "Show products"}</span>
+                    <span>
+                    {isExpanded 
+                      ? (fw.hide || "Hide") 
+                      : (fw.show_products || "Show products")}
+                  </span>
                     <span className="text-[8px]">{isExpanded ? "▲" : "▼"}</span>
                   </button>
                 ) : (
-                  <span className="text-[10px] text-gray-300"> Message</span>
+                  <span className="text-[10px] text-gray-300">{fw.message || "Message"}</span>
                 )}
                 <span className="text-[9px] text-gray-300">
                   {formatDate(notification.created_at)}
@@ -335,13 +366,14 @@ function NotificationCard({
           </div>
 
           {/* Stats Column */}
-          <div className="flex flex-row lg:flex-col items-center justify-end gap-4 lg:w-40 lg:border-l border-gray-100 lg:pl-5">
+          <div className={`flex flex-row lg:flex-col items-center justify-end gap-4 lg:w-40 ${isRTL ? "lg:border-r lg:pr-5" : "lg:border-l lg:pl-5"} border-gray-100`}>
             {isMessage ? (
               <button
                 onClick={onExpandAction}
                 className="text-xs font-medium text-blue-500 hover:text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap"
               >
-                View →
+                
+                {fw.view || "View"} {isRTL ? "←" : "→"}
               </button>
             ) : (
               <>
@@ -354,7 +386,7 @@ function NotificationCard({
                     </div>
                     <div>
                       <span className="text-xs font-medium text-gray-900">{sentCount}</span>
-                      <p className="text-[8px] text-gray-300 uppercase tracking-wider">Sent</p>
+                      <p className="text-[8px] text-gray-300 uppercase tracking-wider">{fw.sent || "Sent"}</p>
                     </div>
                   </div>
 
@@ -371,24 +403,28 @@ function NotificationCard({
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-900">{viewCount}</span>
-                        <p className="text-[8px] text-gray-300 uppercase tracking-wider">Views</p>
+                        <p className="text-[8px] text-gray-300 uppercase tracking-wider">{fw.views || "Views"}</p>
                       </div>
                     </div>
 
                     {/* Users Tooltip */}
                     {showUsersSheet && (
                       <div
-                        onMouseEnter={() => setShowUsersSheet(true)}
-                        onMouseLeave={() => setShowUsersSheet(false)}
-                          className="absolute z-[999] right-0 top-full mt-3 w-[clamp(220px,25vw,320px)]
-                          max-h-[clamp(200px,35vh,350px)] bg-white rounded-xl shadow-[0_15px_60px_-15px_rgba(0,0,0,0.3)] border border-gray-100 overflow-hidden flex flex-col"
-                          style={{
-                            animation: 'fadeIn 0.2s ease-out forwards',
-                            transformOrigin: 'top right'
-                          }}
-                      >
+  onMouseEnter={() => setShowUsersSheet(true)}
+  onMouseLeave={() => setShowUsersSheet(false)}
+  className={`absolute z-[999] ${isRTL ? "left-0" : "right-0"} top-full mt-3 
+  w-[clamp(220px,25vw,320px)] max-h-[clamp(200px,35vh,350px)] 
+  bg-white rounded-xl shadow-[0_15px_60px_-15px_rgba(0,0,0,0.3)] 
+  border border-gray-100 overflow-hidden flex flex-col`}
+  style={{
+    animation: "fadeIn 0.2s ease-out forwards",
+    transformOrigin: isRTL ? "top left" : "top right"
+  }}
+>
                         <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                          <h4 className="text-xs font-medium text-gray-900">Viewed by</h4>
+                          <h4 className="text-xs font-medium text-gray-900">
+                          {fw.viewed_by || "Viewed by"}
+                        </h4>
                           <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full">
                             {viewCount}
                           </span>
@@ -411,7 +447,7 @@ function NotificationCard({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-gray-900 truncate">{user.name}</p>
-                                  <p className="text-[8px] text-gray-400">{user.read_at ? 'read' : 'viewed'}</p>
+                                  <p className="text-[8px] text-gray-400">{user.read_at ? (fw.read || "Read") : (fw.viewed || "Viewed")}</p>
                                 </div>
                                 <button
                                   onClick={(e) => {
@@ -430,7 +466,7 @@ function NotificationCard({
                             ))
                           ) : (
                             <div className="text-center py-6">
-                              <p className="text-xs text-gray-300">No viewers yet</p>
+                              <p className="text-xs text-gray-300">{fw.no_viewers || "No viewers yet"}</p>
                             </div>
                           )}
                         </div>
@@ -449,12 +485,12 @@ function NotificationCard({
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-medium text-gray-900 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
-                Linked Products
+                {fw.linked_products || "Linked Products"}
               </h4>
-              <p className="text-[9px] text-gray-300">{details?.products?.length || 0} items</p>
+              <p className="text-[9px] text-gray-300">{details?.products?.length || 0} {fw.items || "items"}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
               {details?.loading ? (
                 <div className="col-span-full flex justify-center py-8">
                   <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -471,10 +507,16 @@ function NotificationCard({
                       <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-medium text-gray-900 truncate mb-0.5">{p.name}</h4>
+                    <h4 className="text-xs font-medium text-gray-900 truncate mb-0.5">
+  {isRTL
+    ? (p.name_ar || p.name)
+    : (p.name || p.name_ar)}
+</h4>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-blue-500">QAR {p.price}</span>
-                        <span className="text-[8px] text-gray-300">→</span>
+                        <span className="text-xs text-blue-500">{fw.qar || "QAR"} {p.price}</span>
+                        <span className="text-[8px] text-gray-300">
+  {isRTL ? "←" : "→"}
+</span>
                       </div>
                     </div>
                   </div>

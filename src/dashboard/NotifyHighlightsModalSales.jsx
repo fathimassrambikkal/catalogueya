@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { FaTimes, FaCheckCircle, FaShoppingBag } from "react-icons/fa";
 import { sendProductNotification, getContacts, getImageUrl } from "../companyDashboardApi";
 import { showToast } from "../utils/showToast";
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 export default function NotifyHighlightsModalSales({
   selectedType,
   products,
@@ -14,7 +15,10 @@ export default function NotifyHighlightsModalSales({
   const [notifyFormData, setNotifyFormData] = useState({ title: "", body: "" });
   const [contacts, setContacts] = useState([]);
   const [isSending, setIsSending] = useState(false);
-
+const { fixedWords } = useFixedWords();
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
+const fw = fixedWords?.fixed_words || {};
   useEffect(() => {
     fetchContacts();
   }, []);
@@ -36,14 +40,14 @@ export default function NotifyHighlightsModalSales({
 
   const handleNext = () => {
     if (notifyStep === 1 && selectedProductIds.length === 0) {
-      return showToast("Select at least one product", { type: "error" });
+      return showToast(fw.select_one_product || "Select at least one product", { type: "error" });
     }
     if (notifyStep === 2 && selectedCustomerIds.length === 0) {
-      return showToast("Select at least one customer", { type: "error" });
+      return showToast(fw.select_one_customer || "Select at least one customer", { type: "error" });
     }
     if (notifyStep === 3) {
       if (!notifyFormData.title || !notifyFormData.body) {
-        return showToast("Fill title and message", { type: "error" });
+        return showToast(fw.fill_title_message || "Fill title and message", { type: "error" });
       }
       return handleSend();
     }
@@ -66,7 +70,7 @@ export default function NotifyHighlightsModalSales({
       setNotifyStep(4);
     } catch (err) {
       console.error(err);
-      showToast("Failed to send notification", { type: "error" });
+      showToast(fw.failed_send_notification || "Failed to send notification", { type: "error" });
     } finally {
       setIsSending(false);
     }
@@ -143,14 +147,14 @@ return (
   ))}
 </div>
 <h2 className="text-center text-sm sm:text-base font-semibold text-blue-600 tracking-wide uppercase mb-6">
-  {selectedType.replace(/_/g, " ")}
+  {fw[selectedType] || selectedType.replace(/_/g, " ")}
 </h2>
 
 
         {notifyStep === 1 && (
           <>
             <h3 className="text-xs sm:text-sm font-semibold mb-4 sm:mb-6 text-gray-900 text-center">
-              Select Products
+              {fw.select_products|| "Select Products"}
             </h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
@@ -180,7 +184,9 @@ return (
                       />
                     </div>
                     <p className="text-[10px] sm:text-xs font-medium text-gray-900 truncate">
-                      {p.name_en || p.name}
+                      {isRTL
+    ? (p.name_ar || p.name_en || p.name)
+    : (p.name_en || p.name_ar || p.name)}
                     </p>
                     {selected && (
                       <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
@@ -198,19 +204,21 @@ return (
           <>
             <div className="flex items-center justify-between mb-4 sm:mb-6">
   <h3 className="text-xs sm:text-sm font-semibold text-gray-900">
-    Select Customers
+    {fw.select_customer || "Select Customers"}
   </h3>
 
-  <button
-    onClick={handleToggleSelectAll}
-    className={`text-[10px] sm:text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
-      isAllSelected
-        ? "bg-blue-500 text-white"
-        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-    }`}
-  >
-    {isAllSelected ? "Unselect All" : "Select All"}
-  </button>
+ <button
+  onClick={handleToggleSelectAll}
+  className={`text-[10px] sm:text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
+    isAllSelected
+      ? "bg-blue-500 text-white"
+      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+  }`}
+>
+  {isAllSelected
+    ? fw.unselect_all || "Unselect All"
+    : fw.select_all || "Select All"}
+</button>
 </div>
 
 
@@ -267,17 +275,17 @@ return (
         {notifyStep === 3 && (
           <>
             <h3 className="text-xs sm:text-sm font-semibold mb-4 sm:mb-6 text-gray-900 text-center">
-              Message
+              {fw.message || "Message"}
             </h3>
 
             <div className="space-y-3 sm:space-y-4 max-w-md mx-auto">
               <div>
                 <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase mb-1 block">
-                  Title
+                  {fw.title || "Title"}
                 </label>
                 <input
                   type="text"
-                  placeholder="Notification title"
+                  placeholder={fw.notification_title || "Notification title"}
                   value={notifyFormData.title}
                   onChange={e =>
                     setNotifyFormData({ ...notifyFormData, title: e.target.value })
@@ -288,11 +296,11 @@ return (
 
               <div>
                 <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase mb-1 block">
-                  Message
+                  {fw.message || "Message"}
                 </label>
                 <textarea
                   rows="5"
-                  placeholder="Write your message..."
+                    placeholder={fw.your_message || "Your Message"}
                   value={notifyFormData.body}
                   onChange={e =>
                     setNotifyFormData({ ...notifyFormData, body: e.target.value })
@@ -324,18 +332,19 @@ return (
             </div>
             
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-              Notification Sent
+              {fw.notification_sent || "Notification Sent"}
             </h3>
             
             <p className="text-xs sm:text-sm text-gray-400 text-center max-w-[200px] sm:max-w-xs mb-6 sm:mb-8">
-              Your notification has been sent successfully to selected customers
+              
+              {fw.notification_sent_to_selected_customers || "Your notification has been sent successfully to selected customers"}
             </p>
             
             <button
               onClick={onClose}
               className="px-6 sm:px-8 py-2.5 sm:py-3 bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-blue-600 transition-colors shadow-sm"
             >
-              Done
+              {fw.done || "Done"}
             </button>
           </div>
         )}
@@ -350,7 +359,9 @@ return (
               }
               className="px-4 sm:px-6 py-2 text-gray-400 hover:text-gray-600 text-xs sm:text-sm font-medium transition-colors"
             >
-              {notifyStep > 1 ? "Back" : "Cancel"}
+              {notifyStep > 1
+  ? fw.back || "Back"
+  : fw.cancel || "Cancel"}
             </button>
 
             <button
@@ -364,10 +375,12 @@ return (
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  <span>Sending</span>
+                  <span>{fw.sending || "Sending"}</span>
                 </span>
               ) : (
-                notifyStep === 3 ? "Send" : "Next"
+                notifyStep === 3
+  ? fw.send_message || "Send"
+  : fw.next || "Next"
               )}
             </button>
           </div>

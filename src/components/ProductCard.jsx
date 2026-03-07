@@ -1,6 +1,8 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { HeartIcon, ChatIcon, StarIcon } from "./SvgIcon";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { HeartIcon, ChatIcon, StarIcon ,WhatsappIcon} from "./SvgIcon";
 
 export const ProductCard = memo(({
   product,
@@ -18,6 +20,9 @@ export const ProductCard = memo(({
     e.stopPropagation();
     onToggleFavourite(product);
   };
+
+
+  const navigate = useNavigate();
 
   return (
     <div
@@ -170,11 +175,11 @@ export const ProductCard = memo(({
     </div>
 
     {/* CHAT ICON */}
-<button
-  onClick={(e) => {
-    e.stopPropagation();
-    onChat(product);
-  }}
+{/* <button
+  // onClick={(e) => {
+  //   e.stopPropagation();
+  //   onChat(product);
+  // }}
   aria-label="Chat"
   title="Chat"
   className="
@@ -199,15 +204,15 @@ export const ProductCard = memo(({
   "
 >
   {/* Chrome liquid highlight */}
-  <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/70 via-white/10 to-transparent opacity-40 pointer-events-none" />
+  {/* <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/70 via-white/10 to-transparent opacity-40 pointer-events-none" />
 
   {/* Glass ribbon streak */}
-  <span className="absolute inset-0 rounded-full bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)] opacity-35 pointer-events-none" />
+  {/* <span className="absolute inset-0 rounded-full bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)] opacity-35 pointer-events-none" /> */}
 
   {/* Titanium depth */}
-  <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-20 pointer-events-none" />
+  {/* <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-20 pointer-events-none" />  */}
 
-  <ChatIcon
+  {/* <ChatIcon
     className="
       relative z-10
       w-[clamp(12px,1.1vw,16px)]
@@ -215,8 +220,60 @@ export const ProductCard = memo(({
       text-[rgba(18,18,18,0.88)]
       drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
     "
-  />
-</button>
+  /> */}
+
+  {/* <WhatsappIcon
+  size={16}
+  className="relative z-10"
+/>
+</button> */}
+{(product?.whatsapp || product?.watsapp) && (
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+
+      let phone = product.whatsapp || product.watsapp;
+      if (!phone) return;
+
+      // If full URL
+      if (phone.startsWith("http")) {
+        window.open(phone, "_blank");
+        return;
+      }
+
+      // If normal number like +974 31098634
+      const cleanNumber = phone.replace(/\D/g, "");
+      if (cleanNumber) {
+        window.open(`https://wa.me/${cleanNumber}`, "_blank");
+      }
+    }}
+    aria-label="WhatsApp"
+    title="WhatsApp"
+    className="
+
+
+      relative
+      flex-shrink-0
+      flex items-center justify-center
+      p-[clamp(6px,0.8vw,9px)]
+      rounded-full
+      bg-white/40
+      backdrop-blur-2xl
+      border border-[rgba(255,255,255,0.28)]
+      shadow-[0_8px_24px_rgba(0,0,0,0.18)]
+
+      hover:bg-white/55
+      transition-all duration-300
+      hover:scale-105
+    "
+  >
+  <WhatsappIcon className="w-[clamp(12px,3.5vw,18px)] h-[clamp(12px,3.5vw,18px)] relative z-10" />
+
+  </button>
+)}
+
+
+
       </div>
     </div>
   );

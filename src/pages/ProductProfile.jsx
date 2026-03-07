@@ -20,7 +20,8 @@ import {
   HeartIcon,
   StarIcon,
   ShareIcon,
-  ChatIcon,
+  ChatIcon, 
+  WhatsappIcon
 } from "../components/SvgIcon";
 
 // ✅ Helper to normalize image data
@@ -179,7 +180,7 @@ export default function ProductProfile() {
 
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null); // ✅ Changed to store image object
+  const [selectedImage, setSelectedImage] = useState(null); 
   const [reviews, setReviews] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewName, setReviewName] = useState("");
@@ -217,8 +218,10 @@ export default function ProductProfile() {
         id: productData.id,
         name: productData.name,
         price: productData.price,
+       
+        whatsapp: productData.whatsapp || null,
         oldPrice: productData.old_price || null,
-        image: normalizeImage(productData.image), // ✅ Store object format
+        image: normalizeImage(productData.image), 
         rating: parseFloat(productData.rating) || 0,
         description: productData.description,
         company_id: productData.company_id,
@@ -322,6 +325,7 @@ export default function ProductProfile() {
           id: productData.id,
           name: productData.name,
           price: productData.price,
+           whatsapp: productData.whatsapp || null,
           oldPrice: productData.old_price || null,
           image: normalizeImage(productData.image), // ✅ Store object format
           rating: parseFloat(productData.rating) || 0,
@@ -546,7 +550,7 @@ export default function ProductProfile() {
     }
 
     try {
-      // 🔥 SAVE TO BACKEND
+      
       await addProductReview(
         resolvedProductId,
         reviewRating,
@@ -584,12 +588,28 @@ export default function ProductProfile() {
     setSelectedImage(imgData);
   };
 
-  // Only show error if we have no product AND an error occurred
+  useEffect(() => {
+    if (!auth?.user) return;
+    if (!product) return;
+
+    const params = new URLSearchParams(location.search);
+    const action = params.get("action");
+
+    if (action === "review") {
+      setShowReviewModal(true);
+
+      //  clean URL after opening modal
+      navigate(location.pathname, { replace: true });
+    }
+  }, [auth?.user, product]);
+
+
+
   if (error && !product) {
     return (
       <div className="flex justify-center items-center min-h-screen ">
         <div className="text-center py-20 text-lg text-gray-600 ">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <div className="text-red-500 text-4xl mb-4"></div>
           {error || "Product not found."}
           <div className="text-sm text-gray-500 mb-4">
             Product ID: {resolvedProductId}
@@ -616,20 +636,6 @@ export default function ProductProfile() {
     ...(product?.albums || []),
   ].filter(Boolean);
 
-  useEffect(() => {
-    if (!auth?.user) return;
-    if (!product) return;
-
-    const params = new URLSearchParams(location.search);
-    const action = params.get("action");
-
-    if (action === "review") {
-      setShowReviewModal(true);
-
-      //  clean URL after opening modal
-      navigate(location.pathname, { replace: true });
-    }
-  }, [auth?.user, product]);
 
   return (
     <>
@@ -693,10 +699,10 @@ export default function ProductProfile() {
 
                   const alreadyFav = favourites.some((f) => f.id === product.id);
 
-                  // 🔄 toggle always
+                  //  toggle always
                   dispatch(toggleFavourite(payload));
 
-                  // 🔐 popup only when logged in & adding
+                  //  popup only when logged in & adding
                   if (auth?.user && !alreadyFav) {
                     dispatch(openListPopup(payload));
                   }
@@ -720,6 +726,23 @@ export default function ProductProfile() {
                 <ChatIcon className="w-[clamp(13px,1.1vw,17px)]
              h-[clamp(13px,1.1vw,17px)] text-[rgba(18,18,18,0.88)] " />
               </PremiumIconButton>
+
+
+   
+  <PremiumIconButton
+    title="WhatsApp"
+    onClick={() => {
+      const cleanNumber = product.whatsapp.replace(/\D/g, "");
+      window.open(`https://wa.me/${cleanNumber}`, "_blank");
+    }}
+    disabled={!product}
+  >
+    <WhatsappIcon
+      className="w-[clamp(15px,1.2vw,18px)]
+                 h-[clamp(15px,1.2vw,18px)]
+                 opacity-90"
+    />
+  </PremiumIconButton>
             </div>
 
             {/* THUMBNAIL PREVIEW STRIP */}

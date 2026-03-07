@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 
 import {
   getContacts,
@@ -17,6 +18,12 @@ function CreateBills({ onBack, products = [], editBillId = null }) {
   const [loading, setLoading] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [categories, setCategories] = useState([]);
+
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
+
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
 
   // Bill State
   const [billId, setBillId] = useState(editBillId);
@@ -228,8 +235,10 @@ return (
       {/* PAGE TITLE */}
       <div className="flex items-center gap-2 mb-5 sm:mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-normal text-gray-800 tracking-tight">{editBillId ? 'Edit & Send Bill' : 'Create New Bill'}</h1>
-          <p className="text-gray-400 text-xs sm:text-sm mt-0.5">Fill in the details below to generate a new invoice.</p>
+          <h1 className="text-xl sm:text-2xl font-normal text-gray-800 tracking-tight">{editBillId
+    ? fw.confirm_send || "Edit & Send Bill"
+    : fw.create_new_bill || "Create New Bill"}</h1>
+          <p className="text-gray-400 text-xs sm:text-sm mt-0.5">{fw.general_information || "Fill in the details below to generate a new invoice."}</p>
         </div>
       </div>
 
@@ -239,20 +248,20 @@ return (
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
             <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
-          <h3 className="text-sm sm:text-base font-normal text-gray-700">General Information</h3>
+          <h3 className="text-sm sm:text-base font-normal text-gray-700">{fw.general_information || "General Information"}</h3>
         </div>
 
         <div className="p-4 sm:p-5 space-y-4">
           {/* Recipient Input */}
           <div>
-            <label className="block text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Recipient</label>
+            <label className="block text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">{fw.recipient || "Recipient"}</label>
             <div className="relative">
               <select
                 className="w-full bg-white border border-gray-200/80 focus:border-blue-500 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-gray-600 outline-none appearance-none transition-colors"
                 value={billData.customer_id}
                 onChange={handleContactSelect}
               >
-                <option value="">Select Customer</option>
+                <option value="">{fw.select_customer || "Select Customer"}</option>
                 {contacts.map(c => <option key={c.contact_user_id} value={c.contact_user_id}>{c.name}</option>)}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 w-3.5 h-3.5 pointer-events-none" />
@@ -274,19 +283,19 @@ return (
 
           {/* Payment Method */}
           <div className="pt-2 border-t border-gray-100">
-            <label className="block text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Payment Method</label>
+            <label className="block text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">{fw.payment_method || "Payment Method"}</label>
             <div className="flex gap-2">
               <button
                 onClick={() => setBillData({ ...billData, payment_method: 'cash' })}
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all border ${billData.payment_method === 'cash' ? 'border-blue-500 bg-blue-50/50 text-blue-600' : 'border-gray-200/80 bg-white text-gray-500 hover:bg-gray-50'}`}
               >
-                CASH
+                {fw.cash || "Cash"}
               </button>
               <button
                 disabled
                 className="flex-1 py-2 rounded-lg text-xs font-medium border border-gray-200/80 bg-gray-50/30 text-gray-300 cursor-not-allowed"
               >
-                ONLINE
+                {fw.online || "Online"}
               </button>
             </div>
           </div>
@@ -296,10 +305,10 @@ return (
             {/* Discount Card */}
             <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
               <h4 className="flex items-center gap-1.5 font-normal text-gray-500 text-xs mb-2">
-                <div className="w-1 h-1 rounded-full bg-gray-300" /> Discount
+                <div className="w-1 h-1 rounded-full bg-gray-300" />{fw.discount || "Discount"}
               </h4>
               <div className="flex justify-between items-center">
-                <span className="text-[10px] text-gray-400">Percentage</span>
+                <span className="text-[10px] text-gray-400">{fw.percentage || "Percentage"}</span>
                 <div className="flex items-center gap-1">
                   <input
                     type="number"
@@ -316,12 +325,12 @@ return (
             {/* Note Area */}
             <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
               <h4 className="flex items-center gap-1.5 font-normal text-gray-500 text-xs mb-1.5">
-                <div className="w-1 h-1 rounded-full bg-gray-300" /> Note
+                <div className="w-1 h-1 rounded-full bg-gray-300" />{fw.note || "Note"}
               </h4>
               <textarea
                 className="w-full bg-white border border-gray-200/80 rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-blue-500 resize-none placeholder:text-gray-300"
                 rows="2"
-                placeholder="Add a note..."
+                placeholder={fw.add_a_note || "Add a note"}
                 value={billData.note}
                 onChange={e => setBillData({ ...billData, note: e.target.value })}
               />
@@ -336,13 +345,14 @@ return (
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
             <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
-          <h3 className="text-sm sm:text-base font-normal text-gray-700">Items & Breakdown</h3>
+          <h3 className="text-sm sm:text-base font-normal text-gray-700">  {fw.items_breakdown || "Items & Breakdown"}
+</h3>
         </div>
 
         <div className="p-4 sm:p-5 space-y-4">
           {/* Add Product Section */}
           <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
-            <h4 className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2.5">Add Product</h4>
+            <h4 className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2.5">{fw.add_product_item || "Add Product"}</h4>
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
                 <div className="relative">
@@ -351,7 +361,7 @@ return (
                     value={newItemProduct.product_id}
                     onChange={e => setNewItemProduct({ ...newItemProduct, product_id: e.target.value })}
                   >
-                    <option value="">Select product...</option>
+                    <option value="">{fw.select_products || "Select Product"}</option>
                     {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.price} QR)</option>)}
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 w-3 h-3 pointer-events-none" />
@@ -383,14 +393,14 @@ return (
                 }}
               className="px-3 py-2 bg-blue-500 text-white rounded-md text-xs font-medium hover:bg-blue-600 transition-all flex items-center justify-center gap-1 text-center w-full sm:w-auto"
               >
-                <Plus className="w-3 h-3" /> Add
+                <Plus className="w-3 h-3" />{fw.add || "Add"}
               </button>
             </div>
           </div>
 
           {/* Add Service Section */}
           <div className="bg-white p-3.5 rounded-lg border border-gray-200/60">
-            <h4 className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2.5">Add Service</h4>
+            <h4 className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2.5">{fw.add_service || "Add Service"}</h4>
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
                 <input
@@ -434,7 +444,7 @@ return (
                 }}
                 className="px-3 py-2 bg-blue-500 text-white rounded-md text-xs font-medium hover:bg-blue-600 transition-all flex items-center justify-center gap-1 text-center w-full sm:w-auto"
               >
-                <Plus className="w-3 h-3" /> Add
+                <Plus className="w-3 h-3" />{fw.add || "Add"}
               </button>
             </div>
           </div>
@@ -468,14 +478,14 @@ return (
           {/* FINAL ACTION BAR */}
           <div className="bg-gray-50 rounded-lg p-3.5 sm:p-4 flex flex-col sm:flex-row justify-between items-center gap-3 border border-gray-200/60">
             <div className="text-center sm:text-left">
-              <div className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider">Total Payable</div>
+              <div className="text-[9px] sm:text-[10px] font-medium text-gray-400 uppercase tracking-wider">{fw.total_payable || "Total Payable"}</div>
               <div className="text-lg sm:text-xl font-normal text-gray-800">
                 {(() => {
                   const subtotal = items.reduce((acc, i) => acc + (parseFloat(i.price) * i.quantity), 0);
                   const discount = subtotal * ((billData.discount_percent || 0) / 100);
                   const total = subtotal - discount;
                   return total.toFixed(2);
-                })()} <span className="text-xs opacity-60">QR</span>
+                })()}<span className="text-xs opacity-60">{fw.qar || "QAR"}</span>
               </div>
             </div>
 
@@ -487,11 +497,11 @@ return (
               {loading ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Processing
+                  {fw.processing || "Processing"}
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-3.5 h-3.5" /> Confirm & Send
+                  <CheckCircle className="w-3.5 h-3.5" />{fw.confirm_send || "Confirm & Send"}
                 </>
               )}
             </button>

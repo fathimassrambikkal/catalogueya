@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { FaUser, FaEnvelope, FaCalendar, FaTrash, FaUserPlus, FaUserCheck } from "react-icons/fa";
 import { getFollowers, getImageUrl, getContacts, addContact, deleteContact } from "../companyDashboardApi";
 import { showToast } from "../utils/showToast";
-
+import { useFixedWords } from "../hooks/useFixedWords";
 export default function Followers() {
   const [followers, setFollowers] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
 
   useEffect(() => {
     fetchData();
@@ -141,8 +143,8 @@ export default function Followers() {
         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
           <FaUser className="text-3xl text-gray-400" />
         </div>
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-700">No Followers Yet</h2>
-        <p className="text-gray-500 mt-2">When customers follow your company, they will appear here.</p>
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-700"> {fw.no_followers || "No Followers Yet"}</h2>
+        <p className="text-gray-500 mt-2">{fw.no_followers_description || "When customers follow your company, they will appear here."}</p>
       </div>
     );
   }
@@ -157,10 +159,10 @@ export default function Followers() {
       {/* Header INSIDE container */}
       <div className="px-6 py-5 border-b border-gray-100">
         <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4 ">
-          Followers
+          {fw.followers || "Followers"}
         </h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {getFollowersCount()} follower{getFollowersCount() === 1 ? "" : "s"}
+           {getFollowersCount()} {fw.followers || "Followers"}
         </p>
       </div>
 
@@ -242,7 +244,7 @@ export default function Followers() {
                   )}
 
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Followed {formatDate(date)}
+                    {fw.followed || "Followed"} {formatDate(date)}
                   </p>
                 </div>
               </div>
@@ -262,7 +264,9 @@ export default function Followers() {
                     : "bg-blue-50 text-blue-600 hover:bg-blue-100"
                 }`}
               >
-                {isContact ? "Added" : "Add"}
+                {isContact
+  ? (fw.added || "Added")
+  : (fw.add || "Add")}
               </button>
             </div>
           );

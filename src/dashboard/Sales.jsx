@@ -31,6 +31,8 @@ import NotifyHighlightsModalSales from "./NotifyHighlightsModalSales";
 import Notifications from "./Notifications";
 
 import { showToast } from "../utils/showToast";
+import { useFixedWords } from "../hooks/useFixedWords";
+import { useTranslation } from "react-i18next";
 
 const HIGHLIGHT_TYPES = [
   { id: "sales", label: "SALES", icon: FaTags, color: "from-blue-500 to-blue-600" },
@@ -51,9 +53,13 @@ export default function Sales({ companyId, companyInfo, user, setActiveTab, setT
   const [discountData, setDiscountData] = useState({ discount: '', from: '', to: '' });
   const [editingProduct, setEditingProduct] = useState(null);
   const [tabMap, setTabMap] = useState({});
-
+  const [deleteProductId, setDeleteProductId] = useState(null);
   const currentUserId = companyId || localStorage.getItem("company_id") || "13";
+const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
 
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
   // Fetch mapping of Tab keys to their correct IDs 
   useEffect(() => {
     const fetchTabs = async () => {
@@ -122,14 +128,14 @@ export default function Sales({ companyId, companyInfo, user, setActiveTab, setT
         discount_from: discountData.from,
         discount_to: discountData.to
       });
-      showToast("Updated successfully", { type: "success" });
+      showToast(fw.update || "Updated successfully", { type: "success" });
       setShowDiscountModal(false);
       setEditingProduct(null);
       setView("list");
       fetchProducts(selectedType);
     } catch (error) {
       console.error(error);
-      showToast("Failed to update", { type: "error" });
+      showToast("Error", { type: "error" });
     } finally {
       setIsSending(false);
     }
@@ -145,29 +151,39 @@ export default function Sales({ companyId, companyInfo, user, setActiveTab, setT
     setShowDiscountModal(true);
   };
 
-  const handleDeleteClick = async (id) => {
-    if (!window.confirm("Are you sure you want to remove this from highlights?")) return;
-    try {
-      setIsSending(true);
-      if (selectedType === "sales") {
-        await deleteSalesProduct(id);
-      } else {
-        const tabId = tabMap[selectedType];
-        if (!tabId) {
-          throw new Error("Invalid tab ID mapping for: " + selectedType);
-        }
-        await deleteHighlightFromProduct(id, [tabId]);
-      }
-      showToast("Removed successfully", { type: "success" });
-      fetchProducts(selectedType);
-    } catch (error) {
-      console.error(error);
-      showToast("Failed to remove", { type: "error" });
-    } finally {
-      setIsSending(false);
-    }
-  };
+  const handleDeleteClick = (id) => {
+  setDeleteProductId(id);
+};
+const handleDelete = async () => {
+  if (!deleteProductId) return;
 
+  try {
+    setIsSending(true);
+
+    if (selectedType === "sales") {
+      await deleteSalesProduct(deleteProductId);
+    } else {
+      const tabId = tabMap[selectedType];
+
+      if (!tabId) {
+        throw new Error("Invalid tab ID mapping for: " + selectedType);
+      }
+
+      await deleteHighlightFromProduct(deleteProductId, [tabId]);
+    }
+
+    showToast(fw.delete || "Removed successfully", { type: "success" });
+
+    setDeleteProductId(null);
+    fetchProducts(selectedType);
+
+  } catch (error) {
+    console.error(error);
+    showToast("Error", { type: "error" });
+  } finally {
+    setIsSending(false);
+  }
+};
   const renderProductCard = (p) => {
     const imgSrc = getImageUrl(p.image);
     const SelectedIcon = HIGHLIGHT_TYPES.find(t => t.id === selectedType)?.icon || FaShoppingBag;
@@ -180,7 +196,7 @@ return (
         <img
           src={imgSrc}
           className="w-full h-full object-cover"
-          alt={p.name_en || p.name}
+          alt={isRTL ? (p.name_ar || p.name_en) : (p.name_en || p.name_ar)}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-gray-200 text-xs">
@@ -200,9 +216,11 @@ return (
 
     {/* Content Section - Ultra compact */}
     <div className="p-2 flex-grow flex flex-col">
-      <h3 className="font-medium text-xs text-gray-900 line-clamp-1 mb-0.5">
-        {p.name_en || p.name}
-      </h3>
+    <h3 className="font-medium text-xs text-gray-900 line-clamp-1 mb-0.5">
+  {isRTL
+    ? (p.name_ar || p.name_en || p.name)
+    : (p.name_en || p.name_ar || p.name)}
+</h3>
       
       {/* Price Section */}
       <div className="leading-tight mb-1.5">
@@ -240,7 +258,7 @@ return (
             onClick={() => handleEditClick(p)}
             className="text-[10px] text-blue-500 hover:text-blue-600 font-medium px-1 py-0.5 rounded-md hover:bg-blue-50/50 transition-colors"
           >
-            Edit
+            {fw.edit || "Edit"}
           </button>
         ) : (
           <div />
@@ -250,7 +268,7 @@ return (
           onClick={() => handleDeleteClick(p.id)}
           className="text-[10px] text-red-400 hover:text-red-500 font-medium px-1 py-0.5 rounded-md hover:bg-red-50/50 transition-colors"
         >
-          Delete
+          {fw.delete || "Delete"}
         </button>
         
        
@@ -265,7 +283,7 @@ return (
       <div className="max-w-[clamp(1000px,90vw,1920px)] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-[clamp(1rem,2.5vw,1.5rem)]">
-          <h1 className=" text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">Product Highlights</h1>
+          <h1 className=" text-xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-20 md:mt-4">{fw.product_highlights || "Product Highlights"}</h1>
         </div>
 
         {/* Category Tabs */}
@@ -289,7 +307,7 @@ return (
                 >
                   <div className="flex items-center gap-1">
                     <Icon className={`w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] ${isSelected ? 'text-white' : 'text-blue-500'}`} />
-                    <span>{type.label}</span>
+                   <span>{fw[type.id] || type.label}</span>
                   </div>
                 </button>
               );
@@ -302,7 +320,7 @@ return (
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <div className=" ">
               <span className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700">
-                {products.length} {products.length === 1 ? 'Product' : 'Products'}
+                {products.length} {products.length === 1 ? fw.product || "Product" : fw.products || "Products"}
               </span>
             </div>
           </div>
@@ -313,7 +331,7 @@ return (
               className=" sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-blue-600 rounded-xl text-[clamp(0.6rem,1.2vw,0.875rem)] font-medium text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2"
             >
               <FaPlus className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(1.1rem,1.2vw,1rem)]" />
-              <span>Add Highlights</span>
+              <span>{fw.add_highlights || "Add Highlights"}</span>
             </button>
 
             <button
@@ -321,7 +339,7 @@ return (
               className="flex-1 sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-white/80 backdrop-blur-sm rounded-xl text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700 hover:bg-white hover:shadow-md transition-all duration-200 border border-blue-100/50 flex items-center justify-center gap-2"
             >
               <FaBell className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(1.1rem,1.2vw,1rem)] text-blue-500" />
-              <span>Notify</span>
+              <span>{fw.notify || "Notify"}</span>
             </button>
 
             <button
@@ -329,7 +347,7 @@ return (
               className="flex-1 sm:flex-initial px-[clamp(0.625rem,1.5vw,0.875rem)] py-[clamp(0.25rem,0.875vw,0.375rem)] bg-white/80 backdrop-blur-sm rounded-xl text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-700 hover:bg-white hover:shadow-md transition-all duration-200 border border-blue-100/50 flex items-center justify-center gap-2"
             >
               <FaHistory className="w-[clamp(0.875rem,1.2vw,1rem)] h-[clamp(1.1rem,1.2vw,1rem)] text-blue-500" />
-              <span>History</span>
+              <span>{fw.history || "History"}</span>
             </button>
           </div>
         </div>
@@ -340,7 +358,7 @@ return (
           <div className="flex items-center gap-2 mb-[clamp(0.875rem,2vw,1.25rem)]">
             <div className="w-1 h-[clamp(1rem,2vw,1.25rem)] bg-blue-600 rounded-full" />
             <h2 className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium text-gray-500 uppercase tracking-wider">
-              {selectedType.replace(/_/g, " ")} Products
+              {selectedType.replace(/_/g, " ")} {fw.products || "Products"}
             </h2>
           </div>
 
@@ -368,8 +386,8 @@ return (
               <div className="w-[clamp(2.5rem,5vw,4rem)] h-[clamp(2.5rem,5vw,4rem)] bg-blue-50/50 rounded-2xl flex items-center justify-center mb-4">
                 <FaShoppingBag className="w-[clamp(1.25rem,2.5vw,1.75rem)] h-[clamp(1.25rem,2.5vw,1.75rem)] text-blue-300" />
               </div>
-              <p className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium">No products found</p>
-              <p className="text-[clamp(0.625rem,1vw,0.75rem)] mt-1">Add products to get started</p>
+              <p className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-medium"> {fw.no_products_found || "No products found"}</p>
+              <p className="text-[clamp(0.625rem,1vw,0.75rem)] mt-1">{fw.add_products_to_get_started || "Add products to get started"}</p>
             </div>
           )}
         </div>
@@ -380,7 +398,7 @@ return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white backdrop-blur-xl rounded-3xl w-full max-w-[clamp(300px,90vw,1280px)] max-h-[80vh] flex flex-col shadow-2xl border border-blue-100/50 ">
             <div className="p-[clamp(0.875rem,2vw,1.25rem)] border-b border-blue-100/50 flex justify-between items-center">
-              <h3 className="text-[clamp(0.875rem,2vw,1.125rem)] font-semibold text-gray-900">Notification History</h3>
+              <h3 className="text-[clamp(0.875rem,2vw,1.125rem)] font-semibold text-gray-900">{fw.history || "History"}</h3>
               <button 
                 onClick={() => setView('list')} 
                 className="w-[clamp(1.5rem,3vw,2rem)] h-[clamp(1.5rem,3vw,2rem)] rounded-full bg-gray-200/30 hover:bg-white flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
@@ -405,7 +423,9 @@ return (
           <div className="bg-white/90 backdrop-blur-xl rounded-3xl w-full max-w-[clamp(280px,90vw,448px)] p-[clamp(0.875rem,2vw,1.25rem)] shadow-2xl border border-blue-100/50">
             <div className="flex justify-between items-center mb-[clamp(0.875rem,2vw,1.25rem)]">
               <h3 className="text-[clamp(0.875rem,2vw,1.125rem)] font-semibold text-gray-900">
-                {editingProduct ? 'Edit Discount' : 'Add Discount'}
+                {editingProduct
+  ? fw.edit || "Edit"
+  : fw.add_highlights || "Add"}
               </h3>
               <button
                 onClick={() => { setShowDiscountModal(false); setEditingProduct(null); }}
@@ -418,7 +438,7 @@ return (
             <div className="space-y-4">
               <div>
                 <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">
-                  Discount Percentage
+                  {fw.discount || "Discount"}
                 </label>
                 <div className="relative">
                   <FaPercent className="absolute left-3 top-1/2 -translate-y-1/2 w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] text-gray-400" />
@@ -434,7 +454,7 @@ return (
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">From</label>
+                  <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">{fw.from || "From"}</label>
                   <div className="relative">
                     <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] text-gray-400" />
                     <input
@@ -446,7 +466,7 @@ return (
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">To</label>
+                  <label className="block text-[clamp(0.625rem,1vw,0.75rem)] font-medium text-gray-500 mb-1.5">{fw.to || "To"}</label>
                   <div className="relative">
                     <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 w-[clamp(0.75rem,1.2vw,0.875rem)] h-[clamp(0.75rem,1.2vw,0.875rem)] text-gray-400" />
                     <input
@@ -464,13 +484,46 @@ return (
                 disabled={isSending}
                 className="w-full py-[clamp(0.375rem,1.5vw,0.625rem)] bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-[clamp(0.75rem,1.2vw,0.875rem)]"
               >
-                {isSending ? 'Saving...' : 'Save Changes'}
+                {isSending ? "..." : fw.save || "Save"}
               </button>
             </div>
           </div>
         </div>
       )}
 
+
+{/* DELETE CONFIRM MODAL */}
+{deleteProductId && (
+  <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center p-3 z-[1100]">
+    <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5 animate-in fade-in zoom-in duration-300">
+
+      <h3 className="text-sm font-semibold text-gray-900 mb-2">
+        {fw.delete_product || "Delete Product?"}
+      </h3>
+
+      <p className="text-xs text-gray-500 mb-4">
+        {fw.delete_warning || "This action cannot be undone."}
+      </p>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => setDeleteProductId(null)}
+          className="flex-1 py-2 bg-gray-50 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100"
+        >
+          {fw.cancel || "Cancel"}
+        </button>
+
+        <button
+          onClick={handleDelete}
+          className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600"
+        >
+          {fw.delete || "Delete"}
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
       {/* Add Modal */}
       {view === "add" && (
         <AddToHighlightsModalSales
@@ -490,5 +543,6 @@ return (
         />
       )}
     </div>
+    
   );
 }

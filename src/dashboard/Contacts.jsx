@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-
+import { useFixedWords } from "../hooks/useFixedWords";
 import { getContacts, deleteContact, getImageUrl } from '../companyDashboardApi';
 import { toast } from 'react-hot-toast';
  import { IconDelete  } from "./SvgIcons";
 function Contacts({ onBack }) {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
-
+ const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
   useEffect(() => {
     fetchContacts();
   }, []);
@@ -25,7 +26,7 @@ function Contacts({ onBack }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this contact?")) return;
+    if (!window.confirm(fw.delete_warning || "This action cannot be undone.")) return;
 
     try {
       await deleteContact(id);
@@ -71,7 +72,7 @@ return (
   </div>
 ) : contacts.length === 0 ? (
   <div className="text-center py-16 text-gray-400">
-    No contacts found.
+    {fw.no_contacts_found || "No contacts found"}
   </div>
 ) : (
   <div className="bg-white backdrop-blur-xl">
@@ -80,7 +81,7 @@ return (
           {/* Section Header INSIDE card */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 ">
             <h2 className="text-2xl xs:text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mt-16 md:mt-4  p-4">
-              Contacts
+              {fw.contacts || "Contacts"}
             </h2>
            
           </div>
@@ -120,7 +121,7 @@ return (
 
                     {contact.email && (
                       <p className="text-xs text-gray-400 truncate">
-                        {contact.email}
+                        {fw.email || "Email"}: {contact.email}
                       </p>
                     )}
                   </div>

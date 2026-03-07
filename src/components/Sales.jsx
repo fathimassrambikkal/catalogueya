@@ -76,7 +76,7 @@ function SalesComponent() {
   company_id: product.company_id?.id,
   company_name: product.company_name || "Company",
   category_id: product.category_id,
-  
+    whatsapp: product.whatsapp || null,
 }));
 
 

@@ -41,7 +41,7 @@ export default function CompanyDashboard() {
   const { user } = useSelector((state) => state.auth);
   const isMobile = useIsMobile();
 const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("Products");
+  const [activeTab, setActiveTab] = useState("products");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [companyId, setCompanyId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -276,13 +276,17 @@ const [isChatOpen, setIsChatOpen] = useState(false);
       {/* 🔒 LOCK VIEWPORT */}
       <div className="relative flex w-full h-[calc(100vh-64px)]  overflow-hidden bg-gray-100 ">
         {/* ================= Sidebar ================= */}
-        <aside
+<aside
           className={`
             ${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"}
             bg-white
             transform transition-transform duration-300 ease-out
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            lg:translate-x-0
+          ${isMobile
+  ? sidebarOpen
+    ? "translate-x-0"
+    : "-translate-x-full"
+  : "translate-x-0"
+}
             shadow-lg
           `}
         >
@@ -309,35 +313,35 @@ const [isChatOpen, setIsChatOpen] = useState(false);
         )}
 
         {/* ================= Mobile Menu Button ================= */}
-        {isMobile && !sidebarOpen && !isChatOpen && (
-          <button
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open menu"
-            className="
-              fixed top-20 left-3 z-50
-              h-10 w-10
-              flex items-center justify-center
-              rounded-2xl
-              bg-white/70 backdrop-blur-xl
-              shadow-lg
-              active:scale-95
-            "
-          >
-            <RiMenu2Fill className="w-4 h-4 text-gray-700" />
-          </button>
-        )}
+    {isMobile && !sidebarOpen && !isChatOpen && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+              className="
+                fixed top-20 left-3 z-50
+                h-10 w-10
+                flex items-center justify-center
+                rounded-2xl
+                bg-white/70 backdrop-blur-xl
+                shadow-lg
+                active:scale-95
+              "
+            >
+              <RiMenu2Fill className="w-4 h-4 text-gray-700" />
+            </button>
+          )}
 
         {/* ================= Main ================= */}
         <main className="flex-1 flex flex-col overflow-y-auto ">
           {/* Fixed header / cover */}
-        {activeTab === "Products" && (
+        {activeTab === "products" && (
   <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
 )}
 
           {/* 🔥 ONLY SCROLL AREA - Conditional for Messages */}
           <div >
             <div className={`max-w-[1600px] mx-auto ${activeTab === "Messages" ? "h-full" : "space-y-6"}`}>
-              {activeTab === "Products" && (
+              {activeTab === "products" && (
                 <Products
                   products={products}
                   setProducts={setProducts}
@@ -348,7 +352,7 @@ const [isChatOpen, setIsChatOpen] = useState(false);
                 />
               )}
 
-              {activeTab === "Product Highlights" && (
+              {activeTab === "highlights" && (
                 <Sales
                   companyId={companyId}
                   companyInfo={companyInfo}
@@ -357,9 +361,9 @@ const [isChatOpen, setIsChatOpen] = useState(false);
                   setTargetConversationId={setTargetConversationId}
                 />
               )}
-              {activeTab === "Analytics" && <Analytics companyId={companyId} companyInfo={companyInfo} />}
-              {activeTab === "Contacts" && <Contacts companyId={companyId} />}
-              {activeTab === "Messages" && (
+              {activeTab === "analytics" && <Analytics companyId={companyId} companyInfo={companyInfo} />}
+              {activeTab === "contacts" && <Contacts companyId={companyId} />}
+              {activeTab === "messages" && (
   <Messages
     companyId={companyId}
     companyInfo={companyInfo}
@@ -372,22 +376,22 @@ const [isChatOpen, setIsChatOpen] = useState(false);
     onChatOpen={setIsChatOpen}   
   />
 )}
-              {activeTab === "Followers" && <Followers companyId={companyId} />}
-              {activeTab === "Notifications" && (
+              {activeTab === "followers" && <Followers companyId={companyId} />}
+              {activeTab === "otifications" && (
                 <Notifications
                   setActiveTab={setActiveTab}
                   setTargetConversationId={setTargetConversationId}
                 />
               )}
-              {activeTab === "Reviews" && <DashboardReviews companyId={companyId} />}
-              {activeTab === "Bills" && (
+              {activeTab === "reviews" && <DashboardReviews companyId={companyId} />}
+              {activeTab === "bills" && (
                 <Bills
                   companyId={companyId}
                   companyInfo={companyInfo}
                   products={products}
                 />
               )}
-              {activeTab === "Settings" && (
+              {activeTab === "settings" && (
                 <Settings
                   companyId={companyId}
                   companyInfo={companyInfo}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getSubscribeDetails } from "../../api";
 import { FaTimes, FaChevronRight } from "react-icons/fa";
-
+import { useTranslation } from "react-i18next";
+import { useFixedWords } from "../../hooks/useFixedWords";
 export default function PlanModal({ isOpen, onClose, onSubscribe }) {
   const [tabs, setTabs] = useState([]);
   const [pricing, setPricing] = useState({});
@@ -10,7 +11,11 @@ export default function PlanModal({ isOpen, onClose, onSubscribe }) {
   const [isLoading, setIsLoading] = useState(true);
   const [tabDimensions, setTabDimensions] = useState({});
   const tabRefs = useRef([]);
+const { i18n } = useTranslation();
+const isRTL = i18n.dir() === "rtl";
 
+const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
   useEffect(() => {
     if (!isOpen) return;
     const fetchData = async () => {
@@ -62,15 +67,17 @@ export default function PlanModal({ isOpen, onClose, onSubscribe }) {
     onSubscribe(billingCycle === "monthly" ? 1 : 2);
   };
 
-  const getSliderStyles = () => {
-    const idx = tabs.findIndex(t => t.key === activeTab);
-    if (idx === -1 || !tabDimensions[idx]) return { width: 0, left: 0 };
-    let left = 0;
-    for (let i = 0; i < idx; i++) {
-        left += (tabDimensions[i]?.width || 0) + 8;
-    }
-    return { width: tabDimensions[idx].width, left };
+const getSliderStyles = () => {
+  const idx = tabs.findIndex(t => t.key === activeTab);
+  const el = tabRefs.current[idx];
+
+  if (!el) return { width: 0, left: 0 };
+
+  return {
+    width: el.offsetWidth,
+    left: el.offsetLeft
   };
+};
 
   return (
     <div className="fixed inset-0 z-[1001] flex items-center justify-center px-2 xs:px-3 sm:px-4">
@@ -87,7 +94,7 @@ export default function PlanModal({ isOpen, onClose, onSubscribe }) {
         <div className="p-4 xs:p-5 sm:p-6 md:p-8 lg:p-10 xl:p-12 overflow-y-auto">
           <div className="text-center mb-4 xs:mb-5 sm:mb-6">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-black text-gray-900">
-              Simple Pricing
+              {fw.simple_pricing || "Simple Pricing"}
             </h2>
           </div>
 
@@ -95,7 +102,7 @@ export default function PlanModal({ isOpen, onClose, onSubscribe }) {
             {/* Toggle */}
             <div className="flex items-center gap-2 xs:gap-3 sm:gap-4 mb-6 xs:mb-7 sm:mb-8 bg-gray-50 p-1.5 xs:p-2 rounded-xl xs:rounded-2xl border border-gray-100">
                <span className={`text-[10px] xs:text-xs sm:text-sm font-bold ${billingCycle === 'monthly' ? 'text-blue-500' : 'text-gray-400'}`}>
-                 Monthly
+                {fw.monthly || "Monthly"}
                </span>
                <button 
                 onClick={() => setBillingCycle(b => b === 'monthly' ? 'yearly' : 'monthly')}
@@ -104,17 +111,19 @@ export default function PlanModal({ isOpen, onClose, onSubscribe }) {
                  <div className={`absolute top-1 w-4 xs:w-5 h-4 xs:h-5 bg-white rounded-full transition-all ${billingCycle === 'yearly' ? 'right-1' : 'left-1'}`} />
                </button>
                <span className={`text-[10px] xs:text-xs sm:text-sm font-bold ${billingCycle === 'yearly' ? 'text-blue-500' : 'text-gray-400'}`}>
-                 Yearly
+                 {fw.yearly || "Yearly"}
                </span>
             </div>
 
             {/* Price */}
             <div className="text-center mb-6 xs:mb-7 sm:mb-8">
               <h3 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black text-blue-500 mb-1">
-                {billingCycle === 'monthly' ? monthlyPrice : yearlyPrice} QAR
+                {billingCycle === 'monthly' ? monthlyPrice : yearlyPrice} {fw.qar || "QAR"}
               </h3>
               <p className="text-gray-400 font-black uppercase tracking-widest text-[10px] xs:text-xs sm:text-sm">
-                {billingCycle === 'monthly' ? 'Per Month' : 'Per Year'}
+                {billingCycle === 'monthly'
+  ? fw.per_month || "Per month"
+  : fw.yearly || "Yearly"}
               </p>
             </div>
 
@@ -126,25 +135,26 @@ export default function PlanModal({ isOpen, onClose, onSubscribe }) {
       rounded-xl
         bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
-              Subscribe
+             {fw.subscribe_now || "Subscribe Now"}
             </button>
 
             <div className="mt-8 xs:mt-10 sm:mt-12 w-full text-center">
                 <h4 className="text-xl xs:text-2xl sm:text-3xl font-black text-gray-900 mb-4 xs:mb-5 sm:mb-6">
-                  Benefits of subscription
+                 {fw.benefits_of_subscription || "Benefits of subscription"}
                 </h4>
                 
                 {/* Custom Tabs */}
-                <div className="
-                  relative flex items-center
-                  bg-gray-50/50
-                  p-1 xs:p-1.5 sm:p-2
-                  rounded-xl xs:rounded-2xl
-                  border border-gray-100
-                  mb-6 xs:mb-7 sm:mb-8
-                  w-full
-                  overflow-hidden
-                ">
+                <div className={`
+  relative flex items-center
+  ${isRTL ? "flex-row-reverse" : ""}
+  bg-gray-50/50
+  p-1 xs:p-1.5 sm:p-2
+  rounded-xl xs:rounded-2xl
+  border border-gray-100
+  mb-6 xs:mb-7 sm:mb-8
+  w-full
+  overflow-hidden
+`}>
                    {tabs.length > 0 && activeTab && (
                        <div 
                         className="absolute top-1 xs:top-1.5 sm:top-2 bottom-1 xs:bottom-1.5 sm:bottom-2 bg-blue-500 rounded-lg xs:rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/20"
@@ -196,7 +206,10 @@ export default function PlanModal({ isOpen, onClose, onSubscribe }) {
                                 {(activeTabData.benefits || []).map((b, i) => (
                                     <div key={i} className="flex gap-3 xs:gap-4 items-start">
                                         <div className="shrink-0 w-5 xs:w-6 h-5 xs:h-6 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                                            <FaChevronRight size={8} className="xs:w-2 xs:h-2 sm:w-2.5 sm:h-2.5" />
+                                            <FaChevronRight
+                                            size={8}
+                                            className={isRTL ? "rotate-180" : ""}
+                                          />
                                         </div>
                                         <div>
                                             <p className="font-black text-gray-900 text-xs xs:text-sm mb-0.5 xs:mb-1">

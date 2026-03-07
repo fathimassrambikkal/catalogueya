@@ -6,6 +6,7 @@ import {
   ShareIcon,
 } from "./AnalyticsIcons";
 import { getImageUrl } from "../companyDashboardApi";
+import { useFixedWords } from "../hooks/useFixedWords";
 
 // Helper to safely parse image string
 const parseImageString = (imgStr) => {
@@ -29,15 +30,17 @@ const parseImageString = (imgStr) => {
 };
 
 function AnalyticsImgCards({ range, setRange, companyName, data = {}, summaryData = {}, companyAnalytics = {} }) {
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
 
   // Map Top Products
   const topHighlights = useMemo(() => {
-    const keys = [
-      { key: "most_sold", title: "Most Sold" },
-      { key: "most_viewed", title: "Most Viewed" },
-      { key: "most_favored", title: "Most Favored" },
-      { key: "most_shared", title: "Most Shared" }
-    ];
+   const keys = [
+  { key: "most_sold", title: fw.most_sold || "Most Sold" },
+  { key: "most_viewed", title: fw.most_viewed || "Most Viewed" },
+  { key: "most_favored", title: fw.most_favored || "Most Favored" },
+  { key: "most_shared", title: fw.most_shared || "Most Shared" }
+];
 
     if (!data || Object.keys(data).length === 0) {
       return [];
@@ -48,7 +51,7 @@ function AnalyticsImgCards({ range, setRange, companyName, data = {}, summaryDat
       if (!item) {
         return {
           title: k.title,
-          product: "No Data",
+          product: fw.no_data || "No Data",
           image: null,
           metrics: { views: 0, sold: 0, fav: 0, share: 0 }
         };
@@ -78,7 +81,7 @@ return (
           {/* Header - More Compact */}
           <div className="px-3 pt-3 pb-1 flex items-center justify-between">
             <h3 className="text-blue-600/80 font-bold text-[10px] uppercase tracking-wider">
-              TOP PRODUCT
+              {fw.top_product || "Top Product"}
             </h3>
             <p className="text-[9px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded">
               {range}
@@ -96,7 +99,7 @@ return (
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-100">
-                  <span className="text-xs">No Image</span>
+                  <span className="text-xs">{fw.no_image || "No Image"}</span>
                 </div>
               )}
               

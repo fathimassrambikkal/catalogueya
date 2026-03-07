@@ -17,6 +17,7 @@ import {
   StarIcon,
   ShareIcon,
   ChatIcon,
+  WhatsappIcon 
 } from "../components/SvgIcon";
 import { error as logError } from "../utils/logger";
 import { showToast } from "../utils/showToast";
@@ -296,6 +297,7 @@ export default function NewArrivalProductProfile() {
           id: productData.id,
           name: productData.name,
           price: productData.price,
+          whatsapp: productData.whatsapp || null,
           oldPrice: productData.old_price || null,
           image: productImage, // ✅ Store object format
           rating: parseFloat(productData.rating) || 0,
@@ -619,6 +621,22 @@ export default function NewArrivalProductProfile() {
               <PremiumIconButton title="Chat" onClick={handleChat} disabled={!product}>
                 <ChatIcon className="w-[clamp(13px,1.1vw,17px)] h-[clamp(13px,1.1vw,17px)] text-[rgba(18,18,18,0.88)]" />
               </PremiumIconButton>
+
+  <PremiumIconButton
+    title="WhatsApp"
+    onClick={() => {
+      const cleanNumber = product.whatsapp.replace(/\D/g, "");
+      window.open(`https://wa.me/${cleanNumber}`, "_blank");
+    }}
+    disabled={!product}
+  >
+    <WhatsappIcon
+      className="w-[clamp(15px,1.2vw,18px)]
+                 h-[clamp(15px,1.2vw,18px)]
+                 opacity-90"
+    />
+  </PremiumIconButton>
+
             </div>
 
             {productImages.length > 1 ? (
