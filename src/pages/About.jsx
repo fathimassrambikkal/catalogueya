@@ -18,7 +18,7 @@ import { useSettings } from "../hooks/useSettings";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { log, warn } from "../utils/logger";
 
-import LogoMarquee from "../components/LogoMarquee";
+
 import SmartImage from "../components/SmartImage";
 
 // 🔒 DEV flag
@@ -237,7 +237,7 @@ export default function About() {
       <div className="h-20 sm:h-40 bg-white" />
 
       {/* Partners */}
-      <section className="px-4 sm:px-6 md:px-16 lg:px-20 py-12 sm:py-20 bg-white">
+      {/* <section className="px-4 sm:px-6 md:px-16 lg:px-20 py-12 sm:py-20 bg-white">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 mb-8">
           <h2 className="flex-1 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900">
             {partnersTitle}
@@ -245,10 +245,8 @@ export default function About() {
           <p className="flex-1 text-gray-600">{partnersText}</p>
         </div>
 
-        {isClient && clientLogos.length > 0 && (
-          <LogoMarquee logos={clientLogos} isRTL={isRTL} duration={30} useSmartImage />
-        )}
-      </section>
+    
+      </section> */}
 
       <Suspense fallback={<div className="h-64 bg-gray-50 animate-pulse" />}>
         <SubscribeSection />

@@ -31,9 +31,10 @@ export default function Home() {
       <NewArrivals />
       <Sales />
       <Pricing />
+      <AppDescribingSection/>
       <Faq />
       <CallToAction />
-       <AppDescribingSection/>
+       
     </div>
   );
 }
