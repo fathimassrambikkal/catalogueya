@@ -6,6 +6,7 @@ import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
 export default function NotifyHighlightsModalSales({
   selectedType,
+  categoryId,
   products,
   onClose
 }) {
@@ -64,7 +65,8 @@ const fw = fixedWords?.fixed_words || {};
         product_ids: selectedProductIds,
         customer_ids: selectedCustomerIds,
         send_to_all: false,
-        category: selectedType
+        category: selectedType,
+        category_id: categoryId
       });
 
       setNotifyStep(4);

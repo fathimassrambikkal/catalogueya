@@ -13,6 +13,8 @@ import PlanModal from "../components/auth/PlanModal";
 import CompanyRegisterModal from "../components/auth/CompanyRegisterModal";
 
 import { log, error as logError } from "../utils/logger";
+import { showToast } from "../utils/showToast";
+
 
 
 export default function Sign() {
@@ -178,7 +180,6 @@ const isRTL = i18n.dir() === "rtl";
         return;
       }
 
-
       // ✅ PRODUCTION redirect
       navigate("/", { replace: true });
 
@@ -189,14 +190,16 @@ const isRTL = i18n.dir() === "rtl";
         status: err.response?.status,
       });
 
+      const errorMsg = err.response?.data?.message || err.message || "Login failed";
+
       if (err.response?.status === 401) {
-        setError("Invalid email or password");
+        showToast(errorMsg || "Invalid email or password");
       } else if (err.response?.status === 422) {
-        setError("Validation error");
+        showToast(errorMsg || "Validation error");
       } else if (err.response?.status === 500) {
-        setError("Server error. Please try again later.");
+        showToast("Server error. Please try again later.");
       } else {
-        setError(err.message || "Login failed");
+        showToast(errorMsg);
       }
     } finally {
       setLoading(false);
@@ -265,10 +268,12 @@ const isRTL = i18n.dir() === "rtl";
 
     } catch (err) {
       logError(" COMPANY LOGIN ERROR:", err);
+      const errorMsg = err.response?.data?.message || err.message || "Company login failed";
+
       if (err.response?.status === 401) {
-        setError("Invalid company email or password");
+        showToast(errorMsg || "Invalid company email or password");
       } else {
-        setError(err.message || "Company login failed");
+        showToast(errorMsg);
       }
     } finally {
       setLoading(false);
@@ -380,29 +385,6 @@ const isRTL = i18n.dir() === "rtl";
             {/* Login Forms */}
             {loginType === "customer" ? (
               <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-700 rounded-2xl text-sm text-center backdrop-blur-sm">
-                    <div className="flex items-center justify-center">
-                      <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mr-2">
-                        <svg
-                          className="w-3 h-3 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="3"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </div>
-                      {error}
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-4">
                   {/* Email */}
                   <input
@@ -520,30 +502,7 @@ const isRTL = i18n.dir() === "rtl";
 
             ) : (
               /* Company Login Form */
-              <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-700 rounded-2xl text-sm text-center backdrop-blur-sm">
-                    <div className="flex items-center justify-center">
-                      <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center mr-2">
-                        <svg
-                          className="w-3 h-3 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="3"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </div>
-                      {error}
-                    </div>
-                  </div>
-                )}
-
+                <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                 <div className="space-y-4">
                   {/* Company Email */}
                   <input

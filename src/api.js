@@ -40,7 +40,13 @@ api.interceptors.response.use(
   (error) => {
     // Check if the response exists and the status is 401 Unauthorized/Unauthenticated
     if (error.response && error.response.status === 401) {
-      window.dispatchEvent(new CustomEvent("sessionExpired"));
+      const url = error.config?.url || "";
+      const isAuthUrl = url.includes("/login") || url.includes("/logout") || url.includes("/register");
+      
+      // Only dispatch sessionExpired if it's NOT an auth-related request
+      if (!isAuthUrl) {
+        window.dispatchEvent(new CustomEvent("sessionExpired"));
+      }
     }
     return Promise.reject(error);
   }

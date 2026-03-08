@@ -538,6 +538,7 @@ return (
       {view === "notify" && (
         <NotifyHighlightsModalSales
           selectedType={selectedType}
+          categoryId={tabMap[selectedType]}
           products={products}
           onClose={() => setView("list")}
         />
