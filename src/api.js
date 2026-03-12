@@ -199,6 +199,21 @@ export const loginCustomer = (email, password) => {
   });
 };
 
+export const forgotPasswordCustomer = (email) => {
+  return api.post("/customer/forgot-password", {
+    email: email.trim(),
+  });
+};
+
+export const resetPasswordCustomer = (data) => {
+  return api.post("/customer/reset-password", {
+    email: data.email.trim(),
+    code: data.code.trim(),
+    password: data.password.trim(),
+    password_confirmation: data.password_confirmation.trim(),
+  });
+};
+
 
 export const registerCustomer = ({
   first_name,
@@ -581,6 +596,17 @@ export const rejectPublicBill = (publicToken, reason) => {
 
 export const loginCompany = (email, password) =>
   api.post("/company/login", { email, password });
+
+export const forgotPasswordCompany = (email) =>
+  api.post("/company/forgot-password", { email: email.trim() });
+
+export const resetPasswordCompany = (data) =>
+  api.post("/company/reset-password", {
+    email: data.email.trim(),
+    code: data.code.trim(),
+    password: data.password.trim(),
+    password_confirmation: data.password_confirmation.trim(),
+  });
 
 export const registerCompany = (data) => {
   const token = localStorage.getItem("token");

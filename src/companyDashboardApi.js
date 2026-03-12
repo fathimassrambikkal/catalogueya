@@ -53,8 +53,9 @@ export const getImageUrl = (path) => {
 
 // Get all company products
 // GET /api/company/products
-export const getCompanyProducts = () => {
-  return api.get("/company/products");
+export const getCompanyProducts = (type = null) => {
+  const url = type ? `/company/products?type=${type}` : "/company/products";
+  return api.get(url);
 };
 
 // Add new product

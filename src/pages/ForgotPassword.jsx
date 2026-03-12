@@ -1,27 +1,68 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
+import { forgotPasswordCustomer, resetPasswordCustomer } from "../api";
+import { toast } from "react-hot-toast";
 
 export default function ForgotPassword() {
+  const [step, setStep] = useState(1); // 1: forgot, 2: reset
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleReset = async (e) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
-    if (email.trim() === "") {
-      alert("Please enter your email address.");
+    if (!email.trim()) {
+      toast.error("Please enter your email address.");
       return;
     }
 
     setLoading(true);
-    
-    // Simulate API call with delay
-    setTimeout(() => {
-      alert(`Password reset link sent to ${email}`);
-      setEmail("");
+    try {
+      const resp = await forgotPasswordCustomer(email);
+      // If the API returns a message and no error was thrown, or if status is explicitly true
+      if (resp.data.status !== false) {
+        toast.success(resp.data.message || "Reset code sent to your email.");
+        setStep(2);
+      } else {
+        toast.error(resp.data.message || "Failed to send reset code.");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const resp = await resetPasswordCustomer({
+        email,
+        code,
+        password,
+        password_confirmation: confirmPassword,
+      });
+      if (resp.data.status !== false) {
+        toast.success(resp.data.message || "Password reset successfully.");
+        navigate("/sign");
+      } else {
+        toast.error(resp.data.message || "Failed to reset password.");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,28 +92,61 @@ export default function ForgotPassword() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
               </div>
-              <span className="font-medium">We'll send a reset link to your email</span>
+              <span className="font-medium">
+                {step === 1 ? "We'll send a code to your email" : "Enter the code and your new password"}
+              </span>
             </div>
           </div>
 
           {/* Header */}
           <h1 className="text-3xl font-semibold text-gray-900 mb-2 text-center">
-            Forgot Password
+            {step === 1 ? "Forgot Password" : "Reset Password"}
           </h1>
           <p className="text-gray-500 mb-6 text-sm text-center">
-            Enter your registered email address, and we'll send you a reset link.
+            {step === 1
+              ? "Enter your registered email address, and we'll send you a reset code."
+              : "Enter the code you received along with your new password."}
           </p>
 
-          <form onSubmit={handleReset} className="space-y-5">
+          <form onSubmit={step === 1 ? handleForgotPassword : handleResetPassword} className="space-y-5">
             <div className="space-y-4">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
-                required
-              />
+              {step === 1 ? (
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+                  required
+                />
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Enter reset code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="New password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
+                    required
+                  />
+                </>
+              )}
             </div>
 
             <button
@@ -83,10 +157,10 @@ export default function ForgotPassword() {
               {loading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                  Sending Reset Link...
+                  {step === 1 ? "Sending Code..." : "Resetting Password..."}
                 </div>
               ) : (
-                "Reset Password"
+                  step === 1 ? "Get Reset Code" : "Reset Password"
               )}
             </button>
           </form>

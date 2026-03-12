@@ -336,12 +336,7 @@ const isRTL = i18n.dir() === "rtl";
     try {
       setIsLoading(true);
 
-      const phoneDigits = (form.contactMobile || "").replace(/\D/g, "");
-      if (phoneDigits.length < 10 && form.contactMobile) {
-        alert("Phone number must be at least 10 digits.");
-        setIsLoading(false);
-        return;
-      }
+      // Phone validation removed
 
       // Prepare data according to backend API requirements
       const apiData = new FormData();

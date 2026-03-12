@@ -25,11 +25,7 @@ function PersonalInformation({ onBack }) {
       return;
     }
     try {
-      const phoneDigits = (formData.mobile || "").replace(/\D/g, "");
-      if (formData.mobile && phoneDigits.length < 10) {
-        alert("Mobile number must be at least 10 digits");
-        return;
-      }
+      // Phone validation removed
 
       await updateCustomerSettings({
         customerId: currentUser.id,

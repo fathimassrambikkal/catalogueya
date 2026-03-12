@@ -427,8 +427,8 @@ const fw = fixedWords?.fixed_words || {};
             return;
         }
 
-        if (!formData.phone || formData.phone.replace(/\D/g, "").length < 10) {
-            alert("Phone number must be at least 10 digits.");
+        if (!formData.phone) {
+            alert("Phone number is required.");
             setLoading(false);
             return;
         }

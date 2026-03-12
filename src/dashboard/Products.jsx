@@ -42,6 +42,7 @@ export default function Products({
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contacts, setContacts] = useState([]);
 const [deleteProductId, setDeleteProductId] = useState(null);
+  const [productType, setProductType] = useState("product"); // 'product' | 'service'
 
 const { i18n } = useTranslation();
 const isRTL = i18n.dir() === "rtl";
@@ -49,6 +50,7 @@ const { fixedWords } = useFixedWords();
 const fw = fixedWords?.fixed_words || {};
   const [formData, setFormData] = useState({
     id: null,
+    type: "product", // 'product' | 'service'
     name: "",
     name_ar: "",
     price: "",
@@ -72,7 +74,7 @@ const fw = fixedWords?.fixed_words || {};
     fetchTags();
     fetchContacts();
     fetchCategories();
-  }, []);
+  }, [productType]);
 
   const fetchCategories = async () => {
     try {
@@ -103,7 +105,7 @@ const fw = fixedWords?.fixed_words || {};
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await getCompanyProducts();
+      const res = await getCompanyProducts(productType === "service" ? "service" : null);
       // response: { data: { products: [...] }, message: "..." }
       if (res.data?.data) {
         setProducts(Array.isArray(res.data.data) ? res.data.data : (res.data.data.products || []));
@@ -149,6 +151,7 @@ const fw = fixedWords?.fixed_words || {};
     if (!editingProduct) {
       setFormData({
         id: null,
+        type: "product",
         name: "",
         name_ar: "",
         price: "",
@@ -227,6 +230,7 @@ const fw = fixedWords?.fixed_words || {};
 
     setFormData({
       id: editingProduct.id,
+      type: editingProduct.type || "product",
       name: editingProduct.name_en || editingProduct.name || "",
       name_ar: editingProduct.name_ar || "",
       price: editingProduct.price || "",
@@ -354,7 +358,10 @@ const fw = fixedWords?.fixed_words || {};
   const handleSave = async () => {
     if (isSubmitting) return;
 
-    if (!formData.name.trim() || !formData.price || !formData.quantity || formData.category_ids.length === 0) {
+    const isService = formData.type === "service";
+    const requiresQty = !isService;
+
+    if (!formData.name.trim() || !formData.price || (requiresQty && !formData.quantity) || formData.category_ids.length === 0) {
       showToast(fw.required_fields || "Please fill required fields", { type: 'error' });
       return;
     }
@@ -370,7 +377,10 @@ const fw = fixedWords?.fixed_words || {};
     // ALWAYS include required fields
     payload.append("name", formData.name);
     payload.append("price", formData.price);
-    payload.append("quantity", formData.quantity);
+    payload.append("type", formData.type);
+    if (!isService) {
+      payload.append("quantity", formData.quantity);
+    }
     if (formData.category_ids.length > 0) {
       payload.append("category_id", formData.category_ids[0]);
     }
@@ -410,7 +420,9 @@ const fw = fixedWords?.fixed_words || {};
       if (formData.description) payload.append("description", formData.description);
       if (formData.description_ar) payload.append("description_ar", formData.description_ar);
 
-      formData.tags.forEach(tagId => payload.append("special_mark[]", tagId));
+      if (!isService) {
+        formData.tags.forEach(tagId => payload.append("special_mark[]", tagId));
+      }
 
       formData.media.forEach((m) => {
         if (m.file) payload.append("albums[]", m.file);
@@ -630,18 +642,25 @@ return (
   ">
     
     {/* Title */}
-    <h2 className="
-      text-sm 
-      sm:text-base 
-      md:text-lg 
-      font-semibold 
-      text-gray-900 
-      truncate
-      w-full
-      sm:w-auto
-    ">
-      {fw.our_products} ({products.length})
+        <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 truncate sm:w-auto">
+          {productType === "service" ? (fw.our_services || "Our Services") : (fw.our_products || "Our Products")} ({products.length})
     </h2>
+
+        {/* Tabs for Product/Service - Premium Card Style */}
+        <div className="flex bg-white border border-gray-200/50 rounded-2xl p-1 shrink-0 mx-auto sm:mx-0 shadow-sm">
+          {["product", "service"].map((t) => (
+            <button
+              key={t}
+              onClick={() => setProductType(t)}
+              className={`px-8 py-2 text-xs font-bold rounded-xl transition-all duration-300 ${productType === t
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg transform scale-[1.02]"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-50/50"
+                }`}
+            >
+              {t === "product" ? (fw.products || "Products") : (fw.services || "Services")}
+            </button>
+          ))}
+        </div>
 {/* right content */}
 <div className="
       flex 
@@ -856,6 +875,24 @@ return (
           </button>
         </div>
 
+          {/* Product / Service Toggle */}
+          <div className="px-4 pt-3 shrink-0">
+            <div className="flex bg-gray-100 rounded-lg p-0.5">
+              {["product", "service"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setFormData(prev => ({ ...prev, type: t, tags: [], quantity: "" }))}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${formData.type === t
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
+                >
+                  {t === "product" ? (fw.product || "Product") : (fw.service || "Service")}
+                </button>
+              ))}
+            </div>
+          </div>
+
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
 
@@ -909,24 +946,24 @@ return (
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-             <input
-            type="text"
-            inputMode="decimal" 
-            className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
-            placeholder={fw.price || "Price"}
-            value={formData.price}
-            onChange={(e) =>
-              setFormData({ ...formData, price: e.target.value })
-            }
-          />
-                        <input
-                type="number"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
-                placeholder={fw.quantity || "Stock"}
-                value={formData.quantity}
-                onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-              />
+              <div className={`grid gap-2 ${formData.type === "service" ? "grid-cols-1" : "grid-cols-2"}`}>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
+                  placeholder={fw.price || "Price"}
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                />
+                {formData.type !== "service" && (
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:bg-white focus:border-gray-200 transition-all text-xs text-gray-900 placeholder-gray-400"
+                    placeholder={fw.quantity || "Stock"}
+                    value={formData.quantity}
+                    onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+                  />
+                )}
             </div>
 
             <textarea
@@ -1003,7 +1040,8 @@ return (
   </div>
 </div>
 
-     {/* SECTION: Tags */}
+            {/* SECTION: Tags — hidden for service */}
+            {formData.type !== "service" && (
 <div className="space-y-2">
   <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
     {fw.product_highlights}
@@ -1066,6 +1104,7 @@ return (
 })}
   </div>
 </div>
+            )}
 
         </div>
 

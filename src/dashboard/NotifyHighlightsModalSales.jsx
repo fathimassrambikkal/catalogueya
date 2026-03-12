@@ -13,7 +13,7 @@ export default function NotifyHighlightsModalSales({
   const [notifyStep, setNotifyStep] = useState(1);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
-  const [notifyFormData, setNotifyFormData] = useState({ title: "", body: "" });
+  const [notifyFormData, setNotifyFormData] = useState({ body: "" });
   const [contacts, setContacts] = useState([]);
   const [isSending, setIsSending] = useState(false);
 const { fixedWords } = useFixedWords();
@@ -47,8 +47,8 @@ const fw = fixedWords?.fixed_words || {};
       return showToast(fw.select_one_customer || "Select at least one customer", { type: "error" });
     }
     if (notifyStep === 3) {
-      if (!notifyFormData.title || !notifyFormData.body) {
-        return showToast(fw.fill_title_message || "Fill title and message", { type: "error" });
+      if (!notifyFormData.body) {
+        return showToast(fw.fill_message || "Please enter a message", { type: "error" });
       }
       return handleSend();
     }
@@ -60,7 +60,7 @@ const fw = fixedWords?.fixed_words || {};
       setIsSending(true);
 
       await sendProductNotification({
-        title: notifyFormData.title,
+        title: fw[selectedType] || selectedType.replace(/_/g, " "),
         body: notifyFormData.body,
         product_ids: selectedProductIds,
         customer_ids: selectedCustomerIds,
@@ -281,20 +281,6 @@ return (
             </h3>
 
             <div className="space-y-3 sm:space-y-4 max-w-md mx-auto">
-              <div>
-                <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase mb-1 block">
-                  {fw.title || "Title"}
-                </label>
-                <input
-                  type="text"
-                  placeholder={fw.notification_title || "Notification title"}
-                  value={notifyFormData.title}
-                  onChange={e =>
-                    setNotifyFormData({ ...notifyFormData, title: e.target.value })
-                  }
-                  className="w-full p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100 focus:border-blue-500 focus:outline-none text-xs sm:text-sm"
-                />
-              </div>
 
               <div>
                 <label className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase mb-1 block">

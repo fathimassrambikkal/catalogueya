@@ -46,11 +46,8 @@ const fw = fixedWords?.fixed_words || {};
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) {
       errors.email = "Invalid email address";
     }
-      const phoneDigits = customerData.phone.replace(/\D/g, "");
       if (!customerData.phone.trim()) {
-          errors.phone = "Phone number is required";
-      } else if (phoneDigits.length < 10) {
-          errors.phone = "Phone number must be at least 10 digits";
+        errors.phone = "Phone number is required";
       }
     if (!customerData.password) {
       errors.password = "Password is required";
