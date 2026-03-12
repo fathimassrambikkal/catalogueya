@@ -44,40 +44,42 @@ function ProductsSection() {
   const sectionRef = useRef(null);
   const isInViewport = useIsInViewport(sectionRef);
 const [activeTab, setActiveTab] = useState("all");
-useEffect(() => {
-  const loadHighlights = async () => {
-    try {
-      const res = await getHighlights();
-      const highlightsData = res.data?.data?.heighlight || [];
+  useEffect(() => {
+    const loadHighlights = async () => {
+      try {
+        const res = await getHighlights();
+        const highlightsData = res.data?.data?.heighlight || [];
 
-      const map = {};
-      const tabsList = [];
-
-      for (const h of highlightsData) {
-
-        tabsList.push({
+        const map = {};
+        const tabsList = highlightsData.map((h) => ({
           key: h.key,
-          label: h.name
-        });
+          label: h.name,
+        }));
 
-        const productsRes = await getHighlightProducts(h.id);
-        const products = productsRes.data?.products || [];
+        // Fetch each highlight's products to build the mapping
+        await Promise.all(
+          highlightsData.map(async (h) => {
+            try {
+              const productsRes = await getHighlightProducts(h.id);
+              const products = productsRes.data?.products || [];
+              products.forEach((p) => {
+                map[p.id] = h.key;
+              });
+            } catch (err) {
+              console.warn(`Failed to fetch products for highlight ${h.name}`, err);
+            }
+          })
+        );
 
-        products.forEach((p) => {
-          map[p.id] = h.key;
-        });
+        setHighlightMap(map);
+        setHighlights(tabsList);
+      } catch (err) {
+        console.error("Critical error loading highlights", err);
       }
+    };
 
-      setHighlightMap(map);
-      setHighlights(tabsList);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  loadHighlights();
-}, []);
+    loadHighlights();
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -275,23 +277,11 @@ const displayProducts = useMemo(() => {
   const showSkeleton = apiProducts.length === 0;
 
 const tabs = useMemo(() => {
-
-  const availableHighlights = new Set(
-    apiProducts
-      .map(p => p.highlight)
-      .filter(Boolean)
-  )
-
-  const filteredHighlights = highlights.filter(h =>
-    availableHighlights.has(h.key)
-  )
-
   return [
     { key: "all", label: fw.all_products || "All Products" },
-    ...filteredHighlights
+    ...highlights
   ]
-
-}, [highlights, apiProducts])
+}, [highlights, fw.all_products])
 
   return (
     <section
@@ -310,7 +300,7 @@ const tabs = useMemo(() => {
   to={
     activeTab === "all" 
       ? "/productviewmore"  
-      : `/${activeTab}ViewMore` 
+                : `/heighlights${activeTab}viewmore` 
   }
   className="text-sm font-medium text-gray-600 hover:text-gray-900 tracking-wide transition flex items-center gap-1.5 group"
 >

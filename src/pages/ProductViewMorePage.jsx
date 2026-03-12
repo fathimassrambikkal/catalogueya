@@ -22,11 +22,13 @@ function ProductViewMorePageComponent() {
   const params = useParams();
   
   // Extract highlight key correctly by removing "ViewMore" suffix
-  const rawHighlightKey = params.highlightKey;
+  // Extract highlight key correctly by removing "highlights" prefix and "viewmore" suffix
+  const rawHighlightKey = params.highlightKeyViewMore;
   const highlightKey = useMemo(() => {
     if (!rawHighlightKey) return null;
-    // Remove "ViewMore" from the end if present
-    return rawHighlightKey.replace("ViewMore", "");
+    return rawHighlightKey
+      .replace(/^heighlights|^highlights/, "")
+      .replace(/viewmore$/i, "");
   }, [rawHighlightKey]);
   
   // State management
@@ -77,8 +79,11 @@ function ProductViewMorePageComponent() {
         const res = await getHighlights();
         const list = res?.data?.data?.heighlight || [];
         
-        // Find New Arrival ID
-        const newArrival = list.find(h => h.key === "New_Arrival");
+        // Find New Arrival ID (case-insensitive and handles plural)
+        const newArrival = list.find(h =>
+          h.key?.toLowerCase() === "new_arrivals" ||
+          h.key?.toLowerCase() === "new_arrival"
+        );
         if (newArrival) {
           setNewArrivalId(newArrival.id);
         }
@@ -111,7 +116,7 @@ function ProductViewMorePageComponent() {
       try {
         const res = await getHighlights();
         const list = res?.data?.data?.heighlight || [];
-        const found = list.find(h => h.key === highlightKey);
+        const found = list.find(h => h.key?.toLowerCase() === highlightKey?.toLowerCase());
         
         if (found) {
           setHighlightId(found.id);
@@ -169,8 +174,22 @@ function ProductViewMorePageComponent() {
         const data = await response.json();
 
         // Handle different response structures
-        const apiProducts = data?.data?.products?.data || [];
-        const pagination = data?.data?.products;
+        // 1. Paginated: data.data.products.data
+        // 2. Direct: data.products
+        // 3. Nested: data.data.products
+        let apiProducts = [];
+        let pagination = null;
+
+        if (data?.data?.products?.data) {
+          apiProducts = data.data.products.data;
+          pagination = data.data.products;
+        } else if (data?.products) {
+          apiProducts = Array.isArray(data.products) ? data.products : (data.products.data || []);
+          pagination = Array.isArray(data.products) ? null : data.products;
+        } else if (data?.data?.products) {
+          apiProducts = Array.isArray(data.data.products) ? data.data.products : (data.data.products.data || []);
+          pagination = Array.isArray(data.data.products) ? null : data.data.products;
+        }
 
         setLastPage(pagination?.last_page || 1);
 
@@ -502,13 +521,13 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
                     imageSlot={
                       <div className="relative w-full h-full">
                         {/* Highlight Label - Top Left */}
-                        {highlightLabel && (
+                        {/* {highlightLabel && (
                           <div className="absolute top-2 left-2 z-20">
                             <span className={`${highlightLabel.color} text-white text-xs font-medium px-2 py-1 rounded-full shadow-md`}>
                               {highlightLabel.name}
                             </span>
                           </div>
-                        )}
+                        )} */}
                         
                         {/* Discount Badge - Top Right (if on sale) */}
                         {isSales && product.old_price && (
