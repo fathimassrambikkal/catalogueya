@@ -49,8 +49,8 @@ const PaymentPage = React.lazy(() => import("./Customer/PaymentPage"));
 const CompanyChat = React.lazy(() => import("./dashboard/ChatDashboard"));
 const NotificationsProducts = React.lazy(() => import("./Customer/NotificationsProducts"));
 const ViewBill = React.lazy(() => import("./Customer/ViewBill"));
-
-
+const ProductViewMorePage = React.lazy(() => import("./pages/ProductViewMorePage"));
+const ProductDetailPage = React.lazy(() => import("./pages/ProductDetailPage"));
 function AppContent() {
   const location = useLocation();
   const { i18n } = useTranslation();
@@ -231,7 +231,7 @@ useEffect(() => {
 
             <Route path="/category/:categoryId/company/:companyId/product/:id" element={<ProductProfile />} />
             <Route path="/company/:companyId/product/:id" element={<ProductProfile />} />
-            <Route path="/product/:id" element={<ProductProfile />} />
+            {/* <Route path="/product/:id" element={<ProductProfile />} /> */}
             <Route path="/product/:productId/reviews" element={<ProductReviews />} />
 
             <Route path="/company/:companyId/reviews" element={<CompanyReviewsPage />} />
@@ -242,7 +242,13 @@ useEffect(() => {
             <Route path="/newarrivalproducts" element={<NewArrivalProductPage />} />
             <Route path="/newarrivalprofile/:id" element={<NewArrivalProductProfile />} />
             <Route path="/favourite" element={<Favourite />} />
+    
 
+         <Route path="/productviewmore" element={<ProductViewMorePage />} />
+<Route path="/:highlightKeyViewMore" element={<ProductViewMorePage />} />
+
+          
+            <Route path="/product/:id" element={<ProductDetailPage />} />
       </Route>
 
 

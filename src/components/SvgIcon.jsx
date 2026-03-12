@@ -6,14 +6,14 @@ export const StarIcon = ({ filled = false, className = "", size = 16 }) => (
     className={className}
     width={size}
     height={size}
-    viewBox="0 0 576 512"
+    viewBox="0 0 24 24"
     fill={filled ? "currentColor" : "none"}
-    stroke={filled ? "currentColor" : "#9CA3AF"}
-    strokeWidth="30"
-    aria-hidden="true"
-    focusable="false"
+    stroke={filled ? "none" : "currentColor"}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
-    <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.54 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/>
   </svg>
 );
 
@@ -211,12 +211,19 @@ export const OutlineHeartIcon = ({ className = "", size = 20 }) => (
 );
 export const ShareAltIcon = ({ className = "" }) => (
   <svg
-    viewBox="0 0 448 512"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
   >
-    <path d="M352 320c-22.6 0-43.5 9.2-58.7 24.1L158.6 260.6c1.3-6.1 1.9-12.3 1.9-18.6s-.7-12.5-1.9-18.6l134.7-83.5C308.5 154.8 329.4 164 352 164c53 0 96-43 96-96S405  -28 352  -28s-96 43-96 96c0 6.3.7 12.5 1.9 18.6L123.2 170.1C108.1 155.2 87.2 146 64.6 146 11.6 146-31.4 189-31.4 242s43 96 96 96c22.6 0 43.5-9.2 58.7-24.1l134.7 83.5c-1.3 6.1-1.9 12.3-1.9 18.6 0 53 43 96 96 96s96-43 96-96-43-96-96-96z" />
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.7" y1="10.7" x2="15.3" y2="6.3" />
+    <line x1="8.7" y1="13.3" x2="15.3" y2="17.7" />
   </svg>
 );
 

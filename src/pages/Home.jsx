@@ -10,6 +10,7 @@ import Pricing from "../components/Pricing";
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
 import AppDescribingSection from "../components/AppDescribingSection";
+import ProductsSection from "../components/ProductsSection";
 export default function Home() {
   const location = useLocation();
 
@@ -28,12 +29,14 @@ export default function Home() {
     <div>
       <Banner />
       <HomeServices />
-      <NewArrivals />
-      <Sales />
+      <ProductsSection/>
+      {/* <NewArrivals /> */}
+      {/* <Sales /> */}
       <Pricing />
+      <AppDescribingSection/>
       <Faq />
       <CallToAction />
-       <AppDescribingSection/>
+     
     </div>
   );
 }

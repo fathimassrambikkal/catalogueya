@@ -1,6 +1,11 @@
 import React, { memo, useCallback, useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getSalesProducts, createCustomerConversation } from "../api";
+import { 
+  getSalesProducts, 
+  createCustomerConversation,
+  getHighlights,
+  getHighlightProducts
+} from "../api";
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useDispatch, useSelector } from "react-redux";
@@ -42,6 +47,37 @@ function SalesComponent() {
   const sectionRef = useRef(null);
   const isInViewport = useIsInViewport(sectionRef);
 
+  const [salesIds, setSalesIds] = useState(new Set());
+
+  useEffect(() => {
+  const loadSalesHighlight = async () => {
+    try {
+      const res = await getHighlights();
+
+      const highlights = res.data?.data?.heighlight || [];
+
+      const salesHighlight = highlights.find(
+        (h) => h.key === "on_sales"
+      );
+
+      if (!salesHighlight) return;
+
+      const productsRes = await getHighlightProducts(salesHighlight.id);
+
+      const ids = new Set(
+        (productsRes.data?.products || []).map((p) => p.id)
+      );
+
+      setSalesIds(ids);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  loadSalesHighlight();
+}, []);
+
   // ✅ Fetch data immediately - non-blocking
   useEffect(() => {
     let mounted = true;
@@ -77,6 +113,7 @@ function SalesComponent() {
   company_name: product.company_name || "Company",
   category_id: product.category_id,
     whatsapp: product.whatsapp || null,
+     highlight: "on_sales"
 }));
 
 
@@ -93,7 +130,10 @@ function SalesComponent() {
 
     fetchSales();
     return () => { mounted = false; };
-  }, []);
+  }, [salesIds]);
+
+
+
 
   const handleToggleFav = useCallback((product) => {
     const isAlreadyFav = favourites.some((p) => p.id === product.id);

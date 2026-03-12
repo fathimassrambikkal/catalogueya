@@ -172,7 +172,7 @@ export default function Faq() {
     >
       <div className="w-full max-w-4xl p-10 md:p-16 flex flex-col items-center gap-12">
         <div className="text-center px-4">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-gray-900">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight  text-gray-900">
             {settings.questions_title}
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-gray-600 mt-1 max-w-xl mx-auto">

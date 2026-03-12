@@ -92,7 +92,7 @@ const getSliderStyles = () => {
         </button>
 
         <div className="p-4 xs:p-5 sm:p-6 md:p-8 lg:p-10 xl:p-12 overflow-y-auto">
-          <div className="text-center mb-4 xs:mb-5 sm:mb-6">
+          <div className="text-center mb-4 xs:mb-5 sm:mb-6 mt-4">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-black text-gray-900">
               {fw.simple_pricing || "Simple Pricing"}
             </h2>

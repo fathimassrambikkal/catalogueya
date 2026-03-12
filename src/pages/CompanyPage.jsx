@@ -12,14 +12,13 @@ import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { getCompany } from "../api";
 import { addFollowCompany, unfollowCompany, getCustomerFollowUps, createCustomerConversation } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
-import { ChatIcon } from "../components/SvgIcon";
+import { ChatIcon, ShareAltIcon } from "../components/SvgIcon";
 import {
   HeartIcon,
   StarIcon,
   
 } from "../components/SvgIcon";
 import SmartImage from "../components/SmartImage";
-import { ShareAltIcon } from "../components/SvgIcon";
 
 import {
   YoutubeIcon,
@@ -284,10 +283,10 @@ export default function CompanyPage() {
       ...product,
       id: product.id, // ✅ Keep original ID, don't generate random ones
       image: getImageUrl(product.image),
-      name: product.name || "Unnamed Product",
+      name: product.name || fw.unnamed_product || "Unnamed Product",
       price: product.price || 0,
       company_id: companyId,
-      company_name: company?.name || "Company",
+      company_name: company?.name || product.company_name || fw.company || "Company",
     }));
   }, [companyId, company?.name, getImageUrl]);
 
@@ -600,7 +599,7 @@ export default function CompanyPage() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+     alert(fw.link_copied || "Link copied to clipboard!");
     }
   };
 
@@ -774,7 +773,7 @@ export default function CompanyPage() {
                 )}
 
                 <span className="relative z-10">
-                  {isFollowing ? "Following" : "Follow"}
+                  {isFollowing ? (fw.following || "Following") : (fw.follow || "Follow")}
                 </span>
               </button>
 
@@ -805,7 +804,7 @@ export default function CompanyPage() {
                 "
               >
                 <ChatIcon className="relative w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)] text-gray-800 transition-transform duration-300 group-hover:scale-105" />
-                <span className="relative">Chat</span>
+                <span className="relative"> {fw.chat || "Chat"}</span>
               </button>
             </div>
           </div>
@@ -826,7 +825,7 @@ export default function CompanyPage() {
             {displayLocation && (
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-white/70 transition-all duration-200">
                 <MapMarkerIcon className="w-4 h-4" />
-                <span>Location</span>
+                <span>{fw.location || "Location"}</span>
               </button>
             )}
 
@@ -835,7 +834,7 @@ export default function CompanyPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-white/70 transition-all duration-200"
             >
               <StarIcon className="w-4 h-4" />
-              <span>Reviews</span>
+              <span>{fw.reviews || "Reviews"}</span>
             </button>
 
             <button
@@ -843,7 +842,7 @@ export default function CompanyPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-white/70 transition-all duration-200"
             >
               <ShareAltIcon className="w-4 h-4" />
-              <span>Share</span>
+              <span>{fw.share || "Share"}</span>
             </button>
           </div>
 
@@ -903,7 +902,7 @@ export default function CompanyPage() {
                       e.stopPropagation();
                       const productPayload = {
                         ...product,
-                        name: product.name || "Unnamed Product",
+                       name: product.name || fw.unnamed_product || "Unnamed Product",
                         company_name: company?.name || product.company_name || "Company",
                         company_id: company?.id || product.company_id || null,
                         price: product.price || 0,
@@ -994,7 +993,7 @@ export default function CompanyPage() {
           </>
         ) : (
           <p className="text-gray-500 text-center py-10 text-lg transform-gpu">
-            No products available for this company.
+          {fw.no_products_found || "No products found"}
           </p>
         )}
       </section>

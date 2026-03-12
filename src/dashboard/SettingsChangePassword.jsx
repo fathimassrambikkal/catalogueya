@@ -118,7 +118,7 @@ export default function SettingsChangePassword({ onBack }) {
           {/* Current Password */}
           <div className="space-y-1 xs:space-y-2">
             <label className="block text-xs xs:text-sm sm:text-base font-medium text-gray-700">
-              {fw.password || "Current Password"}
+              {fw.old_password || "Current Password"}
             </label>
 
             <input
@@ -126,7 +126,7 @@ export default function SettingsChangePassword({ onBack }) {
               name="old_password"
               value={form.old_password}
               onChange={handleChange}
-              placeholder={fw.password || "Enter your current password"}
+              placeholder={fw.enter_current_password || "Enter your current password"}
               className="w-full px-3 xs:px-4 py-2.5 xs:py-3 sm:py-3.5 bg-white border border-gray-200 rounded-xl xs:rounded-2xl text-sm xs:text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-xs xs:placeholder:text-sm placeholder:text-gray-400"
             />
           </div>
@@ -134,7 +134,7 @@ export default function SettingsChangePassword({ onBack }) {
           {/* New Password */}
           <div className="space-y-1 xs:space-y-2">
             <label className="block text-xs xs:text-sm sm:text-base font-medium text-gray-700">
-              {fw.password || "New Password"}
+              {fw.new_password || "New Password"}
             </label>
 
             <input
@@ -142,7 +142,7 @@ export default function SettingsChangePassword({ onBack }) {
               name="new_password"
               value={form.new_password}
               onChange={handleChange}
-              placeholder={fw.password || "Enter your new password"}
+              placeholder={fw.enter_new_password || "Enter your new password"}
               className="w-full px-3 xs:px-4 py-2.5 xs:py-3 sm:py-3.5 bg-white border border-gray-200 rounded-xl xs:rounded-2xl text-sm xs:text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-xs xs:placeholder:text-sm placeholder:text-gray-400"
             />
           </div>
@@ -158,7 +158,7 @@ export default function SettingsChangePassword({ onBack }) {
               name="new_password_confirmation"
               value={form.new_password_confirmation}
               onChange={handleChange}
-              placeholder={fw.confirm_password || "Confirm password"}
+              placeholder={fw.reenter_password}
               className="w-full px-3 xs:px-4 py-2.5 xs:py-3 sm:py-3.5 bg-white border border-gray-200 rounded-xl xs:rounded-2xl text-sm xs:text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-xs xs:placeholder:text-sm placeholder:text-gray-400"
             />
           </div>

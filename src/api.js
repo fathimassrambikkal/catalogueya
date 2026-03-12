@@ -113,7 +113,13 @@ export const getCompany = (id, page = 1) => {
 export const getProducts = () => api.get("/showProducts");
 
 export const getProduct = (id, payload = {}) => {
-  return api.post(`/showProduct/${id}`, payload);
+  const finalPayload = {
+    device: navigator.userAgent || "web",
+    country: payload.country || "Unknown",
+    ...payload
+  };
+
+  return api.post(`/showProduct/${id}`, finalPayload);
 };
 
 
@@ -862,6 +868,14 @@ export const sendTypingIndicator = (conversationId, data) =>
 
 export const markAsRead = (conversationId) =>
   api.post(`/conversations/${conversationId}/read`);
+
+
+// =================product heighlights api=======================================
+
+export const getHighlights = () => api.get("/heighlight");
+
+export const getHighlightProducts = (id) =>
+  api.get(`/heighlightProduct/${id}`);
 
 // ==================== UPDATE API INSTANCE ON LANGUAGE CHANGE ====================
 

@@ -153,7 +153,7 @@ const Footer = React.memo(() => {
     <img
       src={ios}
       loading="lazy"
-      className="w-32 md:w-20"
+      className="w-32 md:w-32"
       alt="Download on the App Store"
     />
   </a>
@@ -169,7 +169,7 @@ const Footer = React.memo(() => {
   <img
     src={android}
     loading="lazy"
-    className="w-32 md:w-20"
+    className="w-32 md:w-32"
     alt="Get it on Google Play"
   />
 </a>
