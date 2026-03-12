@@ -14,6 +14,7 @@ import Bills from "../dashboard/Bills.jsx";
 import { RiMenu2Fill } from "react-icons/ri";
 import Messages from "../dashboard/Messages.jsx";
 import DashboardReviews from "../dashboard/DashboardReviews.jsx";
+import { useTranslation } from "react-i18next";
 
 import { getCompany } from "../api";
 import Pusher from "pusher-js";
@@ -41,7 +42,7 @@ export default function CompanyDashboard() {
   const { user } = useSelector((state) => state.auth);
   const isMobile = useIsMobile();
 const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("products");
+  const [activeTab, setActiveTab] = useState("Products");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [companyId, setCompanyId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +50,8 @@ const [isChatOpen, setIsChatOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [targetConversationId, setTargetConversationId] = useState(null);
-
+const { i18n } = useTranslation();
+const isRTL = i18n.language === "ar";
   const [companyInfo, setCompanyInfo] = useState({
     companyName: "",
     companyDescription: "",
@@ -277,18 +279,22 @@ const [isChatOpen, setIsChatOpen] = useState(false);
       <div className="relative flex w-full h-[calc(100vh-64px)]  overflow-hidden bg-gray-100 ">
         {/* ================= Sidebar ================= */}
 <aside
-          className={`
-            ${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"}
-            bg-white
-            transform transition-transform duration-300 ease-out
-          ${isMobile
-  ? sidebarOpen
-    ? "translate-x-0"
-    : "-translate-x-full"
-  : "translate-x-0"
-}
-            shadow-lg
-          `}
+       className={`
+    ${isMobile ? "fixed inset-y-0 z-40" : "relative"}
+    ${isRTL ? "right-0" : "left-0"}
+    bg-white
+    transform transition-transform duration-300 ease-out
+    ${
+      isMobile
+        ? sidebarOpen
+          ? "translate-x-0"
+          : isRTL
+          ? "translate-x-full"
+          : "-translate-x-full"
+        : "translate-x-0"
+    }
+    shadow-lg
+  `}
         >
           <Sidebar
             activeTab={activeTab}
@@ -314,19 +320,19 @@ const [isChatOpen, setIsChatOpen] = useState(false);
 
         {/* ================= Mobile Menu Button ================= */}
     {isMobile && !sidebarOpen && !isChatOpen && (
-            <button
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open menu"
-              className="
-                fixed top-20 left-3 z-50
-                h-10 w-10
-                flex items-center justify-center
-                rounded-2xl
-                bg-white/70 backdrop-blur-xl
-                shadow-lg
-                active:scale-95
-              "
-            >
+          <button
+  onClick={() => setSidebarOpen(true)}
+  aria-label="Open menu"
+  className={`
+    fixed top-20 ${isRTL ? "right-3" : "left-3"} z-50
+    h-10 w-10
+    flex items-center justify-center
+    rounded-2xl
+    bg-white/70 backdrop-blur-xl
+    shadow-lg
+    active:scale-95
+  `}
+>
               <RiMenu2Fill className="w-4 h-4 text-gray-700" />
             </button>
           )}
@@ -334,14 +340,14 @@ const [isChatOpen, setIsChatOpen] = useState(false);
         {/* ================= Main ================= */}
         <main className="flex-1 flex flex-col overflow-y-auto ">
           {/* Fixed header / cover */}
-        {activeTab === "products" && (
+        {activeTab === "Products" && (
   <Cover companyInfo={companyInfo} setActiveTab={setActiveTab} />
 )}
 
           {/* 🔥 ONLY SCROLL AREA - Conditional for Messages */}
           <div >
             <div className={`max-w-[1600px] mx-auto ${activeTab === "Messages" ? "h-full" : "space-y-6"}`}>
-              {activeTab === "products" && (
+              {activeTab === "Products" && (
                 <Products
                   products={products}
                   setProducts={setProducts}
@@ -352,7 +358,7 @@ const [isChatOpen, setIsChatOpen] = useState(false);
                 />
               )}
 
-              {activeTab === "highlights" && (
+              {activeTab === "Highlights" && (
                 <Sales
                   companyId={companyId}
                   companyInfo={companyInfo}
@@ -361,9 +367,9 @@ const [isChatOpen, setIsChatOpen] = useState(false);
                   setTargetConversationId={setTargetConversationId}
                 />
               )}
-              {activeTab === "analytics" && <Analytics companyId={companyId} companyInfo={companyInfo} />}
-              {activeTab === "contacts" && <Contacts companyId={companyId} />}
-              {activeTab === "messages" && (
+              {activeTab === "Analytics" && <Analytics companyId={companyId} companyInfo={companyInfo} />}
+              {activeTab === "Contacts" && <Contacts companyId={companyId} />}
+              {activeTab === "Messages" && (
   <Messages
     companyId={companyId}
     companyInfo={companyInfo}
@@ -376,22 +382,22 @@ const [isChatOpen, setIsChatOpen] = useState(false);
     onChatOpen={setIsChatOpen}   
   />
 )}
-              {activeTab === "followers" && <Followers companyId={companyId} />}
-              {activeTab === "otifications" && (
+              {activeTab === "Followers" && <Followers companyId={companyId} />}
+              {activeTab === "Notifications" && (
                 <Notifications
                   setActiveTab={setActiveTab}
                   setTargetConversationId={setTargetConversationId}
                 />
               )}
-              {activeTab === "reviews" && <DashboardReviews companyId={companyId} />}
-              {activeTab === "bills" && (
+              {activeTab === "Reviews" && <DashboardReviews companyId={companyId} />}
+              {activeTab === "Bills" && (
                 <Bills
                   companyId={companyId}
                   companyInfo={companyInfo}
                   products={products}
                 />
               )}
-              {activeTab === "settings" && (
+              {activeTab === "Settings" && (
                 <Settings
                   companyId={companyId}
                   companyInfo={companyInfo}

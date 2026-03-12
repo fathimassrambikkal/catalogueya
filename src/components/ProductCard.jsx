@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { HeartIcon, ChatIcon, StarIcon ,WhatsappIcon} from "./SvgIcon";
-
+import { useFixedWords } from "../hooks/useFixedWords";
 export const ProductCard = memo(({
   product,
   imageSlot,
@@ -15,6 +15,8 @@ export const ProductCard = memo(({
   currency,
 }) => {
   const { i18n } = useTranslation();
+  const { fixedWords } = useFixedWords();
+const fw = fixedWords?.fixed_words || {};
 
   const handleHeartClick = (e) => {
     e.stopPropagation();
@@ -23,6 +25,28 @@ export const ProductCard = memo(({
 
 
   const navigate = useNavigate();
+const badgeStyles = {
+  best_seller:
+    "bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-[0_6px_16px_rgba(79,70,229,0.25)]",
+
+  limited_edition:
+    "bg-gradient-to-r from-purple-500 to-purple-400 text-white shadow-[0_6px_16px_rgba(147,51,234,0.25)]",
+
+  low_in_stock:
+    "bg-gradient-to-r from-amber-500 to-amber-400 text-white shadow-[0_6px_16px_rgba(245,158,11,0.25)]",
+
+  out_of_stock:
+    "bg-gradient-to-r from-gray-500 to-gray-400 text-white shadow-sm",
+
+  new_arrivals:
+    "bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-[0_6px_16px_rgba(59,130,246,0.25)]",
+
+  on_sales:
+    "bg-gradient-to-r from-rose-500 to-rose-400 text-white shadow-[0_6px_16px_rgba(244,63,94,0.25)]",
+
+  limited_stock:
+    "bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-[0_6px_16px_rgba(249,115,22,0.25)]"
+};
 
   return (
     <div
@@ -63,9 +87,26 @@ export const ProductCard = memo(({
 
       {/* IMAGE SLOT (UNCHANGED) */}
       <div className="relative w-full h-[190px] xs:h-[210px] sm:h-[250px] overflow-hidden rounded-t-2xl">
+        
+        
+{product.highlight && (
+  <div
+    className={`
+      absolute top-3 left-3 z-20
+      px-3 py-[4px]
+      rounded-full
+      text-[11px] font-semibold tracking-wide
+      ${badgeStyles[product.highlight] || "bg-white/75 backdrop-blur-xl text-gray-700 border border-white/70"}
+    `}
+  >
+    {fw[product.highlight] || product.highlight.replace("_", " ")}
+  </div>
+)}
+        
+        
         {imageSlot}
 
-        {product.rating !== undefined && (
+        {/* {product.rating !== undefined && (
           <div
   className="
     absolute
@@ -105,7 +146,7 @@ export const ProductCard = memo(({
   </span>
 </div>
 
-        )}
+        )} */}
       </div>
 
       {/* BOTTOM CONTENT (FIXED HEIGHT, SAME LOOK) */}
@@ -136,6 +177,20 @@ export const ProductCard = memo(({
       >
         {product.name}
       </h3>
+
+{/* RATING */}
+{product.rating !== undefined && (
+  <div className="flex items-center gap-[4px] mt-[2px]">
+    <StarIcon
+      filled={true}
+      className="w-[11px] h-[11px] text-gray-900"
+    />
+
+    <span className="text-[10.5px] text-gray-600 font-medium leading-none">
+      {Number(product.rating).toFixed(1)}
+    </span>
+  </div>
+)}
 {priceSlot ? (
   <div
     className="

@@ -306,7 +306,7 @@ export default function CustomerAccountDropdown({
           <>
             <MenuItem 
               icon={<DashboardIcon />} 
-              label="Company Dashboard" 
+              label={fw.company_dashboard || "Company Dashboard"} 
               onClick={() => { 
                 navigate("/company-dashboard"); 
                 onClose?.(); 

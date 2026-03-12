@@ -134,7 +134,7 @@ const fw = fixedWords?.fixed_words || {};
         </div>
 
         {/* Add Contact Button */}
-        <div className="ml-auto">
+        <div className="ltr:ml-auto rtl:mr-auto">
           {isAdded ? (
             <div className="flex items-center  bg-blue-500 text-white p-2  hover:bg-blue-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium">
               

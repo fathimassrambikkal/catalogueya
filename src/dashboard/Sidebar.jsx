@@ -85,15 +85,15 @@ const Sidebar = ({ activeTab, setActiveTab, onCloseSidebar, isMobile, companyInf
     performLogout(dispatch, navigate, userType);
 
 const tabs = [
-  { key: "products", label: fw.products || "Products", icon: <FaTags className="w-3 h-3" /> },
-  { key: "highlights", label: fw.product_highlights || "Product Highlights", icon: <FaShoppingCart className="w-3 h-3" /> },
-  { key: "analytics", label: fw.analytics || "Analytics", icon: <FaChartLine className="w-3 h-3" /> },
-  { key: "contacts", label: fw.contacts || "Contacts", icon: <FaUsers className="w-4 h-4" /> },
-  { key: "messages", label: fw.messages || "Messages", icon: <FaCommentDots className="w-4 h-4" /> },
-  { key: "followers", label: fw.followers || "Followers", icon: <FaUserFriends className="w-4 h-3" /> },
-  { key: "reviews", label: fw.reviews || "Reviews", icon: <FaStar className="w-3 h-3" /> },
-  { key: "bills", label: fw.bills || "Bills", icon: <IconBills className="w-3 h-3" /> },
-  { key: "settings", label: fw.settings || "Settings", icon: <FaCog className="w-3 h-3" /> },
+  { key: "Products", label: fw.products || "Products", icon: <FaTags className="w-3 h-3" /> },
+  { key: "Highlights", label: fw.product_highlights || "Product Highlights", icon: <FaShoppingCart className="w-3 h-3" /> },
+  { key: "Analytics", label: fw.analytics || "Analytics", icon: <FaChartLine className="w-3 h-3" /> },
+  { key: "Contacts", label: fw.contacts || "Contacts", icon: <FaUsers className="w-4 h-4" /> },
+  { key: "Messages", label: fw.messages || "Messages", icon: <FaCommentDots className="w-4 h-4" /> },
+  { key: "Followers", label: fw.followers || "Followers", icon: <FaUserFriends className="w-4 h-3" /> },
+  { key: "Reviews", label: fw.reviews || "Reviews", icon: <FaStar className="w-3 h-3" /> },
+  { key: "Bills", label: fw.bills || "Bills", icon: <IconBills className="w-3 h-3" /> },
+  { key: "Settings", label: fw.settings || "Settings", icon: <FaCog className="w-3 h-3" /> },
 ];
 
   const getFollowersCount = () => unreadCounts.followers || 0;

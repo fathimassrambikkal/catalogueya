@@ -4,7 +4,7 @@ import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
 import { getImageUrl } from "../companyDashboardApi";
 import AnalyticsGraph from "./AnalyticsGraph";
-
+import { useEffect, useRef } from "react";
 
 // Helper to safely parse image string
 const parseImageString = (imgStr) => {
@@ -26,13 +26,19 @@ const parseImageString = (imgStr) => {
     return imgStr;
   }
 };
-
-function AnalyticsAllProductCard({ range, data = [], onProductClick }) {
+function AnalyticsAllProductCard({
+  range,
+  data = [],
+  page,
+  lastPage,
+  setPage,
+  onProductClick
+}) {
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'graph'
   const [sortBy, setSortBy] = useState('views');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const loaderRef = useRef(null);
+ 
 
 const { i18n } = useTranslation();
 const isRTL = i18n.language === "ar";
@@ -62,21 +68,16 @@ const fw = fixedWords?.fixed_words || {};
     return items;
   }, [data, sortBy, sortOrder]);
 
-  // Pagination (Table Only)
-  const totalPages = Math.ceil(processedProducts.length / itemsPerPage);
-  const paginatedProducts = processedProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+ 
 
   const handleSortBy = (e) => {
     setSortBy(e.target.value.toLowerCase());
-    setCurrentPage(1);
+   setPage(1);
   };
 
   const handleOrderChange = (order) => {
     setSortOrder(order);
-    setCurrentPage(1);
+    setPage(1);
   };
 
   /* Custom Tooltip for Graph */
@@ -97,6 +98,27 @@ const fw = fixedWords?.fixed_words || {};
     }
     return null;
   };
+
+
+  useEffect(() => {
+  if (window.innerWidth >= 640) return; // desktop ignore
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && page < lastPage) {
+        setPage((prev) => prev + 1);
+      }
+    },
+    { threshold: 1 }
+  );
+
+  if (loaderRef.current) {
+    observer.observe(loaderRef.current);
+  }
+
+  return () => observer.disconnect();
+}, [page, lastPage]);
+
 
 return (
   <div className="w-full bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden flex flex-col mt-4 xs:mt-6 sm:mt-8">
@@ -198,21 +220,21 @@ return (
             </thead>
 
             <tbody className="divide-y divide-gray-100">
-              {paginatedProducts.length === 0 ? (
+              {processedProducts.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center py-8 xs:py-12 sm:py-16 text-gray-400 text-[10px] xs:text-xs">
                     {fw.no_products_found || "No products found"}
                   </td>
                 </tr>
               ) : (
-                paginatedProducts.map((p, index) => (
+                processedProducts.map((p, index) => (
                   <tr
                     key={p.id}
                     className="hover:bg-gray-50/60 transition"
                   >
                     {/* Rank */}
                     <td className="px-2 xs:px-3 sm:px-4 md:px-6 py-3 xs:py-4 sm:py-5 text-center text-[10px] xs:text-xs sm:text-sm text-gray-400 w-8 xs:w-10 sm:w-12">
-                      {(currentPage - 1) * itemsPerPage + index + 1}.
+                   {index + 1}.
                     </td>
 
                     {/* Product */}
@@ -285,24 +307,71 @@ return (
       )}
     </div>
 
-    {/* Pagination - Only for Table */}
-    {viewMode === 'table' && processedProducts.length > itemsPerPage && (
-      <div className="px-3 xs:px-4 sm:px-6 md:px-8 py-3 xs:py-4 sm:py-5 border-t border-gray-100 flex flex-wrap justify-center gap-1 xs:gap-1.5 sm:gap-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-          <button
-            key={n}
-            onClick={() => setCurrentPage(n)}
-            className={`w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 text-[9px] xs:text-[10px] sm:text-xs rounded-lg border transition ${
-              currentPage === n
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-            }`}
-          >
-            {n}
-          </button>
-        ))}
-      </div>
-    )}
+{viewMode === "table" && lastPage > 1 && (
+  <div className="hidden sm:flex px-3 xs:px-4 sm:px-6 md:px-8 py-3 xs:py-4 sm:py-5 border-t border-gray-100 justify-center gap-2">
+<div className="hidden sm:flex justify-center py-6">
+  <div className="flex items-center gap-6 px-6 py-3 rounded-full backdrop-blur-xl bg-white/70 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+
+    {/* Previous */}
+    <button
+      disabled={page === 1}
+      onClick={() => setPage(page - 1)}
+      className="flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:text-gray-900 hover:bg-white/60 disabled:opacity-30 transition-all"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-4 h-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
+
+    {/* Page Indicator */}
+    <span className="text-sm font-medium text-gray-800 tracking-wide">
+      {page} / {lastPage}
+    </span>
+
+    {/* Next */}
+    <button
+      disabled={page === lastPage}
+      onClick={() => setPage(page + 1)}
+      className="flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:text-gray-900 hover:bg-white/60 disabled:opacity-30 transition-all"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-4 h-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
+
+  </div>
+</div>
+
+  </div>
+)}
+
+
+{/* Mobile Infinite Scroll Loader */}
+<div ref={loaderRef} className="sm:hidden h-16 flex items-center justify-center">
+  {page < lastPage && (
+    <div className="text-xs text-gray-400 animate-pulse">
+      Loading more...
+    </div>
+  )}
+</div>
   </div>
 );
 }

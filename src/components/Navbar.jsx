@@ -45,10 +45,11 @@ const Logo = memo(function Logo({ settings , scrolled }) {
   src={logoUrl}
   alt="Catalogueya"
   className={`
-    w-auto object-contain
+    w-auto max-w-[clamp(80px,25vw,180px)]
+    object-contain
     transition-all duration-500
     ease-[cubic-bezier(0.16,1,0.3,1)]
-    ${scrolled ? "h-10 lg:h-12" : "h-12 lg:h-14"}
+    ${scrolled ? "h-[clamp(32px,5vw,48px)]" : "h-[clamp(40px,6vw,56px)]"}
   `}
   width="160"
   height="56"
@@ -56,7 +57,7 @@ const Logo = memo(function Logo({ settings , scrolled }) {
   fetchpriority="high"
 />
       ) : (
-        <div className="h-12 w-32 bg-gray-200 animate-pulse rounded" />
+        <div className="h-[clamp(32px,5vw,48px)] w-[clamp(80px,25vw,160px)] bg-gray-200 animate-pulse rounded" />
       )}
     </Link>
   );
@@ -86,7 +87,7 @@ const FavouritesCounter = memo(function FavouritesCounter() {
       />
 
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[clamp(8px,1.5vw,10px)] rounded-full w-[clamp(14px,3vw,18px)] h-[clamp(14px,3vw,18px)] flex items-center justify-center">
           {count}
         </span>
       )}
@@ -110,7 +111,7 @@ const LanguageToggle = memo(function LanguageToggle({
   return (
     <button
       onClick={handleClick}
-      className="relative px-3 py-1.5 text-xs font-medium rounded-xl border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow"
+      className="relative px-2 py-1 md:px-3 md:py-1.5 text-[clamp(11px,1vw,14px)] font-medium rounded-[clamp(8px,1.5vw,14px)] border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow"
       aria-label="Toggle language"
     >
       <span className="relative z-10">{language === "en" ? "عربي" : "EN"}</span>
@@ -125,11 +126,11 @@ const AnimatedHamburgerIcon = memo(function AnimatedHamburgerIcon({ isOpen, onCl
   return (
     <button
       onClick={onClick}
-      className="relative w-8 h-8 flex items-center justify-center text-xs font-medium rounded-lg border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow"
+      className="relative w-[clamp(28px,5vw,36px)] h-[clamp(28px,5vw,36px)] flex items-center justify-center text-[clamp(11px,1vw,13px)] font-medium rounded-[clamp(6px,1vw,10px)] border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow"
       aria-label={isOpen ? "Close menu" : "Open menu"}
     >
       <svg
-        className="w-6 h-6 text-gray-700"
+        className="w-[clamp(18px,4vw,24px)] h-[clamp(18px,4vw,24px)] text-gray-700"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -150,7 +151,7 @@ const AnimatedHamburgerIcon = memo(function AnimatedHamburgerIcon({ isOpen, onCl
       <span 
         className={`
           absolute -bottom-1 left-1/2 -translate-x-1/2
-          w-1 h-1 rounded-full bg-gray-400
+          w-[clamp(3px,0.5vw,4px)] h-[clamp(3px,0.5vw,4px)] rounded-full bg-gray-400
           transition-all duration-300
           ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
         `}
@@ -298,43 +299,44 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 font-inter transition-all duration-300 ${scrolled && isGlassPage
-        ? "backdrop-blur-lg bg-white/30 shadow-xl border border-white/20"
-        : "bg-white shadow-md"
-        }`}
+      className={`fixed inset-x-0 top-0 z-50 font-inter transition-all duration-300 ${
+        scrolled && isGlassPage
+          ? "backdrop-blur-lg bg-white/30 shadow-xl border border-white/20"
+          : "bg-white shadow-md"
+      }`}
     >
-      {/* Container */}
-      <div className="mx-auto w-full max-w-[1440px] pl-6 pr-4 sm:pl-8 sm:pr-6">
- <div
-  className={`flex items-center justify-between 
-    transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
-    ${scrolled ? "h-14" : "h-16"}
-  `}
->
+      {/* Container - Fluid with max-width */}
+      <div className="mx-auto w-full max-w-[1440px] px-[clamp(12px,3vw,24px)] sm:px-[clamp(16px,4vw,32px)]">
+        <div
+          className={`flex items-center justify-between 
+            transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+            ${scrolled ? "h-14" : "h-16"}
+          `}
+        >
           {/* Logo */}
           <Logo settings={settings} scrolled={scrolled} />
 
           {/* RIGHT: Actions */}
-          <div className="flex items-center gap-3 ltr:ml-auto rtl:mr-auto">
-            {/*  Heart - Hidden for company */}
+          <div className="flex items-center gap-[clamp(6px,1.2vw,14px)] ltr:ml-auto rtl:mr-auto lg:scale-95 xl:scale-90 origin-right">
+            {/* Heart - Hidden for company */}
             {userType !== 'company' && <FavouritesCounter />}
 
-            {/*  Sent Notifications - Only for company */}
+            {/* Sent Notifications - Only for company */}
             {userType === 'company' && (
-           <button
-  onClick={() => navigate("/company-dashboard", { state: { restoreTab: "Notifications" } })}
-  className="group p-2.5 rounded-xl bg-white text-gray-400 hover:text-gray-900 border border-gray-100 hover:border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden"
-  title="Sent Notifications History"
->
-  <div className="relative flex items-center justify-center">
-    <FaHistory className="text-base transition-transform group-hover:scale-105" />
-    <FaRegBell className="absolute text-[6px] font-medium opacity-80 group-hover:opacity-100" />
-  </div>
-  <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-transparent to-gray-50/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-</button>
+              <button
+                onClick={() => navigate("/company-dashboard", { state: { restoreTab: "Notifications" } })}
+                className="group p-[clamp(6px,1vw,10px)] rounded-[clamp(8px,1.5vw,14px)] text-gray-500 hover:text-gray-900 border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 hover:shadow-md transition-all duration-200 relative overflow-hidden"
+                title="Sent Notifications History"
+              >
+                <div className="relative flex items-center justify-center">
+                  <FaHistory className="text-[clamp(14px,2vw,18px)] transition-transform group-hover:scale-105" />
+                  <FaRegBell className="absolute text-[clamp(5px,0.8vw,7px)] font-medium opacity-80 group-hover:opacity-100" />
+                </div>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-transparent to-gray-50/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              </button>
             )}
 
-            {/*  Notifications - Only for company */}
+            {/* Notifications - Only for company */}
             {userType === 'company' && (
               <div className="relative">
                 <button
@@ -344,64 +346,123 @@ export default function Navbar() {
                     if (nextState) fetchAllNotifications();
                   }}
                   className={`
-                    p-2 rounded-full transition-all duration-300 relative
+                    p-[clamp(6px,1vw,10px)] rounded-full transition-all duration-300 relative
                     ${showNotifDropdown ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100/50 text-gray-500 hover:bg-gray-200/80'}
                   `}
                 >
-                  <FaRegBell className={`text-base ${unreadNotifCount > 0 && !showNotifDropdown ? 'animate-pulse' : ''}`} />
+                  <FaRegBell className={`text-[clamp(14px,2vw,18px)] ${unreadNotifCount > 0 && !showNotifDropdown ? 'animate-pulse' : ''}`} />
                   {unreadNotifCount > 0 && (
-                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white shadow-sm">
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[clamp(7px,1vw,9px)] font-black w-[clamp(14px,2.5vw,18px)] h-[clamp(14px,2.5vw,18px)] rounded-full flex items-center justify-center border border-white shadow-sm">
                       {unreadNotifCount}
                     </span>
                   )}
                 </button>
 
                 {showNotifDropdown && (
-                  <div 
-                    className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-100 z-[100] overflow-hidden flex flex-col animate-notification-dropdown"
+                  <div
+                    className={`
+                      absolute
+                      ${i18n.language === "ar" ? "left-0 origin-top-left" : "right-0 origin-top-right"}
+                      top-full mt-3
+                      min-w-[clamp(200px,50vw,320px)] sm:min-w-[clamp(280px,40vw,380px)]
+                      max-w-[calc(100vw-32px)] sm:max-w-[clamp(320px,50vw,480px)]
+                      bg-white rounded-2xl
+                      shadow-[0_10px_30px_rgba(0,0,0,0.15)]
+                      border border-gray-100
+                      z-[100]
+                      overflow-hidden
+                      flex flex-col
+                      animate-notification-dropdown
+                    `}
                   >
-                    <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-blue-50/20">
-                      <span className="text-xs font-black text-gray-900 uppercase tracking-wider">Notifications</span>
+                    <div className="px-[clamp(12px,2vw,20px)] py-[clamp(8px,1.5vw,14px)] border-b border-gray-50 flex items-center justify-between bg-blue-50/20">
+                      <span className="text-[clamp(11px,1.5vw,14px)] font-black text-gray-900 uppercase tracking-wider">
+                        {fw.notifications || "Notifications"}
+                      </span>
+
                       <button
                         onClick={() => {
                           markAllNotificationsAsRead();
                           setUnreadNotifCount(0);
                         }}
-                        className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-white px-2 py-1 rounded-lg shadow-sm"
+                        className="
+                          text-[clamp(10px,1.2vw,13px)]
+                          font-bold
+                          text-blue-600 hover:text-blue-700
+                          bg-white
+                          px-[clamp(8px,1.5vw,12px)]
+                          py-[clamp(2px,0.5vw,5px)]
+                          rounded-[clamp(6px,1vw,10px)]
+                          shadow-sm
+                          transition
+                        "
                       >
-                        Read All
+                        {fw.read_all || "Read All"}
                       </button>
                     </div>
 
-                    <div className="max-h-[360px] overflow-y-auto no-scrollbar py-1">
+                    <div className="max-h-[clamp(300px,50vh,500px)] overflow-y-auto py-1">
                       {loadingNotifs ? (
-                        <div className="p-8 text-center text-gray-400">
-                          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                          <p className="text-[10px] font-bold uppercase tracking-widest">Syncing</p>
+                        <div className="p-[clamp(20px,5vw,40px)] text-center text-gray-400">
+                          <div className="w-[clamp(20px,4vw,30px)] h-[clamp(20px,4vw,30px)] border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                          <p className="text-[clamp(10px,1.5vw,13px)] font-bold uppercase tracking-widest">
+                            {fw.syncing || "Syncing"}
+                          </p>
                         </div>
                       ) : notifications.length > 0 ? (
                         notifications.map((n, idx) => (
                           <button
                             key={idx}
                             onClick={() => handleNotifClick(n)}
-                            className="w-full px-5 py-3.5 flex gap-3.5 text-left hover:bg-gray-50 transition-all border-b border-gray-50 last:border-0 group"
+                            className="
+                              w-full
+                              px-[clamp(10px,2vw,16px)]
+                              py-[clamp(8px,1.5vw,14px)]
+                              flex
+                              gap-[clamp(8px,1.5vw,14px)]
+                              text-left
+                              hover:bg-gray-50
+                              transition-all
+                              border-b border-gray-50
+                              last:border-0
+                              group
+                            "
                           >
-                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                              <FaRegBell className="text-xs" />
+                            {/* Bell Icon Container */}
+                            <div
+                              className="
+                                w-[clamp(28px,5vw,40px)]
+                                h-[clamp(28px,5vw,40px)]
+                                rounded-[clamp(6px,1vw,10px)]
+                                bg-blue-50 text-blue-600
+                                flex items-center justify-center
+                                shrink-0
+                                group-hover:bg-blue-600
+                                group-hover:text-white
+                                transition-all duration-300
+                                shadow-sm
+                              "
+                            >
+                              <FaRegBell className="text-[clamp(10px,1.5vw,14px)]" />
                             </div>
+
+                            {/* Text Content */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-black text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                                {n.notification?.title || "New Message"}
+                              <p className="text-[clamp(11px,1.5vw,14px)] font-black text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                                {n.notification?.title || fw.new_message_received || "New Message"}
                               </p>
-                              <p className="text-[10px] text-gray-500 line-clamp-2 leading-tight mt-0.5 font-medium">
+
+                              <p className="text-[clamp(9px,1.2vw,12px)] text-gray-500 line-clamp-2 leading-tight mt-0.5 font-medium">
                                 {n.notification?.body || n.data?.body || "Tap to view details"}
                               </p>
                             </div>
                           </button>
                         ))
                       ) : (
-                        <div className="p-10 text-center text-gray-300">
-                          <p className="text-sm font-black italic">Perfect Silence</p>
+                        <div className="p-[clamp(30px,6vw,50px)] text-center text-gray-300">
+                          <p className="text-[clamp(14px,2vw,18px)] font-black italic">
+                            {fw.perfect_silence || "Perfect Silence"}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -410,15 +471,15 @@ export default function Navbar() {
               </div>
             )}
 
-            {/*  Language - Hidden for company */}
-<LanguageToggle
-  toggleLanguage={toggleLanguage}
-  language={i18n.language}
-/>
+            {/* Language - Hidden for company */}
+            <LanguageToggle
+              toggleLanguage={toggleLanguage}
+              language={i18n.language}
+            />
 
-            {/*  Avatar Dropdown with Animated Hamburger */}
-            <div className="relative customer-account-container flex items-center gap-2">
-              {/*  Avatar */}
+            {/* Avatar Dropdown with Animated Hamburger */}
+            <div className="relative customer-account-container flex items-center gap-[clamp(6px,1vw,10px)]">
+              {/* Avatar */}
               <button
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -429,21 +490,21 @@ export default function Navbar() {
                     navigate("/customer-login");
                   }
                 }}
-                className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white/50 hover:bg-white overflow-hidden hover:border-gray-300 transition-colors duration-200"
+               className="flex items-center justify-center w-[clamp(28px,3.5vw,38px)] h-[clamp(28px,3.5vw,38px)] rounded-full border border-gray-200 bg-white/50 hover:bg-white overflow-hidden hover:border-gray-300 transition-colors duration-200"
               >
-                {/*  BEFORE LOGIN → Show Outline Icon */}
+                {/* BEFORE LOGIN → Show Outline Icon */}
                 {!isAuthenticated && (
-                  <UserOutlineIcon className="w-4 h-4 text-gray-600" />
+                  <UserOutlineIcon className="w-[clamp(16px,2.5vw,20px)] h-[clamp(16px,2.5vw,20px)] text-gray-600" />
                 )}
 
-                {/*  CUSTOMER LOGIN → Show First Letter */}
+                {/* CUSTOMER LOGIN → Show First Letter */}
                 {isAuthenticated && userType === "customer" && (
-                  <span className="text-xs font-semibold p-4 rounded-xl border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow">
+                  <span className="text-[clamp(11px,1.5vw,14px)] font-semibold p-4 rounded-xl border border-gray-200 bg-white/50 hover:bg-white hover:border-gray-300 transition-all duration-200 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow">
                     {displayName?.charAt(0)?.toUpperCase()}
                   </span>
                 )}
 
-                {/*  COMPANY LOGIN → Show Logo Image */}
+                {/* COMPANY LOGIN → Show Logo Image */}
                 {isAuthenticated && userType === "company" && (
                   <>
                     {getImageUrl(user?.logo || user?.image) ? (
@@ -453,7 +514,7 @@ export default function Navbar() {
                         alt=""
                       />
                     ) : (
-                      <span className="text-xs font-semibold text-gray-800">
+                      <span className="text-[clamp(11px,1.5vw,14px)] font-semibold text-gray-800">
                         {displayName?.charAt(0)?.toUpperCase()}
                       </span>
                     )}
@@ -461,24 +522,24 @@ export default function Navbar() {
                 )}
               </button>
               
-              {/*  Animated Hamburger Icon (SVG Only) */}
+              {/* Animated Hamburger Icon (SVG Only) */}
               <AnimatedHamburgerIcon
                 isOpen={accountOpen}
                 onClick={() => setAccountOpen((p) => !p)}
               />
 
               {/* Unified Dropdown */}
-             <div
-  className={`
-    absolute mt-3
-    ltr:right-0 rtl:left-0
-    ltr:origin-top-right rtl:origin-top-left
-    transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-    ${accountOpen
-      ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
-      : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}
-  `}
->
+              <div
+                className={`
+                  absolute mt-3
+                  ltr:right-0 rtl:left-0
+                  ltr:origin-top-right rtl:origin-top-left
+                  transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
+                  ${accountOpen
+                    ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+                    : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}
+                `}
+              >
                 <CustomerAccountDropdown
                   isAuthenticated={isAuthenticated}
                   userType={userType}
@@ -490,7 +551,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Add CSS animations to your global styles  */}
+      {/* Add CSS animations to your global styles */}
       <style >{`
         @keyframes notificationDropdown {
           0% {
@@ -506,6 +567,13 @@ export default function Navbar() {
         .animate-notification-dropdown {
           animation: notificationDropdown 0.2s ease-out forwards;
           transform-origin: top right;
+        }
+
+        /* Ensure text doesn't get too large on 4K screens */
+        @media (min-width: 2560px) {
+          .font-inter {
+            font-size: 16px;
+          }
         }
       `}</style>
     </nav>

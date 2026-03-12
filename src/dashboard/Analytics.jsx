@@ -23,8 +23,10 @@ const isRTL = i18n.language === "ar";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
+const [page, setPage] = useState(1);
 const [range, setRange] = useState("Last 7 days");
+
+
 
 useEffect(() => {
   if (fw.last_7_days && range === "Last 7 days") {
@@ -33,12 +35,11 @@ useEffect(() => {
 }, [fw.last_7_days]);
 
 
-  
-  useEffect(() => {
-    if (companyId) {
-      fetchAnalytics();
-    }
-  }, [range, companyId]);
+useEffect(() => {
+  if (companyId) {
+    fetchAnalytics();
+  }
+}, [range, companyId, page]);
 
   const fetchAnalytics = async () => {
     try {
@@ -53,15 +54,38 @@ if (range === fw.last_year || range === "Last year") days = 365;
       if (typeof range === 'number') days = range;
 
       // Call API with the required body
-      const res = await getAnalytics({
-        days: days,
-        sort_by: "view",
-        order: "desc",
-        per_page: 10
-      });
+     const res = await getAnalytics({
+  days: days,
+  sort_by: "view",
+  order: "desc",
+  per_page: 10,
+  page: page
+});
 
       const fetchedData = res.data || {};
-      setData(fetchedData);
+setData((prev) => {
+  if (window.innerWidth >= 640) {
+    return fetchedData;
+  }
+
+  if (!prev || page === 1) return fetchedData;
+
+  return {
+    ...fetchedData,
+    products_analytics: {
+      ...fetchedData.products_analytics,
+      items: [
+        ...prev.products_analytics.items,
+        ...fetchedData.products_analytics.items.filter(
+          (newItem) =>
+            !prev.products_analytics.items.some(
+              (oldItem) => oldItem.id === newItem.id
+            )
+        )
+      ]
+    }
+  };
+});
 
       // If we have a selected product, update it with fresh stats from the new list
       if (selectedProduct) {
@@ -235,11 +259,14 @@ className={`${
 </button>
           </div>
 
-          <AnalyticsAllProductCard
-            range={range}
-            data={data?.products_analytics?.items || []}
-            onProductClick={setSelectedProduct}
-          />
+         <AnalyticsAllProductCard
+  range={range}
+  data={data?.products_analytics?.items || []}
+page={page}
+  lastPage={data?.products_analytics?.pagination?.last_page || 1}
+  setPage={setPage}
+  onProductClick={setSelectedProduct}
+/>
         </div>
 
       </Suspense>

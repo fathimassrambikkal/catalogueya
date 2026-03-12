@@ -2,10 +2,16 @@ import React, { memo, useCallback, useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
-import { getArrivalsProducts, createCustomerConversation } from "../api";
+
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { resolveProductRoute } from "../utils/productNavigation";
+import { 
+  getArrivalsProducts,
+  createCustomerConversation,
+  getHighlights,
+  getHighlightProducts
+} from "../api";
 
 import { warn, error } from "../utils/logger";
 
@@ -41,7 +47,43 @@ function NewArrivalsComponent() {
   const scrollContainerRef = useRef(null);
   const sectionRef = useRef(null);
   const isInViewport = useIsInViewport(sectionRef);
+const [highlightMap, setHighlightMap] = useState({});
 
+
+
+useEffect(() => {
+  const loadHighlights = async () => {
+    try {
+      const res = await getHighlights();
+
+      const highlights = res.data?.data?.heighlight || [];
+
+      const map = {};
+
+      for (const h of highlights) {
+
+        // ❌ skip sales
+        if (h.key === "on_sales") continue;
+
+        const productsRes = await getHighlightProducts(h.id);
+
+        const products = productsRes.data?.products || [];
+
+        products.forEach(p => {
+          map[p.id] = h.key;
+        });
+
+      }
+
+      setHighlightMap(map);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  loadHighlights();
+}, []);
   // ✅ Fetch data immediately on mount - non-blocking
   useEffect(() => {
     let mounted = true;
@@ -57,21 +99,22 @@ function NewArrivalsComponent() {
 
         if (!mounted || !paginated?.data) return;
 
-      const mapped = paginated.data.map(product => ({
+const mapped = paginated.data.map(product => ({
   id: product.id,
   name: product.name,
   price: product.price,
   oldPrice: null,
 
-  // ✅ keep raw backend image object
   image: product.image,
-rating: parseFloat(product.rating) || 0,
+  rating: parseFloat(product.rating) || 0,
   description: product.description,
-  isNewArrival: true,
+
   company_id: product.company_id?.id,
   company_name: product.company_name?.name || "Company",
   category_id: product.category_id,
-   whatsapp: product.whatsapp || null,
+  whatsapp: product.whatsapp || null,
+
+  highlight: highlightMap[product.id] || null
 }));
 
 
@@ -92,7 +135,7 @@ rating: parseFloat(product.rating) || 0,
     return () => {
       mounted = false;
     };
-  }, []);
+  },  [highlightMap]);
 
   const isProductFav = useCallback(
     (productId) => favouriteItems.some((p) => p.id === productId),

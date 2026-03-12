@@ -237,6 +237,8 @@ const yearlySavings =
 
   return (
     <section
+
+    id="pricing"
       dir={isRTL ? "rtl" : "ltr"}
       className="bg-white py-8 xs:py-10 sm:py-12 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20 font-inter flex flex-col items-center relative overflow-hidden"
     >
@@ -285,7 +287,7 @@ const yearlySavings =
             {yearlyPrice} {fw.qar}
           </h2>
           <p className="text-xs xs:text-sm text-gray-500">
-            {fw.per_year } {yearlySavings > 0 && `(${yearlySavings} ${fw.qar} saved)`}
+            {fw.per_year } {yearlySavings > 0 && `(${yearlySavings} ${fw.qar} ${fw.saved || "saved"})`}
           </p>
         </div>
       ) : !isLoading && !monthlyPrice && !yearlyPrice && (
