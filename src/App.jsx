@@ -229,8 +229,8 @@ useEffect(() => {
             <Route path="/category/:categoryId/company/:companyId" element={<CompanyPage />} />
             <Route path="/company/:companyId" element={<CompanyPage />} />
 
-            <Route path="/category/:categoryId/company/:companyId/product/:id" element={<ProductProfile />} />
-            <Route path="/company/:companyId/product/:id" element={<ProductProfile />} />
+            {/* <Route path="/category/:categoryId/company/:companyId/product/:id" element={<ProductProfile />} />
+            <Route path="/company/:companyId/product/:id" element={<ProductProfile />} /> */}
             {/* <Route path="/product/:id" element={<ProductProfile />} /> */}
             <Route path="/product/:productId/reviews" element={<ProductReviews />} />
 

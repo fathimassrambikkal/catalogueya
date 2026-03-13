@@ -9,7 +9,7 @@ import { useFixedWords } from "../hooks/useFixedWords";
 import CallToAction from "../components/CallToAction";
 import { ProductCard } from "../components/ProductCard";
 import { getHighlights } from "../api";
-
+import { useTranslation } from "react-i18next";
 const API_BASE_URL = "https://catalogueyanew.com.awu.zxu.temporary.site";
 
 function ProductViewMorePageComponent() {
@@ -43,7 +43,7 @@ function ProductViewMorePageComponent() {
   const [highlightName, setHighlightName] = useState(null);
   const [highlightLabels, setHighlightLabels] = useState({});
   const [newArrivalId, setNewArrivalId] = useState(null);
-
+const { i18n } = useTranslation();
   // Mobile detection and infinite scroll
   const [isMobile, setIsMobile] = useState(false);
   const loadMoreRef = useRef(null);
@@ -72,6 +72,9 @@ function ProductViewMorePageComponent() {
     return colors[key] || 'bg-gray-500';
   }, []);
 
+
+
+  const lang = i18n.language === "ar" ? "ar" : "en";
   // Load all highlights and create a map of highlight IDs to names/labels
   useEffect(() => {
     const loadAllHighlights = async () => {
@@ -154,17 +157,17 @@ function ProductViewMorePageComponent() {
 
         // CASE 1: All products (no highlightKey)
         if (!highlightKey) {
-          url = `${API_BASE_URL}/en/api/showProducts?page=${page}`;
+          url = `${API_BASE_URL}/${lang}/api/showProducts?page=${page}`;
         } 
         // CASE 2: New Arrivals
         else if (highlightKey === "new_arrivals") {
           const id = newArrivalId || 3; // Fallback to 3 if not found
-          url = `${API_BASE_URL}/en/api/heighlightProduct/${id}?page=${page}`;
+          url = `${API_BASE_URL}/${lang}/api/heighlightProduct/${id}?page=${page}`;
         }
         // CASE 3: Other highlights
         else {
           if (!highlightId) return;
-          url = `${API_BASE_URL}/en/api/heighlightProduct/${highlightId}?page=${page}`;
+          url = `${API_BASE_URL}/${lang}/api/heighlightProduct/${highlightId}?page=${page}`;
         }
 
         const response = await fetch(url, {
@@ -204,17 +207,20 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
           
           return {
             id: product.id,
-            name: product.name,
-            name_en: product.name,
+            name:
+  i18n.language === "ar"
+    ? product.name_ar || product.name
+    : product.name,
             price: product.price,
-            old_price: product.old_price || null,
+            old_price: product.old_price ? Number(product.old_price) : null,
             image: product.image,
             rating: parseFloat(product.rating) || 0,
             description: product.description,
             company_id: product.company_id?.id,
-            company_name: product.company_name || product.company_id?.name || "Company",
+            company_name: product.company_name?.name || "Company",
             category_id: product.category_id,
             whatsapp: product.whatsapp || null,
+             type: product.type,
             highlight: productHighlight,
             highlight_id: product.highlight_id,
             highlight_name: product.highlight_name || highlightLabels[product.highlight_id]?.name,
@@ -222,9 +228,12 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
           };
         });
 
-        setProducts(prev =>
-          page === 1 ? mapped : [...prev, ...mapped]
-        );
+        setProducts(prev => {
+  if (isMobile && page > 1) {
+    return [...prev, ...mapped]; // append for mobile scroll
+  }
+  return mapped; // replace for desktop pagination
+});
 
       } catch (err) {
         if (err.name === "AbortError") return;
@@ -242,7 +251,13 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
         abortControllerRef.current.abort();
       }
     };
-  }, [page, highlightKey, highlightId, highlightLabels, fw, newArrivalId, loadingHighlight]);
+  }, [page, highlightKey, highlightId, highlightLabels, fw, newArrivalId, loadingHighlight, isMobile , i18n.language]);
+
+
+  useEffect(() => {
+  setProducts([]);
+  setPage(1);
+}, [highlightKey]);
 
   // Desktop scroll to top on page change
   useEffect(() => {
@@ -258,7 +273,7 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !loading) {
+        if (entry.isIntersecting && !loading && page < lastPage) {
           setPage(p => p + 1);
         }
       },
@@ -497,7 +512,7 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
         ) : sortedProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center w-full">
             <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              {fw.no_products || "No Products Available"}
+              {fw.no_products_found || fw.no_products || "No products found"}
             </h3>
           </div>
         ) : (

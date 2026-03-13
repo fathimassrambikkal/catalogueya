@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { HeartIcon, ChatIcon, StarIcon ,WhatsappIcon} from "./SvgIcon";
+import { HeartIcon, StarIcon ,WhatsappIcon, ServiceIcon } from "./SvgIcon";
 import { useFixedWords } from "../hooks/useFixedWords";
 export const ProductCard = memo(({
   product,
@@ -27,25 +27,25 @@ const fw = fixedWords?.fixed_words || {};
   const navigate = useNavigate();
 const badgeStyles = {
   best_seller:
-    "bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-[0_6px_16px_rgba(79,70,229,0.25)]",
+    "bg-black text-white",
 
   limited_edition:
-    "bg-gradient-to-r from-purple-500 to-purple-400 text-white shadow-[0_6px_16px_rgba(147,51,234,0.25)]",
+    "bg-gray-900 text-white",
 
   low_in_stock:
-    "bg-gradient-to-r from-amber-500 to-amber-400 text-white shadow-[0_6px_16px_rgba(245,158,11,0.25)]",
-
-  out_of_stock:
-    "bg-gradient-to-r from-gray-500 to-gray-400 text-white shadow-sm",
+    "bg-amber-50 text-amber-700 border border-amber-200",
 
   new_arrivals:
-    "bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-[0_6px_16px_rgba(59,130,246,0.25)]",
+    "bg-blue-50 text-blue-600 border border-blue-200",
 
   on_sales:
-    "bg-gradient-to-r from-rose-500 to-rose-400 text-white shadow-[0_6px_16px_rgba(244,63,94,0.25)]",
+    "bg-rose-50 text-rose-600 border border-rose-200",
 
   limited_stock:
-    "bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-[0_6px_16px_rgba(249,115,22,0.25)]"
+    "bg-orange-50 text-orange-600 border border-orange-200",
+
+  out_of_stock:
+    "bg-gray-100 text-gray-500 border border-gray-200"
 };
 
   return (
@@ -54,8 +54,8 @@ const badgeStyles = {
       className="
         relative
         flex flex-col         
-        w-full max-w-[300px]
-        h-[200px] xs:h-[220px] sm:h-[260px]   
+        w-full max-w-[320px]
+        h-[220px] xs:h-[240px] sm:h-[280px]   
         rounded-2xl
         overflow-hidden
         group
@@ -86,23 +86,48 @@ const badgeStyles = {
       </div>
 
       {/* IMAGE SLOT (UNCHANGED) */}
-      <div className="relative w-full h-[190px] xs:h-[210px] sm:h-[250px] overflow-hidden rounded-t-2xl">
+      <div className="relative w-full h-[150px] xs:h-[170px] sm:h-[210px] overflow-hidden rounded-t-2xl">
         
         
 {product.highlight && (
   <div
     className={`
-      absolute top-3 left-3 z-20
-      px-3 py-[4px]
+        absolute top-3 left-3 z-20
+      px-[clamp(8px,0.9vw,12px)]
+py-[clamp(3px,0.4vw,5px)]
+text-[clamp(9px,0.9vw,11px)]
       rounded-full
-      text-[11px] font-semibold tracking-wide
-      ${badgeStyles[product.highlight] || "bg-white/75 backdrop-blur-xl text-gray-700 border border-white/70"}
+      
+      font-medium
+      tracking-[0.12em]
+      uppercase
+     
+      ${badgeStyles[product.highlight] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
     `}
   >
     {fw[product.highlight] || product.highlight.replace("_", " ")}
   </div>
 )}
-        
+{product.type === "service" && (
+<div
+  className="
+    absolute bottom-3 left-3 z-20
+    flex items-center gap-2
+    px-3 py-1.5
+    rounded-md
+    text-[10px] font-medium uppercase tracking-wider
+    bg-transparent
+    text-white
+    border border-white/30
+    backdrop-blur-sm
+    shadow-[0_2px_4px_rgba(0,0,0,0.1)]
+  "
+>
+  <ServiceIcon className="w-3 h-3 text-white/90" />
+  <span>{fw.service || "Service"}</span>
+</div>
+)}
+       
         
         {imageSlot}
 
@@ -156,23 +181,23 @@ const badgeStyles = {
           gap-[clamp(6px,1vw,14px)]
           w-full
           px-[clamp(10px,1.6vw,18px)]
-          py-[clamp(8px,1.2vw,14px)]
-          h-[72px] sm:h-[80px]      /* ✅ FIXED INFO HEIGHT */
+          py-[clamp(12px,1.8vw,18px)]
+          min-h-[72px] sm:min-h-[80px]/* ✅ FIXED INFO HEIGHT */
           border-t border-white/20
           bg-white/75
           backdrop-blur-xl
         "
       >
     {/* PRODUCT NAME + PRICE */}
-    <div className="flex flex-col min-w-0 flex-1">
+    <div className="flex flex-col min-w-0 flex-1 pr-2">
       <h3
         className="
           font-medium
           text-gray-900
           truncate
           tracking-[-0.01em]
-          text-[clamp(10.5px,1.2vw,12.5px)]
-          leading-[1.25]
+          text-[clamp(11.5px,1.35vw,14px)]
+          leading-[1.35]
         "
       >
         {product.name}
@@ -180,7 +205,7 @@ const badgeStyles = {
 
 {/* RATING */}
 {product.rating !== undefined && (
-  <div className="flex items-center gap-[4px] mt-[2px]">
+  <div className="flex items-center gap-[4px] mt-[4px]">
     <StarIcon
       filled={true}
       className="w-[11px] h-[11px] text-gray-900"
@@ -194,7 +219,7 @@ const badgeStyles = {
 {priceSlot ? (
   <div
     className="
-      mt-[clamp(2px,0.4vw,4px)]
+      mt-[clamp(4px,0.5vw,6px)]
       whitespace-nowrap
       flex-shrink-0
       leading-[1.2]
@@ -205,7 +230,7 @@ const badgeStyles = {
 ) : (
   <div
     className="
-      mt-[clamp(2px,0.4vw,4px)]
+      mt-[clamp(4px,0.5vw,6px)]
       whitespace-nowrap
       flex-shrink-0
       leading-[1.2]
@@ -216,7 +241,7 @@ const badgeStyles = {
         font-semibold
         text-gray-900
         tracking-tight
-        text-[clamp(10px,1vw,11px)]
+        text-[clamp(11.5px,1.2vw,13px)]
       "
     >
       {i18n.language === "ar"

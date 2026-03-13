@@ -1,5 +1,8 @@
 import { toast } from "react-hot-toast";
-export const showToast = (message, { rtl = false } = {}) => {
+
+export const showToast = (message, { rtl = false, id = "global-toast" } = {}) => {
+  toast.dismiss(id); // ensure previous toast with same id disappears
+
   toast.custom(
     (t) => (
       <div
@@ -25,6 +28,7 @@ export const showToast = (message, { rtl = false } = {}) => {
     ),
     {
       duration: 2800,
+      id,
     }
   );
 };

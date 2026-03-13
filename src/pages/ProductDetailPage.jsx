@@ -5,7 +5,7 @@ import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { getHighlights, getHighlightProducts } from "../api";
 import { useFixedWords } from "../hooks/useFixedWords";
 import { useTranslation } from "react-i18next";
-
+import { ServiceIcon } from "../components/SvgIcon";
 // Components
 import Faq from "../components/Faq";
 import CallToAction from "../components/CallToAction";
@@ -199,6 +199,7 @@ const productResponse = await getProduct(resolvedProductId, payload);
       const transformedProduct = {
         id: productData.id,
         name: productData.name,
+        type: productData.type,
 
         // Use sale data for prices if available
         price: sale?.price_after
@@ -311,6 +312,7 @@ const productResponse = await getProduct(resolvedProductId, payload);
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
+          type: productData.type,
           price: sale?.price_after
             ? Number(sale.price_after).toFixed(2)
             : Number(productData.price).toFixed(2),
@@ -747,62 +749,83 @@ const badgeStyles = {
 
         {/* RIGHT: Product details */}
         <div className="flex flex-col gap-6 transform-gpu">
-          {/* Category + Title + Company */}
-          <div className="space-y-2 ">
-            <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500 transform-gpu">
-             {product ? (fw.products || "PRODUCT") : "LOADING"}
-            </p>
+   {/* Category + Title + Company */}
+<div className="space-y-2">
 
+  {/* PRODUCT label */}
+  <p className="text-xs font-medium tracking-[0.18em] uppercase text-gray-500 transform-gpu">
+    {product ? (fw.products || "PRODUCT") : "LOADING"}
+  </p>
 
+  {/* SERVICE badge */}
+  {product?.type === "service" && (
+    <span
+      className="
+      inline-flex items-center gap-1
+      px-2.5 py-1
+      rounded-md
+      text-[11px]
+      font-medium
+      uppercase
+      tracking-wider
+      bg-gray-900
+      text-white
+      "
+    >
+      <ServiceIcon className="w-3.5 h-3.5" />
+      {fw.service || "Service"}
+    </span>
+  )}
 
-{product?.specialMarks?.length > 0 && (
-  <div className="flex flex-wrap gap-2 mt-3">
-    {product.specialMarks.map((mark) => (
-      <span
-        key={mark.id || mark.key}
-        className={`
-          inline-flex items-center
-          px-2.5 py-[3px]
-          rounded-full
-          text-[10px]
-          font-medium
-          tracking-[0.12em]
-          uppercase
-          transition-all
-          ${badgeStyles[mark.key] || "bg-gray-100 text-gray-600"}
-        `}
+  {/* Special Marks */}
+  {product?.specialMarks?.length > 0 && (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {product.specialMarks.map((mark) => (
+        <span
+          key={mark.id || mark.key}
+          className={`
+            inline-flex items-center
+            px-2.5 py-[3px]
+            rounded-full
+            text-[10px]
+            font-medium
+            tracking-[0.12em]
+            uppercase
+            transition-all
+            ${badgeStyles[mark.key] || "bg-gray-100 text-gray-600"}
+          `}
+        >
+          {fw[mark.key] || mark.name}
+        </span>
+      ))}
+    </div>
+  )}
+
+  {/* Product Title */}
+  {product ? (
+    <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight transform-gpu">
+      {product.name}
+    </h1>
+  ) : (
+    <div className="h-10 w-3/4 bg-gray-100 rounded-lg animate-pulse" />
+  )}
+
+  {/* Company */}
+  {product ? (
+    product.company_name && (
+      <button
+        onClick={handleCompanyClick}
+        className="text-sm text-blue-600 font-medium hover:underline w-fit flex items-center gap-1 transform-gpu"
       >
-        {fw[mark.key] || mark.name}
-      </span>
-    ))}
-  </div>
-)}
-            {product ? (
-              <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight transform-gpu">
-                {product.name}
-              </h1>
-            ) : (
-              <div className="h-10 w-3/4 bg-gray-100 rounded-lg animate-pulse" />
-            )}
+        <span className="text-gray-500">{fw.by}</span>
+        {product.company_name}
+      </button>
+    )
+  ) : (
+    <div className="h-4 w-32 bg-gray-100 rounded animate-pulse" />
+  )}
 
-
-
-
-            {product ? (
-              product.company_name && (
-                <button
-                  onClick={handleCompanyClick}
-                  className="text-sm text-blue-600 font-medium hover:underline w-fit flex items-center gap-1 transform-gpu"
-                >
-                  <span className="text-gray-500">{fw.by}</span>
-                  {product.company_name}
-                </button>
-              )
-            ) : (
-              <div className="h-4 w-32 bg-gray-100 rounded animate-pulse" />
-            )}
-          </div>
-
+</div>
 
 
           {/* Price + rating */}

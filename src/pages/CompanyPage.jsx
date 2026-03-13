@@ -586,9 +586,9 @@ export default function CompanyPage() {
 
   // =================== UI Functions ===================
   const handleOpenProduct = (id) => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    navigate(`${getBasePath()}/product/${id}`);
-  };
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  navigate(`/product/${id}`);
+};
 
   const handleShare = () => {
     if (navigator.share) {

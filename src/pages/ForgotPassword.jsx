@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { forgotPasswordCustomer, resetPasswordCustomer } from "../api";
-import { toast } from "react-hot-toast";
+
+import { useFixedWords } from "../hooks/useFixedWords";
+import { showToast } from "../utils/showToast"; 
+
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1); // 1: forgot, 2: reset
@@ -12,11 +15,12 @@ export default function ForgotPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+  const { fixedWords } = useFixedWords();
+  const fw = fixedWords?.fixed_words || {};
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
-      toast.error("Please enter your email address.");
+     showToast(fw.enter_email_address || "Please enter your email address.");
       return;
     }
 
@@ -25,13 +29,19 @@ export default function ForgotPassword() {
       const resp = await forgotPasswordCustomer(email);
       // If the API returns a message and no error was thrown, or if status is explicitly true
       if (resp.data.status !== false) {
-        toast.success(resp.data.message || "Reset code sent to your email.");
+showToast(
+  resp.data.message || fw.reset_link_sent_email || "Reset code sent to your email."
+);
         setStep(2);
       } else {
-        toast.error(resp.data.message || "Failed to send reset code.");
+       showToast(
+  resp.data.message || fw.failed || "Failed to send reset code."
+);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong.");
+      showToast(
+  error.response?.data?.message || fw.danger || "Something went wrong."
+);
     } finally {
       setLoading(false);
     }
@@ -40,7 +50,7 @@ export default function ForgotPassword() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match.");
+     showToast("Passwords do not match.");
       return;
     }
 
@@ -53,13 +63,15 @@ export default function ForgotPassword() {
         password_confirmation: confirmPassword,
       });
       if (resp.data.status !== false) {
-        toast.success(resp.data.message || "Password reset successfully.");
+        showToast(
+  resp.data.message || fw.updated_successfully || "Password reset successfully."
+);
         navigate("/sign");
       } else {
-        toast.error(resp.data.message || "Failed to reset password.");
+        showToast(resp.data.message || fw.failed || "Failed to reset password.");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong.");
+      showToast(error.response?.data?.message || fw.danger || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -86,26 +98,31 @@ export default function ForgotPassword() {
 
           {/* Info message */}
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200/50 text-blue-700 rounded-2xl text-sm backdrop-blur-sm">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3 shadow-sm">
+             
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center  shadow-sm">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
               </div>
               <span className="font-medium">
-                {step === 1 ? "We'll send a code to your email" : "Enter the code and your new password"}
+                {step === 1
+  ? fw.reset_link_sent_email || "We'll send a code to your email"
+: fw.enter_new_password || "Enter the code and your new password"}
               </span>
             </div>
           </div>
 
           {/* Header */}
           <h1 className="text-3xl font-semibold text-gray-900 mb-2 text-center">
-            {step === 1 ? "Forgot Password" : "Reset Password"}
+            {step === 1
+  ? fw.forgot_password || "Forgot Password"
+  : fw.reset_password || "Reset Password"}
           </h1>
           <p className="text-gray-500 mb-6 text-sm text-center">
-            {step === 1
-              ? "Enter your registered email address, and we'll send you a reset code."
-              : "Enter the code you received along with your new password."}
+          {step === 1
+  ? fw.enter_registered_email || "Enter your registered email address, and we'll send you a reset code."
+  : fw.enter || "Enter the code you received along with your new password."}
           </p>
 
           <form onSubmit={step === 1 ? handleForgotPassword : handleResetPassword} className="space-y-5">
@@ -113,7 +130,7 @@ export default function ForgotPassword() {
               {step === 1 ? (
                 <input
                   type="email"
-                  placeholder="Enter your email address"
+                  placeholder={fw.enter_email_address || "Enter your email address"}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
@@ -123,7 +140,7 @@ export default function ForgotPassword() {
                 <>
                   <input
                     type="text"
-                    placeholder="Enter reset code"
+                    placeholder={fw.enter || "Enter reset code"}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
@@ -131,7 +148,7 @@ export default function ForgotPassword() {
                   />
                   <input
                     type="password"
-                    placeholder="New password"
+                    placeholder={fw.new_password || "New password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
@@ -139,7 +156,7 @@ export default function ForgotPassword() {
                   />
                   <input
                     type="password"
-                    placeholder="Confirm new password"
+                    placeholder={fw.confirm_password || "Confirm new password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
@@ -157,22 +174,26 @@ export default function ForgotPassword() {
               {loading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                  {step === 1 ? "Sending Code..." : "Resetting Password..."}
+      {step === 1
+      ? `${fw.sending || "Sending"}...`
+      : fw.processing || "Processing..."}
                 </div>
               ) : (
-                  step === 1 ? "Get Reset Code" : "Reset Password"
+step === 1
+  ? fw.send_message || "Send"
+  : fw.reset_password || "Reset Password"
               )}
             </button>
           </form>
 
           <div className="mt-8 text-center text-sm">
             <p className="text-gray-600">
-              Remember your password?{" "}
+              {fw.remember_password || "Remember your password?"}{" "}
               <Link
                 to="/sign"
                 className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200"
               >
-                Back to Login
+                {fw.back_to_login || "Back to Login"}
               </Link>
             </p>
           </div>
