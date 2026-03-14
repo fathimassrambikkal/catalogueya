@@ -45,7 +45,7 @@ const fw = fixedWords?.fixed_words || {};
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      showToast("Passwords do not match.");
+        showToast(fw.passwords_not_match);
       return;
     }
 
@@ -58,13 +58,13 @@ const fw = fixedWords?.fixed_words || {};
         password_confirmation: confirmPassword,
       });
       if (resp.data.status !== false) {
-        showToast(fw.updated_successfully || resp.data.message || "Password reset successfully.");
+        showToast(fw.password_reset_success);
         navigate("/sign");
       } else {
-        showToast(resp.data.message || fw.failed || "Failed to reset password.");
+        showToast(fw.password_reset_failed);
       }
     } catch (error) {
-        showToast(error.response?.data?.message || fw.danger || "Something went wrong.");
+        showToast(error.response?.data?.message || fw.something_went_wrong);
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ const fw = fixedWords?.fixed_words || {};
                 <>
                     <input
                       type="text"
-                      placeholder={fw.enter || "Enter reset code"}
+                      placeholder={fw.enter_reset_code}
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
@@ -163,24 +163,22 @@ const fw = fixedWords?.fixed_words || {};
               disabled={loading}
               className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-2xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none shadow-lg hover:shadow-xl"
             >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                  {step === 1
- ? `${fw.sending || "Sending"}...`
- : fw.processing || "Processing..."}
-                </div>
-              ) : (
+            {loading ? (
+  <div className="flex items-center justify-center">
+    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+    {step === 1 ? `${fw.sending}...` : fw.processing}
+  </div>
+) : (
   step === 1
-  ? fw.send_message || "Send"
-  : fw.reset_password || "Reset Password"
-              )}
+    ? fw.get_reset_code
+    : fw.reset_password
+)}
             </button>
           </form>
 
           <div className="mt-8 text-center text-sm">
             <p className="text-gray-600">
-              {fw.remember_password || "Remember your password?"}{" "}
+             {fw.remember_password}{" "}
               <Link
                 to="/sign"
                 className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200"

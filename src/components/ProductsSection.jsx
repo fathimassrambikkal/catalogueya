@@ -404,14 +404,37 @@ useEffect(() => {
   return (
     <section
       ref={sectionRef}
-      className="py-16 sm:py-20 md:py-24 bg-white px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 overflow-hidden"
+     className="
+bg-white overflow-hidden
+py-14
+sm:py-20
+md:py-24
+lg:py-28
+xl:py-32
+2xl:py-36
+px-4
+sm:px-8
+md:px-12
+lg:px-20
+xl:px-28
+2xl:px-36
+"
       style={{ contentVisibility: "auto" }}
     >
-      <div className="mb-8 sm:mb-12">
+      <div className="max-w-[1600px] mx-auto mb-10 sm:mb-14 lg:mb-16">
         {/* Top row */}
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-4xl sm:text-5xl md:text-5xl font-light tracking-tight text-gray-900">
-            {fw.products || "Products"}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h2  className="
+text-3xl
+sm:text-4xl
+md:text-5xl
+lg:text-6xl
+font-light
+tracking-tight
+text-gray-900
+leading-tight
+">
+            {fw.products_services || "Products & Services"}
           </h2>
           <Link
             to={
@@ -419,7 +442,7 @@ useEffect(() => {
                 ? "/productviewmore"  
                 : `/heighlights${activeTab}viewmore` 
             }
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 tracking-wide transition flex items-center gap-1.5 group"
+            className="text-[12px] md:text-sm font-medium text-gray-600 hover:text-gray-900 tracking-wide transition flex items-center gap-1.5 group"
           >
             {fw.view_more}
             <ArrowOutwardIcon className={`w-4 h-4 text-gray-400 group-hover:text-gray-900 transition ${

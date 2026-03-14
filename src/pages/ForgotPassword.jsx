@@ -20,7 +20,7 @@ export default function ForgotPassword() {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
-     showToast(fw.enter_email_address || "Please enter your email address.");
+    showToast(fw.enter_email_address);
       return;
     }
 
@@ -30,17 +30,17 @@ export default function ForgotPassword() {
       // If the API returns a message and no error was thrown, or if status is explicitly true
       if (resp.data.status !== false) {
 showToast(
-  resp.data.message || fw.reset_link_sent_email || "Reset code sent to your email."
+  resp.data.message || fw.reset_link_sent_email
 );
         setStep(2);
       } else {
        showToast(
-  resp.data.message || fw.failed || "Failed to send reset code."
+  resp.data.message || fw.failed_send_reset_code
 );
       }
     } catch (error) {
       showToast(
-  error.response?.data?.message || fw.danger || "Something went wrong."
+  error.response?.data?.message || fw.something_went_wrong
 );
     } finally {
       setLoading(false);
@@ -50,7 +50,7 @@ showToast(
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-     showToast("Passwords do not match.");
+     showToast(fw.passwords_not_match);
       return;
     }
 
@@ -64,14 +64,14 @@ showToast(
       });
       if (resp.data.status !== false) {
         showToast(
-  resp.data.message || fw.updated_successfully || "Password reset successfully."
+    resp.data.message || fw.password_reset_success
 );
         navigate("/sign");
       } else {
-        showToast(resp.data.message || fw.failed || "Failed to reset password.");
+        showToast(resp.data.message || fw.password_reset_failed);
       }
     } catch (error) {
-      showToast(error.response?.data?.message || fw.danger || "Something went wrong.");
+      showToast(error.response?.data?.message || fw.something_went_wrong);
     } finally {
       setLoading(false);
     }
@@ -106,23 +106,23 @@ showToast(
                 </svg>
               </div>
               <span className="font-medium">
-                {step === 1
-  ? fw.reset_link_sent_email || "We'll send a code to your email"
-: fw.enter_new_password || "Enter the code and your new password"}
+{step === 1
+  ? fw.reset_link_sent_email
+  : fw.enter_new_password}
               </span>
             </div>
           </div>
 
           {/* Header */}
           <h1 className="text-3xl font-semibold text-gray-900 mb-2 text-center">
-            {step === 1
-  ? fw.forgot_password || "Forgot Password"
-  : fw.reset_password || "Reset Password"}
+{step === 1
+  ? fw.forgot_password
+  : fw.reset_password}
           </h1>
           <p className="text-gray-500 mb-6 text-sm text-center">
-          {step === 1
-  ? fw.enter_registered_email || "Enter your registered email address, and we'll send you a reset code."
-  : fw.enter || "Enter the code you received along with your new password."}
+{step === 1
+  ? fw.enter_registered_email
+  : fw.enter_reset_code}
           </p>
 
           <form onSubmit={step === 1 ? handleForgotPassword : handleResetPassword} className="space-y-5">
@@ -130,7 +130,7 @@ showToast(
               {step === 1 ? (
                 <input
                   type="email"
-                  placeholder={fw.enter_email_address || "Enter your email address"}
+                  placeholder={fw.enter_email_address}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
@@ -140,7 +140,7 @@ showToast(
                 <>
                   <input
                     type="text"
-                    placeholder={fw.enter || "Enter reset code"}
+                    placeholder={fw.enter_reset_code}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     className="w-full px-4 py-4 rounded-2xl bg-white/50 border border-gray-200/50 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm placeholder-gray-500"
@@ -180,8 +180,8 @@ showToast(
                 </div>
               ) : (
 step === 1
-  ? fw.send_message || "Send"
-  : fw.reset_password || "Reset Password"
+  ? fw.get_reset_code
+  : fw.reset_password
               )}
             </button>
           </form>
