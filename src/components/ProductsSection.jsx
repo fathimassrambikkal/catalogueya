@@ -5,11 +5,9 @@ import { toggleFavourite, openListPopup } from "../store/favouritesSlice";
 import { useTranslation } from "react-i18next";
 import { useFixedWords } from "../hooks/useFixedWords";
 import {
-  getArrivalsProducts,
-  getSalesProducts,
   createCustomerConversation,
   getHighlights,
-  getHighlightProducts,
+  getHomeProducts,
 } from "../api";
 import { warn, error as logError } from "../utils/logger";
 
@@ -22,7 +20,6 @@ import {
 
 import { ProductCard } from "./ProductCard";
 import { ProductCardSkeleton } from "./Skeletons";
-import { useIsInViewport } from "../hooks/useIsInViewport";
 import { useCardWidth } from "../hooks/useCardWidth";
 
 function ProductsSection() {
@@ -38,18 +35,22 @@ function ProductsSection() {
   const fw = fixedWords?.fixed_words || {};
 
   const [apiProducts, setApiProducts] = useState([]);
-  const [highlightMap, setHighlightMap] = useState({});
   const [highlights, setHighlights] = useState([]);
   const cardWidth = useCardWidth();
 
   const scrollContainerRef = useRef(null);
   const sectionRef = useRef(null);
-  const isInViewport = useIsInViewport(sectionRef);
   const [activeTab, setActiveTab] = useState("all");
+  const [page, setPage] = useState(1);
   const tabsContainerRef = useRef(null);
   const tabRefs = useRef([]);
   const [sliderStyle, setSliderStyle] = useState({});
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const lastItemRef = useRef(null);
+
 
   const tabs = useMemo(() => {
     return [
@@ -143,11 +144,7 @@ useEffect(() => {
 
     setSliderStyle({
       width: offsetWidth,
-      left: i18n.language === "ar" ? undefined : offsetLeft,
-      right:
-        i18n.language === "ar"
-          ? container.offsetWidth - offsetLeft - offsetWidth
-          : undefined,
+      left: offsetLeft,
     });
 
     // FIXED auto scroll
@@ -187,27 +184,11 @@ useEffect(() => {
         const res = await getHighlights();
         const highlightsData = res.data?.data?.heighlight || [];
 
-        const map = {};
         const tabsList = highlightsData.map((h) => ({
           key: h.key,
           label: h.name,
         }));
 
-        await Promise.all(
-          highlightsData.map(async (h) => {
-            try {
-              const productsRes = await getHighlightProducts(h.id);
-              const products = productsRes.data?.products || [];
-              products.forEach((p) => {
-                map[p.id] = h.key;
-              });
-            } catch (err) {
-              console.warn(`Failed to fetch products for highlight ${h.name}`, err);
-            }
-          })
-        );
-
-        setHighlightMap(map);
         setHighlights(tabsList);
       } catch (err) {
         console.error("Critical error loading highlights", err);
@@ -217,82 +198,94 @@ useEffect(() => {
     loadHighlights();
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
 
-    const fetchProducts = async () => {
-      try {
-        const [arrivalsRes, salesRes] = await Promise.all([
-          getArrivalsProducts(1),
-          getSalesProducts(1),
-        ]);
+  const fetchProducts = useCallback(async (pageNum, isInitial = false) => {
+    try {
+      if (isInitial) setIsLoading(true);
+      else setIsFetchingMore(true);
 
-        const arrivalsData = arrivalsRes?.data?.data?.products?.data || [];
-        const salesData = salesRes?.data?.data?.products?.data || [];
+      const res = await getHomeProducts(pageNum);
+      
+      const rawProducts = res.data?.data?.products?.data || [];
+      const pagination = res.data?.data?.products || {};
+      
+      const mapped = rawProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        old_price: p.discount_price ? p.price : null,
+        hasDiscount: !!p.discount_price && p.discount_price < p.price,
+        image: p.image,
+        rating: parseFloat(p.rating) || 0,
+        description: p.description,
+        company_id: p.company?.id,
+        company_name: p.company?.name || "Company",
+        whatsapp: p.company?.whatsapp || p.company?.watsapp || null,
+        type: p.type,
+        specialMarks: p.specialMarks || [],
+        highlight: p.specialMarks?.[0]?.key || (p.type === "sales" ? "on_sales" : null),
+      }));
 
-        const mappedArrivals = arrivalsData.map((product) => ({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          old_price: null,
-          hasDiscount: false,
-          discountPercentage: 0,
-          image: product.image,
-          rating: parseFloat(product.rating) || 0,
-          description: product.description,
-          company_id: product.company_id?.id,
-          company_name: product.company_name?.name || "Company",
-          category_id: product.category_id,
-          whatsapp: product.whatsapp || null,
-          sourceType: "arrival",
-          type: product.type,
-          highlight: highlightMap[product.id] || null,
-        }));
-
-        const mappedSales = salesData.map((product) => ({
-          id: product.id,
-          name: product.name,
-          price: product.discount_price || product.price,
-          old_price: product.discount_price ? product.price : null,
-          hasDiscount:
-            !!product.discount_price && product.discount_price < product.price,
-          discountPercentage: product.discount_price
-            ? Math.round(
-                ((product.price - product.discount_price) / product.price) * 100
-              )
-            : 0,
-          image: product.image,
-          rating: parseFloat(product.rating) || 0,
-          description: product.description,
-          company_id: product.company_id?.id,
-          company_name: product.company_name?.name || "Company",
-          category_id: product.category_id,
-          whatsapp: product.whatsapp || null,
-          sourceType: "sale",
-          type: product.type,
-          highlight: "on_sales",
-        }));
-
-        const merged = [...mappedSales, ...mappedArrivals];
-
-        const uniqueProducts = Array.from(
-          new Map(merged.map((item) => [item.id, item])).values()
-        );
-
-        if (mounted) {
-          setApiProducts(uniqueProducts);
-        }
-      } catch (err) {
-        logError("ProductsSection: failed to load products", err);
+      if (isInitial) {
+        setApiProducts(mapped);
+      } else {
+        setApiProducts((prev) => [...prev, ...mapped]);
       }
-    };
+      
+      setHasMore(pagination.current_page < pagination.last_page);
+    } catch (err) {
+      logError("ProductsSection: failed to load products", err);
+    } finally {
+      setIsLoading(false);
+      setIsFetchingMore(false);
+    }
+  }, []);
 
-    fetchProducts();
+  useEffect(() => {
+    fetchProducts(1, true);
+    setPage(1);
+  }, [fetchProducts]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [highlightMap]);
+  const displayProducts = useMemo(() => {
+    if (activeTab === "all") return apiProducts;
+    return apiProducts.filter(
+      product => product.highlight === activeTab
+    );
+  }, [apiProducts, activeTab]);
+
+  // Observer for Infinite Scroll
+  useEffect(() => {
+    if (isLoading || isFetchingMore || !hasMore) return;
+
+    // Check if we need more products to fill the screen for the current tab
+    // If the filtered list is short but there are more products on the server, fetch more
+    const MIN_REQUIRED_ITEMS = 6;
+    if (displayProducts.length < MIN_REQUIRED_ITEMS && hasMore && !isFetchingMore && !isLoading) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchProducts(nextPage);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchProducts(nextPage);
+        }
+      },
+      { threshold: 0.1, root: scrollContainerRef.current }
+    );
+
+    if (lastItemRef.current) {
+      observer.observe(lastItemRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isLoading, isFetchingMore, hasMore, page, fetchProducts, displayProducts.length]);
+
+
 
   const isProductFav = useCallback(
     (productId) => favouriteItems.some((p) => p.id === productId),
@@ -383,33 +376,30 @@ useEffect(() => {
   }, []);
 
   const handleScrollLeft = useCallback(() => {
-    if (scrollContainerRef.current && isInViewport) {
-      const scrollAmount = window.innerWidth < 640 ? window.innerWidth / 2 : 220;
+    if (scrollContainerRef.current) {
+      const scrollAmount = window.innerWidth < 640 ? window.innerWidth * 0.8 : 400;
       scrollContainerRef.current.scrollBy({
-        left: -scrollAmount,
+        left: i18n.language === "ar" ? scrollAmount : -scrollAmount,
         behavior: "smooth",
       });
     }
-  }, [isInViewport]);
+  }, [i18n.language]);
 
   const handleScrollRight = useCallback(() => {
-    if (scrollContainerRef.current && isInViewport) {
-      const scrollAmount = window.innerWidth < 640 ? window.innerWidth / 2 : 220;
+    if (scrollContainerRef.current) {
+      const scrollAmount = window.innerWidth < 640 ? window.innerWidth * 0.8 : 400;
       scrollContainerRef.current.scrollBy({
-        left: scrollAmount,
+        left: i18n.language === "ar" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
       });
     }
-  }, [isInViewport]);
+  }, [i18n.language]);
 
-  const displayProducts = useMemo(() => {
-    if (activeTab === "all") return apiProducts;
-    return apiProducts.filter(
-      product => product.highlight === activeTab
-    );
-  }, [apiProducts, activeTab]);
 
-  const showSkeleton = apiProducts.length === 0;
+
+
+  const showSkeleton = isLoading && apiProducts.length === 0;
+
 
   return (
     <section
@@ -540,14 +530,17 @@ useEffect(() => {
     </div>
   </div>
 ) : (
-  displayProducts.map((product) => (
+  displayProducts.map((product, index) => (
                 <div
-                  key={product.id}
+                  key={`${product.id}-${index}`}
+                  ref={index === displayProducts.length - 1 ? lastItemRef : null}
                   className="flex-none"
                   style={{ width: cardWidth, minWidth: cardWidth }}
                 >
                   <ProductCard
                     product={product}
+                    activeTab={activeTab}
+
                     isFav={isProductFav(product.id)}
                     onToggleFavourite={handleToggleFav}
                     onNavigate={handleNavigate}
@@ -601,6 +594,13 @@ useEffect(() => {
                   />
                 </div>
               ))
+            )}
+
+            {/* Infinite Loader at end */}
+            {isFetchingMore && (
+              <div className="shrink-0 flex items-center justify-center px-12">
+                <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin shadow-sm" />
+              </div>
             )}
           </div>
         </div>

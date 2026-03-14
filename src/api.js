@@ -128,8 +128,12 @@ export const getSalesProducts = (page = 1) =>
 
 
 
+export const getHomeProducts = (pageParam) =>
+  api.get(`/showProducts?page=${pageParam}`);
+
 export const getArrivalsProducts = (page = 1) =>
   api.get(`/showProducts?page=${page}`);
+
 
 
 // ==================== QUESTIONS & SUBSCRIBE DETAILS ====================

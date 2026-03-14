@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import AddToListPopup from "./components/AddToListPopup";
 import CustomerRegister from "./pages/CustomerRegister";
 import CompanyRegister from "./pages/CompanyRegister";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { loginSuccess } from "./store/authSlice";
 import { Toaster } from "react-hot-toast";
 import { showToast } from "./utils/showToast.jsx";
@@ -51,31 +51,51 @@ const NotificationsProducts = React.lazy(() => import("./Customer/NotificationsP
 const ViewBill = React.lazy(() => import("./Customer/ViewBill"));
 const ProductViewMorePage = React.lazy(() => import("./pages/ProductViewMorePage"));
 const ProductDetailPage = React.lazy(() => import("./pages/ProductDetailPage"));
-function AppContent() {
+const AppContent = () => {
   const location = useLocation();
   const { i18n } = useTranslation();
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-// 1️⃣ AUTH REHYDRATION (MUST BE FIRST)
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
-  const userType = localStorage.getItem("userType");
+  // 1️⃣ AUTH REHYDRATION (ONLY IF NOT ALREADY HYDRATED BY PERSISTOR)
+  useEffect(() => {
+    // If already authenticated by redux-persist, don't overwrite with (potentially partial) localStorage data
+    if (isAuthenticated) return;
 
-  if (token && user && userType) {
-    dispatch(
-      loginSuccess({
-        user: JSON.parse(user),
-        userType,
-      })
-    );
-  }
-}, [dispatch]);
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    const userType = localStorage.getItem("userType");
+
+    if (token && user && userType) {
+      let userData = JSON.parse(user);
+
+      // ✅ ENHANCEMENT: If company, merge with company_details to ensure name is restored on refresh
+      if (userType === 'company') {
+        const companyDetails = localStorage.getItem("company_details");
+        if (companyDetails) {
+          try {
+            const details = JSON.parse(companyDetails);
+            userData = { ...details, ...userData };
+          } catch (e) {
+            console.error("Failed to parse company_details during rehydration", e);
+          }
+        }
+      }
+
+      dispatch(
+        loginSuccess({
+          user: userData,
+          userType,
+        })
+      );
+    }
+  }, [dispatch, isAuthenticated]);
+
 
 // 2️⃣ FETCH FAVOURITES (AFTER AUTH EXISTS)
 useEffect(() => {

@@ -13,6 +13,7 @@ export const ProductCard = memo(({
   onChat,
   priceSlot,
   currency,
+  activeTab = "all",
 }) => {
   const { i18n } = useTranslation();
   const { fixedWords } = useFixedWords();
@@ -88,26 +89,77 @@ const badgeStyles = {
       {/* IMAGE SLOT (UNCHANGED) */}
       <div className="relative w-full h-[150px] xs:h-[170px] sm:h-[210px] overflow-hidden rounded-t-2xl">
         
-        
-{product.highlight && (
-  <div
-    className={`
-        absolute top-3 left-3 z-20
-      px-[clamp(8px,0.9vw,12px)]
-py-[clamp(3px,0.4vw,5px)]
-text-[clamp(9px,0.9vw,11px)]
-      rounded-full
-      
-      font-medium
-      tracking-[0.12em]
-      uppercase
-     
-      ${badgeStyles[product.highlight] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
-    `}
-  >
-    {fw[product.highlight] || product.highlight.replace("_", " ")}
-  </div>
-)}
+        {/* Special Marks or Highlight Badge */}
+        <div className="absolute top-2 left-2 z-20 flex flex-row flex-wrap gap-1 items-start max-w-[90%]">
+          {(() => {
+            if (activeTab === "all") {
+              const marks = product?.specialMarks || [];
+              if (marks.length > 0) {
+                return marks.map((mark, idx) => (
+                  <div
+                    key={`${mark.key}-${idx}`}
+                    className={`
+                      px-[clamp(5px,0.6vw,8px)]
+                      py-[clamp(1.5px,0.25vw,3px)]
+                      text-[clamp(7px,0.7vw,9px)]
+                      rounded-full
+                      font-bold
+                      tracking-tight
+                      uppercase
+                      shadow-sm
+                      ${badgeStyles[mark.key] || "bg-white/80 backdrop-blur-md text-gray-700"}
+                    `}
+                  >
+                    {mark.name}
+                  </div>
+                ));
+              }
+              if (product.highlight) {
+                return (
+                  <div
+                    className={`
+                      px-[clamp(6px,0.7vw,10px)]
+                      py-[clamp(2px,0.3vw,4px)]
+                      text-[clamp(8px,0.8vw,10px)]
+                      rounded-full
+                      font-bold
+                      tracking-tight
+                      uppercase
+                      ${badgeStyles[product.highlight] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
+                    `}
+                  >
+                    {fw[product.highlight] || product.highlight.replace("_", " ")}
+                  </div>
+                );
+              }
+            } else {
+              const mark = product?.specialMarks?.find(m => m.key === activeTab);
+              const key = mark?.key || product.highlight;
+              const name = mark?.name || fw[product.highlight] || product.highlight?.replace("_", " ");
+ 
+              if (!key) return null;
+ 
+              return (
+                <div
+                  className={`
+                    px-[clamp(6px,0.7vw,10px)]
+                    py-[clamp(2px,0.3vw,4px)]
+                    text-[clamp(8px,0.8vw,10px)]
+                    rounded-full
+                    font-bold
+                    tracking-tight
+                    uppercase
+                    ${badgeStyles[key] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
+                  `}
+                >
+                  {name}
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+
 {product.type === "service" && (
 <div
   className="

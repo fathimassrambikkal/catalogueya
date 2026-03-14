@@ -1,23 +1,26 @@
 import React, { useState } from "react";
 import { updateCustomerSettings } from "../api";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { updateProfile } from "../store/authSlice";
 
 function PersonalInformation({ onBack }) {
+  const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth.user);
 
   const [formData, setFormData] = useState({
-    name: "",
-    surname: "",
-    dateOfBirth: "",
-    gender: "",
-    email: "",
-    mobile: "",
-    location: "",
+    name: currentUser?.first_name || "",
+    surname: currentUser?.last_name || "",
+    dateOfBirth: currentUser?.date_of_birth || "",
+    gender: currentUser?.gender || "",
+    email: currentUser?.email || "",
+    mobile: currentUser?.mobile || currentUser?.phone || "",
+    location: currentUser?.location || "",
   });
 
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
+
 
   const handleSubmit = async () => {
     if (!currentUser?.id) {
@@ -37,6 +40,22 @@ function PersonalInformation({ onBack }) {
         mobile: formData.mobile || undefined,
         location: formData.location || undefined,
       });
+
+      // ✅ Update Redux state
+      const updatedUser = {
+        ...currentUser,
+        first_name: formData.name || currentUser.first_name,
+        last_name: formData.surname || currentUser.last_name,
+        name: `${formData.name || ""} ${formData.surname || ""}`.trim() || currentUser.name,
+        email: formData.email || currentUser.email,
+        mobile: formData.mobile || currentUser.mobile,
+        phone: formData.mobile || currentUser.phone,
+      };
+
+      dispatch(updateProfile(updatedUser));
+
+      // ✅ Update localStorage
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       alert("Profile updated successfully");
       onBack();

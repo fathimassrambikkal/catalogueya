@@ -138,6 +138,10 @@ const isRTL = i18n.language === "ar";
         // Ensure Redux is also in sync with latest API data
         dispatch(updateProfile(info));
         localStorage.setItem("company_details", JSON.stringify(info));
+
+        // ✅ IMPORTANT: Also update the 'user' key used for rehydration in App.jsx
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+        localStorage.setItem("user", JSON.stringify({ ...currentUser, ...info }));
       })
       .finally(() => {
         if (mounted) setLoading(false);

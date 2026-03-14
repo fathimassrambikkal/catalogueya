@@ -234,7 +234,9 @@ export default function Navbar() {
   const displayName =
     user?.name ||
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
-    "Customer";
+    user?.companyName ||
+    user?.company_name ||
+    "Guest";
 
   const { settings } = useSettings();
   const { fixedWords } = useFixedWords();

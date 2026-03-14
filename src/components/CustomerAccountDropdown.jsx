@@ -166,8 +166,8 @@ export default function CustomerAccountDropdown({
   const fw = fixedWords?.fixed_words || {};
 
   const displayName =
-    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
     user?.name ||
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
     user?.companyName ||
     user?.company_name ||
     "Guest";
