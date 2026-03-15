@@ -205,27 +205,32 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
   productHighlight = highlightLabels[product.highlight_id].key;
 }
           
-          return {
-            id: product.id,
-            name:
-  i18n.language === "ar"
-    ? product.name_ar || product.name
-    : product.name,
-            price: product.price,
-            old_price: product.old_price ? Number(product.old_price) : null,
-            image: product.image,
-            rating: parseFloat(product.rating) || 0,
-            description: product.description,
-            company_id: product.company_id?.id,
-            company_name: product.company_name?.name || "Company",
-            category_id: product.category_id,
-            whatsapp: product.whatsapp || null,
-             type: product.type,
-            highlight: productHighlight,
-            highlight_id: product.highlight_id,
-            highlight_name: product.highlight_name || highlightLabels[product.highlight_id]?.name,
-            source: "products"
-          };
+            return {
+              id: product.id,
+              name:
+                i18n.language === "ar"
+                  ? product.name_ar || product.name
+                  : product.name,
+              price: product.price,
+              old_price: product.old_price ? Number(product.old_price) : null,
+              image: product.image,
+              rating: parseFloat(product.rating) || 0,
+              description: product.description,
+              company_id: product.company_id?.id,
+              company_name: product.company_name?.name || "Company",
+              category_id: product.category_id,
+              whatsapp: product.whatsapp || null,
+
+              // Robust sale detection
+              sale: product.sale || null,
+              type: product.type || 
+                (product.sale || productHighlight === "on_sales" ? "sales" : product.type),
+
+              highlight: productHighlight,
+              highlight_id: product.highlight_id,
+              highlight_name: product.highlight_name || highlightLabels[product.highlight_id]?.name,
+              source: "products"
+            };
         });
 
         setProducts(prev => {
@@ -534,68 +539,33 @@ if (product.highlight_id && highlightLabels[product.highlight_id]) {
                     onToggleFavourite={handleToggleFavourite}
                     onChat={handleChatClick}
                     imageSlot={
-                      <div className="relative w-full h-full">
-                        {/* Highlight Label - Top Left */}
-                        {/* {highlightLabel && (
-                          <div className="absolute top-2 left-2 z-20">
-                            <span className={`${highlightLabel.color} text-white text-xs font-medium px-2 py-1 rounded-full shadow-md`}>
-                              {highlightLabel.name}
-                            </span>
-                          </div>
-                        )} */}
-                        
-                        {/* Discount Badge - Top Right (if on sale) */}
-                        {isSales && product.old_price && (
-                          <div className="absolute top-2 right-2 z-20">
-                            <span className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full shadow-md">
-                              {Math.round(((product.old_price - product.price) / product.old_price) * 100)}% OFF
-                            </span>
-                          </div>
-                        )}
-                        
-                        <picture>
-                          {product.image?.avif && (
-                            <source
-                              srcSet={`${API_BASE_URL}/${product.image.avif}`}
-                              type="image/avif"
-                            />
-                          )}
-                          {product.image?.webp && (
-                            <source
-                              srcSet={`${API_BASE_URL}/${product.image.webp}`}
-                              type="image/webp"
-                            />
-                          )}
-                          <img
-                            src={
-                              product.image?.webp
-                                ? `${API_BASE_URL}/${product.image.webp}`
-                                : "/placeholder-image.jpg"
-                            }
-                            alt={product.name_en || product.name}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover"
+                      <picture>
+                        {product.image?.avif && (
+                          <source
+                            srcSet={`${API_BASE_URL}/${product.image.avif}`}
+                            type="image/avif"
                           />
-                        </picture>
-                      </div>
+                        )}
+                        {product.image?.webp && (
+                          <source
+                            srcSet={`${API_BASE_URL}/${product.image.webp}`}
+                            type="image/webp"
+                          />
+                        )}
+                        <img
+                          src={
+                            product.image?.webp
+                              ? `${API_BASE_URL}/${product.image.webp}`
+                              : "/placeholder-image.jpg"
+                          }
+                          alt={product.name_en || product.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover"
+                        />
+                      </picture>
                     }
-                    priceSlot={
-                      isSales && product.old_price ? (
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900 text-[clamp(10px,1vw,11px)]">
-                            {fw.qar || 'QAR'} {product.price}
-                          </span>
-                          <span className="text-gray-500 line-through text-[clamp(7px,0.8vw,10px)]">
-                            {product.old_price}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="font-semibold text-gray-900 text-[clamp(10px,1vw,11px)]">
-                          {fw.qar || 'QAR'} {product.price}
-                        </span>
-                      )
-                    }
+                    priceSlot={null}
                   />
                 );
               })}

@@ -77,16 +77,17 @@ function SalesProductPageComponent() {
           id: product.id,
           name: product.name,
           name_en: product.name,
-          price: product.discount_price || product.price,
-          old_price: product.discount_price ? product.price : null,
-          image: product.image, // ✅ Use image for SmartImage
+          price: product.price,
+          sale: product.sale || null,
+          image: product.image,
           rating: parseFloat(product.rating) || 0,
           description: product.description,
           company_id: product.company_id?.id ?? product.company_id,
           company_name: product.company_name || product.company_id?.name || "Company",
           category_id: product.category_id,
           category_name: product.category_name || "Sale",
-           whatsapp: product.whatsapp || null,
+          whatsapp: product.whatsapp || null,
+          type: product.type || "sales",
         }));
 
         setProducts(prev => {
@@ -390,19 +391,7 @@ const handleToggleFavourite = useCallback((product) => {
       }
 
       /* 💰 Price */
-      priceSlot={
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-gray-900 text-[clamp(10px,1vw,11px)]">
-            {fw.qar} {product.price}
-          </span>
-
-          {product.old_price && (
-            <span className="text-gray-500 line-through text-[clamp(7px,0.8vw,10px)]">
-              {product.old_price}
-            </span>
-          )}
-        </div>
-      }
+      priceSlot={null}
     />
   );
 })}

@@ -286,20 +286,67 @@ const badgeStyles = {
       whitespace-nowrap
       flex-shrink-0
       leading-[1.2]
+      flex items-center gap-1.5
     "
   >
-    <span
-      className="
-        font-semibold
-        text-gray-900
-        tracking-tight
-        text-[clamp(11.5px,1.2vw,13px)]
-      "
-    >
-      {i18n.language === "ar"
-        ? `${currency} ${product.price}`
-        : `${product.price} ${currency}`}
-    </span>
+    {((product.type === "sales" || product.sale) && product.sale) ? (
+      <>
+        <span
+          className="
+            font-semibold
+            text-gray-900
+            tracking-tight
+            text-[clamp(11.5px,1.2vw,14px)]
+          "
+        >
+          {i18n.language === "ar"
+            ? `${currency} ${product.sale.price_after}`
+            : `${product.sale.price_after} ${currency}`}
+        </span>
+        <span
+          className="
+            text-gray-400
+            line-through
+            text-[clamp(9px,0.9vw,11px)]
+            font-medium
+          "
+        >
+          {i18n.language === "ar"
+            ? `${currency} ${product.sale.price_before}`
+            : `${product.sale.price_before} ${currency}`}
+        </span>
+        <span
+          className="
+            text-[clamp(8.5px,0.85vw,10px)]
+            font-bold
+            text-rose-600
+            bg-rose-50
+            px-1.5
+            py-0.5
+            rounded-md
+            border
+            border-rose-100
+            uppercase
+            tracking-tighter
+          "
+        >
+          {product.sale.discount_value}% {fw.off || "OFF"}
+        </span>
+      </>
+    ) : (
+      <span
+        className="
+          font-semibold
+          text-gray-900
+          tracking-tight
+          text-[clamp(11.5px,1.2vw,13px)]
+        "
+      >
+        {i18n.language === "ar"
+          ? `${currency} ${product.price}`
+          : `${product.price} ${currency}`}
+      </span>
+    )}
   </div>
 )}
 

@@ -242,18 +242,9 @@ export default function SalesProductProfile() {
       const transformedProduct = {
         id: productData.id,
         name: productData.name,
-
-        // Use sale.price_after for current price, fallback to productData.price
-        price: sale?.price_after
-          ? Number(sale.price_after).toFixed(2)
-          : Number(productData.price).toFixed(2),
-
-        // Use sale.price_before for old price
-        oldPrice: sale?.price_before
-          ? Number(sale.price_before).toFixed(2)
-          : null,
-
-        discount_percent: sale?.discount_value || null,
+        price: productData.price,
+        oldPrice: productData.old_price || null,
+        discount_percent: productData.discount_percent || null,
         whatsapp: productData.whatsapp || null, 
         image: normalizeImage(productData.image),
         rating: parseFloat(productData.rating) || 0,
@@ -363,15 +354,8 @@ export default function SalesProductProfile() {
         const transformedProduct = {
           id: productData.id,
           name: productData.name,
-
-          // Use sale data for prices
-          price: sale?.price_after
-            ? Number(sale.price_after).toFixed(2)
-            : Number(productData.price).toFixed(2),
-
-          oldPrice: sale?.price_before
-            ? Number(sale.price_before).toFixed(2)
-            : null,
+          price: productData.price,
+          oldPrice: productData.old_price || null,
 
           image: normalizeImage(productData.image), // ✅ Store object format
           rating: parseFloat(productData.rating) || 0,
@@ -890,32 +874,44 @@ export default function SalesProductProfile() {
             {product ? (
               <>
                 {/* PRICE ROW */}
-                <div
-                  className="flex items-end gap-3 transform-gpu"
-                  dir={i18n.language === "ar" ? "rtl" : "ltr"}
-                >
-                  {/* NEW PRICE */}
-                  <span
-                    className="text-3xl font-semibold text-gray-900 transform-gpu"
-                    dir="ltr"
-                  >
-                    {product.price}
-                  </span>
+                <div className="flex items-baseline gap-2 ">
+                  {product.sale ? (
+                    <>
+                      <span className="text-3xl font-semibold text-gray-900">
+                        {i18n.language === "ar"
+                          ? `${fw.qar || "QAR"} ${product.sale.price_after}`
+                          : `${product.sale.price_after} ${fw.qar || "QAR"}`
+                        }
+                      </span>
+                      <span className="text-lg line-through text-gray-400 font-medium">
+                        {i18n.language === "ar"
+                          ? `${fw.qar || "QAR"} ${product.sale.price_before}`
+                          : `${product.sale.price_before} ${fw.qar || "QAR"}`
+                        }
+                      </span>
+                      <span className="text-sm font-bold text-rose-600 bg-rose-50 rounded-full px-3 py-1 border border-rose-100 uppercase tracking-tight">
+                        {product.sale.discount_value}% {fw.off || "OFF"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-semibold text-gray-900">
+                        {i18n.language === "ar"
+                          ? `${fw.qar || "QAR"} ${product.price}`
+                          : `${product.price} ${fw.qar || "QAR"}`
+                        }
+                      </span>
 
-                  {/* OLD PRICE */}
-                  {product.oldPrice && (
-                    <span
-                      className="text-sm text-gray-400 line-through transform-gpu"
-                      dir="ltr"
-                    >
-                      {product.oldPrice}
-                    </span>
+                      {product.oldPrice && (
+                        <span className="text-lg line-through text-gray-400 font-medium">
+                          {i18n.language === "ar"
+                            ? `${fw.qar || "QAR"} ${product.oldPrice}`
+                            : `${product.oldPrice} ${fw.qar || "QAR"}`
+                          }
+                        </span>
+                      )}
+                    </>
                   )}
-
-                  {/* CURRENCY */}
-                  <span className="text-sm font-medium text-gray-500 transform-gpu">
-                    {fw.qar || "QAR"}
-                  </span>
                 </div>
 
 

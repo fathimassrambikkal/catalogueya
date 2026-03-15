@@ -213,17 +213,16 @@ useEffect(() => {
         id: p.id,
         name: p.name,
         price: p.price,
-        old_price: p.discount_price ? p.price : null,
-        hasDiscount: !!p.discount_price && p.discount_price < p.price,
         image: p.image,
         rating: parseFloat(p.rating) || 0,
         description: p.description,
         company_id: p.company?.id,
         company_name: p.company?.name || "Company",
         whatsapp: p.company?.whatsapp || p.company?.watsapp || null,
-        type: p.type,
+        type: p.type || (p.sale ? "sales" : p.type),
         specialMarks: p.specialMarks || [],
-        highlight: p.specialMarks?.[0]?.key || (p.type === "sales" ? "on_sales" : null),
+        sale: p.sale || null,
+        highlight: p.specialMarks?.[0]?.key || (p.type === "sales" || p.sale ? "on_sales" : null),
       }));
 
       if (isInitial) {
@@ -569,20 +568,7 @@ leading-tight
                     onNavigate={handleNavigate}
                     onChat={handleChatClick}
                     currency={fw.qar}
-                    priceSlot={
-                      product.old_price ? (
-                        <div className="mt-[clamp(2px,0.5vw,4px)] flex items-baseline gap-[clamp(3px,0.2vw,6px)]">
-                          <span className="font-semibold text-gray-900 tracking-tight leading-[1.2] text-[clamp(10px,1vw,11px)]">
-                            {i18n.language === "ar"
-                              ? `${fw.qar} ${product.price}`
-                              : `${product.price} ${fw.qar}`}
-                          </span>
-                          <span className="text-gray-500 line-through tracking-tight leading-[1.1] text-[clamp(7px,0.8vw,10px)]">
-                            {product.old_price}
-                          </span>
-                        </div>
-                      ) : null
-                    }
+                    priceSlot={null}
                     imageSlot={
                       <picture>
                         {product.image?.avif && (

@@ -221,6 +221,7 @@ export default function ProductProfile() {
        
         whatsapp: productData.whatsapp || null,
         oldPrice: productData.old_price || null,
+        sale: productData.sale || null,
         image: normalizeImage(productData.image), 
         rating: parseFloat(productData.rating) || 0,
         description: productData.description,
@@ -327,6 +328,7 @@ export default function ProductProfile() {
           price: productData.price,
            whatsapp: productData.whatsapp || null,
           oldPrice: productData.old_price || null,
+          sale: productData.sale || null,
           image: normalizeImage(productData.image), // ✅ Store object format
           rating: parseFloat(productData.rating) || 0,
           description: productData.description,
@@ -849,27 +851,48 @@ export default function ProductProfile() {
             {product ? (
               <>
                 <div className="flex items-baseline gap-2 ">
-                  <span className="text-3xl font-semibold text-gray-900">
-                    {i18n.language === "ar"
-                      ? `${fw.qar || "QAR"} ${product.price}`
-                      : `${product.price} ${fw.qar || "QAR"}`
-                    }
-                  </span>
+                  {product.sale ? (
+                    <>
+                      <span className="text-3xl font-semibold text-gray-900">
+                        {i18n.language === "ar"
+                          ? `${fw.qar || "QAR"} ${product.sale.price_after}`
+                          : `${product.sale.price_after} ${fw.qar || "QAR"}`
+                        }
+                      </span>
+                      <span className="text-lg line-through text-gray-400 font-medium">
+                        {i18n.language === "ar"
+                          ? `${fw.qar || "QAR"} ${product.sale.price_before}`
+                          : `${product.sale.price_before} ${fw.qar || "QAR"}`
+                        }
+                      </span>
+                      <span className="text-sm font-bold text-rose-600 bg-rose-50 rounded-full px-3 py-1 border border-rose-100 uppercase tracking-tight">
+                        {product.sale.discount_value}% {fw.off || "OFF"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-semibold text-gray-900">
+                        {i18n.language === "ar"
+                          ? `${fw.qar || "QAR"} ${product.price}`
+                          : `${product.price} ${fw.qar || "QAR"}`
+                        }
+                      </span>
 
+                      {product.oldPrice && (
+                        <span className="text-lg line-through text-gray-400 font-medium">
+                          {i18n.language === "ar"
+                            ? `${fw.qar || "QAR"} ${product.oldPrice}`
+                            : `${product.oldPrice} ${fw.qar || "QAR"}`
+                          }
+                        </span>
+                      )}
 
-                  {product.oldPrice && (
-                    <span className="text-sm line-through text-gray-400 ">
-                      {i18n.language === "ar"
-                        ? `${fw.qar || "QAR"} ${product.oldPrice}`
-                        : `${product.oldPrice} ${fw.qar || "QAR"}`
-                      }
-                    </span>
-                  )}
-
-                  {product.discount_percent && (
-                    <span className="text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 ">
-                      -{product.discount_percent}%
-                    </span>
+                      {product.discount_percent && (
+                        <span className="text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 ">
+                          -{product.discount_percent}%
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
 
