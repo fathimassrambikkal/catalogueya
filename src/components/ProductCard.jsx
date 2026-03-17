@@ -13,7 +13,6 @@ export const ProductCard = memo(({
   onChat,
   priceSlot,
   currency,
-  activeTab = "all",
 }) => {
   const { i18n } = useTranslation();
   const { fixedWords } = useFixedWords();
@@ -56,15 +55,19 @@ const badgeStyles = {
         relative
         flex flex-col         
         w-full max-w-[320px]
-        h-[220px] xs:h-[240px] sm:h-[280px]   
-        rounded-2xl
+       
+        h-[220px] xs:h-[240px] sm:h-[260px] md:h-[280px]
+
+        rounded-[20px]
         overflow-hidden
         group
         cursor-pointer
-        bg-white/10
-        border border-white/30
-        backdrop-blur-2xl
-        shadow-[0_8px_30px_rgba(0,0,0,0.08)]
+     
+      
+       bg-white
+border border-gray-100
+shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_14px_rgba(0,0,0,0.05)]
+
       "
     >
       {/* TOP RIGHT ACTIONS */}
@@ -73,7 +76,12 @@ const badgeStyles = {
           onClick={handleHeartClick}
           className={`
             p-[clamp(6px,0.8vw,8px)]
-            rounded-full shadow-md transition backdrop-blur-md border
+            rounded-full  border 
+            flex items-center justify-center
+           
+            backdrop-blur-sm
+            transition-all duration-150
+            shadow-[0_1px_6px_rgba(0,0,0,0.10)]
             ${isFav
               ? "bg-red-100 text-red-600 border-red-200"
               : "bg-white/80 text-gray-600 border-white/50 hover:bg-red-50"}
@@ -87,79 +95,29 @@ const badgeStyles = {
       </div>
 
       {/* IMAGE SLOT (UNCHANGED) */}
-      <div className="relative w-full h-[150px] xs:h-[170px] sm:h-[210px] overflow-hidden rounded-t-2xl">
+      <div className="relative w-full 
+ h-[148px] xs:h-[166px] sm:h-[186px] md:h-[206px] overflow-hidden rounded-t-2xl">
         
-        {/* Special Marks or Highlight Badge */}
-        <div className="absolute top-2 left-2 z-20 flex flex-row flex-wrap gap-1 items-start max-w-[90%]">
-          {(() => {
-            if (activeTab === "all") {
-              const marks = product?.specialMarks || [];
-              if (marks.length > 0) {
-                return marks.map((mark, idx) => (
-                  <div
-                    key={`${mark.key}-${idx}`}
-                    className={`
-                      px-[clamp(5px,0.6vw,8px)]
-                      py-[clamp(1.5px,0.25vw,3px)]
-                      text-[clamp(7px,0.7vw,9px)]
-                      rounded-full
-                      font-bold
-                      tracking-tight
-                      uppercase
-                      shadow-sm
-                      ${badgeStyles[mark.key] || "bg-white/80 backdrop-blur-md text-gray-700"}
-                    `}
-                  >
-                    {mark.name}
-                  </div>
-                ));
-              }
-              if (product.highlight) {
-                return (
-                  <div
-                    className={`
-                      px-[clamp(6px,0.7vw,10px)]
-                      py-[clamp(2px,0.3vw,4px)]
-                      text-[clamp(8px,0.8vw,10px)]
-                      rounded-full
-                      font-bold
-                      tracking-tight
-                      uppercase
-                      ${badgeStyles[product.highlight] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
-                    `}
-                  >
-                    {fw[product.highlight] || product.highlight.replace("_", " ")}
-                  </div>
-                );
-              }
-            } else {
-              const mark = product?.specialMarks?.find(m => m.key === activeTab);
-              const key = mark?.key || product.highlight;
-              const name = mark?.name || fw[product.highlight] || product.highlight?.replace("_", " ");
- 
-              if (!key) return null;
- 
-              return (
-                <div
-                  className={`
-                    px-[clamp(6px,0.7vw,10px)]
-                    py-[clamp(2px,0.3vw,4px)]
-                    text-[clamp(8px,0.8vw,10px)]
-                    rounded-full
-                    font-bold
-                    tracking-tight
-                    uppercase
-                    ${badgeStyles[key] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
-                  `}
-                >
-                  {name}
-                </div>
-              );
-            }
-            return null;
-          })()}
-        </div>
-
+        
+{product.highlight && (
+  <div
+    className={`
+        absolute top-3 left-3 z-20
+      px-[clamp(8px,0.9vw,12px)]
+py-[clamp(3px,0.4vw,5px)]
+text-[clamp(9px,0.9vw,11px)]
+      rounded-full
+      
+      font-medium
+      tracking-[0.03em]
+      
+     
+      ${badgeStyles[product.highlight] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
+    `}
+  >
+    {fw[product.highlight] || product.highlight.replace("_", " ")}
+  </div>
+)}
 {product.type === "service" && (
 <div
   className="
@@ -171,7 +129,7 @@ const badgeStyles = {
     bg-transparent
     text-white
     border border-white/30
-    backdrop-blur-sm
+    backdrop-blur-3xl
     shadow-[0_2px_4px_rgba(0,0,0,0.1)]
   "
 >
@@ -183,47 +141,7 @@ const badgeStyles = {
         
         {imageSlot}
 
-        {/* {product.rating !== undefined && (
-          <div
-  className="
-    absolute
-    bottom-[clamp(8px,1vw,12px)]
-    left-[clamp(8px,1vw,12px)]
-    flex items-center
-    gap-[clamp(3px,0.5vw,6px)]
-    bg-black/40
-    backdrop-blur-md
-    px-[clamp(6px,0.9vw,10px)]
-    py-[clamp(3px,0.6vw,6px)]
-    rounded-[clamp(6px,0.8vw,10px)]
-    z-20
-  "
->
-  {Array.from({ length: 5 }).map((_, i) => (
-    <StarIcon
-      key={i}
-      filled={i < Math.round(product.rating)}
-      className="
-        w-[clamp(9px,1vw,13px)]
-        h-[clamp(9px,1vw,13px)]
-        text-white/90
-      "
-    />
-  ))}
-
-  <span
-    className="
-      ml-[clamp(2px,0.4vw,4px)]
-      text-[clamp(9px,1vw,12px)]
-      text-white/90
-      leading-none
-    "
-  >
-    {Number(product.rating).toFixed(1)}
-  </span>
-</div>
-
-        )} */}
+    
       </div>
 
       {/* BOTTOM CONTENT (FIXED HEIGHT, SAME LOOK) */}
@@ -234,22 +152,29 @@ const badgeStyles = {
           w-full
           px-[clamp(10px,1.6vw,18px)]
           py-[clamp(12px,1.8vw,18px)]
-          min-h-[72px] sm:min-h-[80px]/* ✅ FIXED INFO HEIGHT */
+          min-h-[72px] sm:min-h-[80px]
           border-t border-white/20
-          bg-white/75
-          backdrop-blur-xl
+          bg-white
+          backdrop-blur-xl 
         "
       >
     {/* PRODUCT NAME + PRICE */}
     <div className="flex flex-col min-w-0 flex-1 pr-2">
       <h3
         className="
-          font-medium
-          text-gray-900
-          truncate
-          tracking-[-0.01em]
+         
+         
           text-[clamp(11.5px,1.35vw,14px)]
-          leading-[1.35]
+          
+
+
+      
+            whitespace-nowrap overflow-hidden text-ellipsis
+
+
+            font-normal text-gray-900
+            truncate leading-[1.3] tracking-[-0.01em]
+
         "
       >
         {product.name}
@@ -286,126 +211,27 @@ const badgeStyles = {
       whitespace-nowrap
       flex-shrink-0
       leading-[1.2]
-      flex items-center gap-1.5
     "
   >
-    {((product.type === "sales" || product.sale) && product.sale) ? (
-      <>
-        <span
-          className="
-            font-semibold
-            text-gray-900
-            tracking-tight
-            text-[clamp(11.5px,1.2vw,14px)]
-          "
-        >
-          {i18n.language === "ar"
-            ? `${currency} ${product.sale.price_after}`
-            : `${product.sale.price_after} ${currency}`}
-        </span>
-        <span
-          className="
-            text-gray-400
-            line-through
-            text-[clamp(9px,0.9vw,11px)]
-            font-medium
-          "
-        >
-          {i18n.language === "ar"
-            ? `${currency} ${product.sale.price_before}`
-            : `${product.sale.price_before} ${currency}`}
-        </span>
-        <span
-          className="
-            text-[clamp(8.5px,0.85vw,10px)]
-            font-bold
-            text-rose-600
-            bg-rose-50
-            px-1.5
-            py-0.5
-            rounded-md
-            border
-            border-rose-100
-            uppercase
-            tracking-tighter
-          "
-        >
-          {product.sale.discount_value}% {fw.off || "OFF"}
-        </span>
-      </>
-    ) : (
-      <span
-        className="
-          font-semibold
-          text-gray-900
-          tracking-tight
-          text-[clamp(11.5px,1.2vw,13px)]
-        "
-      >
-        {i18n.language === "ar"
-          ? `${currency} ${product.price}`
-          : `${product.price} ${currency}`}
-      </span>
-    )}
+    <span
+      className="
+        font-semibold
+        text-gray-900
+        tracking-tight
+        text-[clamp(11.5px,1.2vw,13px)]
+      "
+    >
+      {i18n.language === "ar"
+        ? `${currency} ${product.price}`
+        : `${product.price} ${currency}`}
+    </span>
   </div>
 )}
 
 
     </div>
 
-    {/* CHAT ICON */}
-{/* <button
-  // onClick={(e) => {
-  //   e.stopPropagation();
-  //   onChat(product);
-  // }}
-  aria-label="Chat"
-  title="Chat"
-  className="
-    relative
-    flex-shrink-0
-    flex items-center justify-center
 
-    p-[clamp(6px,0.8vw,9px)]
-    rounded-full
-
-    bg-white/40
-    backdrop-blur-2xl
-    border border-[rgba(255,255,255,0.28)]
-    shadow-[0_8px_24px_rgba(0,0,0,0.18)]
-
-    hover:bg-white/55
-    transition-all duration-300
-
-    focus:outline-none
-    focus-visible:ring-2
-    focus-visible:ring-black/20
-  "
->
-  {/* Chrome liquid highlight */}
-  {/* <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/70 via-white/10 to-transparent opacity-40 pointer-events-none" />
-
-  {/* Glass ribbon streak */}
-  {/* <span className="absolute inset-0 rounded-full bg-[linear-gradient(115deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.15)_20%,rgba(255,255,255,0)_45%)] opacity-35 pointer-events-none" /> */}
-
-  {/* Titanium depth */}
-  {/* <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-20 pointer-events-none" />  */}
-
-  {/* <ChatIcon
-    className="
-      relative z-10
-      w-[clamp(12px,1.1vw,16px)]
-      h-[clamp(12px,1.1vw,16px)]
-      text-[rgba(18,18,18,0.88)]
-      drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]
-    "
-  /> */}
-
-  {/* <WhatsappIcon
-  size={16}
-  className="relative z-10"
-/>
-</button> */}
 {(product?.whatsapp || product?.watsapp) && (
   <button
     onClick={(e) => {
@@ -433,17 +259,25 @@ const badgeStyles = {
 
       relative
       flex-shrink-0
-      flex items-center justify-center
+      
       p-[clamp(6px,0.8vw,9px)]
-      rounded-full
-      bg-white/40
+    
       backdrop-blur-2xl
-      border border-[rgba(255,255,255,0.28)]
-      shadow-[0_8px_24px_rgba(0,0,0,0.18)]
-
-      hover:bg-white/55
-      transition-all duration-300
+    
+     
       hover:scale-105
+
+
+
+       
+          
+              flex items-center justify-center
+              rounded-full border
+              transition-all duration-150
+              active:scale-90
+              bg-[#25D366]/10 border-[#25D366]/25 text-[#25D366]
+              hover:bg-[#25D366]/18 hover:border-[#25D366]/40
+              shadow-[0_1px_4px_rgba(37,211,102,0.12)]
     "
   >
   <WhatsappIcon className="w-[clamp(12px,3.5vw,18px)] h-[clamp(12px,3.5vw,18px)] relative z-10" />
