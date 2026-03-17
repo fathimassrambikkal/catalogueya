@@ -128,14 +128,14 @@ const badgeStyles = {
                       ${badgeStyles[product.highlight] || "bg-white/80 backdrop-blur-md text-gray-700 border border-white/70"}
                     `}
                   >
-                    {fw[product.highlight] || product.highlight.replace("_", " ")}
+                    {product.highlight_name || fw[product.highlight] || product.highlight.replace("_", " ")}
                   </div>
                 );
               }
             } else {
               const mark = product?.specialMarks?.find(m => m.key === activeTab);
               const key = mark?.key || product.highlight;
-              const name = mark?.name || fw[product.highlight] || product.highlight?.replace("_", " ");
+              const name = mark?.name || product.highlight_name || fw[product.highlight] || product.highlight?.replace("_", " ");
  
               if (!key) return null;
  

@@ -223,6 +223,7 @@ useEffect(() => {
         specialMarks: p.specialMarks || [],
         sale: p.sale || null,
         highlight: p.specialMarks?.[0]?.key || (p.type === "sales" || p.sale ? "on_sales" : null),
+        highlight_name: p.specialMarks?.[0]?.name || null,
       }));
 
       if (isInitial) {
@@ -246,11 +247,19 @@ useEffect(() => {
   }, [fetchProducts]);
 
   const displayProducts = useMemo(() => {
-    if (activeTab === "all") return apiProducts;
-    return apiProducts.filter(
+    const rawFiltered = activeTab === "all" ? apiProducts : apiProducts.filter(
       product => product.highlight === activeTab
     );
-  }, [apiProducts, activeTab]);
+    
+    return rawFiltered.map(product => {
+      // Find the label from highlights list if not already present or if we want to sync with tab names
+      const tabInfo = highlights.find(h => h.key === product.highlight);
+      return {
+        ...product,
+        highlight_name: product.highlight_name || tabInfo?.label || (product.highlight === "on_sales" ? (fw.on_sales || "On Sale") : null)
+      };
+    });
+  }, [apiProducts, activeTab, highlights, fw.on_sales]);
 
   // Observer for Infinite Scroll
   useEffect(() => {
@@ -544,7 +553,10 @@ leading-tight
       </div>
 
       <p className="text-sm font-medium text-gray-700">
-        {fw.no_products_found || "No products found"}
+        {activeTab === "all" 
+          ? (fw.no_products_found || "No products found")
+          : `${fw.no || "No"} ${tabs.find(t => t.key === activeTab)?.label || activeTab} ${fw.found || "found"}`
+        }
       </p>
 
   

@@ -495,7 +495,7 @@ return (
 {/* DELETE CONFIRM MODAL */}
 {deleteProductId && (
   <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center p-3 z-[1100]">
-    <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5 animate-in fade-in zoom-in duration-300">
+    <div className="bg-white w-full max-w-[320px] rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in duration-300 transform">
 
       <h3 className="text-sm font-semibold text-gray-900 mb-2">
         {fw.delete_product || "Delete Product?"}

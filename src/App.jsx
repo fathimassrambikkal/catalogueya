@@ -6,7 +6,7 @@ import AddToListPopup from "./components/AddToListPopup";
 import CustomerRegister from "./pages/CustomerRegister";
 import CompanyRegister from "./pages/CompanyRegister";
 import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess } from "./store/authSlice";
+import { loginSuccess, logout } from "./store/authSlice";
 import { Toaster } from "react-hot-toast";
 import { showToast } from "./utils/showToast.jsx";
 import { fetchFavourites } from "./store/favouritesSlice";
@@ -156,10 +156,14 @@ useEffect(() => {
         isOpen={showSessionModal}
         onLogin={() => {
           localStorage.clear();
+          dispatch(logout());
+          setShowSessionModal(false);
           window.location.href = "/sign";
         }}
         onHome={() => {
           localStorage.clear();
+          dispatch(logout());
+          setShowSessionModal(false);
           window.location.href = "/";
         }}
       />

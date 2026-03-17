@@ -13,11 +13,11 @@ import {
   editProduct,
   deleteProduct,
   changeProductStatus,
-  getSpecialMarks,
   getImageUrl,
   getContacts,
   getCategories
 } from "../companyDashboardApi";
+import { getHighlights } from "../api";
 import SendNotificationModal from "./SendNotificationModal";
 import NotificationHistoryModal from "./NotificationHistoryModal";
 import { useTranslation } from "react-i18next";
@@ -117,7 +117,10 @@ export default function Products({
 
   const fetchTags = async () => {
     try {
-      const res = await getSpecialMarks();
+      const res = await getHighlights();
+      // Expecting { data: { data: { heighlight: [...] } } } from getHighlights()
+      const list = res.data?.data?.heighlight || [];
+      
       const shouldFilter = (tag) => {
         const name = tag.name?.toLowerCase() || "";
         return !name.includes('sale') &&
@@ -126,13 +129,8 @@ export default function Products({
           !name.includes('out in stock');
       };
 
-      if (res.data?.data) {
-        const filtered = res.data.data.filter(shouldFilter);
-        setAvailableTags(filtered);
-      } else if (Array.isArray(res.data)) {
-        const filtered = res.data.filter(shouldFilter);
-        setAvailableTags(filtered);
-      }
+      const filtered = list.filter(shouldFilter);
+      setAvailableTags(filtered);
     } catch (error) {
       console.error("Error fetching tags:", error);
     }
@@ -937,7 +935,7 @@ export default function Products({
                     {fw.product_highlights}
                   </h3>
 
-                  <div className="flex flex-wrap gap-1.5 xs:gap-2">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {availableTags.map(tag => {
                       const tid = String(tag.id);
                       const isActive = formData.tags.includes(tid);
@@ -946,6 +944,7 @@ export default function Products({
                       return (
                         <button
                           key={tag.id}
+                          type="button"
                           onClick={() => {
                             const exists = formData.tags.includes(tid);
                             const newTags = exists
@@ -955,35 +954,16 @@ export default function Products({
                             setFormData({ ...formData, tags: newTags });
                           }}
                           className={`
-          flex items-center gap-1.5
-          px-2.5 py-1
-          rounded-full
-          text-[10px]
-          font-medium
-          border
-          transition-all
-          duration-200
-          ${isActive
-                              ? "bg-blue-50 text-blue-600 border-blue-200"
-                              : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-gray-100"
+                            relative px-4 py-2 rounded-xl text-xs font-medium 
+                            transition-all duration-300 transform active:scale-95
+                            border flex items-center gap-2
+                            ${isActive
+                              ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 translate-y-[-1px]"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
                             }
-        `}
+                          `}
                         >
-                          <span
-                            className={`
-            w-3 h-3
-            rounded-full
-            border
-            flex items-center justify-center
-            ${isActive
-                                ? "bg-blue-500 border-blue-500"
-                                : "border-gray-300"
-                              }
-          `}
-                          >
-                            {isActive && <FaCheck className="text-white text-[7px]" />}
-                          </span>
-
+                          {isActive && <FaCheck className="text-[9px]" />}
                           {fw[key] || tag.name}
                         </button>
                       );
@@ -1026,7 +1006,7 @@ export default function Products({
       {/* DELETE CONFIRM MODAL */}
       {deleteProductId && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center p-2 xs:p-3 z-[1100]">
-          <div className="bg-white w-full max-w-[95%] xs:max-w-sm rounded-lg xs:rounded-xl sm:rounded-2xl shadow-xl p-3 xs:p-4 sm:p-5 animate-in fade-in zoom-in duration-300">
+        <div className="bg-white w-full max-w-[320px] rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in duration-300 transform">
             <h3 className="text-xs xs:text-sm sm:text-base font-semibold text-gray-900 mb-1.5 xs:mb-2">
               {fw.delete_product || "Delete Product?"}
             </h3>
