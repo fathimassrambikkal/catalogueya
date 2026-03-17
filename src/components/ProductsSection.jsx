@@ -523,96 +523,100 @@ leading-tight
         </div>
       </div>
 
-      <div className="relative">
-        <div
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto pb-8 -mx-3 sm:-mx-6 md:-mx-10 lg:-mx-16 xl:-mx-24 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 scroll-pl-3 scroll-pr-0 sm:scroll-pr-0 scrollbar-hide scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
-        >
-          <div className="flex gap-3 sm:gap-4 items-stretch">
-            <div className="shrink-0 w-px" />
-{showSkeleton ? (
-  Array.from({ length: 4 }).map((_, index) => (
-    <ProductCardSkeleton key={`skeleton-${index}`} width={cardWidth} />
-  ))
-) : displayProducts.length === 0 ? (
-  <div className="w-full flex items-center justify-center py-24">
-    <div className="flex flex-col items-center text-center max-w-xs">
-      
-      <div className="w-16 h-16 mb-4 text-gray-400">
-        <EmptyProductsIcon className="w-full h-full" />
-      </div>
+   <div className="relative">
 
-      <p className="text-sm font-medium text-gray-700">
-        {fw.no_products_found || "No products found"}
-      </p>
-
-  
-
+  {showSkeleton ? (
+    <div className="flex gap-3 sm:gap-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <ProductCardSkeleton key={`skeleton-${index}`} width={cardWidth} />
+      ))}
     </div>
-  </div>
-) : (
-  displayProducts.map((product, index) => (
-                <div
-                  key={`${product.id}-${index}`}
-                  ref={index === displayProducts.length - 1 ? lastItemRef : null}
-                  className="flex-none"
-                  style={{ width: cardWidth, minWidth: cardWidth }}
-                >
-                  <ProductCard
-                    product={product}
-                    activeTab={activeTab}
 
-                    isFav={isProductFav(product.id)}
-                    onToggleFavourite={handleToggleFav}
-                    onNavigate={handleNavigate}
-                    onChat={handleChatClick}
-                    currency={fw.qar}
-                    priceSlot={null}
-                    imageSlot={
-                      <picture>
-                        {product.image?.avif && (
-                          <source
-                            srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.avif}`}
-                            type="image/avif"
-                          />
-                        )}
-                        {product.image?.webp && (
-                          <source
-                            srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.webp}`}
-                            type="image/webp"
-                          />
-                        )}
-                        <img
-                          src={`https://catalogueyanew.com.awu.zxu.temporary.site/${
-                            product.image?.webp || product.image?.avif
-                          }`}
-                          alt={product.name}
-                          width="320"
-                          height="400"
-                          loading="eager"
-                          fetchPriority="high"
-                          decoding="sync"
-                          className="w-full h-full object-cover rounded-t-2xl"
-                        />
-                      </picture>
-                    }
+  ) : displayProducts.length === 0 ? (
 
-
-                    
-                  />
-                </div>
-              ))
-            )}
-
-            {/* Infinite Loader at end */}
-            {isFetchingMore && (
-              <div className="shrink-0 flex items-center justify-center px-12">
-                <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin shadow-sm" />
-              </div>
-            )}
-          </div>
+    <div className="w-full flex justify-center items-center min-h-[400px]">
+      <div className="flex flex-col items-center text-center">
+        
+        <div className="w-16 h-16 mb-4 text-gray-400">
+          <EmptyProductsIcon className="w-full h-full" />
         </div>
+
+        <p className="text-sm font-medium text-gray-700">
+          {fw.no_products_found || "No products found"}
+        </p>
+
+      </div>
+    </div>
+
+  ) : (
+
+    <div
+      ref={scrollContainerRef}
+      className="flex overflow-x-auto pb-8 -mx-3 sm:-mx-6 md:-mx-10 lg:-mx-16 xl:-mx-24 px-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 scroll-pl-3 scroll-pr-0 sm:scroll-pr-0 scrollbar-hide scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
+    >
+      <div className="flex gap-3 sm:gap-4 items-stretch">
+
+        <div className="shrink-0 w-px" />
+
+        {displayProducts.map((product, index) => (
+          <div
+            key={`${product.id}-${index}`}
+            ref={index === displayProducts.length - 1 ? lastItemRef : null}
+            className="flex-none"
+            style={{ width: cardWidth, minWidth: cardWidth }}
+          >
+            <ProductCard
+              product={product}
+              activeTab={activeTab}
+              isFav={isProductFav(product.id)}
+              onToggleFavourite={handleToggleFav}
+              onNavigate={handleNavigate}
+              onChat={handleChatClick}
+              currency={fw.qar}
+              priceSlot={null}
+              imageSlot={
+                <picture>
+                  {product.image?.avif && (
+                    <source
+                      srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.avif}`}
+                      type="image/avif"
+                    />
+                  )}
+                  {product.image?.webp && (
+                    <source
+                      srcSet={`https://catalogueyanew.com.awu.zxu.temporary.site/${product.image.webp}`}
+                      type="image/webp"
+                    />
+                  )}
+                  <img
+                    src={`https://catalogueyanew.com.awu.zxu.temporary.site/${
+                      product.image?.webp || product.image?.avif
+                    }`}
+                    alt={product.name}
+                    width="320"
+                    height="400"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="sync"
+                    className="w-full h-full object-cover rounded-t-2xl"
+                  />
+                </picture>
+              }
+            />
+          </div>
+        ))}
+
+        {isFetchingMore && (
+          <div className="shrink-0 flex items-center justify-center px-12">
+            <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin shadow-sm" />
+          </div>
+        )}
+          </div>
+    </div>
+
+  )}
+
 
         {!showSkeleton && displayProducts.length > 0 && (
        <div className="flex justify-end mt-4 gap-3">
